@@ -18,7 +18,7 @@ export default function Header() {
           <input
             type="text"
             placeholder="Search"
-            className="w-full px-4 py-3 pr-12 rounded-full bg-white text-black placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-emerald-700 text-base"
+            className="w-full px-4 py-3 pr-12 rounded-full bg-white text-black placeholder-gray-500 border border-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-700 text-base"
           />
           <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
             <svg 
