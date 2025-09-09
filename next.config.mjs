@@ -20,6 +20,10 @@ const nextConfig = {
       },
     ];
   },
+  // Allow all hosts for Replit proxy environment
+  experimental: {
+    allowedDevOrigins: ['*'],
+  },
 };
 
 export default nextConfig;
