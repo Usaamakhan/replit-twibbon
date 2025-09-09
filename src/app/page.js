@@ -21,13 +21,6 @@ export default function Home() {
         <Footer />
       </div>
 
-      {/* Blur Overlay */}
-      {isMenuOpen && (
-        <div 
-          className="fixed inset-0 bg-black bg-opacity-20 z-30"
-          onClick={() => setIsMenuOpen(false)}
-        />
-      )}
 
       {/* Sidebar */}
       <div className={`fixed top-0 right-0 h-full w-80 bg-white shadow-2xl transform transition-transform duration-300 ease-in-out z-40 ${
