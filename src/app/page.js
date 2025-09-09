@@ -55,7 +55,7 @@ export default function Home() {
           </button>
         </div>
         <div className="p-6 pt-20">
-          <nav className="space-y-2">
+          <nav className="space-y-0">
             <a 
               href="#" 
               className="block py-3 px-4 text-lg font-normal text-gray-800 hover:bg-emerald-50 hover:text-emerald-700 rounded-lg transition-colors duration-200"
