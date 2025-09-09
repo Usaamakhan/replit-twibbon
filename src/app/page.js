@@ -12,7 +12,7 @@ export default function Home() {
     <div className="min-h-screen flex flex-col relative">
       {/* Main Content with blur effect */}
       <div className={`min-h-screen flex flex-col transition-all duration-300 ${
-        isMenuOpen ? 'blur-sm brightness-50' : ''
+        isMenuOpen ? 'blur-sm' : ''
       }`}>
         <Header isMenuOpen={isMenuOpen} setIsMenuOpen={setIsMenuOpen} />
         <main className="flex-1">
