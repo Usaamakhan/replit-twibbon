@@ -55,40 +55,40 @@ export default function Home() {
           </button>
         </div>
         <div className="p-6 pt-20">
-          <nav className="space-y-4">
+          <nav className="space-y-2">
             <a 
               href="#" 
-              className="block py-3 px-4 text-lg font-semibold text-gray-800 hover:bg-emerald-50 hover:text-emerald-700 rounded-lg transition-colors duration-200"
+              className="block py-3 px-4 text-lg font-normal text-gray-800 hover:bg-emerald-50 hover:text-emerald-700 rounded-lg transition-colors duration-200"
             >
               Create Frame
             </a>
             <a 
               href="#" 
-              className="block py-3 px-4 text-lg font-semibold text-gray-800 hover:bg-emerald-50 hover:text-emerald-700 rounded-lg transition-colors duration-200"
+              className="block py-3 px-4 text-lg font-normal text-gray-800 hover:bg-emerald-50 hover:text-emerald-700 rounded-lg transition-colors duration-200"
             >
               Use Frame
             </a>
             <a 
               href="#" 
-              className="block py-3 px-4 text-lg font-semibold text-gray-800 hover:bg-emerald-50 hover:text-emerald-700 rounded-lg transition-colors duration-200"
+              className="block py-3 px-4 text-lg font-normal text-gray-800 hover:bg-emerald-50 hover:text-emerald-700 rounded-lg transition-colors duration-200"
             >
               Explore
             </a>
             <a 
               href="#" 
-              className="block py-3 px-4 text-lg font-semibold text-gray-800 hover:bg-emerald-50 hover:text-emerald-700 rounded-lg transition-colors duration-200"
+              className="block py-3 px-4 text-lg font-normal text-gray-800 hover:bg-emerald-50 hover:text-emerald-700 rounded-lg transition-colors duration-200"
             >
               Leaderboard
             </a>
             <a 
               href="#" 
-              className="block py-3 px-4 text-lg font-semibold text-gray-800 hover:bg-emerald-50 hover:text-emerald-700 rounded-lg transition-colors duration-200"
+              className="block py-3 px-4 text-lg font-normal text-gray-800 hover:bg-emerald-50 hover:text-emerald-700 rounded-lg transition-colors duration-200"
             >
               Remove Ads
             </a>
             <a 
               href="#" 
-              className="block py-3 px-4 text-lg font-semibold text-gray-800 hover:bg-emerald-50 hover:text-emerald-700 rounded-lg transition-colors duration-200"
+              className="block py-3 px-4 text-lg font-normal text-gray-800 hover:bg-emerald-50 hover:text-emerald-700 rounded-lg transition-colors duration-200"
             >
               Help Center
             </a>
