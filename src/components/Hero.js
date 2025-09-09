@@ -15,13 +15,13 @@ export default function Hero() {
         <div className="mt-6 sm:mt-8 flex flex-row items-center justify-center gap-4 sm:gap-5 flex-nowrap">
           <a
             href="#"
-            className="inline-flex items-center justify-center rounded-full bg-emerald-700 px-7 py-4 text-white text-base sm:text-lg font-semibold transition-all duration-300 hover:bg-emerald-800 hover:scale-105 hover:shadow-lg active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-emerald-700 whitespace-nowrap"
+            className="inline-flex items-center justify-center rounded-full bg-emerald-700 px-7 py-4 text-white text-base sm:text-lg font-semibold transition-all duration-300 ease-in-out hover:bg-emerald-900 hover:scale-110 hover:shadow-2xl hover:-translate-y-1 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-emerald-700 whitespace-nowrap"
           >
             Create Frame
           </a>
           <a
             href="#"
-            className="inline-flex items-center justify-center rounded-full border border-emerald-700 px-7 py-4 text-emerald-800 text-base sm:text-lg font-semibold transition-all duration-300 hover:bg-emerald-700 hover:text-white hover:scale-105 hover:shadow-lg active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-emerald-700 whitespace-nowrap"
+            className="inline-flex items-center justify-center rounded-full border-2 border-emerald-700 px-7 py-4 text-emerald-800 text-base sm:text-lg font-semibold transition-all duration-300 ease-in-out hover:bg-emerald-700 hover:text-white hover:scale-110 hover:shadow-2xl hover:-translate-y-1 hover:border-emerald-700 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-emerald-700 whitespace-nowrap"
           >
             Use Frame
           </a>
