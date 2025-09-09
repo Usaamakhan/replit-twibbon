@@ -6,6 +6,11 @@ import { useState } from "react";
 const caveat = Caveat({ subsets: ["latin"], weight: ["700"] });
 
 export default function Header({ isMenuOpen, setIsMenuOpen }) {
+  const handleSearch = () => {
+    // Search functionality can be implemented here
+    console.log('Search clicked');
+  };
+
   return (
     <header className="bg-yellow-400 text-black py-4 sm:py-5 md:py-6 border-0 shadow-none relative z-40">
       <div className="mx-auto w-full max-w-screen-xl px-3 sm:px-4 md:px-6 flex items-center justify-between">
@@ -21,7 +26,10 @@ export default function Header({ isMenuOpen, setIsMenuOpen }) {
             placeholder="Search"
             className="w-full px-4 py-3 pr-12 rounded-full bg-white text-black placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-emerald-700 text-base"
           />
-          <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+          <button 
+            onClick={handleSearch}
+            className="absolute right-3 top-1/2 transform -translate-y-1/2 cursor-pointer hover:text-emerald-700 transition-colors duration-200"
+          >
             <svg 
               className="w-5 h-5 text-gray-500" 
               fill="none" 
@@ -35,7 +43,7 @@ export default function Header({ isMenuOpen, setIsMenuOpen }) {
                 d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" 
               />
             </svg>
-          </div>
+          </button>
         </div>
         <div className="relative">
           <button
