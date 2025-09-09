@@ -15,15 +15,15 @@ export default function Hero() {
         <div className="mt-6 sm:mt-8 flex flex-row items-center justify-center gap-4 sm:gap-5 flex-nowrap">
           <a
             href="#"
-            className="group inline-flex items-center justify-center rounded-full bg-emerald-700 px-7 py-4 text-white text-base sm:text-lg font-semibold transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-emerald-700 whitespace-nowrap"
+            className="inline-flex items-center justify-center rounded-full bg-emerald-700 px-7 py-4 text-white text-base sm:text-lg font-semibold transition-transform duration-300 hover:scale-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-emerald-700 whitespace-nowrap"
           >
-            <span className="group-hover:animate-pulse">Create Frame</span>
+            Create Frame
           </a>
           <a
             href="#"
-            className="group inline-flex items-center justify-center rounded-full border border-emerald-700 px-7 py-4 text-emerald-800 text-base sm:text-lg font-semibold transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-emerald-700 whitespace-nowrap"
+            className="inline-flex items-center justify-center rounded-full border border-emerald-700 px-7 py-4 text-emerald-800 text-base sm:text-lg font-semibold transition-transform duration-300 hover:scale-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-emerald-700 whitespace-nowrap"
           >
-            <span className="group-hover:animate-pulse">Use Frame</span>
+            Use Frame
           </a>
         </div>
       </div>
