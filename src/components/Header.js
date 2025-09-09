@@ -14,7 +14,7 @@ export default function Header() {
         <div className={`${caveat.className} text-2xl sm:text-3xl md:text-4xl font-bold text-green-700`}>
           Frame
         </div>
-        <div className="flex-1 max-w-md mx-4 relative">
+        <div className="flex-1 max-w-xs mx-4 relative">
           <input
             type="text"
             placeholder="Search"
@@ -39,7 +39,7 @@ export default function Header() {
         <div className="relative">
           <button
             onClick={() => setIsMenuOpen(!isMenuOpen)}
-            className="p-2 rounded-lg hover:bg-black hover:bg-opacity-10 transition-colors duration-200"
+            className="p-2 rounded-full bg-white hover:bg-gray-100 transition-colors duration-200"
           >
             <svg 
               className="w-6 h-6 text-black" 
