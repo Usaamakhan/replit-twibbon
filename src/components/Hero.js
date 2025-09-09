@@ -21,7 +21,7 @@ export default function Hero() {
           </a>
           <a
             href="#"
-            className="inline-flex items-center justify-center rounded-full border border-emerald-700 px-7 py-4 text-emerald-800 text-base sm:text-lg font-semibold whitespace-nowrap"
+            className="inline-flex items-center justify-center rounded-full border-2 border-emerald-700 px-7 py-4 text-emerald-800 text-base sm:text-lg font-semibold whitespace-nowrap"
           >
             Use Frame
           </a>
