@@ -1,14 +1,24 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // Enable experimental features for better development experience
-  experimental: {
-    // Allow all hosts for Replit proxy environment
-    allowedHosts: true,
-  },
-  // Configure server for Replit environment
-  server: {
-    host: '0.0.0.0',
-    port: 5000,
+  // Configure for Replit deployment
+  output: 'standalone',
+  // Allow cross-origin requests for Replit proxy environment
+  async headers() {
+    return [
+      {
+        source: '/(.*)',
+        headers: [
+          {
+            key: 'Access-Control-Allow-Origin',
+            value: '*',
+          },
+          {
+            key: 'Cache-Control',
+            value: 'no-cache, no-store, must-revalidate',
+          },
+        ],
+      },
+    ];
   },
 };
 
