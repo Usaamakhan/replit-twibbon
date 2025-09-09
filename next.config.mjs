@@ -20,9 +20,24 @@ const nextConfig = {
       },
     ];
   },
-  // Allow all hosts for Replit proxy environment
+  // Allow Replit domains for development
+  allowedDevOrigins: [
+    '*.replit.dev',
+    '*.replit.co',
+    '*.pike.replit.dev',
+    'localhost:5000',
+    '127.0.0.1:5000'
+  ],
+  // Additional experimental features
   experimental: {
-    allowedDevOrigins: ['*'],
+    serverActions: {
+      allowedOrigins: [
+        '*.replit.dev',
+        '*.replit.co',
+        '*.pike.replit.dev',
+        'localhost:5000'
+      ]
+    }
   },
 };
 
