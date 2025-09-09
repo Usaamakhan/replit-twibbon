@@ -15,13 +15,13 @@ export default function Hero() {
         <div className="mt-6 sm:mt-8 flex flex-row items-center justify-center gap-4 sm:gap-5 flex-nowrap">
           <a
             href="#"
-            className="inline-flex items-center justify-center rounded-full bg-emerald-700 px-7 py-4 text-white text-base sm:text-lg font-semibold whitespace-nowrap transform transition-transform duration-200 hover:scale-110"
+            className="inline-flex items-center justify-center rounded-full bg-emerald-700 px-7 py-4 text-white text-base sm:text-lg font-semibold whitespace-nowrap hover-zoom"
           >
             Create Frame
           </a>
           <a
             href="#"
-            className="inline-flex items-center justify-center rounded-full border-2 border-emerald-700 px-7 py-4 text-emerald-800 text-base sm:text-lg font-semibold whitespace-nowrap transform transition-transform duration-200 hover:scale-110"
+            className="inline-flex items-center justify-center rounded-full border-2 border-emerald-700 px-7 py-4 text-emerald-800 text-base sm:text-lg font-semibold whitespace-nowrap hover-zoom"
           >
             Use Frame
           </a>
