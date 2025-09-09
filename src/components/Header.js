@@ -11,7 +11,7 @@ export default function Header() {
   return (
     <header className="bg-yellow-400 text-black py-4 sm:py-5 md:py-6 border-0 shadow-none">
       <div className="mx-auto w-full max-w-screen-xl px-3 sm:px-4 md:px-6 flex items-center justify-between">
-        <div className={`${caveat.className} text-2xl sm:text-3xl md:text-4xl font-bold text-green-700`}>
+        <div className={`${caveat.className} text-2xl sm:text-3xl md:text-4xl font-bold text-emerald-700`}>
           Frame
         </div>
         <div className="flex-1 max-w-xs mx-4 relative">
