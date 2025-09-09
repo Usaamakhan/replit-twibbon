@@ -37,7 +37,7 @@ export default function Home() {
         <div className="absolute top-4 right-4">
           <button
             onClick={() => setIsMenuOpen(false)}
-            className="p-2 rounded-full hover:bg-gray-100 transition-colors duration-200"
+            className="p-2 rounded-full hover:bg-gray-100 transition-colors duration-200 cursor-pointer"
           >
             <svg 
               className="w-6 h-6 text-gray-600" 
