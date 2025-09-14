@@ -1,6 +1,7 @@
 modules = ["nodejs-20", "web"]
 [agent]
 expertMode = true
+integrations = ["firebase_barebones_javascript:1.0.0"]
 
 [nix]
 channel = "stable-25_05"
@@ -36,6 +37,10 @@ externalPort = 80
 [[ports]]
 localPort = 36375
 externalPort = 3000
+
+[[ports]]
+localPort = 41633
+externalPort = 3001
 
 [deployment]
 deploymentTarget = "autoscale"

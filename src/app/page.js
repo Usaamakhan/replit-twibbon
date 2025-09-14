@@ -4,9 +4,11 @@ import { useState } from "react";
 import Header from "../components/Header";
 import Hero from "../components/Hero";
 import Footer from "../components/Footer";
+import { useAuth } from "../hooks/useAuth";
 
 export default function Home() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const { user, loading, signInWithGoogle, logout } = useAuth();
 
   return (
     <div className="min-h-screen flex flex-col relative">
@@ -94,18 +96,29 @@ export default function Home() {
             </a>
           </nav>
           
-          {/* Login and Sign Up buttons */}
+          {/* Authentication buttons */}
           <div className="flex gap-3 mt-6">
-            <button 
-              className="flex-1 py-2 px-4 text-sm font-medium text-emerald-700 border border-emerald-700 rounded-full hover:bg-emerald-50 transition-colors duration-200 cursor-pointer hover-zoom"
-            >
-              Log In
-            </button>
-            <button 
-              className="flex-1 py-2 px-4 text-sm font-medium text-white bg-emerald-700 rounded-full hover:bg-emerald-800 transition-colors duration-200 cursor-pointer hover-zoom"
-            >
-              Sign Up
-            </button>
+            {user ? (
+              <>
+                <div className="flex-1 text-center py-2 px-4 text-sm text-gray-700">
+                  Hi, {user.displayName || user.email}!
+                </div>
+                <button 
+                  onClick={logout}
+                  className="flex-1 py-2 px-4 text-sm font-medium text-emerald-700 border border-emerald-700 rounded-full hover:bg-emerald-50 transition-colors duration-200 cursor-pointer hover-zoom"
+                >
+                  Sign Out
+                </button>
+              </>
+            ) : (
+              <button 
+                onClick={signInWithGoogle}
+                disabled={loading}
+                className="w-full py-2 px-4 text-sm font-medium text-white bg-emerald-700 rounded-full hover:bg-emerald-800 transition-colors duration-200 cursor-pointer hover-zoom disabled:opacity-50"
+              >
+                {loading ? 'Loading...' : 'Sign In with Google'}
+              </button>
+            )}
           </div>
         </div>
       </div>
