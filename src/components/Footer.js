@@ -7,7 +7,6 @@ const caveat = Caveat({ subsets: ["latin"], weight: ["700"] });
 
 export default function Footer() {
   const [selectedCountry, setSelectedCountry] = useState("United States");
-  const [selectedLanguage, setSelectedLanguage] = useState("English");
 
   return (
     <footer className="bg-white text-black">
@@ -47,7 +46,7 @@ export default function Footer() {
               </div>
             </div>
 
-            {/* Country and Language Dropdowns */}
+            {/* Country Dropdown */}
             <div className="flex flex-col sm:flex-row gap-3">
               <select 
                 value={selectedCountry}
@@ -58,17 +57,6 @@ export default function Footer() {
                 <option value="Canada">🇨🇦 Canada</option>
                 <option value="United Kingdom">🇬🇧 United Kingdom</option>
                 <option value="Australia">🇦🇺 Australia</option>
-              </select>
-              
-              <select 
-                value={selectedLanguage}
-                onChange={(e) => setSelectedLanguage(e.target.value)}
-                className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-700 text-sm cursor-pointer"
-              >
-                <option value="English">English</option>
-                <option value="Spanish">Español</option>
-                <option value="French">Français</option>
-                <option value="German">Deutsch</option>
               </select>
             </div>
           </div>
