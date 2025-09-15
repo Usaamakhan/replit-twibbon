@@ -27,8 +27,8 @@ export function AuthProvider({ children }) {
       console.log('Auth state changed:', user);
       if (user) {
         console.log('User is signed in:', user.email);
-        // Create user profile in Firestore if it doesn't exist
-        await createUserProfile(user);
+        // Create user profile in Firestore if it doesn't exist - temporarily disabled
+        // await createUserProfile(user);
       } else {
         console.log('No user signed in');
       }
@@ -51,9 +51,9 @@ export function AuthProvider({ children }) {
           console.log('User email:', result.user.email);
           console.log('User display name:', result.user.displayName);
           
-          // Create user profile in Firestore
-          await createUserProfile(result.user);
-          console.log('User profile created in Firestore');
+          // Create user profile in Firestore - temporarily disabled for debugging
+          // await createUserProfile(result.user);
+          console.log('Skipping Firestore profile creation for debugging');
         } else {
           console.log('No redirect result found');
         }
