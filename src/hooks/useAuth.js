@@ -59,9 +59,13 @@ export function AuthProvider({ children }) {
   const signInWithGoogle = async () => {
     try {
       setLoading(true);
+      console.log('Starting Google sign-in...');
       await signInWithRedirect(auth, googleProvider);
     } catch (error) {
       console.error('Sign-in error:', error);
+      console.error('Error code:', error.code);
+      console.error('Error message:', error.message);
+      alert(`Authentication error: ${error.message}`);
       setLoading(false);
     }
   };
