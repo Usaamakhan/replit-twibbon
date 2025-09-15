@@ -2,8 +2,7 @@
 
 import { useState, useEffect, createContext, useContext } from 'react';
 import { 
-  signInWithRedirect, 
-  getRedirectResult, 
+  signInWithPopup, 
   GoogleAuthProvider, 
   signOut,
   onAuthStateChanged
@@ -36,37 +35,7 @@ export function AuthProvider({ children }) {
       setLoading(false);
     });
 
-    // Handle redirect result on page load
-    const handleRedirectResult = async () => {
-      try {
-        console.log('Checking for redirect result...');
-        const result = await getRedirectResult(auth);
-        console.log('Redirect result:', result);
-        
-        if (result) {
-          // Successfully signed in
-          const credential = GoogleAuthProvider.credentialFromResult(result);
-          const token = credential?.accessToken;
-          console.log('Sign-in successful:', result.user);
-          console.log('User email:', result.user.email);
-          console.log('User display name:', result.user.displayName);
-          
-          // Create user profile in Firestore - temporarily disabled for debugging
-          // await createUserProfile(result.user);
-          console.log('Skipping Firestore profile creation for debugging');
-        } else {
-          console.log('No redirect result found');
-        }
-      } catch (error) {
-        console.error('Redirect handling error:', error);
-        console.error('Error code:', error.code);
-        console.error('Error message:', error.message);
-        alert(`Redirect error: ${error.message}`);
-        setLoading(false);
-      }
-    };
-
-    handleRedirectResult();
+    // No need to handle redirect result since we're using popup
 
     return () => unsubscribe();
   }, []);
@@ -74,8 +43,12 @@ export function AuthProvider({ children }) {
   const signInWithGoogle = async () => {
     try {
       setLoading(true);
-      console.log('Starting Google sign-in...');
-      await signInWithRedirect(auth, googleProvider);
+      console.log('Starting Google sign-in with popup...');
+      const result = await signInWithPopup(auth, googleProvider);
+      console.log('Sign-in successful:', result.user);
+      console.log('User email:', result.user.email);
+      console.log('User display name:', result.user.displayName);
+      // User state will be automatically updated via onAuthStateChanged
     } catch (error) {
       console.error('Sign-in error:', error);
       console.error('Error code:', error.code);

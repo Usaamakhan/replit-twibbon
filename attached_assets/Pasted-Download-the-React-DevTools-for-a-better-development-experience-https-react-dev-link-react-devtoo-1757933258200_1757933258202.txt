@@ -1,0 +1,249 @@
+Download the React DevTools for a better development experience: https://react.dev/link/react-devtools
+main-app.js?v=1757933207216:160 A tree hydrated but some attributes of the server rendered HTML didn't match the client properties. This won't be patched up. This can happen if a SSR-ed Client Component used:
+
+- A server/client branch `if (typeof window !== 'undefined')`.
+- Variable input such as `Date.now()` or `Math.random()` which changes each time it's called.
+- Date formatting in a user's locale which doesn't match the server.
+- External changing data without sending a snapshot of it along with the HTML.
+- Invalid HTML tag nesting.
+
+It can also happen if the client has a browser extension installed which messes with the HTML before React loaded.
+
+https://react.dev/link/hydration-mismatch
+
+  ...
+    <HotReload assetPrefix="" globalError={[...]}>
+      <AppDevOverlayErrorBoundary globalError={[...]}>
+        <ReplaySsrOnlyErrors>
+        <DevRootHTTPAccessFallbackBoundary>
+          <HTTPAccessFallbackBoundary notFound={<NotAllowedRootHTTPFallbackError>}>
+            <HTTPAccessFallbackErrorBoundary pathname="/" notFound={<NotAllowedRootHTTPFallbackError>} ...>
+              <RedirectBoundary>
+                <RedirectErrorBoundary router={{...}}>
+                  <Head headCacheNode={{lazyData:null, ...}}>
+                    <__next_viewport_boundary__>
+                    <meta>
+                    <MetadataTree>
+                      <__next_metadata_boundary__>
+                        <__next_metadata_boundary__>
+                          <div
+                            hidden={true}
+-                           bis_skin_checked="1"
+                          >
+                  <__next_root_layout_boundary__>
+                    <SegmentViewNode type="layout" pagePath="layout.js">
+                      <SegmentTrieNode>
+                      <link>
+                      <RootLayout>
+                        <html lang="en">
+                          <body
+                            className="__variable_188709 __variable_9a8899 antialiased"
+-                           __processed_4b931992-f645-4438-b089-c169e033099e__="true"
+-                           bis_register="W3sibWFzdGVyIjp0cnVlLCJleHRlbnNpb25JZCI6ImVwcGlvY2VtaG1ubGJoanBsY2drb2ZjaWll..."
+                          >
+                            ...
+                              <SegmentViewNode type="page" pagePath="page.js">
+                                <SegmentTrieNode>
+                                <ClientPageRoot Component={function Home} searchParams={{}} params={{}}>
+                                  <Home params={Promise} searchParams={Promise}>
+                                    <div
+                                      className="min-h-screen flex flex-col relative"
+-                                     bis_skin_checked="1"
+                                    >
+                                      <div
+                                        className={"min-h-screen flex flex-col transition-all duration-300 "}
+-                                       bis_skin_checked="1"
+                                      >
+                                        <Header isMenuOpen={false} setIsMenuOpen={function bound dispatchSetState}>
+                                          <header className="bg-yellow-...">
+                                            <div
+                                              className="mx-auto w-full max-w-screen-xl px-3 sm:px-4 md:px-6 flex item..."
+-                                             bis_skin_checked="1"
+                                            >
+                                              <a>
+                                              <div
+                                                className="flex-1 max-w-xs mx-4 relative"
+-                                               bis_skin_checked="1"
+                                              >
+                                              <div
+                                                className="relative"
+-                                               bis_skin_checked="1"
+                                              >
+                                        <main className="flex-1">
+                                          <Hero>
+                                            <section className="bg-yellow-...">
+                                              <div
+                                                className="mx-auto w-full max-w-screen-xl px-3 sm:px-4 md:px-6 text-ce..."
+-                                               bis_skin_checked="1"
+                                              >
+                                                <h1>
+                                                <p>
+                                                <div
+                                                  className="mt-6 sm:mt-8 flex flex-row items-center justify-center ga..."
+-                                                 bis_skin_checked="1"
+                                                >
+                                        <Footer>
+                          
+error @ intercept-console-error.js:57
+eval @ react-dom-client.development.js:4707
+runWithFiberInDEV @ react-dom-client.development.js:872
+emitPendingHydrationWarnings @ react-dom-client.development.js:4706
+completeWork @ react-dom-client.development.js:11541
+runWithFiberInDEV @ react-dom-client.development.js:875
+completeUnitOfWork @ react-dom-client.development.js:15863
+performUnitOfWork @ react-dom-client.development.js:15744
+workLoopConcurrentByScheduler @ react-dom-client.development.js:15721
+renderRootConcurrent @ react-dom-client.development.js:15696
+performWorkOnRoot @ react-dom-client.development.js:14990
+performWorkOnRootViaSchedulerTask @ react-dom-client.development.js:16816
+performWorkUntilDeadline @ scheduler.development.js:45
+<div>
+initializeElement @ react-server-dom-webpack-client.browser.development.js:1344
+eval @ react-server-dom-webpack-client.browser.development.js:3066
+initializeModelChunk @ react-server-dom-webpack-client.browser.development.js:1246
+getOutlinedModel @ react-server-dom-webpack-client.browser.development.js:1634
+parseModelString @ react-server-dom-webpack-client.browser.development.js:1993
+eval @ react-server-dom-webpack-client.browser.development.js:2996
+initializeModelChunk @ react-server-dom-webpack-client.browser.development.js:1246
+getOutlinedModel @ react-server-dom-webpack-client.browser.development.js:1634
+parseModelString @ react-server-dom-webpack-client.browser.development.js:1993
+eval @ react-server-dom-webpack-client.browser.development.js:2996
+initializeModelChunk @ react-server-dom-webpack-client.browser.development.js:1246
+resolveModelChunk @ react-server-dom-webpack-client.browser.development.js:1101
+processFullStringRow @ react-server-dom-webpack-client.browser.development.js:2899
+processFullBinaryRow @ react-server-dom-webpack-client.browser.development.js:2766
+processBinaryChunk @ react-server-dom-webpack-client.browser.development.js:2969
+progress @ react-server-dom-webpack-client.browser.development.js:3233
+<__next_metadata_boundary__>
+initializeFakeTask @ react-server-dom-webpack-client.browser.development.js:2531
+initializeDebugInfo @ react-server-dom-webpack-client.browser.development.js:2554
+initializeDebugChunk @ react-server-dom-webpack-client.browser.development.js:1193
+processFullStringRow @ react-server-dom-webpack-client.browser.development.js:2850
+processFullBinaryRow @ react-server-dom-webpack-client.browser.development.js:2766
+processBinaryChunk @ react-server-dom-webpack-client.browser.development.js:2969
+progress @ react-server-dom-webpack-client.browser.development.js:3233
+<MetadataTree>
+initializeFakeTask @ react-server-dom-webpack-client.browser.development.js:2529
+initializeDebugInfo @ react-server-dom-webpack-client.browser.development.js:2554
+initializeDebugChunk @ react-server-dom-webpack-client.browser.development.js:1193
+processFullStringRow @ react-server-dom-webpack-client.browser.development.js:2850
+processFullBinaryRow @ react-server-dom-webpack-client.browser.development.js:2766
+processBinaryChunk @ react-server-dom-webpack-client.browser.development.js:2969
+progress @ react-server-dom-webpack-client.browser.development.js:3233
+"use server"
+ResponseInstance @ react-server-dom-webpack-client.browser.development.js:2041
+createResponseFromOptions @ react-server-dom-webpack-client.browser.development.js:3094
+exports.createFromReadableStream @ react-server-dom-webpack-client.browser.development.js:3478
+eval @ app-index.js:130
+(app-pages-browser)/./node_modules/next/dist/client/app-index.js @ main-app.js?v=1757933207216:160
+options.factory @ webpack.js:1
+__webpack_require__ @ webpack.js:1
+fn @ webpack.js:1
+eval @ app-next-dev.js:14
+eval @ app-bootstrap.js:59
+loadScriptsInSequence @ app-bootstrap.js:24
+appBootstrap @ app-bootstrap.js:53
+eval @ app-next-dev.js:13
+(app-pages-browser)/./node_modules/next/dist/client/app-next-dev.js @ main-app.js?v=1757933207216:182
+options.factory @ webpack.js:1
+__webpack_require__ @ webpack.js:1
+__webpack_exec__ @ main-app.js?v=1757933207216:1889
+(anonymous) @ main-app.js?v=1757933207216:1890
+webpackJsonpCallback @ webpack.js:1
+(anonymous) @ main-app.js?v=1757933207216:9Understand this error
+useAuth.js:42 Checking for redirect result...
+requests.js:1  POST https://48622654-6f24-4a5a-b929-3cf97801db6d-00-5ew8qe61i66g.picard.replit.dev/__nextjs_original-stack-frames 403 (Forbidden)
+s.fetch @ requests.js:1
+(anonymous) @ traffic.js:1
+fetch @ traffic.js:1
+eval @ index.js:1631
+eval @ index.js:1631
+ew @ index.js:1631
+i @ index.js:1631
+eval @ index.js:1631
+eval @ index.js:1631
+eE @ index.js:1631
+eval @ index.js:1631
+eval @ index.js:1631
+nI @ index.js:1631
+i @ index.js:1631
+eval @ index.js:1631
+eval @ index.js:1631
+i @ index.js:1631
+eval @ index.js:1631
+eval @ index.js:1631
+nI @ index.js:1631
+i @ index.js:1631
+eval @ index.js:1631
+eval @ index.js:1631
+r @ index.js:1631
+i1 @ index.js:1631
+l_ @ index.js:1631
+lC @ index.js:1631
+l_ @ index.js:1631
+lC @ index.js:1631
+l_ @ index.js:1631
+lC @ index.js:1631
+l_ @ index.js:1631
+lC @ index.js:1631
+l_ @ index.js:1631
+lC @ index.js:1631
+l_ @ index.js:1631
+lC @ index.js:1631
+l_ @ index.js:1631
+lC @ index.js:1631
+l_ @ index.js:1631
+sO @ index.js:1631
+eval @ index.js:1631
+O @ index.js:1631Understand this error
+use-websocket.js:42 WebSocket connection to 'wss://48622654-6f24-4a5a-b929-3cf97801db6d-00-5ew8qe61i66g.picard.replit.dev/_next/webpack-hmr' failed: 
+eval @ use-websocket.js:42
+react_stack_bottom_frame @ react-dom-client.development.js:23669
+runWithFiberInDEV @ react-dom-client.development.js:872
+commitHookEffectListMount @ react-dom-client.development.js:12345
+commitHookPassiveMountEffects @ react-dom-client.development.js:12466
+commitPassiveMountOnFiber @ react-dom-client.development.js:14387
+recursivelyTraversePassiveMountEffects @ react-dom-client.development.js:14360
+commitPassiveMountOnFiber @ react-dom-client.development.js:14514
+recursivelyTraversePassiveMountEffects @ react-dom-client.development.js:14360
+commitPassiveMountOnFiber @ react-dom-client.development.js:14514
+recursivelyTraversePassiveMountEffects @ react-dom-client.development.js:14360
+commitPassiveMountOnFiber @ react-dom-client.development.js:14514
+recursivelyTraversePassiveMountEffects @ react-dom-client.development.js:14360
+commitPassiveMountOnFiber @ react-dom-client.development.js:14514
+recursivelyTraversePassiveMountEffects @ react-dom-client.development.js:14360
+commitPassiveMountOnFiber @ react-dom-client.development.js:14514
+recursivelyTraversePassiveMountEffects @ react-dom-client.development.js:14360
+commitPassiveMountOnFiber @ react-dom-client.development.js:14514
+recursivelyTraversePassiveMountEffects @ react-dom-client.development.js:14360
+commitPassiveMountOnFiber @ react-dom-client.development.js:14380
+recursivelyTraversePassiveMountEffects @ react-dom-client.development.js:14360
+commitPassiveMountOnFiber @ react-dom-client.development.js:14390
+recursivelyTraversePassiveMountEffects @ react-dom-client.development.js:14360
+commitPassiveMountOnFiber @ react-dom-client.development.js:14380
+recursivelyTraversePassiveMountEffects @ react-dom-client.development.js:14360
+commitPassiveMountOnFiber @ react-dom-client.development.js:14380
+recursivelyTraversePassiveMountEffects @ react-dom-client.development.js:14360
+commitPassiveMountOnFiber @ react-dom-client.development.js:14380
+recursivelyTraversePassiveMountEffects @ react-dom-client.development.js:14360
+commitPassiveMountOnFiber @ react-dom-client.development.js:14514
+recursivelyTraversePassiveMountEffects @ react-dom-client.development.js:14360
+commitPassiveMountOnFiber @ react-dom-client.development.js:14380
+recursivelyTraversePassiveMountEffects @ react-dom-client.development.js:14360
+commitPassiveMountOnFiber @ react-dom-client.development.js:14380
+recursivelyTraversePassiveMountEffects @ react-dom-client.development.js:14360
+commitPassiveMountOnFiber @ react-dom-client.development.js:14514
+recursivelyTraversePassiveMountEffects @ react-dom-client.development.js:14360
+commitPassiveMountOnFiber @ react-dom-client.development.js:14514
+recursivelyTraversePassiveMountEffects @ react-dom-client.development.js:14360
+commitPassiveMountOnFiber @ react-dom-client.development.js:14399
+flushPassiveEffects @ react-dom-client.development.js:16338
+eval @ react-dom-client.development.js:15974
+performWorkUntilDeadline @ scheduler.development.js:45Understand this error
+useAuth.js:27 Auth state changed: null
+useAuth.js:33 No user signed in
+useAuth.js:44 Redirect result: null
+useAuth.js:58 No redirect result found
+(index):1 The resource https://48622654-6f24-4a5a-b929-3cf97801db6d-00-5ew8qe61i66g.picard.replit.dev/_next/static/media/868ce8d975f3d2b8-s.p.woff2 was preloaded using link preload but not used within a few seconds from the window's load event. Please make sure it has an appropriate `as` value and it is preloaded intentionally.Understand this warning
+(index):1 The resource https://48622654-6f24-4a5a-b929-3cf97801db6d-00-5ew8qe61i66g.picard.replit.dev/_next/static/media/4cf2300e9c8272f7-s.p.woff2 was preloaded using link preload but not used within a few seconds from the window's load event. Please make sure it has an appropriate `as` value and it is preloaded intentionally.Understand this warning
+(index):1 The resource https://48622654-6f24-4a5a-b929-3cf97801db6d-00-5ew8qe61i66g.picard.replit.dev/_next/static/media/93f479601ee12b01-s.p.woff2 was preloaded using link preload but not used within a few seconds from the window's load event. Please make sure it has an appropriate `as` value and it is preloaded intentionally.
