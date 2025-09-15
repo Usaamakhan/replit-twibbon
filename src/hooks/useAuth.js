@@ -24,9 +24,13 @@ export function AuthProvider({ children }) {
   useEffect(() => {
     // Listen for authentication state changes
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      console.log('Auth state changed:', user);
       if (user) {
+        console.log('User is signed in:', user.email);
         // Create user profile in Firestore if it doesn't exist
         await createUserProfile(user);
+      } else {
+        console.log('No user signed in');
       }
       setUser(user);
       setLoading(false);
@@ -35,18 +39,29 @@ export function AuthProvider({ children }) {
     // Handle redirect result on page load
     const handleRedirectResult = async () => {
       try {
+        console.log('Checking for redirect result...');
         const result = await getRedirectResult(auth);
+        console.log('Redirect result:', result);
+        
         if (result) {
           // Successfully signed in
           const credential = GoogleAuthProvider.credentialFromResult(result);
           const token = credential?.accessToken;
           console.log('Sign-in successful:', result.user);
+          console.log('User email:', result.user.email);
+          console.log('User display name:', result.user.displayName);
           
           // Create user profile in Firestore
           await createUserProfile(result.user);
+          console.log('User profile created in Firestore');
+        } else {
+          console.log('No redirect result found');
         }
       } catch (error) {
-        console.error('Sign-in error:', error);
+        console.error('Redirect handling error:', error);
+        console.error('Error code:', error.code);
+        console.error('Error message:', error.message);
+        alert(`Redirect error: ${error.message}`);
         setLoading(false);
       }
     };
