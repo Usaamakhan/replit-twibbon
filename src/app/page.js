@@ -153,7 +153,7 @@ export default function Home() {
           <div className="fixed inset-0 backdrop-blur-sm z-40"></div>
           <div className="fixed inset-0 z-50 overflow-y-auto">
             <div className="flex min-h-full items-center justify-center p-4 sm:p-6 lg:p-8">
-              <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-auto border-2 border-emerald-600 max-h-screen overflow-y-auto">
+              <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-auto border-2 border-emerald-600 my-8">
                 {/* Header */}
                 <div className="bg-yellow-400 rounded-t-xl p-4 sm:p-6 text-center relative">
                   <button
@@ -177,21 +177,21 @@ export default function Home() {
                     alert('Email sign-in functionality will be implemented with your backend');
                   }}>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                      <label className="block text-sm font-medium text-gray-800 mb-1">Email</label>
                       <input
                         type="email"
                         required
                         placeholder="Enter your email"
-                        className="w-full px-3 sm:px-4 py-2 border border-gray-300 rounded-full focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none transition-all text-sm sm:text-base"
+                        className="w-full px-3 sm:px-4 py-2 border border-gray-300 rounded-full focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none transition-all text-sm sm:text-base text-gray-900 placeholder-gray-600"
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Password</label>
+                      <label className="block text-sm font-medium text-gray-800 mb-1">Password</label>
                       <input
                         type="password"
                         required
                         placeholder="Enter your password"
-                        className="w-full px-3 sm:px-4 py-2 border border-gray-300 rounded-full focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none transition-all text-sm sm:text-base"
+                        className="w-full px-3 sm:px-4 py-2 border border-gray-300 rounded-full focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none transition-all text-sm sm:text-base text-gray-900 placeholder-gray-600"
                       />
                     </div>
                     <button
@@ -253,7 +253,7 @@ export default function Home() {
           <div className="fixed inset-0 backdrop-blur-sm z-40"></div>
           <div className="fixed inset-0 z-50 overflow-y-auto">
             <div className="flex min-h-full items-center justify-center p-4 sm:p-6 lg:p-8">
-              <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-auto border-2 border-emerald-600 max-h-screen overflow-y-auto">
+              <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-auto border-2 border-emerald-600 my-8">
                 {/* Header */}
                 <div className="bg-yellow-400 rounded-t-xl p-4 sm:p-6 text-center relative">
                   <button
@@ -277,30 +277,30 @@ export default function Home() {
                     alert('Email sign-up functionality will be implemented with your backend');
                   }}>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
+                      <label className="block text-sm font-medium text-gray-800 mb-1">Full Name</label>
                       <input
                         type="text"
                         required
                         placeholder="Enter your full name"
-                        className="w-full px-3 sm:px-4 py-2 border border-gray-300 rounded-full focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none transition-all text-sm sm:text-base"
+                        className="w-full px-3 sm:px-4 py-2 border border-gray-300 rounded-full focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none transition-all text-sm sm:text-base text-gray-900 placeholder-gray-600"
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                      <label className="block text-sm font-medium text-gray-800 mb-1">Email</label>
                       <input
                         type="email"
                         required
                         placeholder="Enter your email"
-                        className="w-full px-3 sm:px-4 py-2 border border-gray-300 rounded-full focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none transition-all text-sm sm:text-base"
+                        className="w-full px-3 sm:px-4 py-2 border border-gray-300 rounded-full focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none transition-all text-sm sm:text-base text-gray-900 placeholder-gray-600"
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Password</label>
+                      <label className="block text-sm font-medium text-gray-800 mb-1">Password</label>
                       <input
                         type="password"
                         required
                         placeholder="Create a password"
-                        className="w-full px-3 sm:px-4 py-2 border border-gray-300 rounded-full focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none transition-all text-sm sm:text-base"
+                        className="w-full px-3 sm:px-4 py-2 border border-gray-300 rounded-full focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none transition-all text-sm sm:text-base text-gray-900 placeholder-gray-600"
                       />
                     </div>
                     <button
