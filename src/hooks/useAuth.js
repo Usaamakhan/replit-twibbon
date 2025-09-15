@@ -43,17 +43,25 @@ export function AuthProvider({ children }) {
   const signInWithGoogle = async () => {
     try {
       setLoading(true);
-      console.log('Starting Google sign-in with popup...');
+      console.log('=== SIGN IN BUTTON CLICKED ===');
+      console.log('Using popup authentication...');
+      console.log('Auth object:', auth);
+      console.log('Google provider:', googleProvider);
+      
       const result = await signInWithPopup(auth, googleProvider);
-      console.log('Sign-in successful:', result.user);
+      console.log('=== SIGN IN SUCCESSFUL ===');
+      console.log('User:', result.user);
       console.log('User email:', result.user.email);
       console.log('User display name:', result.user.displayName);
+      
       // User state will be automatically updated via onAuthStateChanged
+      setLoading(false);
     } catch (error) {
-      console.error('Sign-in error:', error);
+      console.error('=== SIGN IN ERROR ===');
+      console.error('Error:', error);
       console.error('Error code:', error.code);
       console.error('Error message:', error.message);
-      alert(`Authentication error: ${error.message}`);
+      alert(`Authentication error: ${error.code} - ${error.message}`);
       setLoading(false);
     }
   };
