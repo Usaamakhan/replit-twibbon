@@ -20,22 +20,24 @@ const nextConfig = {
       },
     ];
   },
-  // Allow Replit domains for development
+  // Allow Replit domains for development - fixes cross-origin warnings
   allowedDevOrigins: [
     '*.replit.dev',
-    '*.replit.co',
+    '*.replit.co', 
     '*.pike.replit.dev',
     'localhost:5000',
     '127.0.0.1:5000'
   ],
   // Additional experimental features
   experimental: {
+    // Enable server actions
     serverActions: {
       allowedOrigins: [
         '*.replit.dev',
         '*.replit.co',
         '*.pike.replit.dev',
-        'localhost:5000'
+        'localhost:5000',
+        '127.0.0.1:5000'
       ]
     }
   },
