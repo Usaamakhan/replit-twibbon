@@ -1,5 +1,8 @@
 "use client";
 
+import { useEffect } from 'react';
+import { useFocusTrap } from '../../hooks/useFocusTrap';
+
 export default function SignInModal({ 
   isOpen,
   onClose, 
@@ -10,6 +13,22 @@ export default function SignInModal({
   onSwitchToSignUp,
   onSwitchToForgotPassword
 }) {
+  const modalRef = useFocusTrap(isOpen);
+
+  // Handle Escape key
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const handleEscapeEvent = () => {
+      onClose();
+    };
+
+    document.addEventListener('modal-escape', handleEscapeEvent);
+    return () => {
+      document.removeEventListener('modal-escape', handleEscapeEvent);
+    };
+  }, [isOpen, onClose]);
+
   if (!isOpen) return null;
 
   return (
@@ -25,6 +44,7 @@ export default function SignInModal({
       <div className="fixed inset-0 z-50 overflow-y-auto">
         <div className="flex min-h-full items-center justify-center p-4 sm:p-6 lg:p-8">
           <div 
+            ref={modalRef}
             className="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-auto border-2 border-emerald-600 my-8"
             role="dialog"
             aria-modal="true"
@@ -51,7 +71,7 @@ export default function SignInModal({
               {/* Email Sign In Form */}
               <form className="space-y-4 mb-6" onSubmit={onEmailSignIn} noValidate>
                 {error && (
-                  <div className="text-red-600 text-sm text-center p-2 bg-red-50 rounded-lg" role="alert">
+                  <div id="signin-error" className="text-red-600 text-sm text-center p-2 bg-red-50 rounded-lg" role="alert">
                     {error}
                   </div>
                 )}

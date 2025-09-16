@@ -27,7 +27,7 @@ export const normalizeEmail = (email) => {
   return email ? email.toLowerCase().trim() : '';
 };
 
-// Firebase error code to user-friendly message mapping
+// Firebase error code to user-friendly message mapping (cleaned up duplicates)
 export const getFirebaseErrorMessage = (errorCode) => {
   const errorMessages = {
     'auth/user-not-found': 'No account found with this email address',
@@ -56,7 +56,7 @@ export const getFirebaseErrorMessage = (errorCode) => {
     'auth/app-not-authorized': 'App is not authorized for this operation',
     'auth/argument-error': 'Invalid arguments provided',
     'auth/invalid-api-key': 'Invalid API key',
-    'auth/invalid-user-token': 'User token is invalid',
+    'auth/invalid-user-token': 'Your session has expired. Please sign in again',
     'auth/invalid-tenant-id': 'Invalid tenant ID',
     'auth/multi-factor-info-not-found': 'Multi-factor info not found',
     'auth/multi-factor-auth-required': 'Multi-factor authentication required',
@@ -81,55 +81,51 @@ export const getFirebaseErrorMessage = (errorCode) => {
     'auth/cors-unsupported': 'CORS is not supported',
     'auth/credential-already-in-use': 'Credential is already in use',
     'auth/custom-token-mismatch': 'Custom token mismatch',
-    'auth/requires-recent-login': 'Please sign in again to continue',
     'auth/dependent-sdk-initialized-before-auth': 'SDK initialization error',
     'auth/dynamic-link-not-activated': 'Dynamic link not activated',
     'auth/email-change-needs-verification': 'Email change needs verification',
-    'auth/email-already-in-use': 'This email is already registered',
     'auth/expired-action-code': 'Action code expired',
     'auth/cancelled-popup-request': 'Sign-in cancelled',
     'auth/internal-error': 'An internal error occurred. Please try again',
     'auth/invalid-app-credential': 'Invalid app credential',
     'auth/invalid-app-id': 'Invalid app ID',
-    'auth/invalid-user-token': 'Your session has expired. Please sign in again',
     'auth/invalid-auth-event': 'Invalid authentication event',
     'auth/invalid-cert-hash': 'Invalid certificate hash',
-    'auth/invalid-credential': 'Invalid email or password',
     'auth/invalid-message-payload': 'Invalid message payload',
     'auth/invalid-multi-factor-session': 'Invalid multi-factor session',
     'auth/invalid-oauth-client-id': 'Invalid OAuth client ID',
     'auth/invalid-oauth-provider': 'Invalid OAuth provider',
     'auth/invalid-action-code': 'Invalid action code',
     'auth/unauthorized-domain': 'Domain is not authorized',
-    'auth/wrong-password': 'Incorrect password',
     'auth/invalid-persistence-type': 'Invalid persistence type',
     'auth/invalid-provider-id': 'Invalid provider ID',
     'auth/invalid-recipient-email': 'Invalid recipient email',
     'auth/invalid-sender': 'Invalid sender',
-    'auth/invalid-verification-id': 'Invalid verification ID',
-    'auth/missing-android-pkg-name': 'Android package name missing',
     'auth/missing-app-credential': 'App credential missing',
     'auth/auth-domain-config-required': 'Auth domain configuration required',
-    'auth/missing-verification-code': 'Verification code missing',
-    'auth/missing-continue-uri': 'Continue URI missing',
     'auth/missing-iframe-start': 'Missing iframe start',
     'auth/missing-or-invalid-nonce': 'Missing or invalid nonce',
     'auth/null-user': 'User is null',
     'auth/operation-not-supported-in-this-environment': 'Operation not supported in this environment',
-    'auth/popup-blocked': 'Popup blocked by browser',
     'auth/redirect-cancelled-by-user': 'Redirect cancelled by user',
     'auth/redirect-operation-pending': 'Redirect operation pending',
     'auth/rejected-credential': 'Credential rejected',
     'auth/second-factor-limit-exceeded': 'Second factor limit exceeded',
-    'auth/maximum-second-factor-count-exceeded': 'Maximum second factor count exceeded',
     'auth/tenant-id-mismatch': 'Tenant ID mismatch',
     'auth/timeout': 'Operation timed out',
     'auth/user-token-expired': 'User token expired',
-    'auth/web-storage-unsupported': 'Web storage not supported',
-    'default': 'An unexpected error occurred. Please try again'
+    'auth/web-storage-unsupported': 'Web storage not supported'
   };
   
-  return errorMessages[errorCode] || errorMessages['default'];
+  // Ensure we always return a user-friendly message
+  const message = errorMessages[errorCode];
+  if (message) {
+    return message;
+  }
+  
+  // For unknown error codes, provide a generic message without exposing technical details
+  console.warn(`Unknown Firebase error code: ${errorCode}`);
+  return 'An unexpected error occurred. Please try again.';
 };
 
 // Check password strength and return feedback

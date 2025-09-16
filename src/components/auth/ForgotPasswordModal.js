@@ -1,5 +1,8 @@
 "use client";
 
+import { useEffect } from 'react';
+import { useFocusTrap } from '../../hooks/useFocusTrap';
+
 export default function ForgotPasswordModal({ 
   isOpen,
   onClose, 
@@ -9,6 +12,22 @@ export default function ForgotPasswordModal({
   onForgotPassword,
   onSwitchToSignIn
 }) {
+  const modalRef = useFocusTrap(isOpen);
+
+  // Handle Escape key
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const handleEscapeEvent = () => {
+      onClose();
+    };
+
+    document.addEventListener('modal-escape', handleEscapeEvent);
+    return () => {
+      document.removeEventListener('modal-escape', handleEscapeEvent);
+    };
+  }, [isOpen, onClose]);
+
   if (!isOpen) return null;
 
   return (
@@ -24,6 +43,7 @@ export default function ForgotPasswordModal({
       <div className="fixed inset-0 z-50 overflow-y-auto">
         <div className="flex min-h-full items-center justify-center p-4 sm:p-6 lg:p-8">
           <div 
+            ref={modalRef}
             className="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-auto border-2 border-emerald-600 my-8"
             role="dialog"
             aria-modal="true"
@@ -51,6 +71,7 @@ export default function ForgotPasswordModal({
               <form className="space-y-4 mb-6" onSubmit={onForgotPassword} noValidate>
                 {(error || successMessage) && (
                   <div 
+                    id="forgot-password-alert"
                     className={`text-sm text-center p-2 rounded-lg ${
                       successMessage
                         ? 'text-green-700 bg-green-50' 
@@ -72,7 +93,7 @@ export default function ForgotPasswordModal({
                     required
                     placeholder="Enter your email address"
                     className="w-full px-3 sm:px-4 py-2 border border-gray-300 rounded-full focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none transition-all text-sm sm:text-base text-gray-900 placeholder-gray-600"
-                    aria-describedby={error ? "forgot-password-error" : "forgot-password-help"}
+                    aria-describedby={(error || successMessage) ? "forgot-password-alert" : "forgot-password-help"}
                   />
                   <div id="forgot-password-help" className="text-xs text-gray-500 mt-1">
                     Enter the email address associated with your account

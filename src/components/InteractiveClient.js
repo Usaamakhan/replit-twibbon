@@ -2,7 +2,8 @@
 
 import { useState } from 'react';
 import { useAuth } from '../hooks/useAuth';
-import { validateEmail, validatePassword, validateFullName, normalizeEmail, getFirebaseErrorMessage } from '../utils/validation';
+import { getFirebaseErrorMessage } from '../utils/validation';
+import { signInSchema, signUpSchema, forgotPasswordSchema, getValidationError } from '../utils/schemas';
 import Header from './Header';
 import MobileMenu from './MobileMenu';
 import SignInModal from './auth/SignInModal';
@@ -52,7 +53,7 @@ export default function InteractiveClient({ children }) {
       await signInWithGoogle();
       closeModal();
     } catch (error) {
-      setAuthError(getFirebaseErrorMessage(error.code));
+      setAuthError(getFirebaseErrorMessage(error.code) || 'Something went wrong. Please try again.');
     } finally {
       setIsSubmitting(false);
     }
@@ -67,23 +68,25 @@ export default function InteractiveClient({ children }) {
       clearAuthMessages();
       
       const formData = new FormData(e.target);
-      const email = normalizeEmail(formData.get('email'));
-      const password = formData.get('password');
+      const rawData = {
+        email: formData.get('email'),
+        password: formData.get('password')
+      };
       
-      // Client-side validation
-      const emailError = validateEmail(email);
-      const passwordError = validatePassword(password);
-      
-      if (emailError || passwordError) {
-        setAuthError(emailError || passwordError);
+      // Client-side validation with Zod
+      const validationResult = signInSchema.safeParse(rawData);
+      if (!validationResult.success) {
+        setAuthError(getValidationError(validationResult));
         return;
       }
+      
+      const { email, password } = validationResult.data;
       
       const result = await signInWithEmail(email, password);
       if (result.success) {
         closeModal();
       } else {
-        setAuthError(getFirebaseErrorMessage(result.error) || result.error);
+        setAuthError(getFirebaseErrorMessage(result.error) || 'Something went wrong. Please try again.');
       }
     } catch (error) {
       setAuthError(getFirebaseErrorMessage(error.code) || 'An unexpected error occurred');
@@ -101,19 +104,20 @@ export default function InteractiveClient({ children }) {
       clearAuthMessages();
       
       const formData = new FormData(e.target);
-      const fullName = formData.get('fullName').trim();
-      const email = normalizeEmail(formData.get('email'));
-      const password = formData.get('password');
+      const rawData = {
+        fullName: formData.get('fullName'),
+        email: formData.get('email'),
+        password: formData.get('password')
+      };
       
-      // Client-side validation
-      const nameError = validateFullName(fullName);
-      const emailError = validateEmail(email);
-      const passwordError = validatePassword(password, true);
-      
-      if (nameError || emailError || passwordError) {
-        setAuthError(nameError || emailError || passwordError);
+      // Client-side validation with Zod
+      const validationResult = signUpSchema.safeParse(rawData);
+      if (!validationResult.success) {
+        setAuthError(getValidationError(validationResult));
         return;
       }
+      
+      const { fullName, email, password } = validationResult.data;
       
       const result = await signUpWithEmail(email, password, fullName);
       if (result.success) {
@@ -126,7 +130,7 @@ export default function InteractiveClient({ children }) {
           closeModal();
         }
       } else {
-        setAuthError(getFirebaseErrorMessage(result.error) || result.error);
+        setAuthError(getFirebaseErrorMessage(result.error) || 'Something went wrong. Please try again.');
       }
     } catch (error) {
       setAuthError(getFirebaseErrorMessage(error.code) || 'An unexpected error occurred');
@@ -144,14 +148,18 @@ export default function InteractiveClient({ children }) {
       clearAuthMessages();
       
       const formData = new FormData(e.target);
-      const email = normalizeEmail(formData.get('email'));
+      const rawData = {
+        email: formData.get('email')
+      };
       
-      // Client-side validation
-      const emailError = validateEmail(email);
-      if (emailError) {
-        setAuthError(emailError);
+      // Client-side validation with Zod
+      const validationResult = forgotPasswordSchema.safeParse(rawData);
+      if (!validationResult.success) {
+        setAuthError(getValidationError(validationResult));
         return;
       }
+      
+      const { email } = validationResult.data;
       
       const result = await forgotPassword(email);
       if (result.success) {
@@ -160,7 +168,7 @@ export default function InteractiveClient({ children }) {
           closeModal();
         }, 5000);
       } else {
-        setAuthError(getFirebaseErrorMessage(result.error) || result.error);
+        setAuthError(getFirebaseErrorMessage(result.error) || 'Something went wrong. Please try again.');
       }
     } catch (error) {
       setAuthError(getFirebaseErrorMessage(error.code) || 'An unexpected error occurred');
