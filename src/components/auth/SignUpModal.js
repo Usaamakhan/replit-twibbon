@@ -117,7 +117,7 @@ export default function SignUpModal({
                     aria-describedby={error ? "signup-error" : "password-requirements"}
                   />
                   <div id="password-requirements" className="text-xs text-gray-500 mt-1">
-                    Password must be at least 8 characters long
+                    Password must be at least 8 characters
                   </div>
                 </div>
                 <button
