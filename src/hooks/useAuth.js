@@ -14,7 +14,6 @@ import {
   reload
 } from 'firebase/auth';
 import { auth } from '../lib/firebase';
-import { createUserProfile } from '../lib/firestore';
 
 // Create Auth Context
 const AuthContext = createContext(null);
