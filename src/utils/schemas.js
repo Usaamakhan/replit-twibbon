@@ -51,6 +51,7 @@ export const forgotPasswordSchema = z.object({
 export const getValidationError = (result) => {
   if (result.success) return null;
   
-  const firstError = result.error.errors[0];
-  return firstError?.message || 'Validation failed';
+  // Zod uses 'issues' not 'errors'
+  const firstIssue = result.error?.issues?.[0];
+  return firstIssue?.message || 'Validation failed';
 };
