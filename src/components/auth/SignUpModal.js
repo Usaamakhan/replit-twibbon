@@ -76,14 +76,14 @@ export default function SignUpModal({
                 )}
                 <div>
                   <label htmlFor="signup-fullname" className="block text-sm font-medium text-gray-800 mb-1">
-                    Full Name
+                    Name
                   </label>
                   <input
                     id="signup-fullname"
                     type="text"
                     name="fullName"
                     required
-                    placeholder="Enter your full name"
+                    placeholder="Enter your name"
                     className="w-full px-3 sm:px-4 py-2 border border-gray-300 rounded-full focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none transition-all text-sm sm:text-base text-gray-900 placeholder-gray-600"
                     aria-describedby={error ? "signup-error" : undefined}
                   />

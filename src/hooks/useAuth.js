@@ -106,7 +106,7 @@ export function AuthProvider({ children }) {
         console.error('Email sign up error:', error.code, error.message);
       }
       setLoading(false);
-      return { success: false, error: error.message };
+      return { success: false, error: error.code };
     }
   };
 
@@ -124,7 +124,7 @@ export function AuthProvider({ children }) {
         console.error('Email sign in error:', error.code, error.message);
       }
       setLoading(false);
-      return { success: false, error: error.message };
+      return { success: false, error: error.code };
     }
   };
 
