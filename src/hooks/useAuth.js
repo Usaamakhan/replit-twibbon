@@ -158,25 +158,39 @@ export function AuthProvider({ children }) {
   const forgotPassword = async (email) => {
     try {
       setLoading(true);
-      console.log('Sending password reset email to:', email);
-      await sendPasswordResetEmail(auth, email);
-      console.log('Password reset email sent successfully');
-      setLoading(false);
-      return { success: true, message: 'Password reset email sent! Please check your inbox and follow the instructions to reset your password.' };
-    } catch (error) {
-      console.error('Error sending password reset email:', error);
-      let errorMessage = 'Failed to send password reset email. Please try again.';
       
-      if (error.code === 'auth/user-not-found') {
-        errorMessage = 'No account found with this email address.';
-      } else if (error.code === 'auth/invalid-email') {
+      // Only log in development environment
+      if (process.env.NODE_ENV === 'development') {
+        console.log('Attempting password reset');
+      }
+      
+      await sendPasswordResetEmail(auth, email);
+      setLoading(false);
+      
+      // Always return success message for security (prevents user enumeration)
+      return { 
+        success: true, 
+        type: 'success',
+        message: 'If an account exists with this email address, we\'ve sent you a password reset link. Please check your inbox and follow the instructions.' 
+      };
+    } catch (error) {
+      // Log detailed errors only in development
+      if (process.env.NODE_ENV === 'development') {
+        console.error('Password reset error:', error.code);
+      }
+      
+      let errorMessage = 'Something went wrong. Please try again.';
+      
+      // Only show specific error for client-side validation issues
+      if (error.code === 'auth/invalid-email') {
         errorMessage = 'Please enter a valid email address.';
       } else if (error.code === 'auth/too-many-requests') {
         errorMessage = 'Too many requests. Please wait a moment before trying again.';
       }
+      // Note: Don't reveal 'user-not-found' to prevent user enumeration
       
       setLoading(false);
-      return { success: false, error: errorMessage };
+      return { success: false, type: 'error', error: errorMessage };
     }
   };
 

@@ -5,7 +5,8 @@ import { useAuth } from "../hooks/useAuth";
 export default function AuthModal({ 
   activeModal, 
   closeModal, 
-  authError, 
+  authError,
+  authStatus, 
   setActiveModal, 
   handleEmailSignIn, 
   handleEmailSignUp, 
@@ -276,13 +277,13 @@ export default function AuthModal({
                 <div className="p-4 sm:p-6">
                   {/* Forgot Password Form */}
                   <form className="space-y-4 mb-6" onSubmit={handleForgotPassword}>
-                    {authError && (
+                    {(authError || authStatus) && (
                       <div className={`text-sm text-center p-2 rounded-lg ${
-                        authError.includes('sent') || authError.includes('check your inbox') 
+                        authStatus?.type === 'success' 
                           ? 'text-green-700 bg-green-50' 
                           : 'text-red-600 bg-red-50'
                       }`}>
-                        {authError}
+                        {authStatus?.message || authError}
                       </div>
                     )}
                     <div>
