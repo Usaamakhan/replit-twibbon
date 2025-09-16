@@ -37,7 +37,6 @@ const nextConfig = {
     'https://*.replit.co', 
     'https://*.pike.replit.dev',
     'https://*.riker.replit.dev',
-    'https://e2e024b0-4ed8-45dd-add6-1d9ce11d2cc4-00-3jdkkufazkmcw.riker.replit.dev',
     'http://localhost:5000',
     'http://127.0.0.1:5000'
   ],
@@ -50,6 +49,7 @@ const nextConfig = {
         'https://*.replit.co',
         'https://*.pike.replit.dev',
         'https://*.riker.replit.dev',
+        'https://e2e024b0-4ed8-45dd-add6-1d9ce11d2cc4-00-3jdkkufazkmcw.riker.replit.dev',
         'http://localhost:5000',
         'http://127.0.0.1:5000'
       ]
