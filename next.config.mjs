@@ -6,7 +6,8 @@ const nextConfig = {
   async headers() {
     return [
       {
-        source: '/(.*)',
+        // Only apply CORS and no-cache to non-static routes
+        source: '/((?!_next/static|favicon.ico).*)',
         headers: [
           {
             key: 'Access-Control-Allow-Origin',
@@ -18,28 +19,51 @@ const nextConfig = {
           },
         ],
       },
+      {
+        // Enable proper caching for Next.js static assets
+        source: '/_next/static/:path*',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'public, max-age=31536000, immutable',
+          },
+        ],
+      },
     ];
   },
   // Allow Replit domains for development - fixes cross-origin warnings
   allowedDevOrigins: [
-    '*.replit.dev',
-    '*.replit.co', 
-    '*.pike.replit.dev',
-    'localhost:5000',
-    '127.0.0.1:5000'
+    'https://*.replit.dev',
+    'https://*.replit.co', 
+    'https://*.pike.replit.dev',
+    'https://*.riker.replit.dev',
+    'https://e2e024b0-4ed8-45dd-add6-1d9ce11d2cc4-00-3jdkkufazkmcw.riker.replit.dev',
+    'http://localhost:5000',
+    'http://127.0.0.1:5000'
   ],
   // Additional experimental features
   experimental: {
     // Enable server actions
     serverActions: {
       allowedOrigins: [
-        '*.replit.dev',
-        '*.replit.co',
-        '*.pike.replit.dev',
-        'localhost:5000',
-        '127.0.0.1:5000'
+        'https://*.replit.dev',
+        'https://*.replit.co',
+        'https://*.pike.replit.dev',
+        'https://*.riker.replit.dev',
+        'http://localhost:5000',
+        'http://127.0.0.1:5000'
       ]
     }
+  },
+  // Prevent dev server from watching non-source folders
+  webpack: (config, { dev }) => {
+    if (dev) {
+      config.watchOptions = {
+        ...config.watchOptions,
+        ignored: ['**/attached_assets/**', '**/.local/**', '**/tmp/**', '**/node_modules/**']
+      };
+    }
+    return config;
   },
 };
 
