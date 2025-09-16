@@ -8,9 +8,9 @@ import AuthModal from './AuthModal';
 
 export default function InteractiveClient({ children }) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [activeModal, setActiveModal] = useState(null); // 'signin' or 'signup'
+  const [activeModal, setActiveModal] = useState(null); // 'signin', 'signup', or 'forgotpassword'
   const [authError, setAuthError] = useState('');
-  const { user, loading, signInWithGoogle, signUpWithEmail, signInWithEmail, logout } = useAuth();
+  const { user, loading, signInWithGoogle, signUpWithEmail, signInWithEmail, forgotPassword, logout } = useAuth();
 
   const openSignInModal = () => {
     setActiveModal('signin');
@@ -70,6 +70,24 @@ export default function InteractiveClient({ children }) {
     }
   };
 
+  const handleForgotPassword = async (e) => {
+    e.preventDefault();
+    setAuthError('');
+    const formData = new FormData(e.target);
+    const email = formData.get('email');
+    
+    const result = await forgotPassword(email);
+    if (result.success) {
+      setAuthError(result.message);
+      // Close the modal after a short delay to let user read the success message
+      setTimeout(() => {
+        closeModal();
+      }, 4000);
+    } else {
+      setAuthError(result.error);
+    }
+  };
+
   return (
     <div className="min-h-screen flex flex-col relative">
       {/* Main Content with blur effect */}
@@ -99,6 +117,7 @@ export default function InteractiveClient({ children }) {
         handleEmailSignIn={handleEmailSignIn}
         handleEmailSignUp={handleEmailSignUp}
         handleGoogleSignIn={handleGoogleSignIn}
+        handleForgotPassword={handleForgotPassword}
       />
     </div>
   );
