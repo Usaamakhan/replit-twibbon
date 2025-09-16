@@ -93,7 +93,7 @@ export default function InteractiveClient({ children }) {
         setAuthError(getFirebaseErrorMessage(result.error) || 'Something went wrong. Please try again.');
       }
     } catch (error) {
-      setAuthError(getFirebaseErrorMessage(error.code) || 'An unexpected error occurred');
+      setAuthError(getFirebaseErrorMessage(error?.code) || 'An unexpected error occurred');
     } finally {
       setIsSubmitting(false);
     }
@@ -137,7 +137,8 @@ export default function InteractiveClient({ children }) {
         setAuthError(getFirebaseErrorMessage(result.error) || 'Something went wrong. Please try again.');
       }
     } catch (error) {
-      setAuthError(getFirebaseErrorMessage(error.code) || 'An unexpected error occurred');
+      console.error('Sign up catch error:', error);
+      setAuthError(getFirebaseErrorMessage(error?.code) || 'An unexpected error occurred');
     } finally {
       setIsSubmitting(false);
     }
@@ -175,7 +176,7 @@ export default function InteractiveClient({ children }) {
         setAuthError(getFirebaseErrorMessage(result.error) || 'Something went wrong. Please try again.');
       }
     } catch (error) {
-      setAuthError(getFirebaseErrorMessage(error.code) || 'An unexpected error occurred');
+      setAuthError(getFirebaseErrorMessage(error?.code) || 'An unexpected error occurred');
     } finally {
       setIsSubmitting(false);
     }
