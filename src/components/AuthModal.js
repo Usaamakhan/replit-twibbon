@@ -6,7 +6,7 @@ export default function AuthModal({
   activeModal, 
   closeModal, 
   authError, 
-  setAuthError, 
+  setActiveModal, 
   handleEmailSignIn, 
   handleEmailSignUp, 
   handleGoogleSignIn 
