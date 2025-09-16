@@ -9,7 +9,8 @@ export default function AuthModal({
   setActiveModal, 
   handleEmailSignIn, 
   handleEmailSignUp, 
-  handleGoogleSignIn 
+  handleGoogleSignIn,
+  handleForgotPassword 
 }) {
   const { loading } = useAuth();
 
@@ -66,6 +67,15 @@ export default function AuthModal({
                         placeholder="Enter your password"
                         className="w-full px-3 sm:px-4 py-2 border border-gray-300 rounded-full focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none transition-all text-sm sm:text-base text-gray-900 placeholder-gray-600"
                       />
+                      <div className="text-right mt-2">
+                        <button
+                          type="button"
+                          onClick={() => setActiveModal('forgotpassword')}
+                          className="text-sm text-emerald-700 hover:text-emerald-800 font-medium"
+                        >
+                          Forgot Password?
+                        </button>
+                      </div>
                     </div>
                     <button
                       type="submit"
@@ -226,6 +236,77 @@ export default function AuthModal({
                   <div className="text-center">
                     <p className="text-sm text-gray-500">
                       Already have an account? 
+                      <button 
+                        onClick={() => setActiveModal('signin')}
+                        className="text-emerald-700 hover:text-emerald-800 font-medium ml-1"
+                      >
+                        Sign In
+                      </button>
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </>
+      )}
+
+      {/* Forgot Password Modal */}
+      {activeModal === 'forgotpassword' && (
+        <>
+          <div className="fixed inset-0 backdrop-blur-sm z-40"></div>
+          <div className="fixed inset-0 z-50 overflow-y-auto">
+            <div className="flex min-h-full items-center justify-center p-4 sm:p-6 lg:p-8">
+              <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-auto border-2 border-emerald-600 my-8">
+                {/* Header */}
+                <div className="bg-yellow-400 rounded-t-xl p-4 sm:p-6 text-center relative">
+                  <button
+                    onClick={closeModal}
+                    className="absolute top-3 right-3 sm:top-4 sm:right-4 text-gray-700 hover:text-gray-900 transition-colors"
+                  >
+                    <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                  <h2 className="text-xl sm:text-2xl font-bold text-emerald-700">Reset Password</h2>
+                  <p className="text-sm sm:text-base text-gray-700 mt-2">We'll send you a reset link</p>
+                </div>
+
+                {/* Content */}
+                <div className="p-4 sm:p-6">
+                  {/* Forgot Password Form */}
+                  <form className="space-y-4 mb-6" onSubmit={handleForgotPassword}>
+                    {authError && (
+                      <div className={`text-sm text-center p-2 rounded-lg ${
+                        authError.includes('sent') || authError.includes('check your inbox') 
+                          ? 'text-green-700 bg-green-50' 
+                          : 'text-red-600 bg-red-50'
+                      }`}>
+                        {authError}
+                      </div>
+                    )}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-800 mb-1">Email Address</label>
+                      <input
+                        type="email"
+                        name="email"
+                        required
+                        placeholder="Enter your email address"
+                        className="w-full px-3 sm:px-4 py-2 border border-gray-300 rounded-full focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none transition-all text-sm sm:text-base text-gray-900 placeholder-gray-600"
+                      />
+                    </div>
+                    <button
+                      type="submit"
+                      disabled={loading}
+                      className="w-full bg-emerald-700 hover:bg-emerald-800 text-white rounded-full py-2.5 sm:py-3 px-4 font-medium transition-all duration-200 hover-zoom text-sm sm:text-base disabled:opacity-50"
+                    >
+                      {loading ? 'Sending...' : 'Send Reset Link'}
+                    </button>
+                  </form>
+
+                  <div className="text-center">
+                    <p className="text-sm text-gray-500">
+                      Remember your password? 
                       <button 
                         onClick={() => setActiveModal('signin')}
                         className="text-emerald-700 hover:text-emerald-800 font-medium ml-1"
