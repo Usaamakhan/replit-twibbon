@@ -25,49 +25,59 @@ const googleProvider = new GoogleAuthProvider();
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
+    // Set mounted to true to prevent hydration mismatches
+    setMounted(true);
+    
     // Listen for authentication state changes
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
-      console.log('Auth state changed:', user);
+      if (process.env.NODE_ENV === 'development') {
+        console.log('Auth state changed:', user ? user.email : 'No user');
+      }
       if (user) {
-        console.log('User is signed in:', user.email);
-        console.log('Email verified:', user.emailVerified);
+        if (process.env.NODE_ENV === 'development') {
+          console.log('Email verified:', user.emailVerified);
+        }
         // Create user profile in Firestore if it doesn't exist - temporarily disabled
         // await createUserProfile(user);
-      } else {
-        console.log('No user signed in');
       }
       setUser(user);
       setLoading(false);
     });
 
-    // No need to handle redirect result since we're using popup
-
     return () => unsubscribe();
   }, []);
+
+  // Prevent hydration mismatches by not rendering auth-dependent content until mounted
+  if (!mounted || loading) {
+    return <div className="min-h-screen flex items-center justify-center bg-yellow-400">
+      <div className="text-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-700 mx-auto mb-2"></div>
+        <p className="text-emerald-700 font-medium">Loading...</p>
+      </div>
+    </div>;
+  }
 
   const signInWithGoogle = async () => {
     try {
       setLoading(true);
-      console.log('=== SIGN IN BUTTON CLICKED ===');
-      console.log('Using popup authentication...');
-      console.log('Auth object:', auth);
-      console.log('Google provider:', googleProvider);
+      if (process.env.NODE_ENV === 'development') {
+        console.log('Starting Google sign in...');
+      }
       
       const result = await signInWithPopup(auth, googleProvider);
-      console.log('=== SIGN IN SUCCESSFUL ===');
-      console.log('User:', result.user);
-      console.log('User email:', result.user.email);
-      console.log('User display name:', result.user.displayName);
+      if (process.env.NODE_ENV === 'development') {
+        console.log('Google sign in successful:', result.user.email);
+      }
       
       // User state will be automatically updated via onAuthStateChanged
       setLoading(false);
     } catch (error) {
-      console.error('=== SIGN IN ERROR ===');
-      console.error('Error:', error);
-      console.error('Error code:', error.code);
-      console.error('Error message:', error.message);
+      if (process.env.NODE_ENV === 'development') {
+        console.error('Google sign in error:', error.code, error.message);
+      }
       alert(`Authentication error: ${error.code} - ${error.message}`);
       setLoading(false);
     }
@@ -76,7 +86,6 @@ export function AuthProvider({ children }) {
   const signUpWithEmail = async (email, password, fullName) => {
     try {
       setLoading(true);
-      console.log('=== EMAIL SIGN UP ===');
       const result = await createUserWithEmailAndPassword(auth, email, password);
       
       // Update user profile with full name
@@ -88,14 +97,16 @@ export function AuthProvider({ children }) {
       
       // Send email verification
       await sendEmailVerification(result.user);
-      console.log('Verification email sent to:', result.user.email);
+      if (process.env.NODE_ENV === 'development') {
+        console.log('Email sign up successful, verification email sent to:', result.user.email);
+      }
       
-      console.log('Sign up successful:', result.user.email);
       setLoading(false);
       return { success: true, requiresVerification: true };
     } catch (error) {
-      console.error('=== EMAIL SIGN UP ERROR ===');
-      console.error('Error:', error.code, error.message);
+      if (process.env.NODE_ENV === 'development') {
+        console.error('Email sign up error:', error.code, error.message);
+      }
       setLoading(false);
       return { success: false, error: error.message };
     }
@@ -104,14 +115,16 @@ export function AuthProvider({ children }) {
   const signInWithEmail = async (email, password) => {
     try {
       setLoading(true);
-      console.log('=== EMAIL SIGN IN ===');
       const result = await signInWithEmailAndPassword(auth, email, password);
-      console.log('Sign in successful:', result.user.email);
+      if (process.env.NODE_ENV === 'development') {
+        console.log('Email sign in successful:', result.user.email);
+      }
       setLoading(false);
       return { success: true };
     } catch (error) {
-      console.error('=== EMAIL SIGN IN ERROR ===');
-      console.error('Error:', error.code, error.message);
+      if (process.env.NODE_ENV === 'development') {
+        console.error('Email sign in error:', error.code, error.message);
+      }
       setLoading(false);
       return { success: false, error: error.message };
     }
@@ -197,6 +210,7 @@ export function AuthProvider({ children }) {
   const value = {
     user,
     loading,
+    mounted,
     signInWithGoogle,
     signUpWithEmail,
     signInWithEmail,
