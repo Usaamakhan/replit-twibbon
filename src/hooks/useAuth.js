@@ -8,7 +8,9 @@ import {
   onAuthStateChanged,
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
-  updateProfile
+  updateProfile,
+  sendEmailVerification,
+  reload
 } from 'firebase/auth';
 import { auth } from '../lib/firebase';
 import { createUserProfile } from '../lib/firestore';
@@ -29,6 +31,7 @@ export function AuthProvider({ children }) {
       console.log('Auth state changed:', user);
       if (user) {
         console.log('User is signed in:', user.email);
+        console.log('Email verified:', user.emailVerified);
         // Create user profile in Firestore if it doesn't exist - temporarily disabled
         // await createUserProfile(user);
       } else {
@@ -82,9 +85,13 @@ export function AuthProvider({ children }) {
         });
       }
       
+      // Send email verification
+      await sendEmailVerification(result.user);
+      console.log('Verification email sent to:', result.user.email);
+      
       console.log('Sign up successful:', result.user.email);
       setLoading(false);
-      return { success: true };
+      return { success: true, requiresVerification: true };
     } catch (error) {
       console.error('=== EMAIL SIGN UP ERROR ===');
       console.error('Error:', error.code, error.message);
@@ -117,12 +124,44 @@ export function AuthProvider({ children }) {
     }
   };
 
+  // Send email verification
+  const sendVerificationEmail = async () => {
+    try {
+      if (auth.currentUser) {
+        await sendEmailVerification(auth.currentUser);
+        console.log('Verification email sent');
+        return { success: true };
+      }
+      return { success: false, error: 'No user signed in' };
+    } catch (error) {
+      console.error('Error sending verification email:', error);
+      return { success: false, error: error.message };
+    }
+  };
+
+  // Check email verification status (reload user)
+  const checkEmailVerification = async () => {
+    try {
+      if (auth.currentUser) {
+        await reload(auth.currentUser);
+        console.log('User reloaded, verification status:', auth.currentUser.emailVerified);
+        return { verified: auth.currentUser.emailVerified };
+      }
+      return { verified: false };
+    } catch (error) {
+      console.error('Error checking verification status:', error);
+      return { verified: false };
+    }
+  };
+
   const value = {
     user,
     loading,
     signInWithGoogle,
     signUpWithEmail,
     signInWithEmail,
+    sendVerificationEmail,
+    checkEmailVerification,
     logout
   };
 
