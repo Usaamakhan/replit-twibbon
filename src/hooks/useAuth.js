@@ -50,15 +50,7 @@ export function AuthProvider({ children }) {
     return () => unsubscribe();
   }, []);
 
-  // Prevent hydration mismatches by not rendering auth-dependent content until mounted
-  if (!mounted || loading) {
-    return <div className="min-h-screen flex items-center justify-center bg-yellow-400">
-      <div className="text-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-700 mx-auto mb-2"></div>
-        <p className="text-emerald-700 font-medium">Loading...</p>
-      </div>
-    </div>;
-  }
+  // Don't block rendering with loading screen - let components handle their own loading states
 
   const signInWithGoogle = async () => {
     try {
