@@ -9,15 +9,56 @@ import { useAuth } from "../hooks/useAuth";
 export default function Home() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [activeModal, setActiveModal] = useState(null); // 'signin' or 'signup'
-  const { user, loading, signInWithGoogle, logout } = useAuth();
+  const [authError, setAuthError] = useState('');
+  const { user, loading, signInWithGoogle, signUpWithEmail, signInWithEmail, logout } = useAuth();
 
-  const openSignInModal = () => setActiveModal('signin');
-  const openSignUpModal = () => setActiveModal('signup');
-  const closeModal = () => setActiveModal(null);
+  const openSignInModal = () => {
+    setActiveModal('signin');
+    setAuthError('');
+  };
+  const openSignUpModal = () => {
+    setActiveModal('signup');
+    setAuthError('');
+  };
+  const closeModal = () => {
+    setActiveModal(null);
+    setAuthError('');
+  };
 
   const handleGoogleSignIn = async () => {
     await signInWithGoogle();
     closeModal();
+  };
+
+  const handleEmailSignIn = async (e) => {
+    e.preventDefault();
+    setAuthError('');
+    const formData = new FormData(e.target);
+    const email = formData.get('email');
+    const password = formData.get('password');
+    
+    const result = await signInWithEmail(email, password);
+    if (result.success) {
+      closeModal();
+    } else {
+      setAuthError(result.error);
+    }
+  };
+
+  const handleEmailSignUp = async (e) => {
+    e.preventDefault();
+    setAuthError('');
+    const formData = new FormData(e.target);
+    const fullName = formData.get('fullName');
+    const email = formData.get('email');
+    const password = formData.get('password');
+    
+    const result = await signUpWithEmail(email, password, fullName);
+    if (result.success) {
+      closeModal();
+    } else {
+      setAuthError(result.error);
+    }
   };
 
   return (
@@ -171,15 +212,17 @@ export default function Home() {
                 {/* Content */}
                 <div className="p-4 sm:p-6">
                   {/* Email Sign In Form */}
-                  <form className="space-y-4 mb-6" onSubmit={(e) => {
-                    e.preventDefault();
-                    // Add email sign-in functionality here
-                    alert('Email sign-in functionality will be implemented with your backend');
-                  }}>
+                  <form className="space-y-4 mb-6" onSubmit={handleEmailSignIn}>
+                    {authError && (
+                      <div className="text-red-600 text-sm text-center p-2 bg-red-50 rounded-lg">
+                        {authError}
+                      </div>
+                    )}
                     <div>
                       <label className="block text-sm font-medium text-gray-800 mb-1">Email</label>
                       <input
                         type="email"
+                        name="email"
                         required
                         placeholder="Enter your email"
                         className="w-full px-3 sm:px-4 py-2 border border-gray-300 rounded-full focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none transition-all text-sm sm:text-base text-gray-900 placeholder-gray-600"
@@ -189,6 +232,7 @@ export default function Home() {
                       <label className="block text-sm font-medium text-gray-800 mb-1">Password</label>
                       <input
                         type="password"
+                        name="password"
                         required
                         placeholder="Enter your password"
                         className="w-full px-3 sm:px-4 py-2 border border-gray-300 rounded-full focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none transition-all text-sm sm:text-base text-gray-900 placeholder-gray-600"
@@ -196,9 +240,10 @@ export default function Home() {
                     </div>
                     <button
                       type="submit"
-                      className="w-full bg-emerald-700 hover:bg-emerald-800 text-white rounded-full py-2.5 sm:py-3 px-4 font-medium transition-all duration-200 hover-zoom text-sm sm:text-base"
+                      disabled={loading}
+                      className="w-full bg-emerald-700 hover:bg-emerald-800 text-white rounded-full py-2.5 sm:py-3 px-4 font-medium transition-all duration-200 hover-zoom text-sm sm:text-base disabled:opacity-50"
                     >
-                      Sign In
+                      {loading ? 'Signing In...' : 'Sign In'}
                     </button>
                   </form>
 
@@ -271,15 +316,17 @@ export default function Home() {
                 {/* Content */}
                 <div className="p-4 sm:p-6">
                   {/* Email Sign Up Form */}
-                  <form className="space-y-4 mb-6" onSubmit={(e) => {
-                    e.preventDefault();
-                    // Add email sign-up functionality here
-                    alert('Email sign-up functionality will be implemented with your backend');
-                  }}>
+                  <form className="space-y-4 mb-6" onSubmit={handleEmailSignUp}>
+                    {authError && (
+                      <div className="text-red-600 text-sm text-center p-2 bg-red-50 rounded-lg">
+                        {authError}
+                      </div>
+                    )}
                     <div>
                       <label className="block text-sm font-medium text-gray-800 mb-1">Full Name</label>
                       <input
                         type="text"
+                        name="fullName"
                         required
                         placeholder="Enter your full name"
                         className="w-full px-3 sm:px-4 py-2 border border-gray-300 rounded-full focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none transition-all text-sm sm:text-base text-gray-900 placeholder-gray-600"
@@ -289,6 +336,7 @@ export default function Home() {
                       <label className="block text-sm font-medium text-gray-800 mb-1">Email</label>
                       <input
                         type="email"
+                        name="email"
                         required
                         placeholder="Enter your email"
                         className="w-full px-3 sm:px-4 py-2 border border-gray-300 rounded-full focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none transition-all text-sm sm:text-base text-gray-900 placeholder-gray-600"
@@ -298,6 +346,7 @@ export default function Home() {
                       <label className="block text-sm font-medium text-gray-800 mb-1">Password</label>
                       <input
                         type="password"
+                        name="password"
                         required
                         placeholder="Create a password"
                         className="w-full px-3 sm:px-4 py-2 border border-gray-300 rounded-full focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none transition-all text-sm sm:text-base text-gray-900 placeholder-gray-600"
@@ -305,9 +354,10 @@ export default function Home() {
                     </div>
                     <button
                       type="submit"
-                      className="w-full bg-emerald-700 hover:bg-emerald-800 text-white rounded-full py-2.5 sm:py-3 px-4 font-medium transition-all duration-200 hover-zoom text-sm sm:text-base"
+                      disabled={loading}
+                      className="w-full bg-emerald-700 hover:bg-emerald-800 text-white rounded-full py-2.5 sm:py-3 px-4 font-medium transition-all duration-200 hover-zoom text-sm sm:text-base disabled:opacity-50"
                     >
-                      Create Account
+                      {loading ? 'Creating Account...' : 'Create Account'}
                     </button>
                   </form>
 

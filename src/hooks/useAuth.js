@@ -5,7 +5,10 @@ import {
   signInWithPopup, 
   GoogleAuthProvider, 
   signOut,
-  onAuthStateChanged
+  onAuthStateChanged,
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
+  updateProfile
 } from 'firebase/auth';
 import { auth } from '../lib/firebase';
 import { createUserProfile } from '../lib/firestore';
@@ -66,6 +69,46 @@ export function AuthProvider({ children }) {
     }
   };
 
+  const signUpWithEmail = async (email, password, fullName) => {
+    try {
+      setLoading(true);
+      console.log('=== EMAIL SIGN UP ===');
+      const result = await createUserWithEmailAndPassword(auth, email, password);
+      
+      // Update user profile with full name
+      if (fullName) {
+        await updateProfile(result.user, {
+          displayName: fullName
+        });
+      }
+      
+      console.log('Sign up successful:', result.user.email);
+      setLoading(false);
+      return { success: true };
+    } catch (error) {
+      console.error('=== EMAIL SIGN UP ERROR ===');
+      console.error('Error:', error.code, error.message);
+      setLoading(false);
+      return { success: false, error: error.message };
+    }
+  };
+
+  const signInWithEmail = async (email, password) => {
+    try {
+      setLoading(true);
+      console.log('=== EMAIL SIGN IN ===');
+      const result = await signInWithEmailAndPassword(auth, email, password);
+      console.log('Sign in successful:', result.user.email);
+      setLoading(false);
+      return { success: true };
+    } catch (error) {
+      console.error('=== EMAIL SIGN IN ERROR ===');
+      console.error('Error:', error.code, error.message);
+      setLoading(false);
+      return { success: false, error: error.message };
+    }
+  };
+
   const logout = async () => {
     try {
       await signOut(auth);
@@ -78,6 +121,8 @@ export function AuthProvider({ children }) {
     user,
     loading,
     signInWithGoogle,
+    signUpWithEmail,
+    signInWithEmail,
     logout
   };
 
