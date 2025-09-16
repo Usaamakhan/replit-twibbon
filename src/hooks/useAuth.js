@@ -10,6 +10,7 @@ import {
   signInWithEmailAndPassword,
   updateProfile,
   sendEmailVerification,
+  sendPasswordResetEmail,
   reload
 } from 'firebase/auth';
 import { auth } from '../lib/firebase';
@@ -154,6 +155,31 @@ export function AuthProvider({ children }) {
     }
   };
 
+  const forgotPassword = async (email) => {
+    try {
+      setLoading(true);
+      console.log('Sending password reset email to:', email);
+      await sendPasswordResetEmail(auth, email);
+      console.log('Password reset email sent successfully');
+      setLoading(false);
+      return { success: true, message: 'Password reset email sent! Please check your inbox and follow the instructions to reset your password.' };
+    } catch (error) {
+      console.error('Error sending password reset email:', error);
+      let errorMessage = 'Failed to send password reset email. Please try again.';
+      
+      if (error.code === 'auth/user-not-found') {
+        errorMessage = 'No account found with this email address.';
+      } else if (error.code === 'auth/invalid-email') {
+        errorMessage = 'Please enter a valid email address.';
+      } else if (error.code === 'auth/too-many-requests') {
+        errorMessage = 'Too many requests. Please wait a moment before trying again.';
+      }
+      
+      setLoading(false);
+      return { success: false, error: errorMessage };
+    }
+  };
+
   const value = {
     user,
     loading,
@@ -162,6 +188,7 @@ export function AuthProvider({ children }) {
     signInWithEmail,
     sendVerificationEmail,
     checkEmailVerification,
+    forgotPassword,
     logout
   };
 
