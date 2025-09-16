@@ -2,89 +2,170 @@
 
 import { useState } from 'react';
 import { useAuth } from '../hooks/useAuth';
+import { validateEmail, validatePassword, validateFullName, normalizeEmail, getFirebaseErrorMessage } from '../utils/validation';
 import Header from './Header';
 import MobileMenu from './MobileMenu';
-import AuthModal from './AuthModal';
+import SignInModal from './auth/SignInModal';
+import SignUpModal from './auth/SignUpModal';
+import ForgotPasswordModal from './auth/ForgotPasswordModal';
 
 export default function InteractiveClient({ children }) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [activeModal, setActiveModal] = useState(null); // 'signin', 'signup', or 'forgotpassword'
   const [authError, setAuthError] = useState('');
+  const [authSuccessMessage, setAuthSuccessMessage] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const { user, loading, signInWithGoogle, signUpWithEmail, signInWithEmail, forgotPassword, logout } = useAuth();
 
   const openSignInModal = () => {
     setActiveModal('signin');
-    setAuthError('');
+    clearAuthMessages();
   };
   
   const openSignUpModal = () => {
     setActiveModal('signup');
-    setAuthError('');
+    clearAuthMessages();
+  };
+  
+  const openForgotPasswordModal = () => {
+    setActiveModal('forgotpassword');
+    clearAuthMessages();
   };
   
   const closeModal = () => {
     setActiveModal(null);
+    clearAuthMessages();
+    setIsSubmitting(false);
+  };
+
+  const clearAuthMessages = () => {
     setAuthError('');
+    setAuthSuccessMessage('');
   };
 
   const handleGoogleSignIn = async () => {
-    await signInWithGoogle();
-    closeModal();
+    if (isSubmitting) return;
+    
+    try {
+      setIsSubmitting(true);
+      clearAuthMessages();
+      await signInWithGoogle();
+      closeModal();
+    } catch (error) {
+      setAuthError(getFirebaseErrorMessage(error.code));
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleEmailSignIn = async (e) => {
     e.preventDefault();
-    setAuthError('');
-    const formData = new FormData(e.target);
-    const email = formData.get('email');
-    const password = formData.get('password');
+    if (isSubmitting) return;
     
-    const result = await signInWithEmail(email, password);
-    if (result.success) {
-      closeModal();
-    } else {
-      setAuthError(result.error);
+    try {
+      setIsSubmitting(true);
+      clearAuthMessages();
+      
+      const formData = new FormData(e.target);
+      const email = normalizeEmail(formData.get('email'));
+      const password = formData.get('password');
+      
+      // Client-side validation
+      const emailError = validateEmail(email);
+      const passwordError = validatePassword(password);
+      
+      if (emailError || passwordError) {
+        setAuthError(emailError || passwordError);
+        return;
+      }
+      
+      const result = await signInWithEmail(email, password);
+      if (result.success) {
+        closeModal();
+      } else {
+        setAuthError(getFirebaseErrorMessage(result.error) || result.error);
+      }
+    } catch (error) {
+      setAuthError(getFirebaseErrorMessage(error.code) || 'An unexpected error occurred');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   const handleEmailSignUp = async (e) => {
     e.preventDefault();
-    setAuthError('');
-    const formData = new FormData(e.target);
-    const fullName = formData.get('fullName');
-    const email = formData.get('email');
-    const password = formData.get('password');
+    if (isSubmitting) return;
     
-    const result = await signUpWithEmail(email, password, fullName);
-    if (result.success) {
-      if (result.requiresVerification) {
-        setAuthError('Account created successfully! Please check your email and click the verification link before signing in.');
-        setTimeout(() => {
-          closeModal();
-        }, 3000);
-      } else {
-        closeModal();
+    try {
+      setIsSubmitting(true);
+      clearAuthMessages();
+      
+      const formData = new FormData(e.target);
+      const fullName = formData.get('fullName').trim();
+      const email = normalizeEmail(formData.get('email'));
+      const password = formData.get('password');
+      
+      // Client-side validation
+      const nameError = validateFullName(fullName);
+      const emailError = validateEmail(email);
+      const passwordError = validatePassword(password, true);
+      
+      if (nameError || emailError || passwordError) {
+        setAuthError(nameError || emailError || passwordError);
+        return;
       }
-    } else {
-      setAuthError(result.error);
+      
+      const result = await signUpWithEmail(email, password, fullName);
+      if (result.success) {
+        if (result.requiresVerification) {
+          setAuthSuccessMessage('Account created successfully! Please check your email and click the verification link to complete your registration.');
+          setTimeout(() => {
+            closeModal();
+          }, 4000);
+        } else {
+          closeModal();
+        }
+      } else {
+        setAuthError(getFirebaseErrorMessage(result.error) || result.error);
+      }
+    } catch (error) {
+      setAuthError(getFirebaseErrorMessage(error.code) || 'An unexpected error occurred');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   const handleForgotPassword = async (e) => {
     e.preventDefault();
-    setAuthError('');
-    const formData = new FormData(e.target);
-    const email = formData.get('email');
+    if (isSubmitting) return;
     
-    const result = await forgotPassword(email);
-    if (result.success) {
-      setAuthError(result.message);
-      // Close the modal after a short delay to let user read the success message
-      setTimeout(() => {
-        closeModal();
-      }, 4000);
-    } else {
-      setAuthError(result.error);
+    try {
+      setIsSubmitting(true);
+      clearAuthMessages();
+      
+      const formData = new FormData(e.target);
+      const email = normalizeEmail(formData.get('email'));
+      
+      // Client-side validation
+      const emailError = validateEmail(email);
+      if (emailError) {
+        setAuthError(emailError);
+        return;
+      }
+      
+      const result = await forgotPassword(email);
+      if (result.success) {
+        setAuthSuccessMessage(result.message);
+        setTimeout(() => {
+          closeModal();
+        }, 5000);
+      } else {
+        setAuthError(getFirebaseErrorMessage(result.error) || result.error);
+      }
+    } catch (error) {
+      setAuthError(getFirebaseErrorMessage(error.code) || 'An unexpected error occurred');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -108,16 +189,36 @@ export default function InteractiveClient({ children }) {
         openSignUpModal={openSignUpModal}
       />
 
-      {/* Auth Modal Component */}
-      <AuthModal 
-        activeModal={activeModal}
-        closeModal={closeModal}
-        authError={authError}
-        setActiveModal={setActiveModal}
-        handleEmailSignIn={handleEmailSignIn}
-        handleEmailSignUp={handleEmailSignUp}
-        handleGoogleSignIn={handleGoogleSignIn}
-        handleForgotPassword={handleForgotPassword}
+      {/* Auth Modal Components */}
+      <SignInModal 
+        isOpen={activeModal === 'signin'}
+        onClose={closeModal}
+        error={authError}
+        loading={isSubmitting || loading}
+        onEmailSignIn={handleEmailSignIn}
+        onGoogleSignIn={handleGoogleSignIn}
+        onSwitchToSignUp={openSignUpModal}
+        onSwitchToForgotPassword={openForgotPasswordModal}
+      />
+      
+      <SignUpModal 
+        isOpen={activeModal === 'signup'}
+        onClose={closeModal}
+        error={authError || (!authError && authSuccessMessage ? '' : authError)}
+        loading={isSubmitting || loading}
+        onEmailSignUp={handleEmailSignUp}
+        onGoogleSignIn={handleGoogleSignIn}
+        onSwitchToSignIn={openSignInModal}
+      />
+      
+      <ForgotPasswordModal 
+        isOpen={activeModal === 'forgotpassword'}
+        onClose={closeModal}
+        error={authError}
+        successMessage={authSuccessMessage}
+        loading={isSubmitting || loading}
+        onForgotPassword={handleForgotPassword}
+        onSwitchToSignIn={openSignInModal}
       />
     </div>
   );

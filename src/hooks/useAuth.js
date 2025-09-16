@@ -14,6 +14,7 @@ import {
   reload
 } from 'firebase/auth';
 import { auth } from '../lib/firebase';
+import { createUserProfile } from '../lib/firestore';
 
 // Create Auth Context
 const AuthContext = createContext(null);
@@ -39,8 +40,14 @@ export function AuthProvider({ children }) {
         if (process.env.NODE_ENV === 'development') {
           console.log('Email verified:', user.emailVerified);
         }
-        // Create user profile in Firestore if it doesn't exist - temporarily disabled
-        // await createUserProfile(user);
+        // Create user profile in Firestore if it doesn't exist
+        try {
+          await createUserProfile(user);
+        } catch (error) {
+          if (process.env.NODE_ENV === 'development') {
+            console.error('Error creating user profile:', error);
+          }
+        }
       }
       setUser(user);
       setLoading(false);
