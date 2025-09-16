@@ -6,6 +6,7 @@ import Hero from "../components/Hero";
 import Footer from "../components/Footer";
 import MobileMenu from "../components/MobileMenu";
 import AuthModal from "../components/AuthModal";
+import EmailVerification from "../components/EmailVerification";
 import { useAuth } from "../hooks/useAuth";
 
 export default function Home() {
@@ -57,11 +58,24 @@ export default function Home() {
     
     const result = await signUpWithEmail(email, password, fullName);
     if (result.success) {
-      closeModal();
+      if (result.requiresVerification) {
+        setAuthError('Account created successfully! Please check your email and click the verification link before signing in.');
+        // Keep modal open briefly to show the message, then close
+        setTimeout(() => {
+          closeModal();
+        }, 3000);
+      } else {
+        closeModal();
+      }
     } else {
       setAuthError(result.error);
     }
   };
+
+  // Show email verification screen for unverified users
+  if (user && !loading && !user.emailVerified) {
+    return <EmailVerification />;
+  }
 
   return (
     <div className="min-h-screen flex flex-col relative">
