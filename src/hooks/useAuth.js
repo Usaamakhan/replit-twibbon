@@ -72,12 +72,13 @@ export function AuthProvider({ children }) {
       
       // User state will be automatically updated via onAuthStateChanged
       setLoading(false);
+      return { success: true };
     } catch (error) {
       if (process.env.NODE_ENV === 'development') {
         console.error('Google sign in error:', error.code, error.message);
       }
-      alert(`Authentication error: ${error.code} - ${error.message}`);
       setLoading(false);
+      return { success: false, error: error.code };
     }
   };
 

@@ -50,10 +50,14 @@ export default function InteractiveClient({ children }) {
     try {
       setIsSubmitting(true);
       clearAuthMessages();
-      await signInWithGoogle();
-      closeModal();
+      const result = await signInWithGoogle();
+      if (result.success) {
+        closeModal();
+      } else {
+        setAuthError(getFirebaseErrorMessage(result.error) || 'Something went wrong. Please try again.');
+      }
     } catch (error) {
-      setAuthError(getFirebaseErrorMessage(error.code) || 'Something went wrong. Please try again.');
+      setAuthError(getFirebaseErrorMessage(error.code) || 'An unexpected error occurred');
     } finally {
       setIsSubmitting(false);
     }
