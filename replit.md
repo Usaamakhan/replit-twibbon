@@ -20,8 +20,8 @@ This is a Next.js 15 application with React 19 and Tailwind CSS, designed to wor
 1. Successfully imported project from GitHub and installed all dependencies
 2. Configured Next.js to work with Replit's proxy environment 
 3. Set up development workflow on port 5000 with proper host configuration (0.0.0.0)
-4. Updated CORS and domain configuration with current Replit domain (b9f7cf9a-a349-4272-8c8b-7b3ae0d2daf5-00-yzdm3ga91f1x.pike.replit.dev)
-5. Configured allowedDevOrigins to handle Replit's proxy environment with current domain
+4. Updated CORS and domain configuration with current Replit domain (57ba3b7d-3a19-4259-b224-ea76f2ef994d-00-gb03yclgupnt.worf.replit.dev)
+5. Configured allowedDevOrigins to handle Replit's proxy environment with current domain including *.worf.replit.dev
 6. Set up Firebase authentication with Google provider and environment variables (NEXT_PUBLIC_* format)
 7. Fixed production build configuration by removing --turbopack flag for stability
 8. Verified AuthProvider is properly wrapped around the app in layout.js
