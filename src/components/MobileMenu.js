@@ -8,7 +8,7 @@ export default function MobileMenu({
   openSignInModal, 
   openSignUpModal 
 }) {
-  const { user, loading, logout } = useAuth();
+  const { user, loading, mounted, logout } = useAuth();
 
   return (
     <>
@@ -95,7 +95,17 @@ export default function MobileMenu({
           
           {/* Authentication buttons */}
           <div className="flex gap-3 mt-6">
-            {user ? (
+            {!mounted || loading ? (
+              // Show skeleton/placeholder during initial mount and auth restoration to prevent hydration issues and flicker
+              <div className="flex gap-3 w-full">
+                <div className="flex-1 py-2 px-4 text-sm text-center text-gray-400 border border-gray-300 rounded-full">
+                  Sign In
+                </div>
+                <div className="flex-1 py-2 px-4 text-sm text-center text-white bg-gray-400 rounded-full">
+                  Sign Up
+                </div>
+              </div>
+            ) : user ? (
               <>
                 <button 
                   onClick={logout}
@@ -108,17 +118,15 @@ export default function MobileMenu({
               <>
                 <button 
                   onClick={openSignInModal}
-                  disabled={loading}
-                  className="flex-1 py-2 px-4 text-sm font-medium text-emerald-700 border border-emerald-700 rounded-full hover:bg-emerald-50 transition-colors duration-200 cursor-pointer hover-zoom disabled:opacity-50"
+                  className="flex-1 py-2 px-4 text-sm font-medium text-emerald-700 border border-emerald-700 rounded-full hover:bg-emerald-50 transition-colors duration-200 cursor-pointer hover-zoom"
                 >
-                  {loading ? 'Loading...' : 'Sign In'}
+                  Sign In
                 </button>
                 <button 
                   onClick={openSignUpModal}
-                  disabled={loading}
-                  className="flex-1 py-2 px-4 text-sm font-medium text-white bg-emerald-700 rounded-full hover:bg-emerald-800 transition-colors duration-200 cursor-pointer hover-zoom disabled:opacity-50"
+                  className="flex-1 py-2 px-4 text-sm font-medium text-white bg-emerald-700 rounded-full hover:bg-emerald-800 transition-colors duration-200 cursor-pointer hover-zoom"
                 >
-                  {loading ? 'Loading...' : 'Sign Up'}
+                  Sign Up
                 </button>
               </>
             )}
