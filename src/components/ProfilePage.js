@@ -3,40 +3,21 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../hooks/useAuth';
 import { useRouter } from 'next/navigation';
+import { 
+  getUserProfile, 
+  getUserProfileByUsername, 
+  getUserStats,
+  getUserFrames 
+} from '../lib/firestore';
 
 export default function ProfilePage({ isOwnProfile = false, username = null }) {
   const { user, loading } = useAuth();
   const router = useRouter();
-  const [profileData, setProfileData] = useState(null);
   const [profileLoading, setProfileLoading] = useState(true);
-
-  // Mock data for now - will be replaced with real Firestore data
-  const [userData, setUserData] = useState({
-    displayName: 'John Doe',
-    username: 'johndoe',
-    bio: 'Creative designer passionate about visual storytelling and frame creation.',
-    profileImage: 'https://via.placeholder.com/120x120/059669/FFFFFF?text=JD',
-    bannerImage: 'https://via.placeholder.com/1200x300/10B981/FFFFFF?text=Banner',
-    supportersCount: 127,
-    campaignsCount: 8,
-    joinedDate: new Date('2024-01-15')
-  });
-
-  const [campaigns, setCampaigns] = useState([
-    // Mock campaign data - will be replaced with real data
-    {
-      id: 1,
-      title: 'Save the Ocean',
-      thumbnail: 'https://via.placeholder.com/300x200/059669/FFFFFF?text=Ocean',
-      supportersCount: 45
-    },
-    {
-      id: 2,
-      title: 'Climate Action',
-      thumbnail: 'https://via.placeholder.com/300x200/10B981/FFFFFF?text=Climate',
-      supportersCount: 32
-    }
-  ]);
+  const [userData, setUserData] = useState(null);
+  const [userStats, setUserStats] = useState({ supportersCount: 0, campaignsCount: 0 });
+  const [campaigns, setCampaigns] = useState([]);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     // If viewing own profile, redirect to login if not authenticated
@@ -45,20 +26,86 @@ export default function ProfilePage({ isOwnProfile = false, username = null }) {
       return;
     }
 
-    // Load profile data based on whether it's own profile or username
-    if (isOwnProfile && user) {
-      // Load current user's profile
-      setUserData({
-        ...userData,
-        displayName: user.displayName || user.email || 'User',
-        username: user.email?.split('@')[0] || 'user'
-      });
-    } else if (username) {
-      // Load profile by username
-      // TODO: Implement Firestore lookup by username
+    const loadProfileData = async () => {
+      setProfileLoading(true);
+      setError(null);
+      
+      try {
+        let profileUser = null;
+        
+        if (isOwnProfile && user) {
+          // Load current user's profile
+          profileUser = await getUserProfile(user.uid);
+          if (!profileUser) {
+            // Create fallback profile data for new users
+            profileUser = {
+              id: user.uid,
+              displayName: user.displayName || user.email || 'User',
+              username: user.email?.split('@')[0] || 'user',
+              email: user.email,
+              photoURL: user.photoURL,
+              bio: '',
+              profileImage: user.photoURL || 'https://via.placeholder.com/120x120/059669/FFFFFF?text=U',
+              bannerImage: 'https://via.placeholder.com/1200x300/10B981/FFFFFF?text=Banner',
+              supportersCount: 0,
+              campaignsCount: 0,
+              createdAt: new Date()
+            };
+          }
+        } else if (username) {
+          // Load profile by username
+          profileUser = await getUserProfileByUsername(username);
+          if (!profileUser) {
+            setError('User not found');
+            setProfileLoading(false);
+            return;
+          }
+        }
+
+        if (profileUser) {
+          setUserData(profileUser);
+          
+          // Load user statistics with safe defaults
+          try {
+            const stats = await getUserStats(profileUser.id);
+            setUserStats({
+              supportersCount: stats?.supportersCount || 0,
+              campaignsCount: stats?.campaignsCount || 0
+            });
+          } catch (statError) {
+            console.error('Error loading user stats:', statError);
+            setUserStats({ supportersCount: 0, campaignsCount: 0 });
+          }
+          
+          // Load user's campaigns/frames with safe defaults
+          try {
+            const userFrames = await getUserFrames(profileUser.id);
+            if (Array.isArray(userFrames)) {
+              setCampaigns(userFrames.map(frame => ({
+                id: frame.id,
+                title: frame.title || 'Untitled Campaign',
+                thumbnail: frame.frameImageUrl || 'https://via.placeholder.com/300x200/059669/FFFFFF?text=Frame',
+                supportersCount: frame.usageCount || 0
+              })));
+            } else {
+              setCampaigns([]);
+            }
+          } catch (frameError) {
+            console.error('Error loading user frames:', frameError);
+            setCampaigns([]);
+          }
+        }
+      } catch (error) {
+        console.error('Error loading profile data:', error);
+        setError('Failed to load profile data');
+      } finally {
+        setProfileLoading(false);
+      }
+    };
+
+    if (!loading) {
+      loadProfileData();
     }
-    
-    setProfileLoading(false);
   }, [user, loading, isOwnProfile, username, router]);
 
   if (loading || profileLoading) {
@@ -67,6 +114,32 @@ export default function ProfilePage({ isOwnProfile = false, username = null }) {
 
   if (isOwnProfile && !user) {
     return null; // Will redirect
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="mx-auto w-24 h-24 bg-red-100 rounded-full flex items-center justify-center mb-6">
+            <svg className="w-12 h-12 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16c-.77.833.192 2.5 1.732 2.5z" />
+            </svg>
+          </div>
+          <h3 className="text-2xl font-bold text-gray-900 mb-2">{error}</h3>
+          <p className="text-gray-600 mb-6">The profile you're looking for could not be found.</p>
+          <button 
+            onClick={() => router.push('/')}
+            className="bg-emerald-600 text-white px-6 py-3 rounded-lg hover:bg-emerald-700 transition-colors font-medium"
+          >
+            Go Back Home
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (!userData) {
+    return <ProfileSkeleton />;
   }
 
   return (
@@ -133,27 +206,30 @@ export default function ProfilePage({ isOwnProfile = false, username = null }) {
               {/* Stats Cards */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
                 <div className="bg-white rounded-xl shadow-lg p-6 text-center">
-                  <div className="text-3xl font-bold text-emerald-600">{userData.supportersCount}</div>
+                  <div className="text-3xl font-bold text-emerald-600">{userStats.supportersCount}</div>
                   <div className="text-gray-600 font-medium">Supporters</div>
                   <div className="text-sm text-gray-500 mt-1">People who used frames</div>
                 </div>
                 
                 <div className="bg-white rounded-xl shadow-lg p-6 text-center">
-                  <div className="text-3xl font-bold text-emerald-600">{userData.campaignsCount}</div>
+                  <div className="text-3xl font-bold text-emerald-600">{userStats.campaignsCount}</div>
                   <div className="text-gray-600 font-medium">Campaigns</div>
                   <div className="text-sm text-gray-500 mt-1">Frames created</div>
                 </div>
                 
                 <div className="bg-white rounded-xl shadow-lg p-6 text-center">
                   <div className="text-3xl font-bold text-emerald-600">
-                    {userData.joinedDate.getFullYear()}
+                    {userData.createdAt ? new Date(userData.createdAt.seconds ? userData.createdAt.seconds * 1000 : userData.createdAt).getFullYear() : new Date().getFullYear()}
                   </div>
                   <div className="text-gray-600 font-medium">Joined Since</div>
                   <div className="text-sm text-gray-500 mt-1">
-                    {userData.joinedDate.toLocaleDateString('en-US', { 
-                      month: 'long', 
-                      year: 'numeric' 
-                    })}
+                    {userData.createdAt ? 
+                      new Date(userData.createdAt.seconds ? userData.createdAt.seconds * 1000 : userData.createdAt).toLocaleDateString('en-US', { 
+                        month: 'long', 
+                        year: 'numeric' 
+                      }) : 
+                      'Recently'
+                    }
                   </div>
                 </div>
               </div>
