@@ -11,7 +11,7 @@ const nextConfig = {
         headers: [
           {
             key: 'Access-Control-Allow-Origin',
-            value: 'https://57ba3b7d-3a19-4259-b224-ea76f2ef994d-00-gb03yclgupnt.worf.replit.dev',
+            value: 'https://a952a103-f3af-47db-b629-140a62aa717f-00-34hxyypvm79e.spock.replit.dev',
           },
           {
             key: 'Cache-Control',
@@ -38,8 +38,8 @@ const nextConfig = {
     'https://*.pike.replit.dev',
     'https://*.riker.replit.dev',
     'https://*.sisko.replit.dev',
-    'https://*.worf.replit.dev',
-    'https://57ba3b7d-3a19-4259-b224-ea76f2ef994d-00-gb03yclgupnt.worf.replit.dev',
+    'https://*.spock.replit.dev',
+    'https://a952a103-f3af-47db-b629-140a62aa717f-00-34hxyypvm79e.spock.replit.dev',
     'http://localhost:5000',
     'http://127.0.0.1:5000'
   ],
@@ -53,8 +53,8 @@ const nextConfig = {
         'https://*.pike.replit.dev',
         'https://*.riker.replit.dev', 
         'https://*.sisko.replit.dev',
-        'https://*.worf.replit.dev',
-        'https://57ba3b7d-3a19-4259-b224-ea76f2ef994d-00-gb03yclgupnt.worf.replit.dev',
+        'https://*.spock.replit.dev',
+        'https://a952a103-f3af-47db-b629-140a62aa717f-00-34hxyypvm79e.spock.replit.dev',
         'http://localhost:5000',
         'http://127.0.0.1:5000'
       ]
