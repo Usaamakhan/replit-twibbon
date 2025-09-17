@@ -34,14 +34,16 @@ const nextConfig = {
   // Allow Replit domains for development - fixes cross-origin warnings
   allowedDevOrigins: [
     'https://*.replit.dev',
-    'https://*.replit.co', 
+    'https://*.repl.co', 
     'https://*.pike.replit.dev',
     'https://*.riker.replit.dev',
     'https://*.sisko.replit.dev',
     'https://*.spock.replit.dev',
     'https://a952a103-f3af-47db-b629-140a62aa717f-00-34hxyypvm79e.spock.replit.dev',
     'http://localhost:5000',
-    'http://127.0.0.1:5000'
+    'http://127.0.0.1:5000',
+    'http://localhost',
+    'http://127.0.0.1'
   ],
   // Additional experimental features
   experimental: {
@@ -49,7 +51,7 @@ const nextConfig = {
     serverActions: {
       allowedOrigins: [
         'https://*.replit.dev',
-        'https://*.replit.co',
+        'https://*.repl.co',
         'https://*.pike.replit.dev',
         'https://*.riker.replit.dev', 
         'https://*.sisko.replit.dev',
