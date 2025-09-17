@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useAuth } from '../hooks/useAuth';
+import { useBodyScrollLock } from '../hooks/useBodyScrollLock';
 import { getFirebaseErrorMessage } from '../utils/validation';
 import { signInSchema, signUpSchema, forgotPasswordSchema, getValidationError } from '../utils/schemas';
 import Header from './Header';
@@ -18,6 +19,9 @@ export default function InteractiveClient({ children }) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isWaitingForAuth, setIsWaitingForAuth] = useState(false);
   const { user, loading, signInWithGoogle, signUpWithEmail, signInWithEmail, forgotPassword, logout } = useAuth();
+
+  // Prevent body scrolling when sidebar or modals are open
+  useBodyScrollLock(isMenuOpen || activeModal !== null);
 
   // Watch for user authentication state changes and close modal when signed in
   useEffect(() => {
