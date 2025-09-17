@@ -50,16 +50,29 @@ export default function MobileMenu({
         <div className="flex-1 overflow-y-auto min-h-0">
           <div className="px-6 pb-6">
             {/* Welcome message for authenticated users */}
-            {user && (
+            {(!mounted || loading) ? (
+              /* Show loading skeleton during auth restoration */
+              <div className="mb-6 pb-4 border-b border-gray-100">
+                <div className="h-7 bg-gray-200 rounded animate-pulse w-48"></div>
+              </div>
+            ) : user ? (
               <div className="mb-6 pb-4 border-b border-gray-100">
                 <div className="text-lg font-medium text-gray-800">
                   Welcome {user.displayName || user.email}
                 </div>
               </div>
-            )}
+            ) : null}
             <nav className="space-y-1">
-              {/* Profile link - only show when user is authenticated */}
-              {user && (
+              {/* Profile link - show when user is authenticated or during loading */}
+              {(!mounted || loading) ? (
+                /* Show loading skeleton for profile link during auth restoration */
+                <div className="py-2 px-4">
+                  <div className="inline-flex items-center gap-3 py-2 px-3 text-base font-normal rounded-lg">
+                    <div className="w-5 h-5 bg-gray-200 rounded animate-pulse"></div>
+                    <div className="h-5 bg-gray-200 rounded animate-pulse w-16"></div>
+                  </div>
+                </div>
+              ) : user ? (
                 <div className="py-2 px-4">
                   <a 
                     href="#" 
@@ -71,7 +84,7 @@ export default function MobileMenu({
                     Profile
                   </a>
                 </div>
-              )}
+              ) : null}
               
               <div className="py-2 px-4">
                 <a 
