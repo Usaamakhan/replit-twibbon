@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '../hooks/useAuth';
 import { getFirebaseErrorMessage } from '../utils/validation';
 import { signInSchema, signUpSchema, forgotPasswordSchema, getValidationError } from '../utils/schemas';
@@ -16,7 +16,18 @@ export default function InteractiveClient({ children }) {
   const [authError, setAuthError] = useState('');
   const [authSuccessMessage, setAuthSuccessMessage] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isWaitingForAuth, setIsWaitingForAuth] = useState(false);
   const { user, loading, signInWithGoogle, signUpWithEmail, signInWithEmail, forgotPassword, logout } = useAuth();
+
+  // Watch for user authentication state changes and close modal when signed in
+  useEffect(() => {
+    if (isWaitingForAuth && user && (activeModal === 'signin' || activeModal === 'signup')) {
+      // User successfully signed in, close the modal
+      setIsWaitingForAuth(false);
+      setIsSubmitting(false);
+      closeModal();
+    }
+  }, [user, isWaitingForAuth, activeModal]);
 
   const openSignInModal = () => {
     setActiveModal('signin');
@@ -37,6 +48,7 @@ export default function InteractiveClient({ children }) {
     setActiveModal(null);
     clearAuthMessages();
     setIsSubmitting(false);
+    setIsWaitingForAuth(false);
   };
 
   const clearAuthMessages = () => {
@@ -52,15 +64,17 @@ export default function InteractiveClient({ children }) {
       clearAuthMessages();
       const result = await signInWithGoogle();
       if (result.success) {
-        closeModal();
+        // Don't close modal immediately, wait for auth state change
+        setIsWaitingForAuth(true);
       } else {
         setAuthError(getFirebaseErrorMessage(result.error) || 'Something went wrong. Please try again.');
+        setIsSubmitting(false);
       }
     } catch (error) {
       setAuthError(getFirebaseErrorMessage(error.code) || 'An unexpected error occurred');
-    } finally {
       setIsSubmitting(false);
     }
+    // Don't set isSubmitting to false here if successful - keep loading until auth state changes
   };
 
   const handleEmailSignIn = async (e) => {
@@ -81,6 +95,7 @@ export default function InteractiveClient({ children }) {
       const validationResult = signInSchema.safeParse(rawData);
       if (!validationResult.success) {
         setAuthError(getValidationError(validationResult));
+        setIsSubmitting(false);
         return;
       }
       
@@ -88,15 +103,17 @@ export default function InteractiveClient({ children }) {
       
       const result = await signInWithEmail(email, password);
       if (result.success) {
-        closeModal();
+        // Don't close modal immediately, wait for auth state change
+        setIsWaitingForAuth(true);
       } else {
         setAuthError(getFirebaseErrorMessage(result.error) || 'Something went wrong. Please try again.');
+        setIsSubmitting(false);
       }
     } catch (error) {
       setAuthError(getFirebaseErrorMessage(error?.code) || 'An unexpected error occurred');
-    } finally {
       setIsSubmitting(false);
     }
+    // Don't set isSubmitting to false here if successful - keep loading until auth state changes
   };
 
   const handleEmailSignUp = async (e) => {
@@ -207,7 +224,7 @@ export default function InteractiveClient({ children }) {
         isOpen={activeModal === 'signin'}
         onClose={closeModal}
         error={authError}
-        loading={isSubmitting || loading}
+        loading={isSubmitting || loading || isWaitingForAuth}
         onEmailSignIn={handleEmailSignIn}
         onGoogleSignIn={handleGoogleSignIn}
         onSwitchToSignUp={openSignUpModal}
