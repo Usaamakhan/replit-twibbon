@@ -138,6 +138,84 @@ export default function ProfileEditModal({ isOpen, onClose, userData, onUpdate }
           )}
 
           <div className="space-y-6">
+            {/* Profile Banner - moved to top */}
+            <div>
+              <label className="block text-sm font-medium text-gray-800 mb-2">
+                Profile Banner
+              </label>
+              <div className="space-y-3">
+                <div className="w-full h-32 rounded-lg overflow-hidden border-2 border-gray-200">
+                  {formData.profileBannerPreview ? (
+                    <img
+                      src={formData.profileBannerPreview}
+                      alt="Banner preview"
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <div className="w-full h-full bg-gradient-to-r from-emerald-400 to-emerald-600 flex items-center justify-center">
+                      <svg className="w-12 h-12 text-white/70" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                      </svg>
+                    </div>
+                  )}
+                </div>
+                <input
+                  type="file"
+                  ref={profileBannerRef}
+                  onChange={(e) => handleFileChange('profileBanner', e.target.files[0], 'profileBannerPreview')}
+                  accept="image/*"
+                  className="hidden"
+                />
+                <button
+                  type="button"
+                  onClick={() => profileBannerRef.current?.click()}
+                  className="bg-gray-100 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200 transition-colors"
+                >
+                  Change Banner
+                </button>
+              </div>
+            </div>
+
+            {/* Profile Picture - moved to top */}
+            <div>
+              <label className="block text-sm font-medium text-gray-800 mb-2">
+                Profile Picture
+              </label>
+              <div className="flex items-center space-x-4">
+                <div className="w-20 h-20 rounded-full overflow-hidden border-2 border-gray-200">
+                  {formData.profilePicPreview ? (
+                    <img
+                      src={formData.profilePicPreview}
+                      alt="Profile preview"
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <div className="w-full h-full bg-gray-100 flex items-center justify-center">
+                      <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                      </svg>
+                    </div>
+                  )}
+                </div>
+                <div className="flex-1">
+                  <input
+                    type="file"
+                    ref={profilePicRef}
+                    onChange={(e) => handleFileChange('profilePic', e.target.files[0], 'profilePicPreview')}
+                    accept="image/*"
+                    className="hidden"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => profilePicRef.current?.click()}
+                    className="bg-gray-100 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200 transition-colors"
+                  >
+                    Change Photo
+                  </button>
+                </div>
+              </div>
+            </div>
+
             {/* Username */}
             <div>
               <label className="block text-sm font-medium text-gray-800 mb-2">
@@ -153,7 +231,7 @@ export default function ProfileEditModal({ isOpen, onClose, userData, onUpdate }
                 placeholder="johndoe123"
               />
               <p className="text-sm text-gray-500 mt-1">
-                Your profile URL: frame.com/{formData.username || 'username'}
+                Your profile URL: frame.com/u/{formData.username || 'username'}
               </p>
               {errors.username && <p className="text-red-600 text-sm mt-1">{errors.username}</p>}
             </div>
@@ -198,84 +276,6 @@ export default function ProfileEditModal({ isOpen, onClose, userData, onUpdate }
                 ))}
               </select>
               {errors.country && <p className="text-red-600 text-sm mt-1">{errors.country}</p>}
-            </div>
-
-            {/* Profile Picture */}
-            <div>
-              <label className="block text-sm font-medium text-gray-800 mb-2">
-                Profile Picture
-              </label>
-              <div className="flex items-center space-x-4">
-                <div className="w-20 h-20 rounded-full overflow-hidden border-2 border-gray-200">
-                  {formData.profilePicPreview ? (
-                    <img
-                      src={formData.profilePicPreview}
-                      alt="Profile preview"
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <div className="w-full h-full bg-gray-100 flex items-center justify-center">
-                      <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                      </svg>
-                    </div>
-                  )}
-                </div>
-                <div className="flex-1">
-                  <input
-                    type="file"
-                    ref={profilePicRef}
-                    onChange={(e) => handleFileChange('profilePic', e.target.files[0], 'profilePicPreview')}
-                    accept="image/*"
-                    className="hidden"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => profilePicRef.current?.click()}
-                    className="bg-gray-100 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200 transition-colors"
-                  >
-                    Change Photo
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            {/* Profile Banner */}
-            <div>
-              <label className="block text-sm font-medium text-gray-800 mb-2">
-                Profile Banner
-              </label>
-              <div className="space-y-3">
-                <div className="w-full h-32 rounded-lg overflow-hidden border-2 border-gray-200">
-                  {formData.profileBannerPreview ? (
-                    <img
-                      src={formData.profileBannerPreview}
-                      alt="Banner preview"
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <div className="w-full h-full bg-gradient-to-r from-emerald-400 to-emerald-600 flex items-center justify-center">
-                      <svg className="w-12 h-12 text-white/70" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                      </svg>
-                    </div>
-                  )}
-                </div>
-                <input
-                  type="file"
-                  ref={profileBannerRef}
-                  onChange={(e) => handleFileChange('profileBanner', e.target.files[0], 'profileBannerPreview')}
-                  accept="image/*"
-                  className="hidden"
-                />
-                <button
-                  type="button"
-                  onClick={() => profileBannerRef.current?.click()}
-                  className="bg-gray-100 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200 transition-colors"
-                >
-                  Change Banner
-                </button>
-              </div>
             </div>
 
             {/* Bio */}
