@@ -13,7 +13,7 @@ import {
   sendPasswordResetEmail,
   reload
 } from 'firebase/auth';
-import { auth } from '../lib/firebase';
+import { auth, firebaseConfigured } from '../lib/firebase';
 import { createUserProfile } from '../lib/firestore';
 
 // Create Auth Context
@@ -30,6 +30,12 @@ export function AuthProvider({ children }) {
   useEffect(() => {
     // Set mounted to true to prevent hydration mismatches
     setMounted(true);
+    
+    // If Firebase is not configured, set loading to false and return
+    if (!firebaseConfigured || !auth) {
+      setLoading(false);
+      return;
+    }
     
     // Listen for authentication state changes
     const unsubscribe = onAuthStateChanged(auth, async (user) => {

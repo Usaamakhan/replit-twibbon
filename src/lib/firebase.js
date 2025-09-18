@@ -3,37 +3,49 @@ import { initializeApp, getApps, getApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
 
-// Validate required environment variables
-const requiredEnvVars = {
+// Check for Firebase environment variables
+const firebaseEnvVars = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
   projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
 };
 
 // Check for missing environment variables
-const missingVars = Object.entries(requiredEnvVars)
+const missingVars = Object.entries(firebaseEnvVars)
   .filter(([key, value]) => !value)
   .map(([key]) => key);
 
-if (missingVars.length > 0) {
+// Firebase configuration is optional for development
+const firebaseConfigured = missingVars.length === 0;
+
+if (!firebaseConfigured && process.env.NODE_ENV !== 'development') {
   throw new Error(`Missing required Firebase environment variables: ${missingVars.join(', ')}`);
 }
 
-const firebaseConfig = {
-  apiKey: requiredEnvVars.apiKey,
-  authDomain: `${requiredEnvVars.projectId}.firebaseapp.com`,
-  projectId: requiredEnvVars.projectId,
-  storageBucket: `${requiredEnvVars.projectId}.appspot.com`,
-  appId: requiredEnvVars.appId,
-};
+// Initialize Firebase only if configured
+let app = null;
+let auth = null;
+let db = null;
 
-// Initialize Firebase - prevent duplicate initialization during HMR
-const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
+if (firebaseConfigured) {
+  const firebaseConfig = {
+    apiKey: firebaseEnvVars.apiKey,
+    authDomain: `${firebaseEnvVars.projectId}.firebaseapp.com`,
+    projectId: firebaseEnvVars.projectId,
+    storageBucket: `${firebaseEnvVars.projectId}.appspot.com`,
+    appId: firebaseEnvVars.appId,
+  };
 
-// Initialize Firebase Authentication and get a reference to the service
-export const auth = getAuth(app);
+  // Initialize Firebase - prevent duplicate initialization during HMR
+  app = getApps().length ? getApp() : initializeApp(firebaseConfig);
+  
+  // Initialize Firebase Authentication and get a reference to the service
+  auth = getAuth(app);
 
-// Initialize Cloud Firestore and get a reference to the service
-export const db = getFirestore(app);
+  // Initialize Cloud Firestore and get a reference to the service
+  db = getFirestore(app);
+}
 
+// Export Firebase services (will be null if not configured)
+export { auth, db, firebaseConfigured };
 export default app;
