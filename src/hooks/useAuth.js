@@ -62,7 +62,28 @@ export function AuthProvider({ children }) {
     return () => unsubscribe();
   }, []);
 
-  // Don't block rendering with loading screen - let components handle their own loading states
+  // Prevent hydration mismatches by providing consistent API shape when not mounted
+  if (!mounted) {
+    const noopAsync = async () => ({ success: false });
+    const noop = () => {};
+    
+    return (
+      <AuthContext.Provider value={{ 
+        user: null, 
+        loading: true, 
+        mounted: false,
+        signInWithGoogle: noopAsync, 
+        signUpWithEmail: noopAsync, 
+        signInWithEmail: noopAsync, 
+        sendVerificationEmail: noopAsync,
+        checkEmailVerification: async () => ({ verified: false }),
+        forgotPassword: noopAsync,
+        logout: noop
+      }}>
+        {children}
+      </AuthContext.Provider>
+    );
+  }
 
   const signInWithGoogle = async () => {
     try {
@@ -163,6 +184,8 @@ export function AuthProvider({ children }) {
     try {
       if (auth.currentUser) {
         await reload(auth.currentUser);
+        // Update the user state so components re-render with new verification status
+        setUser(auth.currentUser);
         console.log('User reloaded, verification status:', auth.currentUser.emailVerified);
         return { verified: auth.currentUser.emailVerified };
       }

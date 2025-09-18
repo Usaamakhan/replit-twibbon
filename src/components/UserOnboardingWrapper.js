@@ -14,23 +14,29 @@ export default function UserOnboardingWrapper({ children }) {
     const checkProfileStatus = async () => {
       if (!user || loading) return;
 
+      // For email/password users, check if email is verified first
+      if (user.providerData[0]?.providerId === 'password' && !user.emailVerified) {
+        console.log('User email not verified yet, skipping profile check');
+        return;
+      }
+
       setCheckingProfile(true);
       try {
         let userProfile = await getUserProfile(user.uid);
         
-        // If profile doesn't exist, create it first (for brand-new users)
+        // If profile doesn't exist, it should have been created by useAuth
+        // Log this as an unexpected case for debugging
         if (!userProfile) {
-          const { createUserProfile } = await import('../lib/firestore');
-          const createResult = await createUserProfile(user);
-          
-          if (createResult.success) {
-            userProfile = await getUserProfile(user.uid);
-          }
+          console.log('No user profile found for verified user:', user.email, 'This should not happen after auth state change');
+          return;
         }
         
         // Show welcome popup if user exists but hasn't completed profile setup
         if (userProfile && !userProfile.profileCompleted) {
+          console.log('Profile not completed, showing welcome popup');
           setShowWelcome(true);
+        } else if (userProfile) {
+          console.log('Profile already completed, skipping welcome popup');
         }
       } catch (error) {
         console.error('Error checking profile status:', error);
