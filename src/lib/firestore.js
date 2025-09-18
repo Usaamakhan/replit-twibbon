@@ -122,7 +122,14 @@ const reserveUsernameAtomically = async (baseUsername, userUid, userProfile) => 
 export const createUserProfile = async (user) => {
   if (!user) return { success: false, error: 'No user provided' };
   
+  // Check if Firebase is configured
+  if (!db) {
+    console.error('Firebase Firestore is not configured');
+    return { success: false, error: 'Database not available' };
+  }
+  
   try {
+    console.log('Creating user profile for:', user.email, 'with UID:', user.uid);
     const userDocRef = doc(db, 'users', user.uid);
     const userDoc = await getDoc(userDocRef);
     
@@ -168,6 +175,12 @@ export const createUserProfile = async (user) => {
 export const getUserProfile = async (userId) => {
   if (!userId) {
     console.warn('getUserProfile called with invalid userId');
+    return null;
+  }
+  
+  // Check if Firebase is configured
+  if (!db) {
+    console.error('Firebase Firestore is not configured');
     return null;
   }
   
@@ -258,6 +271,12 @@ export const getUserProfileByUsername = async (username) => {
 export const updateUserProfile = async (userId, updates) => {
   if (!userId) return { success: false, error: 'No user ID provided' };
   
+  // Check if Firebase is configured
+  if (!db) {
+    console.error('Firebase Firestore is not configured');
+    return { success: false, error: 'Database not available' };
+  }
+  
   // Whitelist of safe fields that users can update
   const allowedFields = ['bio', 'bannerImage', 'profileImage', 'displayName', 'country', 'username', 'profileCompleted'];
   
@@ -276,6 +295,7 @@ export const updateUserProfile = async (userId, updates) => {
   }
 
   try {
+    console.log('Updating user profile for userId:', userId, 'with updates:', filteredUpdates);
     return await runTransaction(db, async (transaction) => {
       const userDocRef = doc(db, 'users', userId);
       const userDoc = await transaction.get(userDocRef);

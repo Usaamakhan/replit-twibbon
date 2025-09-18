@@ -36,14 +36,30 @@ if (firebaseConfigured) {
     appId: firebaseEnvVars.appId,
   };
 
-  // Initialize Firebase - prevent duplicate initialization during HMR
-  app = getApps().length ? getApp() : initializeApp(firebaseConfig);
-  
-  // Initialize Firebase Authentication and get a reference to the service
-  auth = getAuth(app);
+  try {
+    // Initialize Firebase - prevent duplicate initialization during HMR
+    app = getApps().length ? getApp() : initializeApp(firebaseConfig);
+    
+    // Initialize Firebase Authentication and get a reference to the service
+    auth = getAuth(app);
 
-  // Initialize Cloud Firestore and get a reference to the service
-  db = getFirestore(app);
+    // Initialize Cloud Firestore and get a reference to the service
+    db = getFirestore(app);
+    
+    if (process.env.NODE_ENV === 'development') {
+      console.log('Firebase initialized successfully with project:', firebaseEnvVars.projectId);
+    }
+  } catch (error) {
+    console.error('Firebase initialization failed:', error);
+    // Set services to null if initialization fails
+    app = null;
+    auth = null;
+    db = null;
+  }
+} else {
+  if (process.env.NODE_ENV === 'development') {
+    console.log('Firebase not configured - missing variables:', missingVars);
+  }
 }
 
 // Export Firebase services (will be null if not configured)
