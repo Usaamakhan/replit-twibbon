@@ -58,7 +58,7 @@ export const checkUsernameExists = async (username) => {
   }
 };
 
-// Atomic username reservation using transactions to prevent race conditions
+// Atomic username reservation using usernames collection to prevent race conditions
 const reserveUsernameAtomically = async (baseUsername, userUid, userProfile) => {
   const maxAttempts = 100;
   let username = baseUsername.toLowerCase().replace(/[^a-z0-9]/g, '');
@@ -73,13 +73,18 @@ const reserveUsernameAtomically = async (baseUsername, userUid, userProfile) => 
     let finalUsername = username;
     let attempts = 0;
     
-    // Try to find available username atomically
+    // Try to find available username atomically using usernames collection
     while (attempts < maxAttempts) {
-      const usernameQuery = query(collection(db, 'users'), where('username', '==', finalUsername));
-      const existingDocs = await getDocs(usernameQuery);
+      const usernameDocRef = doc(db, 'usernames', finalUsername);
+      const usernameDoc = await transaction.get(usernameDocRef);
       
-      if (existingDocs.empty) {
+      if (!usernameDoc.exists()) {
         // Username is available, reserve it atomically
+        transaction.set(usernameDocRef, {
+          userId: userUid,
+          createdAt: serverTimestamp(),
+        });
+        
         const userDocRef = doc(db, 'users', userUid);
         transaction.set(userDocRef, {
           ...userProfile,
@@ -97,6 +102,12 @@ const reserveUsernameAtomically = async (baseUsername, userUid, userProfile) => 
     // Fallback: use timestamp-based unique identifier
     finalUsername = `${username}${Date.now().toString().slice(-6)}`;
     console.warn(`Max attempts reached for username generation, using fallback: ${finalUsername}`);
+    
+    const usernameDocRef = doc(db, 'usernames', finalUsername);
+    transaction.set(usernameDocRef, {
+      userId: userUid,
+      createdAt: serverTimestamp(),
+    });
     
     const userDocRef = doc(db, 'users', userUid);
     transaction.set(userDocRef, {
@@ -124,6 +135,7 @@ export const createUserProfile = async (user) => {
         email,
         photoURL,
         bio: '',
+        country: '',
         bannerImage: '',
         profileImage: photoURL || '',
         supportersCount: 0,
@@ -132,6 +144,7 @@ export const createUserProfile = async (user) => {
         updatedAt: serverTimestamp(),
         framesCreated: 0,
         framesUsed: 0,
+        profileCompleted: false, // Track if user has completed welcome popup
       };
       
       // Generate base username and reserve atomically
@@ -186,7 +199,7 @@ export const getUserProfile = async (userId) => {
   }
 };
 
-// Get user profile by username (for /[username] route)
+// Get user profile by username (for /[username] route) - uses usernames collection for consistency
 export const getUserProfileByUsername = async (username) => {
   if (!username || typeof username !== 'string') {
     console.warn('getUserProfileByUsername called with invalid username:', username);
@@ -201,41 +214,52 @@ export const getUserProfileByUsername = async (username) => {
   }
   
   try {
-    const q = query(collection(db, 'users'), where('username', '==', normalizedUsername));
-    const querySnapshot = await getDocs(q);
+    // First, resolve username to userId using usernames collection
+    const usernameDocRef = doc(db, 'usernames', normalizedUsername);
+    const usernameDoc = await getDoc(usernameDocRef);
     
-    if (!querySnapshot.empty) {
-      const userDoc = querySnapshot.docs[0];
-      const userData = userDoc.data();
-      
-      // Ensure required fields exist with fallbacks
-      return { 
-        id: userDoc.id, 
-        ...userData,
-        supportersCount: userData.supportersCount || 0,
-        campaignsCount: userData.campaignsCount || 0,
-        framesCreated: userData.framesCreated || 0,
-        framesUsed: userData.framesUsed || 0,
-        bio: userData.bio || '',
-        profileImage: userData.profileImage || '',
-        bannerImage: userData.bannerImage || ''
-      };
-    } else {
-      console.log('No user profile found for username:', normalizedUsername);
+    if (!usernameDoc.exists()) {
+      console.log('No username reservation found for:', normalizedUsername);
       return null;
     }
+    
+    const { userId } = usernameDoc.data();
+    
+    // Then fetch user profile using the userId
+    const userDocRef = doc(db, 'users', userId);
+    const userDoc = await getDoc(userDocRef);
+    
+    if (!userDoc.exists()) {
+      console.warn('Username exists but user profile missing:', normalizedUsername, userId);
+      return null;
+    }
+    
+    const userData = userDoc.data();
+    
+    // Ensure required fields exist with fallbacks
+    return { 
+      id: userDoc.id, 
+      ...userData,
+      supportersCount: userData.supportersCount || 0,
+      campaignsCount: userData.campaignsCount || 0,
+      framesCreated: userData.framesCreated || 0,
+      framesUsed: userData.framesUsed || 0,
+      bio: userData.bio || '',
+      profileImage: userData.profileImage || '',
+      bannerImage: userData.bannerImage || ''
+    };
   } catch (error) {
     console.error('Error getting user profile by username:', error, { username, normalizedUsername });
     return null;
   }
 };
 
-// Update user profile
+// Update user profile with atomic username reservation
 export const updateUserProfile = async (userId, updates) => {
-  if (!userId) return false;
+  if (!userId) return { success: false, error: 'No user ID provided' };
   
   // Whitelist of safe fields that users can update
-  const allowedFields = ['bio', 'bannerImage', 'profileImage'];
+  const allowedFields = ['bio', 'bannerImage', 'profileImage', 'displayName', 'country', 'username', 'profileCompleted'];
   
   // Filter updates to only include allowed fields
   const filteredUpdates = {};
@@ -248,19 +272,70 @@ export const updateUserProfile = async (userId, updates) => {
   // If no valid fields to update, return early
   if (Object.keys(filteredUpdates).length === 0) {
     console.warn('No allowed fields provided for update');
-    return false;
+    return { success: false, error: 'No valid fields to update' };
   }
-  
+
   try {
-    const userDocRef = doc(db, 'users', userId);
-    await updateDoc(userDocRef, {
-      ...filteredUpdates,
-      updatedAt: serverTimestamp(),
+    return await runTransaction(db, async (transaction) => {
+      const userDocRef = doc(db, 'users', userId);
+      const userDoc = await transaction.get(userDocRef);
+      
+      if (!userDoc.exists()) {
+        throw new Error('User profile not found');
+      }
+
+      const currentData = userDoc.data();
+      
+      // If username is being changed, normalize and ensure it's unique using atomic reservation
+      if (filteredUpdates.username && filteredUpdates.username !== currentData.username) {
+        // Normalize username to ensure consistency
+        const normalizedUsername = filteredUpdates.username.toLowerCase().replace(/[^a-z0-9]/g, '');
+        
+        // Validate normalized username
+        if (normalizedUsername.length < 3) {
+          throw new Error('Username must be at least 3 characters long');
+        }
+        
+        // If normalization changed the username, reject to avoid confusion
+        if (normalizedUsername !== filteredUpdates.username) {
+          throw new Error('Username can only contain lowercase letters and numbers');
+        }
+        
+        // Reserve the new username atomically using usernames collection
+        const usernameDocRef = doc(db, 'usernames', normalizedUsername);
+        const usernameDoc = await transaction.get(usernameDocRef);
+        
+        if (usernameDoc.exists()) {
+          throw new Error('Username already taken');
+        }
+        
+        // Reserve the new username
+        transaction.set(usernameDocRef, {
+          userId: userId,
+          createdAt: serverTimestamp(),
+        });
+        
+        // Remove old username reservation if it exists
+        if (currentData.username) {
+          const oldUsernameDocRef = doc(db, 'usernames', currentData.username);
+          transaction.delete(oldUsernameDocRef);
+        }
+        
+        // Update the filtered updates with normalized username
+        filteredUpdates.username = normalizedUsername;
+      }
+
+      // Update the user profile
+      transaction.update(userDocRef, {
+        ...filteredUpdates,
+        updatedAt: serverTimestamp(),
+      });
+      
+      return { success: true, username: filteredUpdates.username || currentData.username };
     });
-    return true;
   } catch (error) {
     console.error('Error updating user profile:', error);
-    return false;
+    return { success: false, error: error.message };
   }
 };
 
@@ -375,6 +450,89 @@ export const getUserFrames = async (userId) => {
   } catch (error) {
     console.error('Error getting user frames:', error);
     return [];
+  }
+};
+
+// Complete user profile setup after welcome popup
+export const completeUserProfile = async (userId, profileData) => {
+  if (!userId || !profileData) return { success: false, error: 'Missing required data' };
+
+  try {
+    return await runTransaction(db, async (transaction) => {
+      const userDocRef = doc(db, 'users', userId);
+      const userDoc = await transaction.get(userDocRef);
+      
+      if (!userDoc.exists()) {
+        throw new Error('User profile not found');
+      }
+
+      const currentData = userDoc.data();
+      
+      // Check if username is being changed and ensure it's unique using atomic reservation
+      if (profileData.username && profileData.username !== currentData.username) {
+        // Normalize username to ensure consistency  
+        const normalizedUsername = profileData.username.toLowerCase().replace(/[^a-z0-9]/g, '');
+        
+        // Validate normalized username
+        if (normalizedUsername.length < 3) {
+          throw new Error('Username must be at least 3 characters long');
+        }
+        
+        // If normalization changed the username, reject to avoid confusion
+        if (normalizedUsername !== profileData.username) {
+          throw new Error('Username can only contain lowercase letters and numbers');
+        }
+        
+        const usernameDocRef = doc(db, 'usernames', normalizedUsername);
+        const usernameDoc = await transaction.get(usernameDocRef);
+        
+        if (usernameDoc.exists()) {
+          throw new Error('Username already taken');
+        }
+        
+        // Reserve the new username
+        transaction.set(usernameDocRef, {
+          userId: userId,
+          createdAt: serverTimestamp(),
+        });
+        
+        // Remove old username reservation if it exists
+        if (currentData.username) {
+          const oldUsernameDocRef = doc(db, 'usernames', currentData.username);
+          transaction.delete(oldUsernameDocRef);
+        }
+        
+        // Update profileData with normalized username
+        profileData.username = normalizedUsername;
+      }
+
+      // Prepare update data
+      const updateData = {
+        displayName: profileData.displayName || currentData.displayName,
+        username: profileData.username || currentData.username,
+        country: profileData.country || currentData.country,
+        bio: profileData.bio || currentData.bio || '',
+        profileCompleted: true,
+        updatedAt: serverTimestamp(),
+      };
+
+      // Handle profile image
+      if (profileData.profileImage) {
+        updateData.profileImage = profileData.profileImage;
+      }
+
+      // Handle banner image  
+      if (profileData.bannerImage) {
+        updateData.bannerImage = profileData.bannerImage;
+      }
+
+      transaction.update(userDocRef, updateData);
+      
+      return { success: true, username: updateData.username };
+    });
+  } catch (error) {
+    console.error('Error completing user profile:', error);
+    return { success: false, error: error.message };
   }
 };
 

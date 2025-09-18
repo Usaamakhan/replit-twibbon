@@ -1,5 +1,4 @@
 // Dynamic route for viewing other user profiles
-import ClientAuthProvider from "../../components/ClientAuthProvider";
 import InteractiveClient from "../../components/InteractiveClient";
 import ProfilePage from "../../components/ProfilePage";
 
@@ -15,10 +14,8 @@ export default function UserProfile({ params }) {
   const { username } = params;
   
   return (
-    <ClientAuthProvider>
-      <InteractiveClient>
-        <ProfilePage isOwnProfile={false} username={username} />
-      </InteractiveClient>
-    </ClientAuthProvider>
+    <InteractiveClient>
+      <ProfilePage isOwnProfile={false} username={username} />
+    </InteractiveClient>
   );
 }
