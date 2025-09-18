@@ -1,72 +1,97 @@
-// Supabase configuration for storage services
-import { createClient } from '@supabase/supabase-js'
+// Secure client-side storage utilities using server-side API
+import { auth } from './firebase'
 
-// Check for Supabase environment variables
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-
-// Check if Supabase is configured
-const supabaseConfigured = !!(supabaseUrl && supabaseAnonKey)
-
-// Initialize Supabase client only if configured
-let supabase = null
-
-if (supabaseConfigured) {
-  supabase = createClient(supabaseUrl, supabaseAnonKey)
+// Helper function to get Firebase ID token
+const getAuthToken = async () => {
+  if (!auth?.currentUser) {
+    throw new Error('User not authenticated')
+  }
+  return await auth.currentUser.getIdToken()
 }
 
-// Storage utilities
-export const uploadFile = async (file, bucket = 'uploads', path = '') => {
-  if (!supabase) {
-    throw new Error('Supabase not configured. Please add NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY environment variables.')
+// Helper function to make authenticated API requests
+const apiRequest = async (endpoint, options = {}) => {
+  const token = await getAuthToken()
+  
+  const response = await fetch(endpoint, {
+    ...options,
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json',
+      ...options.headers
+    }
+  })
+
+  if (!response.ok) {
+    const error = await response.json()
+    throw new Error(error.error || 'Request failed')
   }
 
-  try {
-    const fileName = `${path}${Date.now()}-${file.name}`
-    
-    const { data, error } = await supabase.storage
-      .from(bucket)
-      .upload(fileName, file, {
-        cacheControl: '3600',
-        upsert: false
-      })
+  return response.json()
+}
 
-    if (error) {
-      throw error
+// Secure file upload using signed URLs
+export const uploadFile = async (file, folder = 'uploads') => {
+  try {
+    // Step 1: Get signed upload URL from server
+    const { uploadUrl, path, token } = await apiRequest('/api/storage/upload-url', {
+      method: 'POST',
+      body: JSON.stringify({
+        fileName: file.name,
+        fileType: file.type,
+        folder
+      })
+    })
+
+    // Step 2: Upload file directly to Supabase using signed URL and token
+    const uploadResponse = await fetch(uploadUrl, {
+      method: 'PUT',
+      body: file,
+      headers: {
+        'Content-Type': file.type,
+        'x-upsert': 'false'
+      }
+    })
+
+    if (!uploadResponse.ok) {
+      throw new Error(`Failed to upload file: ${uploadResponse.status} ${uploadResponse.statusText}`)
     }
 
-    return data
+    return {
+      path,
+      fullPath: path,
+      name: file.name,
+      size: file.size,
+      type: file.type
+    }
   } catch (error) {
     console.error('Error uploading file:', error)
     throw error
   }
 }
 
-export const getPublicUrl = (bucket = 'uploads', path) => {
-  if (!supabase) {
-    throw new Error('Supabase not configured')
+// Get signed URL for private file access
+export const getSignedUrl = async (path, expiresIn = 3600) => {
+  try {
+    const { signedUrl } = await apiRequest('/api/storage/signed-url', {
+      method: 'POST',
+      body: JSON.stringify({ path, expiresIn })
+    })
+
+    return signedUrl
+  } catch (error) {
+    console.error('Error getting signed URL:', error)
+    throw error
   }
-
-  const { data } = supabase.storage
-    .from(bucket)
-    .getPublicUrl(path)
-
-  return data.publicUrl
 }
 
-export const deleteFile = async (bucket = 'uploads', path) => {
-  if (!supabase) {
-    throw new Error('Supabase not configured')
-  }
-
+// Delete file securely
+export const deleteFile = async (path) => {
   try {
-    const { error } = await supabase.storage
-      .from(bucket)
-      .remove([path])
-
-    if (error) {
-      throw error
-    }
+    await apiRequest('/api/storage/delete', {
+      method: 'DELETE',
+      body: JSON.stringify({ path })
+    })
 
     return true
   } catch (error) {
@@ -75,30 +100,72 @@ export const deleteFile = async (bucket = 'uploads', path) => {
   }
 }
 
-export const listFiles = async (bucket = 'uploads', folder = '') => {
-  if (!supabase) {
-    throw new Error('Supabase not configured')
-  }
-
+// List user's files
+export const listFiles = async (folder = 'uploads', limit = 100, offset = 0) => {
   try {
-    const { data, error } = await supabase.storage
-      .from(bucket)
-      .list(folder, {
-        limit: 100,
-        offset: 0
-      })
+    const params = new URLSearchParams({ folder, limit: limit.toString(), offset: offset.toString() })
+    const { files } = await apiRequest(`/api/storage/list?${params}`, {
+      method: 'GET'
+    })
 
-    if (error) {
-      throw error
-    }
-
-    return data
+    return files
   } catch (error) {
     console.error('Error listing files:', error)
     throw error
   }
 }
 
-// Export client and configuration status
-export { supabase, supabaseConfigured }
-export default supabase
+// Utility function for handling file uploads with progress
+export const uploadFileWithProgress = async (file, folder = 'uploads', onProgress) => {
+  try {
+    // Get signed upload URL
+    const { uploadUrl, path } = await apiRequest('/api/storage/upload-url', {
+      method: 'POST',
+      body: JSON.stringify({
+        fileName: file.name,
+        fileType: file.type,
+        folder
+      })
+    })
+
+    // Upload with progress tracking
+    return new Promise((resolve, reject) => {
+      const xhr = new XMLHttpRequest()
+
+      xhr.upload.addEventListener('progress', (event) => {
+        if (event.lengthComputable && onProgress) {
+          const progress = (event.loaded / event.total) * 100
+          onProgress(progress)
+        }
+      })
+
+      xhr.addEventListener('load', () => {
+        if (xhr.status === 200) {
+          resolve({
+            path,
+            fullPath: path,
+            name: file.name,
+            size: file.size,
+            type: file.type
+          })
+        } else {
+          reject(new Error('Upload failed'))
+        }
+      })
+
+      xhr.addEventListener('error', () => {
+        reject(new Error('Upload failed'))
+      })
+
+      xhr.open('PUT', uploadUrl)
+      xhr.setRequestHeader('Content-Type', file.type)
+      xhr.setRequestHeader('x-upsert', 'false')
+      xhr.send(file)
+    })
+  } catch (error) {
+    console.error('Error uploading file with progress:', error)
+    throw error
+  }
+}
+
+// Note: No direct client export for security - use API endpoints instead
