@@ -2,6 +2,7 @@
 
 import { Caveat } from "next/font/google";
 import { useState } from "react";
+import Link from "next/link";
 
 const caveat = Caveat({ subsets: ["latin"], weight: ["700"] });
 
@@ -14,12 +15,12 @@ export default function Header({ isMenuOpen, setIsMenuOpen }) {
   return (
     <header className="bg-yellow-400 text-black py-4 sm:py-5 md:py-6 border-0 shadow-none relative z-40">
       <div className="mx-auto w-full max-w-screen-xl px-3 sm:px-4 md:px-6 flex items-center justify-between">
-        <a 
+        <Link 
           href="/" 
           className={`${caveat.className} text-2xl sm:text-3xl md:text-4xl font-bold text-emerald-700 hover:text-emerald-800 transition-colors duration-200`}
         >
           Frame
-        </a>
+        </Link>
         <div className="flex-1 max-w-xs mx-4 relative">
           <input
             type="text"

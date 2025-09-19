@@ -1,3 +1,5 @@
+"use client";
+
 // Secure client-side storage utilities using server-side API
 import { auth } from './firebase'
 

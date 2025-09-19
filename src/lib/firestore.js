@@ -1,3 +1,5 @@
+"use client";
+
 // Firestore database operations for the Twibbonize app
 import { 
   doc, 

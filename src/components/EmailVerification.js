@@ -73,7 +73,7 @@ export default function EmailVerification() {
             <ol className="text-sm text-emerald-700 space-y-1">
               <li>1. Check your email inbox (and spam folder)</li>
               <li>2. Click the verification link in the email</li>
-              <li>3. Return here and click "I've Verified My Email"</li>
+              <li>3. Return here and click &quot;I&apos;ve Verified My Email&quot;</li>
             </ol>
           </div>
 
@@ -95,7 +95,7 @@ export default function EmailVerification() {
               disabled={isChecking}
               className="w-full bg-emerald-700 hover:bg-emerald-800 text-white rounded-full py-3 px-4 font-medium transition-all duration-200 hover-zoom disabled:opacity-50"
             >
-              {isChecking ? 'Checking...' : "I've Verified My Email"}
+              {isChecking ? 'Checking...' : "I&apos;ve Verified My Email"}
             </button>
 
             <button

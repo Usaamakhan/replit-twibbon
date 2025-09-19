@@ -1,3 +1,5 @@
+"use client";
+
 // Firebase configuration based on firebase_barebones_javascript integration
 import { initializeApp, getApps, getApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
