@@ -148,11 +148,15 @@ export default function ProfilePage({ isOwnProfile = false, username = null }) {
     <div className="min-h-screen bg-gray-50">
       {/* Banner Section */}
       <div className="relative h-72 bg-gradient-to-r from-emerald-500 to-emerald-600 overflow-hidden">
-        <img
-          src={userData.bannerImage}
-          alt="Profile Banner"
-          className="w-full h-full object-cover"
-        />
+        {userData.bannerImage && userData.bannerImage.trim() ? (
+          <img
+            src={userData.bannerImage}
+            alt="Profile Banner"
+            className="w-full h-full object-cover"
+          />
+        ) : (
+          <div className="w-full h-full bg-gradient-to-r from-emerald-500 to-emerald-600"></div>
+        )}
         <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
       </div>
 
@@ -167,11 +171,19 @@ export default function ProfilePage({ isOwnProfile = false, username = null }) {
                 {/* Profile Image */}
                 <div className="flex flex-col items-center">
                   <div className="relative">
-                    <img
-                      src={userData.profileImage}
-                      alt={userData.displayName}
-                      className="w-32 h-32 rounded-full border-4 border-white shadow-xl object-cover"
-                    />
+                    {userData.profileImage && userData.profileImage.trim() ? (
+                      <img
+                        src={userData.profileImage}
+                        alt={userData.displayName}
+                        className="w-32 h-32 rounded-full border-4 border-white shadow-xl object-cover"
+                      />
+                    ) : (
+                      <div className="w-32 h-32 rounded-full border-4 border-white shadow-xl bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center">
+                        <span className="text-white text-2xl font-bold">
+                          {userData.displayName?.charAt(0)?.toUpperCase() || 'U'}
+                        </span>
+                      </div>
+                    )}
                     {isOwnProfile && (
                       <button className="absolute bottom-2 right-2 bg-emerald-600 text-white p-2 rounded-full hover:bg-emerald-700 transition-colors">
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

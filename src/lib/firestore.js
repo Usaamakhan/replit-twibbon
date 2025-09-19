@@ -48,6 +48,12 @@ export const generateUniqueUsername = async (baseUsername, maxAttempts = 100) =>
 
 // Check if username already exists
 export const checkUsernameExists = async (username) => {
+  // Check if database is initialized
+  if (!db) {
+    console.error('Database not initialized - cannot check username');
+    return true; // Assume exists on error to be safe
+  }
+  
   try {
     const q = query(collection(db, 'users'), where('username', '==', username));
     const querySnapshot = await getDocs(q);
@@ -452,6 +458,12 @@ export const getPublicFrames = async (limitCount = 10) => {
 export const getUserFrames = async (userId) => {
   if (!userId) return [];
   
+  // Check if database is initialized
+  if (!db) {
+    console.error('Database not initialized - cannot get user frames');
+    return [];
+  }
+  
   try {
     const q = query(
       collection(db, 'frames'),
@@ -469,6 +481,7 @@ export const getUserFrames = async (userId) => {
     return frames;
   } catch (error) {
     console.error('Error getting user frames:', error);
+    // Return empty array on permissions error or any other error
     return [];
   }
 };

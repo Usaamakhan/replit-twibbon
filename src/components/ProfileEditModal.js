@@ -24,6 +24,22 @@ export default function ProfileEditModal({ isOpen, onClose, userData, onUpdate }
     bio: userData?.bio || ''
   });
 
+  // Update form data when userData changes (including when profile is updated from welcome popup)
+  useEffect(() => {
+    if (userData) {
+      setFormData({
+        username: userData.username || '',
+        displayName: userData.displayName || '',
+        country: userData.country || '',
+        profilePic: null,
+        profilePicPreview: userData.profileImage || '',
+        profileBanner: null,
+        profileBannerPreview: userData.bannerImage || '',
+        bio: userData.bio || ''
+      });
+    }
+  }, [userData]);
+
   const profilePicRef = useRef();
   const profileBannerRef = useRef();
 
