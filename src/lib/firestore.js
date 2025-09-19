@@ -57,9 +57,10 @@ export const checkUsernameExists = async (username) => {
   }
   
   try {
-    const q = query(collection(db, 'users'), where('username', '==', username));
-    const querySnapshot = await getDocs(q);
-    return !querySnapshot.empty;
+    // Check the usernames collection directly - more efficient and consistent
+    const usernameDocRef = doc(db, 'usernames', username.toLowerCase().trim());
+    const usernameDoc = await getDoc(usernameDocRef);
+    return usernameDoc.exists();
   } catch (error) {
     console.error('Error checking username:', error);
     return true; // Assume exists on error to be safe
