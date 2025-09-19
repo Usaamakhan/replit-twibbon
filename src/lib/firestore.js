@@ -17,7 +17,18 @@ import {
   increment,
   runTransaction 
 } from 'firebase/firestore';
-import { db } from './firebase';
+import { db, initializeFirebase } from './firebase';
+
+// Get database instance with initialization check
+const getDatabase = () => {
+  if (typeof window === 'undefined') return null;
+  
+  if (!db) {
+    const { db: initializedDb } = initializeFirebase();
+    return initializedDb;
+  }
+  return db;
+};
 
 // Generate unique username with max attempts to prevent infinite loops
 export const generateUniqueUsername = async (baseUsername, maxAttempts = 100) => {
@@ -50,15 +61,17 @@ export const generateUniqueUsername = async (baseUsername, maxAttempts = 100) =>
 
 // Check if username already exists
 export const checkUsernameExists = async (username) => {
+  const database = getDatabase();
+  
   // Check if database is initialized
-  if (!db) {
+  if (!database) {
     console.error('Database not initialized - cannot check username');
     return true; // Assume exists on error to be safe
   }
   
   try {
     // Check the usernames collection directly - more efficient and consistent
-    const usernameDocRef = doc(db, 'usernames', username.toLowerCase().trim());
+    const usernameDocRef = doc(database, 'usernames', username.toLowerCase().trim());
     const usernameDoc = await getDoc(usernameDocRef);
     return usernameDoc.exists();
   } catch (error) {
@@ -131,15 +144,16 @@ const reserveUsernameAtomically = async (baseUsername, userUid, userProfile) => 
 export const createUserProfile = async (user) => {
   if (!user) return { success: false, error: 'No user provided' };
   
+  const database = getDatabase();
   // Check if Firebase is configured
-  if (!db) {
+  if (!database) {
     console.error('Firebase Firestore is not configured');
     return { success: false, error: 'Database not available' };
   }
   
   try {
     console.log('Creating user profile for:', user.email, 'with UID:', user.uid);
-    const userDocRef = doc(db, 'users', user.uid);
+    const userDocRef = doc(database, 'users', user.uid);
     const userDoc = await getDoc(userDocRef);
     
     if (!userDoc.exists()) {
@@ -187,14 +201,15 @@ export const getUserProfile = async (userId) => {
     return null;
   }
   
+  const database = getDatabase();
   // Check if Firebase is configured
-  if (!db) {
+  if (!database) {
     console.error('Firebase Firestore is not configured');
     return null;
   }
   
   try {
-    const userDocRef = doc(db, 'users', userId);
+    const userDocRef = doc(database, 'users', userId);
     const userDoc = await getDoc(userDocRef);
     
     if (userDoc.exists()) {
