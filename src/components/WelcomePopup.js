@@ -167,7 +167,7 @@ export default function WelcomePopup({ isOpen, onClose, onComplete }) {
                     </button>
                   </div>
                 </div>
-                <p className="text-sm text-gray-500 mt-1">
+                <p className="text-sm text-gray-700 mt-1">
                   A nice profile photo helps others recognize you and builds trust
                 </p>
               </div>
@@ -181,12 +181,12 @@ export default function WelcomePopup({ isOpen, onClose, onComplete }) {
                   type="text"
                   value={formData.username}
                   onChange={(e) => handleInputChange('username', e.target.value.toLowerCase().replace(/[^a-z0-9]/g, ''))}
-                  className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none transition-all ${
+                  className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none transition-all text-gray-900 placeholder:text-gray-400 ${
                     errors.username ? 'border-red-300 bg-red-50' : 'border-gray-300'
                   }`}
                   placeholder="johndoe123"
                 />
-                <p className="text-sm text-gray-500 mt-1">
+                <p className="text-sm text-gray-700 mt-1">
                   This will be used for your profile URL: frame.com/u/{formData.username || 'username'}
                 </p>
                 {errors.username && <p className="text-red-600 text-sm mt-1">{errors.username}</p>}
@@ -201,12 +201,12 @@ export default function WelcomePopup({ isOpen, onClose, onComplete }) {
                   type="text"
                   value={formData.displayName}
                   onChange={(e) => handleInputChange('displayName', e.target.value)}
-                  className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none transition-all ${
+                  className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none transition-all text-gray-900 placeholder:text-gray-400 ${
                     errors.displayName ? 'border-red-300 bg-red-50' : 'border-gray-300'
                   }`}
                   placeholder="John Doe"
                 />
-                <p className="text-sm text-gray-500 mt-1">
+                <p className="text-sm text-gray-700 mt-1">
                   This will appear as your profile name and be visible to other users
                 </p>
                 {errors.displayName && <p className="text-red-600 text-sm mt-1">{errors.displayName}</p>}
@@ -220,7 +220,7 @@ export default function WelcomePopup({ isOpen, onClose, onComplete }) {
                 <select
                   value={formData.country}
                   onChange={(e) => handleInputChange('country', e.target.value)}
-                  className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none transition-all ${
+                  className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none transition-all text-gray-900 ${
                     errors.country ? 'border-red-300 bg-red-50' : 'border-gray-300'
                   }`}
                 >
@@ -231,7 +231,7 @@ export default function WelcomePopup({ isOpen, onClose, onComplete }) {
                     </option>
                   ))}
                 </select>
-                <p className="text-sm text-gray-500 mt-1">
+                <p className="text-sm text-gray-700 mt-1">
                   This helps us show relevant content and connect you with users from your region
                 </p>
                 {errors.country && <p className="text-red-600 text-sm mt-1">{errors.country}</p>}
@@ -291,7 +291,7 @@ export default function WelcomePopup({ isOpen, onClose, onComplete }) {
                     Choose Banner Image
                   </button>
                 </div>
-                <p className="text-sm text-gray-500 mt-1">
+                <p className="text-sm text-gray-700 mt-1">
                   A banner image appears at the top of your profile and makes it more attractive
                 </p>
               </div>
@@ -304,12 +304,12 @@ export default function WelcomePopup({ isOpen, onClose, onComplete }) {
                 <textarea
                   value={formData.bio}
                   onChange={(e) => handleInputChange('bio', e.target.value)}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none transition-all resize-none"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none transition-all resize-none text-gray-900 placeholder:text-gray-400"
                   rows="4"
                   placeholder="Tell others about yourself, your interests, or what you do..."
                 />
                 <div className="flex justify-between mt-1">
-                  <p className="text-sm text-gray-500">
+                  <p className="text-sm text-gray-700">
                     Share a bit about yourself - this appears on your profile page
                   </p>
                   <span className="text-sm text-gray-400">{formData.bio.length}/500</span>

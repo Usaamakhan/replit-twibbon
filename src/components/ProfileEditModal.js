@@ -225,12 +225,12 @@ export default function ProfileEditModal({ isOpen, onClose, userData, onUpdate }
                 type="text"
                 value={formData.username}
                 onChange={(e) => handleInputChange('username', e.target.value.toLowerCase().replace(/[^a-z0-9]/g, ''))}
-                className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none transition-all ${
+                className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none transition-all text-gray-900 placeholder:text-gray-400 ${
                   errors.username ? 'border-red-300 bg-red-50' : 'border-gray-300'
                 }`}
                 placeholder="johndoe123"
               />
-              <p className="text-sm text-gray-500 mt-1">
+              <p className="text-sm text-gray-700 mt-1">
                 Your profile URL: frame.com/u/{formData.username || 'username'}
               </p>
               {errors.username && <p className="text-red-600 text-sm mt-1">{errors.username}</p>}
@@ -245,12 +245,12 @@ export default function ProfileEditModal({ isOpen, onClose, userData, onUpdate }
                 type="text"
                 value={formData.displayName}
                 onChange={(e) => handleInputChange('displayName', e.target.value)}
-                className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none transition-all ${
+                className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none transition-all text-gray-900 placeholder:text-gray-400 ${
                   errors.displayName ? 'border-red-300 bg-red-50' : 'border-gray-300'
                 }`}
                 placeholder="John Doe"
               />
-              <p className="text-sm text-gray-500 mt-1">
+              <p className="text-sm text-gray-700 mt-1">
                 This appears as your profile name
               </p>
               {errors.displayName && <p className="text-red-600 text-sm mt-1">{errors.displayName}</p>}
@@ -264,7 +264,7 @@ export default function ProfileEditModal({ isOpen, onClose, userData, onUpdate }
               <select
                 value={formData.country}
                 onChange={(e) => handleInputChange('country', e.target.value)}
-                className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none transition-all ${
+                className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none transition-all text-gray-900 ${
                   errors.country ? 'border-red-300 bg-red-50' : 'border-gray-300'
                 }`}
               >
@@ -286,7 +286,7 @@ export default function ProfileEditModal({ isOpen, onClose, userData, onUpdate }
               <textarea
                 value={formData.bio}
                 onChange={(e) => handleInputChange('bio', e.target.value)}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none transition-all resize-none"
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none transition-all resize-none text-gray-900 placeholder:text-gray-400"
                 rows="4"
                 placeholder="Tell others about yourself..."
                 maxLength="500"
