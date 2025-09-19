@@ -3,6 +3,9 @@ import { verifyIdToken } from '../../../../lib/firebaseAdmin'
 import { supabaseAdmin } from '../../../../lib/supabase-admin'
 import { headers } from 'next/headers'
 
+// Force Node.js runtime for server-side operations
+export const runtime = 'nodejs'
+
 export async function DELETE(request) {
   try {
     // Get the authorization header

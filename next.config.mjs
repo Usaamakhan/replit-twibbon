@@ -16,15 +16,7 @@ const nextConfig = {
       },
     ];
   },
-  // Allow dev origins to prevent Next.js cross-origin warnings
-  allowedDevOrigins: [
-    'https://*.replit.dev',
-    'https://*.repl.co',
-    'http://localhost:5000',
-    'http://127.0.0.1:5000',
-    'http://localhost',
-    'http://127.0.0.1'
-  ],
+  // Dev origin configuration moved to experimental.serverActions.allowedOrigins
   // Additional experimental features
   experimental: {
     // Enable server actions
