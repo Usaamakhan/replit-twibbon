@@ -42,13 +42,6 @@ const nextConfig = {
   
   // Additional experimental features
   experimental: {
-    // Fix cross-origin warnings for Replit environment
-    allowedDevOrigins: [
-      '*.replit.dev',
-      '*.repl.co',
-      'localhost:5000',
-      '127.0.0.1:5000'
-    ],
     // Enable server actions
     serverActions: {
       allowedOrigins: [
