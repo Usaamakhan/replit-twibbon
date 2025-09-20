@@ -20,39 +20,22 @@ const missingVars = Object.entries(firebaseEnvVars)
 // Firebase configuration is optional for development
 const firebaseConfigured = missingVars.length === 0;
 
-// Initialize Firebase only if configured and in browser environment
+// Initialize Firebase immediately if configured and in browser environment
 let app = null;
 let auth = null;
 let db = null;
 
-// Function to initialize Firebase (called from client-side useEffect)
-export const initializeFirebase = () => {
-  if (typeof window === 'undefined') return { app: null, auth: null, db: null };
-  
-  if (!firebaseConfigured) {
-    if (process.env.NODE_ENV === 'development') {
-      console.log('Firebase not configured - missing variables:', missingVars);
-    }
-    return { app: null, auth: null, db: null };
-  }
-
-  if (!firebaseConfigured && process.env.NODE_ENV !== 'development') {
-    throw new Error(`Missing required Firebase environment variables: ${missingVars.join(', ')}`);
-  }
-
-  if (app && auth && db) {
-    return { app, auth, db }; // Already initialized
-  }
-
-  const firebaseConfig = {
-    apiKey: firebaseEnvVars.apiKey,
-    authDomain: `${firebaseEnvVars.projectId}.firebaseapp.com`,
-    projectId: firebaseEnvVars.projectId,
-    storageBucket: `${firebaseEnvVars.projectId}.appspot.com`,
-    appId: firebaseEnvVars.appId,
-  };
-
+// Auto-initialize Firebase if we're in the browser and configured
+if (typeof window !== 'undefined' && firebaseConfigured) {
   try {
+    const firebaseConfig = {
+      apiKey: firebaseEnvVars.apiKey,
+      authDomain: `${firebaseEnvVars.projectId}.firebaseapp.com`,
+      projectId: firebaseEnvVars.projectId,
+      storageBucket: `${firebaseEnvVars.projectId}.appspot.com`,
+      appId: firebaseEnvVars.appId,
+    };
+
     // Initialize Firebase - prevent duplicate initialization during HMR
     app = getApps().length ? getApp() : initializeApp(firebaseConfig);
     
@@ -65,18 +48,24 @@ export const initializeFirebase = () => {
     if (process.env.NODE_ENV === 'development') {
       console.log('Firebase initialized successfully with project:', firebaseEnvVars.projectId);
     }
-    
-    return { app, auth, db };
   } catch (error) {
     console.error('Firebase initialization failed:', error);
-    // Set services to null if initialization fails
     app = null;
     auth = null;
     db = null;
-    return { app: null, auth: null, db: null };
   }
+} else if (typeof window !== 'undefined' && !firebaseConfigured) {
+  if (process.env.NODE_ENV === 'development') {
+    console.log('Firebase not configured - missing variables:', missingVars);
+  }
+}
+
+// Function to initialize Firebase (for compatibility, now redundant)
+export const initializeFirebase = () => {
+  if (typeof window === 'undefined') return { app: null, auth: null, db: null };
+  return { app, auth, db };
 };
 
-// Export Firebase services (will be null if not configured or not in browser)
+// Export Firebase services
 export { auth, db, firebaseConfigured };
 export default app;
