@@ -40,6 +40,14 @@ const nextConfig = {
     return config;
   },
   
+  // Configure allowed dev origins for Replit proxy
+  allowedDevOrigins: [
+    '127.0.0.1',
+    'localhost',
+    '*.replit.dev',
+    '*.repl.co'
+  ],
+  
   // Additional experimental features
   experimental: {
     // Enable server actions
