@@ -27,12 +27,10 @@ export default function AuthenticatedLayout({ children }) {
     return children;
   }
 
-  // Provide auth context for authenticated pages
+  // Firebase is configured - provide user onboarding wrapper
   return (
-    <AuthProvider>
-      <UserOnboardingWrapper>
-        {children}
-      </UserOnboardingWrapper>
-    </AuthProvider>
+    <UserOnboardingWrapper>
+      {children}
+    </UserOnboardingWrapper>
   );
 }
