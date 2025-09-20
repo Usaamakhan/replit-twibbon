@@ -269,9 +269,30 @@ export const getUserProfileByUsername = async (username) => {
   }
   
   try {
+    const startTime = performance.now();
+    console.log('🔍 getUserProfileByUsername starting for:', normalizedUsername, 'Time:', new Date().toISOString());
+    
+    // Get Firebase database instance
+    const firebase = useFirebase();
+    const db = getDatabase(firebase);
+    
+    if (!db) {
+      console.error('Database not available for getUserProfileByUsername');
+      return null;
+    }
+
+    // Get Firestore helpers with timing
+    const helpersStart = performance.now();
+    const { doc, getDoc } = await getFirestoreHelpers();
+    const helpersTime = performance.now() - helpersStart;
+    console.log('📦 Firestore helpers loaded in:', helpersTime.toFixed(2) + 'ms');
+    
     // First, resolve username to userId using usernames collection
+    const lookupStart = performance.now();
     const usernameDocRef = doc(db, 'usernames', normalizedUsername);
     const usernameDoc = await getDoc(usernameDocRef);
+    const lookupTime = performance.now() - lookupStart;
+    console.log('🔍 Username lookup completed in:', lookupTime.toFixed(2) + 'ms');
     
     if (!usernameDoc.exists()) {
       console.log('No username reservation found for:', normalizedUsername);
@@ -279,10 +300,14 @@ export const getUserProfileByUsername = async (username) => {
     }
     
     const { userId } = usernameDoc.data();
+    console.log('✅ Found userId for username:', normalizedUsername, '->', userId);
     
     // Then fetch user profile using the userId
+    const profileStart = performance.now();
     const userDocRef = doc(db, 'users', userId);
     const userDoc = await getDoc(userDocRef);
+    const profileTime = performance.now() - profileStart;
+    console.log('👤 User profile fetch completed in:', profileTime.toFixed(2) + 'ms');
     
     if (!userDoc.exists()) {
       console.warn('Username exists but user profile missing:', normalizedUsername, userId);
@@ -290,6 +315,18 @@ export const getUserProfileByUsername = async (username) => {
     }
     
     const userData = userDoc.data();
+    const totalTime = performance.now() - startTime;
+    
+    console.log('🎯 getUserProfileByUsername completed successfully', {
+      username: normalizedUsername,
+      userId: userId,
+      timing: {
+        helpers: helpersTime.toFixed(2) + 'ms',
+        lookup: lookupTime.toFixed(2) + 'ms', 
+        profile: profileTime.toFixed(2) + 'ms',
+        total: totalTime.toFixed(2) + 'ms'
+      }
+    });
     
     // Ensure required fields exist with fallbacks
     return { 
