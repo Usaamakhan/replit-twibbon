@@ -19,13 +19,17 @@ export const useFirebase = () => {
 
   useEffect(() => {
     const startTime = performance.now();
-    console.log('🔍 Firebase useEffect triggered - Route:', window.location.pathname, 'Time:', new Date().toISOString());
-    console.log('📊 Firebase initialization status:', { isInitialized, isConfigured: Boolean(firebaseApp) });
+    if (process.env.NEXT_PUBLIC_DEBUG === '1') {
+      console.log('🔍 Firebase useEffect triggered - Route:', window.location.pathname, 'Time:', new Date().toISOString());
+      console.log('📊 Firebase initialization status:', { isInitialized, isConfigured: Boolean(firebaseApp) });
+    }
     
     // Only initialize once on the client
     if (isInitialized) {
       const cacheTime = performance.now() - startTime;
-      console.log('✅ Firebase already initialized, returning cached values. Time taken:', cacheTime.toFixed(2) + 'ms');
+      if (process.env.NEXT_PUBLIC_DEBUG === '1') {
+        console.log('✅ Firebase already initialized, returning cached values. Time taken:', cacheTime.toFixed(2) + 'ms');
+      }
       setFirebase({
         app: firebaseApp,
         auth: firebaseAuth,
@@ -39,7 +43,9 @@ export const useFirebase = () => {
     const initializeFirebase = async () => {
       try {
         const envCheckStart = performance.now();
-        console.log('🔧 Starting Firebase initialization...', new Date().toISOString());
+        if (process.env.NEXT_PUBLIC_DEBUG === '1') {
+          console.log('🔧 Starting Firebase initialization...', new Date().toISOString());
+        }
         
         // Check environment variables BEFORE importing anything
         const apiKey = process.env.NEXT_PUBLIC_FIREBASE_API_KEY;
@@ -47,19 +53,23 @@ export const useFirebase = () => {
         const appId = process.env.NEXT_PUBLIC_FIREBASE_APP_ID;
 
         const envCheckTime = performance.now() - envCheckStart;
-        console.log('⚙️ Environment check completed in:', envCheckTime.toFixed(2) + 'ms', {
-          hasApiKey: !!apiKey, 
-          hasProjectId: !!projectId, 
-          hasAppId: !!appId
-        });
-
-        if (!apiKey || !projectId || !appId) {
-          console.log('❌ Firebase not configured - missing variables:', { 
+        if (process.env.NEXT_PUBLIC_DEBUG === '1') {
+          console.log('⚙️ Environment check completed in:', envCheckTime.toFixed(2) + 'ms', {
             hasApiKey: !!apiKey, 
             hasProjectId: !!projectId, 
-            hasAppId: !!appId,
-            route: window.location.pathname 
+            hasAppId: !!appId
           });
+        }
+
+        if (!apiKey || !projectId || !appId) {
+          if (process.env.NEXT_PUBLIC_DEBUG === '1') {
+            console.log('❌ Firebase not configured - missing variables:', { 
+              hasApiKey: !!apiKey, 
+              hasProjectId: !!projectId, 
+              hasAppId: !!appId,
+              route: window.location.pathname 
+            });
+          }
           setFirebase({
             app: null,
             auth: null,

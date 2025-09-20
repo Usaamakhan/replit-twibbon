@@ -40,12 +40,16 @@ const nextConfig = {
     return config;
   },
   
-  // Configure allowed dev origins for Replit proxy
+  // Configure allowed dev origins for Replit proxy with proper protocols
   allowedDevOrigins: [
-    '127.0.0.1',
-    'localhost',
-    '*.replit.dev',
-    '*.repl.co'
+    'http://localhost:5000',
+    'http://127.0.0.1:5000',
+    'http://localhost',
+    'http://127.0.0.1',
+    'https://*.replit.dev',
+    'https://*.repl.co',
+    'https://7b268d1b-9684-4003-9c38-bba198c0a3f3-00-1b9p0s26madwt.worf.replit.dev',
+    ...(process.env.REPLIT_DEV_DOMAIN ? [`https://${process.env.REPLIT_DEV_DOMAIN}`] : [])
   ],
   
   // Additional experimental features
