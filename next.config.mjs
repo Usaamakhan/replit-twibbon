@@ -54,8 +54,6 @@ const nextConfig = {
   
   // Additional experimental features  
   experimental: {
-    // Enable Turbopack for faster builds and performance
-    turbo: true,
     // Enable server actions
     serverActions: {
       allowedOrigins: [
@@ -69,7 +67,10 @@ const nextConfig = {
         ...(process.env.ALLOWED_ORIGINS ? process.env.ALLOWED_ORIGINS.split(',') : [])
       ]
     }
-  }
+  },
+  
+  // Enable Turbopack for faster builds (moved to correct location)
+  turbo: true
 };
 
 export default nextConfig;
