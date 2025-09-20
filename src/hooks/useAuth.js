@@ -1,69 +1,73 @@
 "use client";
 
 import { useState, useEffect, createContext, useContext } from 'react';
-import { 
-  signInWithPopup, 
-  GoogleAuthProvider, 
-  signOut,
-  onAuthStateChanged,
-  createUserWithEmailAndPassword,
-  signInWithEmailAndPassword,
-  updateProfile,
-  sendEmailVerification,
-  sendPasswordResetEmail,
-  reload
-} from 'firebase/auth';
-import { auth, firebaseConfigured } from '../lib/firebase';
+import { useFirebase } from '../lib/firebase-client';
 import { createUserProfile } from '../lib/firestore';
 
 // Create Auth Context
 const AuthContext = createContext(null);
 
-// Google Auth Provider
-const googleProvider = new GoogleAuthProvider();
-
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [mounted, setMounted] = useState(false);
+  const firebase = useFirebase();
 
   useEffect(() => {
-    // Set mounted to true to prevent hydration mismatches
-    setMounted(true);
+    // Don't set up auth listener until Firebase is loaded
+    if (firebase.isLoading) return;
     
     // If Firebase is not configured, set loading to false and return
-    if (!firebaseConfigured || !auth) {
+    if (!firebase.isConfigured || !firebase.auth) {
       setLoading(false);
       return;
     }
     
-    // Listen for authentication state changes
-    const unsubscribe = onAuthStateChanged(auth, async (user) => {
-      if (process.env.NODE_ENV === 'development') {
-        console.log('Auth state changed:', user ? user.email : 'No user');
-      }
-      if (user) {
-        if (process.env.NODE_ENV === 'development') {
-          console.log('Email verified:', user.emailVerified);
-        }
-        // Create user profile in Firestore if it doesn't exist
-        try {
-          await createUserProfile(user);
-        } catch (error) {
+    // Set up auth listener with proper cleanup
+    let unsubscribe = null;
+    
+    const setupAuthListener = async () => {
+      try {
+        const { onAuthStateChanged } = await import('firebase/auth');
+        
+        // Listen for authentication state changes
+        unsubscribe = onAuthStateChanged(firebase.auth, async (user) => {
           if (process.env.NODE_ENV === 'development') {
-            console.error('Error creating user profile:', error);
+            console.log('Auth state changed:', user ? user.email : 'No user');
           }
-        }
+          if (user) {
+            if (process.env.NODE_ENV === 'development') {
+              console.log('Email verified:', user.emailVerified);
+            }
+            // Create user profile in Firestore if it doesn't exist
+            try {
+              await createUserProfile(user);
+            } catch (error) {
+              if (process.env.NODE_ENV === 'development') {
+                console.error('Error creating user profile:', error);
+              }
+            }
+          }
+          setUser(user);
+          setLoading(false);
+        });
+      } catch (error) {
+        console.error('Failed to set up auth listener:', error);
+        setLoading(false);
       }
-      setUser(user);
-      setLoading(false);
-    });
+    };
 
-    return () => unsubscribe();
-  }, []);
+    setupAuthListener();
 
-  // Prevent hydration mismatches by providing consistent API shape when not mounted
-  if (!mounted) {
+    // Return cleanup function
+    return () => {
+      if (unsubscribe) {
+        unsubscribe();
+      }
+    };
+  }, [firebase.isLoading, firebase.isConfigured, firebase.auth]);
+
+  // Show loading state while Firebase is initializing
+  if (firebase.isLoading || loading) {
     const noopAsync = async () => ({ success: false });
     const noop = () => {};
     
@@ -71,7 +75,7 @@ export function AuthProvider({ children }) {
       <AuthContext.Provider value={{ 
         user: null, 
         loading: true, 
-        mounted: false,
+        mounted: true,
         signInWithGoogle: noopAsync, 
         signUpWithEmail: noopAsync, 
         signInWithEmail: noopAsync, 
@@ -92,7 +96,13 @@ export function AuthProvider({ children }) {
         console.log('Starting Google sign in...');
       }
       
-      const result = await signInWithPopup(auth, googleProvider);
+      const [{ signInWithPopup, GoogleAuthProvider }] = await Promise.all([
+        import('firebase/auth')
+      ]);
+      
+      const googleProvider = new GoogleAuthProvider();
+      const result = await signInWithPopup(firebase.auth, googleProvider);
+      
       if (process.env.NODE_ENV === 'development') {
         console.log('Google sign in successful:', result.user.email);
       }
@@ -112,7 +122,10 @@ export function AuthProvider({ children }) {
   const signUpWithEmail = async (email, password, fullName) => {
     try {
       setLoading(true);
-      const result = await createUserWithEmailAndPassword(auth, email, password);
+      
+      const { createUserWithEmailAndPassword, updateProfile, sendEmailVerification } = await import('firebase/auth');
+      
+      const result = await createUserWithEmailAndPassword(firebase.auth, email, password);
       
       // Update user profile with full name
       if (fullName) {
@@ -141,7 +154,10 @@ export function AuthProvider({ children }) {
   const signInWithEmail = async (email, password) => {
     try {
       setLoading(true);
-      const result = await signInWithEmailAndPassword(auth, email, password);
+      
+      const { signInWithEmailAndPassword } = await import('firebase/auth');
+      
+      const result = await signInWithEmailAndPassword(firebase.auth, email, password);
       if (process.env.NODE_ENV === 'development') {
         console.log('Email sign in successful:', result.user.email);
       }
@@ -158,7 +174,8 @@ export function AuthProvider({ children }) {
 
   const logout = async () => {
     try {
-      await signOut(auth);
+      const { signOut } = await import('firebase/auth');
+      await signOut(firebase.auth);
     } catch (error) {
       console.error('Sign-out error:', error);
     }
@@ -167,8 +184,9 @@ export function AuthProvider({ children }) {
   // Send email verification
   const sendVerificationEmail = async () => {
     try {
-      if (auth.currentUser) {
-        await sendEmailVerification(auth.currentUser);
+      if (firebase.auth?.currentUser) {
+        const { sendEmailVerification } = await import('firebase/auth');
+        await sendEmailVerification(firebase.auth.currentUser);
         console.log('Verification email sent');
         return { success: true };
       }
@@ -182,12 +200,13 @@ export function AuthProvider({ children }) {
   // Check email verification status (reload user)
   const checkEmailVerification = async () => {
     try {
-      if (auth.currentUser) {
-        await reload(auth.currentUser);
+      if (firebase.auth?.currentUser) {
+        const { reload } = await import('firebase/auth');
+        await reload(firebase.auth.currentUser);
         // Update the user state so components re-render with new verification status
-        setUser(auth.currentUser);
-        console.log('User reloaded, verification status:', auth.currentUser.emailVerified);
-        return { verified: auth.currentUser.emailVerified };
+        setUser(firebase.auth.currentUser);
+        console.log('User reloaded, verification status:', firebase.auth.currentUser.emailVerified);
+        return { verified: firebase.auth.currentUser.emailVerified };
       }
       return { verified: false };
     } catch (error) {
@@ -205,7 +224,8 @@ export function AuthProvider({ children }) {
         console.log('Attempting password reset');
       }
       
-      await sendPasswordResetEmail(auth, email);
+      const { sendPasswordResetEmail } = await import('firebase/auth');
+      await sendPasswordResetEmail(firebase.auth, email);
       setLoading(false);
       
       // Always return success message for security (prevents user enumeration)
@@ -238,7 +258,7 @@ export function AuthProvider({ children }) {
   const value = {
     user,
     loading,
-    mounted,
+    mounted: true,
     signInWithGoogle,
     signUpWithEmail,
     signInWithEmail,

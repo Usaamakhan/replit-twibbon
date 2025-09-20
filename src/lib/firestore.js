@@ -1,33 +1,49 @@
 "use client";
 
 // Firestore database operations for the Twibbonize app
-import { 
-  doc, 
-  setDoc, 
-  getDoc, 
-  collection, 
-  addDoc, 
-  getDocs, 
-  query, 
-  where, 
-  orderBy, 
-  limit,
-  serverTimestamp,
-  updateDoc,
-  increment,
-  runTransaction 
-} from 'firebase/firestore';
-import { db, initializeFirebase } from './firebase';
+import { useFirebase } from './firebase-client';
 
-// Get database instance with initialization check
-const getDatabase = () => {
-  if (typeof window === 'undefined') return null;
+// Dynamic import helper for Firestore functions
+const getFirestoreHelpers = async () => {
+  const { 
+    doc, 
+    setDoc, 
+    getDoc, 
+    collection, 
+    addDoc, 
+    getDocs, 
+    query, 
+    where, 
+    orderBy, 
+    limit,
+    serverTimestamp,
+    updateDoc,
+    increment,
+    runTransaction 
+  } = await import('firebase/firestore');
   
-  if (!db) {
-    const { db: initializedDb } = initializeFirebase();
-    return initializedDb;
-  }
-  return db;
+  return { 
+    doc, 
+    setDoc, 
+    getDoc, 
+    collection, 
+    addDoc, 
+    getDocs, 
+    query, 
+    where, 
+    orderBy, 
+    limit,
+    serverTimestamp,
+    updateDoc,
+    increment,
+    runTransaction 
+  };
+};
+
+// Get database instance - now expects Firebase context
+const getDatabase = (firebase) => {
+  if (typeof window === 'undefined' || !firebase?.db) return null;
+  return firebase.db;
 };
 
 // Generate unique username with max attempts to prevent infinite loops
@@ -59,9 +75,9 @@ export const generateUniqueUsername = async (baseUsername, maxAttempts = 100) =>
   return finalUsername;
 };
 
-// Check if username already exists
-export const checkUsernameExists = async (username) => {
-  const database = getDatabase();
+// Check if username already exists - now uses React context
+export const checkUsernameExists = async (username, firebase) => {
+  const database = getDatabase(firebase);
   
   // Check if database is initialized
   if (!database) {
@@ -70,6 +86,8 @@ export const checkUsernameExists = async (username) => {
   }
   
   try {
+    const { doc, getDoc } = await getFirestoreHelpers();
+    
     // Check the usernames collection directly - more efficient and consistent
     const usernameDocRef = doc(database, 'usernames', username.toLowerCase().trim());
     const usernameDoc = await getDoc(usernameDocRef);
