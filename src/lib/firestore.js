@@ -1,7 +1,7 @@
 "use client";
 
 // Firestore database operations for the Twibbonize app
-import { useFirebase } from './firebase-client';
+import { useFirebaseOptimized as useFirebase } from './firebase-optimized';
 
 // Dynamic import helper for Firestore functions
 const getFirestoreHelpers = async () => {

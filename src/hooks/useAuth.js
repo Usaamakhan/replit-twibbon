@@ -1,7 +1,19 @@
 "use client";
 
 import { useState, useEffect, createContext, useContext } from 'react';
-import { useFirebase } from '../lib/firebase-client';
+import { 
+  onAuthStateChanged, 
+  signInWithPopup, 
+  GoogleAuthProvider,
+  createUserWithEmailAndPassword,
+  updateProfile,
+  sendEmailVerification,
+  signInWithEmailAndPassword,
+  signOut,
+  reload,
+  sendPasswordResetEmail
+} from 'firebase/auth';
+import { useFirebaseOptimized as useFirebase } from '../lib/firebase-optimized';
 import { createUserProfile } from '../lib/firestore';
 
 // Create Auth Context
@@ -27,8 +39,6 @@ export function AuthProvider({ children }) {
     
     const setupAuthListener = async () => {
       try {
-        const { onAuthStateChanged } = await import('firebase/auth');
-        
         // Listen for authentication state changes
         unsubscribe = onAuthStateChanged(firebase.auth, async (user) => {
           if (process.env.NODE_ENV === 'development') {
@@ -96,10 +106,6 @@ export function AuthProvider({ children }) {
         console.log('Starting Google sign in...');
       }
       
-      const [{ signInWithPopup, GoogleAuthProvider }] = await Promise.all([
-        import('firebase/auth')
-      ]);
-      
       const googleProvider = new GoogleAuthProvider();
       const result = await signInWithPopup(firebase.auth, googleProvider);
       
@@ -123,7 +129,7 @@ export function AuthProvider({ children }) {
     try {
       setLoading(true);
       
-      const { createUserWithEmailAndPassword, updateProfile, sendEmailVerification } = await import('firebase/auth');
+      // Static imports already available
       
       const result = await createUserWithEmailAndPassword(firebase.auth, email, password);
       
@@ -155,7 +161,7 @@ export function AuthProvider({ children }) {
     try {
       setLoading(true);
       
-      const { signInWithEmailAndPassword } = await import('firebase/auth');
+      // Static imports already available
       
       const result = await signInWithEmailAndPassword(firebase.auth, email, password);
       if (process.env.NODE_ENV === 'development') {
@@ -174,7 +180,6 @@ export function AuthProvider({ children }) {
 
   const logout = async () => {
     try {
-      const { signOut } = await import('firebase/auth');
       await signOut(firebase.auth);
     } catch (error) {
       console.error('Sign-out error:', error);
@@ -185,7 +190,6 @@ export function AuthProvider({ children }) {
   const sendVerificationEmail = async () => {
     try {
       if (firebase.auth?.currentUser) {
-        const { sendEmailVerification } = await import('firebase/auth');
         await sendEmailVerification(firebase.auth.currentUser);
         console.log('Verification email sent');
         return { success: true };
@@ -201,7 +205,6 @@ export function AuthProvider({ children }) {
   const checkEmailVerification = async () => {
     try {
       if (firebase.auth?.currentUser) {
-        const { reload } = await import('firebase/auth');
         await reload(firebase.auth.currentUser);
         // Update the user state so components re-render with new verification status
         setUser(firebase.auth.currentUser);
@@ -224,7 +227,6 @@ export function AuthProvider({ children }) {
         console.log('Attempting password reset');
       }
       
-      const { sendPasswordResetEmail } = await import('firebase/auth');
       await sendPasswordResetEmail(firebase.auth, email);
       setLoading(false);
       

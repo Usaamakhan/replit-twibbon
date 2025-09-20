@@ -2,7 +2,7 @@
 
 // Provider component to make Firebase context available to Firestore operations
 import { createContext, useContext } from 'react';
-import { useFirebase } from '../lib/firebase-client';
+import { useFirebaseOptimized as useFirebase } from '../lib/firebase-optimized';
 
 const FirestoreContext = createContext(null);
 

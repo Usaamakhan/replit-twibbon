@@ -52,8 +52,10 @@ const nextConfig = {
     ...(process.env.REPLIT_DEV_DOMAIN ? [`https://${process.env.REPLIT_DEV_DOMAIN}`] : [])
   ],
   
-  // Additional experimental features
+  // Additional experimental features  
   experimental: {
+    // Enable Turbopack for faster builds and performance
+    turbo: true,
     // Enable server actions
     serverActions: {
       allowedOrigins: [

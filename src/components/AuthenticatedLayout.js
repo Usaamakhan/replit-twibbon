@@ -1,6 +1,6 @@
 'use client';
 
-import { useFirebase } from '../lib/firebase-client';
+import { useFirebaseOptimized as useFirebase } from '../lib/firebase-optimized';
 import { AuthProvider } from '../hooks/useAuth';
 import UserOnboardingWrapper from './UserOnboardingWrapper';
 
