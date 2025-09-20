@@ -9,10 +9,6 @@ export default function MobileMenu({
   openSignInModal, 
   openSignUpModal 
 }) {
-  if (typeof window !== 'undefined') {
-    console.log('📱 MobileMenu rendering, isOpen:', isMenuOpen);
-  }
-  
   const authContext = useOptionalAuth();
   
   // Provide safe defaults if no auth context
@@ -22,10 +18,6 @@ export default function MobileMenu({
     mounted: true,
     logout: async () => ({ success: false })
   };
-  
-  if (typeof window !== 'undefined') {
-    console.log('🔐 MobileMenu auth status:', { hasAuth: !!authContext, user: !!user, loading, mounted });
-  }
   const router = useRouter();
 
   const handleProfileClick = () => {

@@ -33,6 +33,21 @@ export const useFirebaseOptimized = () => {
       return;
     }
 
+    // Set timeout to prevent infinite loading
+    const timeoutId = setTimeout(() => {
+      if (!isInitialized) {
+        console.warn('Firebase initialization timeout - proceeding without Firebase');
+        setFirebase({
+          app: null,
+          auth: null,
+          db: null,
+          isLoading: false,
+          isConfigured: false
+        });
+        isInitialized = true;
+      }
+    }, 3000);
+
     const initializeFirebase = () => {
       try {
         // Check environment variables
@@ -74,6 +89,7 @@ export const useFirebaseOptimized = () => {
           isLoading: false,
           isConfigured: true
         });
+        clearTimeout(timeoutId);
       } catch (error) {
         console.error('Firebase initialization failed:', error);
         setFirebase({
@@ -84,11 +100,16 @@ export const useFirebaseOptimized = () => {
           isConfigured: false
         });
         isInitialized = true;
+        clearTimeout(timeoutId);
       }
     };
 
     // Initialize immediately without dynamic imports
     initializeFirebase();
+
+    return () => {
+      clearTimeout(timeoutId);
+    };
   }, []);
 
   return firebase;

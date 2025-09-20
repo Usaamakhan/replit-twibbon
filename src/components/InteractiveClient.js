@@ -12,12 +12,6 @@ import SignUpModal from './auth/SignUpModal';
 import ForgotPasswordModal from './auth/ForgotPasswordModal';
 
 export default function InteractiveClient({ children }) {
-  // Fix SSR issue - only log on client side
-  if (typeof window !== 'undefined') {
-    console.log('👾 InteractiveClient mounting on route:', window.location.pathname);
-    console.log('📊 InteractiveClient bundle size check - timestamp:', Date.now());
-  }
-  
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [activeModal, setActiveModal] = useState(null); // 'signin', 'signup', or 'forgotpassword'
   const [authError, setAuthError] = useState('');
@@ -25,10 +19,7 @@ export default function InteractiveClient({ children }) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isWaitingForAuth, setIsWaitingForAuth] = useState(false);
   
-  // FIXED: Use optional auth that doesn't crash on pages without AuthProvider
-  if (typeof window !== 'undefined') {
-    console.log('✅ InteractiveClient using optional auth on:', window.location.pathname);
-  }
+  // Use optional auth that doesn't crash on pages without AuthProvider
   const authContext = useOptionalAuth();
   
   // If no auth context, provide safe defaults
@@ -41,8 +32,6 @@ export default function InteractiveClient({ children }) {
     forgotPassword: async () => ({ success: false, error: 'No auth configured' }),
     logout: async () => ({ success: false })
   };
-  
-  console.log('🔐 Auth status in InteractiveClient:', { hasAuth: !!authContext, user: !!user, loading });
 
   // Prevent body scrolling when sidebar or modals are open
   useBodyScrollLock(isMenuOpen || activeModal !== null);

@@ -1,0 +1,279 @@
+Download the React DevTools for a better development experience: https://react.dev/link/react-devtools
+useAuth.js:300 🔓 useOptionalAuth called from route: /
+useAuth.js:300 🔓 useOptionalAuth called from route: /
+InteractiveClient.js:17 👾 InteractiveClient mounting on route: /
+InteractiveClient.js:18 📊 InteractiveClient bundle size check - timestamp: 1758378539745
+InteractiveClient.js:30 ✅ InteractiveClient using optional auth on: /
+useAuth.js:300 🔓 useOptionalAuth called from route: /
+InteractiveClient.js:45 🔐 Auth status in InteractiveClient: {hasAuth: true, user: false, loading: true}
+InteractiveClient.js:17 👾 InteractiveClient mounting on route: /
+InteractiveClient.js:18 📊 InteractiveClient bundle size check - timestamp: 1758378539754
+InteractiveClient.js:30 ✅ InteractiveClient using optional auth on: /
+useAuth.js:300 🔓 useOptionalAuth called from route: /
+InteractiveClient.js:45 🔐 Auth status in InteractiveClient: {hasAuth: true, user: false, loading: true}
+MobileMenu.js:13 📱 MobileMenu rendering, isOpen: false
+useAuth.js:300 🔓 useOptionalAuth called from route: /
+MobileMenu.js:27 🔐 MobileMenu auth status: {hasAuth: true, user: false, loading: true, mounted: true}
+MobileMenu.js:13 📱 MobileMenu rendering, isOpen: false
+useAuth.js:300 🔓 useOptionalAuth called from route: /
+MobileMenu.js:27 🔐 MobileMenu auth status: {hasAuth: true, user: false, loading: true, mounted: true}
+intercept-console-error.js:57 A tree hydrated but some attributes of the server rendered HTML didn't match the client properties. This won't be patched up. This can happen if a SSR-ed Client Component used:
+
+- A server/client branch `if (typeof window !== 'undefined')`.
+- Variable input such as `Date.now()` or `Math.random()` which changes each time it's called.
+- Date formatting in a user's locale which doesn't match the server.
+- External changing data without sending a snapshot of it along with the HTML.
+- Invalid HTML tag nesting.
+
+It can also happen if the client has a browser extension installed which messes with the HTML before React loaded.
+
+https://react.dev/link/hydration-mismatch
+
+  ...
+    <HotReload assetPrefix="" globalError={[...]}>
+      <AppDevOverlayErrorBoundary globalError={[...]}>
+        <ReplaySsrOnlyErrors>
+        <DevRootHTTPAccessFallbackBoundary>
+          <HTTPAccessFallbackBoundary notFound={<NotAllowedRootHTTPFallbackError>}>
+            <HTTPAccessFallbackErrorBoundary pathname="/" notFound={<NotAllowedRootHTTPFallbackError>} ...>
+              <RedirectBoundary>
+                <RedirectErrorBoundary router={{...}}>
+                  <Head headCacheNode={{lazyData:null, ...}}>
+                    <__next_viewport_boundary__>
+                    <meta>
+                    <MetadataTree>
+                      <__next_metadata_boundary__>
+                        <__next_metadata_boundary__>
+                          <div
+                            hidden={true}
+-                           bis_skin_checked="1"
+                          >
+                  ...
+                    <InnerLayoutRouter url="/" tree={[...]} cacheNode={{lazyData:null, ...}} segmentPath={[...]}>
+                      <SegmentViewNode type="page" pagePath="page.js">
+                        <SegmentTrieNode>
+                        <Home>
+                          <AuthenticatedLayout>
+                            <AuthGate>
+                              <InteractiveClient>
+                                <div
+                                  className="min-h-screen flex flex-col relative"
+-                                 bis_skin_checked="1"
+                                >
+                                  <div
+                                    className={"min-h-screen flex flex-col transition-all duration-300 "}
+-                                   bis_skin_checked="1"
+                                  >
+                                    <Header isMenuOpen={false} setIsMenuOpen={function bound dispatchSetState}>
+                                      <header className="bg-yellow-...">
+                                        <div
+                                          className="mx-auto w-full max-w-screen-xl px-3 sm:px-4 md:px-6 flex items-ce..."
+-                                         bis_skin_checked="1"
+                                        >
+                                          <LinkComponent>
+                                          <div
+                                            className="flex-1 max-w-xs mx-4 relative"
+-                                           bis_skin_checked="1"
+                                          >
+                                          <div
+                                            className="relative"
+-                                           bis_skin_checked="1"
+                                          >
+                                    <main className="flex-1">
+                                      <Hero>
+                                        <section className="bg-yellow-...">
+                                          <div
+                                            className="mx-auto w-full max-w-screen-xl px-3 sm:px-4 md:px-6 text-center"
+-                                           bis_skin_checked="1"
+                                          >
+                                            <h1>
+                                            <p>
+                                            <div
+                                              className="mt-6 sm:mt-8 flex flex-row items-center justify-center gap-4 ..."
+-                                             bis_skin_checked="1"
+                                            >
+                                      <Footer>
+                                        <footer className="bg-white t...">
+                                          <div
+                                            className="mx-auto w-full max-w-screen-xl px-3 sm:px-4 md:px-6 py-12"
+-                                           bis_skin_checked="1"
+                                          >
+                                            <div
+                                              className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-8"
+-                                             bis_skin_checked="1"
+                                            >
+                                              <div
+                                     
+error @ intercept-console-error.js:57
+eval @ react-dom-client.development.js:4707
+runWithFiberInDEV @ react-dom-client.development.js:872
+emitPendingHydrationWarnings @ react-dom-client.development.js:4706
+completeWork @ react-dom-client.development.js:11541
+runWithFiberInDEV @ react-dom-client.development.js:875
+completeUnitOfWork @ react-dom-client.development.js:15863
+performUnitOfWork @ react-dom-client.development.js:15744
+workLoopConcurrentByScheduler @ react-dom-client.development.js:15721
+renderRootConcurrent @ react-dom-client.development.js:15696
+performWorkOnRoot @ react-dom-client.development.js:14990
+performWorkOnRootViaSchedulerTask @ react-dom-client.development.js:16816
+performWorkUntilDeadline @ scheduler.development.js:45Understand this error
+useAuth.js:282 🔑 useAuth called from route: /
+useAuth.js:283 📍 useAuth call stack trace:     at UserOnboardingWrapper (webpack-internal:///(app-pages-browser)/./src/components/UserOnboardingWrapper.js:20:86)
+useAuth.js:282 🔑 useAuth called from route: /
+useAuth.js:283 📍 useAuth call stack trace:     at UserOnboardingWrapper (webpack-internal:///(app-pages-browser)/./src/components/UserOnboardingWrapper.js:20:86)
+useAuth.js:300 🔓 useOptionalAuth called from route: /
+useAuth.js:300 🔓 useOptionalAuth called from route: /
+InteractiveClient.js:17 👾 InteractiveClient mounting on route: /
+InteractiveClient.js:18 📊 InteractiveClient bundle size check - timestamp: 1758378539986
+InteractiveClient.js:30 ✅ InteractiveClient using optional auth on: /
+useAuth.js:300 🔓 useOptionalAuth called from route: /
+InteractiveClient.js:45 🔐 Auth status in InteractiveClient: {hasAuth: true, user: false, loading: true}
+InteractiveClient.js:17 👾 InteractiveClient mounting on route: /
+InteractiveClient.js:18 📊 InteractiveClient bundle size check - timestamp: 1758378539995
+InteractiveClient.js:30 ✅ InteractiveClient using optional auth on: /
+useAuth.js:300 🔓 useOptionalAuth called from route: /
+InteractiveClient.js:45 🔐 Auth status in InteractiveClient: {hasAuth: true, user: false, loading: true}
+MobileMenu.js:13 📱 MobileMenu rendering, isOpen: false
+useAuth.js:300 🔓 useOptionalAuth called from route: /
+MobileMenu.js:27 🔐 MobileMenu auth status: {hasAuth: true, user: false, loading: true, mounted: true}
+MobileMenu.js:13 📱 MobileMenu rendering, isOpen: false
+useAuth.js:300 🔓 useOptionalAuth called from route: /
+MobileMenu.js:27 🔐 MobileMenu auth status: {hasAuth: true, user: false, loading: true, mounted: true}
+useAuth.js:282 🔑 useAuth called from route: /
+useAuth.js:283 📍 useAuth call stack trace:     at UserOnboardingWrapper (webpack-internal:///(app-pages-browser)/./src/components/UserOnboardingWrapper.js:20:86)
+useAuth.js:282 🔑 useAuth called from route: /
+useAuth.js:283 📍 useAuth call stack trace:     at UserOnboardingWrapper (webpack-internal:///(app-pages-browser)/./src/components/UserOnboardingWrapper.js:20:86)
+useAuth.js:300 🔓 useOptionalAuth called from route: /
+useAuth.js:300 🔓 useOptionalAuth called from route: /
+InteractiveClient.js:17 👾 InteractiveClient mounting on route: /
+InteractiveClient.js:18 📊 InteractiveClient bundle size check - timestamp: 1758378540127
+InteractiveClient.js:30 ✅ InteractiveClient using optional auth on: /
+useAuth.js:300 🔓 useOptionalAuth called from route: /
+InteractiveClient.js:45 🔐 Auth status in InteractiveClient: {hasAuth: true, user: false, loading: true}
+InteractiveClient.js:17 👾 InteractiveClient mounting on route: /
+InteractiveClient.js:18 📊 InteractiveClient bundle size check - timestamp: 1758378540133
+InteractiveClient.js:30 ✅ InteractiveClient using optional auth on: /
+useAuth.js:300 🔓 useOptionalAuth called from route: /
+InteractiveClient.js:45 🔐 Auth status in InteractiveClient: {hasAuth: true, user: false, loading: true}
+MobileMenu.js:13 📱 MobileMenu rendering, isOpen: false
+useAuth.js:300 🔓 useOptionalAuth called from route: /
+MobileMenu.js:27 🔐 MobileMenu auth status: {hasAuth: true, user: false, loading: true, mounted: true}
+MobileMenu.js:13 📱 MobileMenu rendering, isOpen: false
+useAuth.js:300 🔓 useOptionalAuth called from route: /
+MobileMenu.js:27 🔐 MobileMenu auth status: {hasAuth: true, user: false, loading: true, mounted: true}
+9The resource <URL> was preloaded using link preload but not used within a few seconds from the window's load event. Please make sure it has an appropriate `as` value and it is preloaded intentionally.Understand this warning
+requests.js:1  POST https://39d4d35b-71ea-493f-a752-8a5296b5f1a3-00-3u13ci9zfz6j3.kirk.replit.dev/__nextjs_original-stack-frames 403 (Forbidden)
+s.fetch @ requests.js:1
+(anonymous) @ traffic.js:1
+fetch @ traffic.js:1
+eval @ index.js:1631
+eval @ index.js:1631
+ew @ index.js:1631
+i @ index.js:1631
+eval @ index.js:1631
+eval @ index.js:1631
+eE @ index.js:1631
+eval @ index.js:1631
+eval @ index.js:1631
+nI @ index.js:1631
+i @ index.js:1631
+eval @ index.js:1631
+eval @ index.js:1631
+i @ index.js:1631
+eval @ index.js:1631
+eval @ index.js:1631
+nI @ index.js:1631
+i @ index.js:1631
+eval @ index.js:1631
+eval @ index.js:1631
+r @ index.js:1631
+i1 @ index.js:1631
+l_ @ index.js:1631
+lC @ index.js:1631
+l_ @ index.js:1631
+lC @ index.js:1631
+l_ @ index.js:1631
+lC @ index.js:1631
+l_ @ index.js:1631
+lC @ index.js:1631
+l_ @ index.js:1631
+lC @ index.js:1631
+l_ @ index.js:1631
+lC @ index.js:1631
+l_ @ index.js:1631
+lC @ index.js:1631
+l_ @ index.js:1631
+sO @ index.js:1631
+eval @ index.js:1631
+O @ index.js:1631Understand this error
+use-websocket.js:42 WebSocket connection to 'wss://39d4d35b-71ea-493f-a752-8a5296b5f1a3-00-3u13ci9zfz6j3.kirk.replit.dev/_next/webpack-hmr' failed: 
+eval @ use-websocket.js:42
+react_stack_bottom_frame @ react-dom-client.development.js:23669
+runWithFiberInDEV @ react-dom-client.development.js:872
+commitHookEffectListMount @ react-dom-client.development.js:12345
+commitHookPassiveMountEffects @ react-dom-client.development.js:12466
+commitPassiveMountOnFiber @ react-dom-client.development.js:14387
+recursivelyTraversePassiveMountEffects @ react-dom-client.development.js:14360
+commitPassiveMountOnFiber @ react-dom-client.development.js:14514
+recursivelyTraversePassiveMountEffects @ react-dom-client.development.js:14360
+commitPassiveMountOnFiber @ react-dom-client.development.js:14514
+recursivelyTraversePassiveMountEffects @ react-dom-client.development.js:14360
+commitPassiveMountOnFiber @ react-dom-client.development.js:14514
+recursivelyTraversePassiveMountEffects @ react-dom-client.development.js:14360
+commitPassiveMountOnFiber @ react-dom-client.development.js:14514
+recursivelyTraversePassiveMountEffects @ react-dom-client.development.js:14360
+commitPassiveMountOnFiber @ react-dom-client.development.js:14514
+recursivelyTraversePassiveMountEffects @ react-dom-client.development.js:14360
+commitPassiveMountOnFiber @ react-dom-client.development.js:14514
+recursivelyTraversePassiveMountEffects @ react-dom-client.development.js:14360
+commitPassiveMountOnFiber @ react-dom-client.development.js:14380
+recursivelyTraversePassiveMountEffects @ react-dom-client.development.js:14360
+commitPassiveMountOnFiber @ react-dom-client.development.js:14390
+recursivelyTraversePassiveMountEffects @ react-dom-client.development.js:14360
+commitPassiveMountOnFiber @ react-dom-client.development.js:14380
+recursivelyTraversePassiveMountEffects @ react-dom-client.development.js:14360
+commitPassiveMountOnFiber @ react-dom-client.development.js:14380
+recursivelyTraversePassiveMountEffects @ react-dom-client.development.js:14360
+commitPassiveMountOnFiber @ react-dom-client.development.js:14380
+recursivelyTraversePassiveMountEffects @ react-dom-client.development.js:14360
+commitPassiveMountOnFiber @ react-dom-client.development.js:14514
+recursivelyTraversePassiveMountEffects @ react-dom-client.development.js:14360
+commitPassiveMountOnFiber @ react-dom-client.development.js:14380
+recursivelyTraversePassiveMountEffects @ react-dom-client.development.js:14360
+commitPassiveMountOnFiber @ react-dom-client.development.js:14380
+recursivelyTraversePassiveMountEffects @ react-dom-client.development.js:14360
+commitPassiveMountOnFiber @ react-dom-client.development.js:14514
+recursivelyTraversePassiveMountEffects @ react-dom-client.development.js:14360
+commitPassiveMountOnFiber @ react-dom-client.development.js:14514
+recursivelyTraversePassiveMountEffects @ react-dom-client.development.js:14360
+commitPassiveMountOnFiber @ react-dom-client.development.js:14399
+flushPassiveEffects @ react-dom-client.development.js:16338
+eval @ react-dom-client.development.js:15974
+performWorkUntilDeadline @ scheduler.development.js:45Understand this error
+useAuth.js:45 Auth state changed: No user
+useAuth.js:282 🔑 useAuth called from route: /
+useAuth.js:283 📍 useAuth call stack trace:     at UserOnboardingWrapper (webpack-internal:///(app-pages-browser)/./src/components/UserOnboardingWrapper.js:20:86)
+useAuth.js:282 🔑 useAuth called from route: /
+useAuth.js:283 📍 useAuth call stack trace:     at UserOnboardingWrapper (webpack-internal:///(app-pages-browser)/./src/components/UserOnboardingWrapper.js:20:86)
+useAuth.js:300 🔓 useOptionalAuth called from route: /
+useAuth.js:300 🔓 useOptionalAuth called from route: /
+InteractiveClient.js:17 👾 InteractiveClient mounting on route: /
+InteractiveClient.js:18 📊 InteractiveClient bundle size check - timestamp: 1758378557559
+InteractiveClient.js:30 ✅ InteractiveClient using optional auth on: /
+useAuth.js:300 🔓 useOptionalAuth called from route: /
+InteractiveClient.js:45 🔐 Auth status in InteractiveClient: {hasAuth: true, user: false, loading: false}
+InteractiveClient.js:17 👾 InteractiveClient mounting on route: /
+InteractiveClient.js:18 📊 InteractiveClient bundle size check - timestamp: 1758378557562
+InteractiveClient.js:30 ✅ InteractiveClient using optional auth on: /
+useAuth.js:300 🔓 useOptionalAuth called from route: /
+InteractiveClient.js:45 🔐 Auth status in InteractiveClient: {hasAuth: true, user: false, loading: false}
+MobileMenu.js:13 📱 MobileMenu rendering, isOpen: false
+useAuth.js:300 🔓 useOptionalAuth called from route: /
+MobileMenu.js:27 🔐 MobileMenu auth status: {hasAuth: true, user: false, loading: false, mounted: true}
+MobileMenu.js:13 📱 MobileMenu rendering, isOpen: false
+useAuth.js:300 🔓 useOptionalAuth called from route: /
+MobileMenu.js:27 🔐 MobileMenu auth status: {hasAuth: true, user: false, loading: false, mounted: true}
+useAuth.js:282 🔑 useAuth called from route: /
+useAuth.js:283 📍 useAuth call stack trace:     at WelcomePopup (webpack-internal:///(app-pages-browser)/./src/components/WelcomePopup.js:20:77)
+useAuth.js:282 🔑 useAuth called from route: /
+useAuth.js:283 📍 useAuth call stack trace:     at WelcomePopup (webpack-internal:///(app-pages-browser)/./src/components/WelcomePopup.js:20:77)

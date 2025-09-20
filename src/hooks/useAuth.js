@@ -41,20 +41,12 @@ export function AuthProvider({ children }) {
       try {
         // Listen for authentication state changes
         unsubscribe = onAuthStateChanged(firebase.auth, async (user) => {
-          if (process.env.NODE_ENV === 'development') {
-            console.log('Auth state changed:', user ? user.email : 'No user');
-          }
           if (user) {
-            if (process.env.NODE_ENV === 'development') {
-              console.log('Email verified:', user.emailVerified);
-            }
             // Create user profile in Firestore if it doesn't exist
             try {
               await createUserProfile(user);
             } catch (error) {
-              if (process.env.NODE_ENV === 'development') {
-                console.error('Error creating user profile:', error);
-              }
+              console.error('Error creating user profile:', error);
             }
           }
           setUser(user);
@@ -278,17 +270,8 @@ export function AuthProvider({ children }) {
 }
 
 export const useAuth = () => {
-  if (typeof window !== 'undefined') {
-    console.log('🔑 useAuth called from route:', window.location.pathname);
-    console.log('📍 useAuth call stack trace:', new Error().stack?.split('\n')[2]);
-  }
-  
   const context = useContext(AuthContext);
   if (!context) {
-    if (typeof window !== 'undefined') {
-      console.error('❌ CRITICAL: useAuth called without AuthProvider on route:', window.location.pathname);
-      console.error('📍 Stack trace:', new Error().stack);
-    }
     throw new Error('useAuth must be used within an AuthProvider');
   }
   return context;
@@ -296,17 +279,6 @@ export const useAuth = () => {
 
 // Optional auth hook that doesn't crash if no provider
 export const useOptionalAuth = () => {
-  if (typeof window !== 'undefined') {
-    console.log('🔓 useOptionalAuth called from route:', window.location.pathname);
-  }
   const context = useContext(AuthContext);
-  
-  if (!context) {
-    if (typeof window !== 'undefined') {
-      console.log('ℹ️ No auth context available (optional), returning null');
-    }
-    return null;
-  }
-  
   return context;
 };
