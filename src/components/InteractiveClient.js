@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, cloneElement, isValidElement } from 'react';
-import { useAuth } from '../hooks/useAuth';
+import { useOptionalAuth } from '../hooks/useAuth';
 import { useBodyScrollLock } from '../hooks/useBodyScrollLock';
 import { getFirebaseErrorMessage } from '../utils/validation';
 import { signInSchema, signUpSchema, forgotPasswordSchema, getValidationError } from '../utils/schemas';
@@ -12,13 +12,37 @@ import SignUpModal from './auth/SignUpModal';
 import ForgotPasswordModal from './auth/ForgotPasswordModal';
 
 export default function InteractiveClient({ children }) {
+  // Fix SSR issue - only log on client side
+  if (typeof window !== 'undefined') {
+    console.log('👾 InteractiveClient mounting on route:', window.location.pathname);
+    console.log('📊 InteractiveClient bundle size check - timestamp:', Date.now());
+  }
+  
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [activeModal, setActiveModal] = useState(null); // 'signin', 'signup', or 'forgotpassword'
   const [authError, setAuthError] = useState('');
   const [authSuccessMessage, setAuthSuccessMessage] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isWaitingForAuth, setIsWaitingForAuth] = useState(false);
-  const { user, loading, signInWithGoogle, signUpWithEmail, signInWithEmail, forgotPassword, logout } = useAuth();
+  
+  // FIXED: Use optional auth that doesn't crash on pages without AuthProvider
+  if (typeof window !== 'undefined') {
+    console.log('✅ InteractiveClient using optional auth on:', window.location.pathname);
+  }
+  const authContext = useOptionalAuth();
+  
+  // If no auth context, provide safe defaults
+  const { user, loading, signInWithGoogle, signUpWithEmail, signInWithEmail, forgotPassword, logout } = authContext || {
+    user: null,
+    loading: false,
+    signInWithGoogle: async () => ({ success: false, error: 'No auth configured' }),
+    signUpWithEmail: async () => ({ success: false, error: 'No auth configured' }),
+    signInWithEmail: async () => ({ success: false, error: 'No auth configured' }),
+    forgotPassword: async () => ({ success: false, error: 'No auth configured' }),
+    logout: async () => ({ success: false })
+  };
+  
+  console.log('🔐 Auth status in InteractiveClient:', { hasAuth: !!authContext, user: !!user, loading });
 
   // Prevent body scrolling when sidebar or modals are open
   useBodyScrollLock(isMenuOpen || activeModal !== null);

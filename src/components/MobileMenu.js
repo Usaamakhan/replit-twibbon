@@ -1,6 +1,6 @@
 "use client";
 
-import { useAuth } from "../hooks/useAuth";
+import { useOptionalAuth } from "../hooks/useAuth";
 import { useRouter } from "next/navigation";
 
 export default function MobileMenu({ 
@@ -9,7 +9,23 @@ export default function MobileMenu({
   openSignInModal, 
   openSignUpModal 
 }) {
-  const { user, loading, mounted, logout } = useAuth();
+  if (typeof window !== 'undefined') {
+    console.log('📱 MobileMenu rendering, isOpen:', isMenuOpen);
+  }
+  
+  const authContext = useOptionalAuth();
+  
+  // Provide safe defaults if no auth context
+  const { user, loading, mounted, logout } = authContext || {
+    user: null,
+    loading: false,
+    mounted: true,
+    logout: async () => ({ success: false })
+  };
+  
+  if (typeof window !== 'undefined') {
+    console.log('🔐 MobileMenu auth status:', { hasAuth: !!authContext, user: !!user, loading, mounted });
+  }
   const router = useRouter();
 
   const handleProfileClick = () => {

@@ -18,8 +18,12 @@ export const useFirebase = () => {
   });
 
   useEffect(() => {
+    console.log('🔍 Firebase useEffect triggered - Route:', window.location.pathname);
+    console.log('📊 Firebase initialization status:', { isInitialized, isConfigured: Boolean(firebaseApp) });
+    
     // Only initialize once on the client
     if (isInitialized) {
+      console.log('✅ Firebase already initialized, returning cached values');
       setFirebase({
         app: firebaseApp,
         auth: firebaseAuth,
@@ -38,9 +42,12 @@ export const useFirebase = () => {
         const appId = process.env.NEXT_PUBLIC_FIREBASE_APP_ID;
 
         if (!apiKey || !projectId || !appId) {
-          if (process.env.NODE_ENV === 'development') {
-            console.log('Firebase not configured - missing environment variables');
-          }
+          console.log('❌ Firebase not configured - missing variables:', { 
+            hasApiKey: !!apiKey, 
+            hasProjectId: !!projectId, 
+            hasAppId: !!appId,
+            route: window.location.pathname 
+          });
           setFirebase({
             app: null,
             auth: null,
@@ -77,9 +84,11 @@ export const useFirebase = () => {
         firebaseDb = getFirestore(firebaseApp);
         isInitialized = true;
 
-        if (process.env.NODE_ENV === 'development') {
-          console.log('Firebase initialized successfully (client-only)');
-        }
+        console.log('🔥 Firebase initialized successfully!', {
+          route: window.location.pathname,
+          projectId: firebaseEnvVars.projectId,
+          timestamp: new Date().toISOString()
+        });
 
         setFirebase({
           app: firebaseApp,

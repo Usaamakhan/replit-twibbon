@@ -5,7 +5,17 @@ import { AuthProvider } from '../hooks/useAuth';
 import UserOnboardingWrapper from './UserOnboardingWrapper';
 
 export default function AuthenticatedLayout({ children }) {
+  // Fix SSR issue - only log on client side
+  if (typeof window !== 'undefined') {
+    console.log('🔐 AuthenticatedLayout mounting on route:', window.location.pathname);
+    console.log('🗠️ AuthenticatedLayout render started at:', Date.now());
+  }
+  
   const { isLoading, isConfigured } = useFirebase();
+  
+  if (typeof window !== 'undefined') {
+    console.log('🔥 Firebase status in AuthenticatedLayout:', { isLoading, isConfigured });
+  }
 
   // Show loading state while Firebase is initializing
   if (isLoading) {
