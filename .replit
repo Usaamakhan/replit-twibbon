@@ -1,7 +1,7 @@
 modules = ["nodejs-20", "web"]
 [agent]
 expertMode = true
-integrations = ["firebase_barebones_javascript:1.0.0"]
+integrations = ["firebase_barebones_javascript:1.0.0", "javascript_supabase:1.0.0"]
 
 [nix]
 channel = "stable-25_05"
@@ -51,16 +51,16 @@ localPort = 38505
 externalPort = 3003
 
 [[ports]]
+localPort = 38579
+externalPort = 6800
+
+[[ports]]
 localPort = 40901
 externalPort = 4200
 
 [[ports]]
 localPort = 41633
 externalPort = 3001
-
-[[ports]]
-localPort = 41815
-externalPort = 6800
 
 [[ports]]
 localPort = 43181

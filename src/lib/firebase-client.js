@@ -86,7 +86,7 @@ export const useFirebase = () => {
 
         console.log('🔥 Firebase initialized successfully!', {
           route: window.location.pathname,
-          projectId: firebaseEnvVars.projectId,
+          projectId: projectId,
           timestamp: new Date().toISOString()
         });
 
