@@ -32,7 +32,27 @@ export const useFirebase = () => {
 
     const initializeFirebase = async () => {
       try {
-        // Dynamic import Firebase only when needed
+        // Check environment variables BEFORE importing anything
+        const apiKey = process.env.NEXT_PUBLIC_FIREBASE_API_KEY;
+        const projectId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
+        const appId = process.env.NEXT_PUBLIC_FIREBASE_APP_ID;
+
+        if (!apiKey || !projectId || !appId) {
+          if (process.env.NODE_ENV === 'development') {
+            console.log('Firebase not configured - missing environment variables');
+          }
+          setFirebase({
+            app: null,
+            auth: null,
+            db: null,
+            isLoading: false,
+            isConfigured: false
+          });
+          isInitialized = true; // Mark as initialized to prevent retries
+          return;
+        }
+
+        // Only import Firebase modules if properly configured
         const [
           { initializeApp, getApps, getApp },
           { getAuth },
@@ -42,23 +62,6 @@ export const useFirebase = () => {
           import('firebase/auth'),
           import('firebase/firestore')
         ]);
-
-        // Check environment variables
-        const apiKey = process.env.NEXT_PUBLIC_FIREBASE_API_KEY;
-        const projectId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
-        const appId = process.env.NEXT_PUBLIC_FIREBASE_APP_ID;
-
-        if (!apiKey || !projectId || !appId) {
-          console.log('Firebase not configured - missing environment variables');
-          setFirebase({
-            app: null,
-            auth: null,
-            db: null,
-            isLoading: false,
-            isConfigured: false
-          });
-          return;
-        }
 
         const firebaseConfig = {
           apiKey,
