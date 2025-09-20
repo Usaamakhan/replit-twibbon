@@ -1,6 +1,8 @@
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import ClientAuthProvider from "../components/ClientAuthProvider";
+import ErrorBoundary from "../components/ErrorBoundary";
+import TimeoutWrapper from "../components/TimeoutWrapper";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -24,9 +26,13 @@ export default function RootLayout({ children }) {
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
         suppressHydrationWarning={true}
       >
-        <ClientAuthProvider>
-          {children}
-        </ClientAuthProvider>
+        <ErrorBoundary>
+          <TimeoutWrapper timeout={15000}>
+            <ClientAuthProvider>
+              {children}
+            </ClientAuthProvider>
+          </TimeoutWrapper>
+        </ErrorBoundary>
       </body>
     </html>
   );
