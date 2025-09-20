@@ -48,7 +48,7 @@ const nextConfig = {
     'http://127.0.0.1',
     'https://*.replit.dev',
     'https://*.repl.co',
-    'https://7b268d1b-9684-4003-9c38-bba198c0a3f3-00-1b9p0s26madwt.worf.replit.dev',
+    'https://39d4d35b-71ea-493f-a752-8a5296b5f1a3-00-3u13ci9zfz6j3.kirk.replit.dev',
     ...(process.env.REPLIT_DEV_DOMAIN ? [`https://${process.env.REPLIT_DEV_DOMAIN}`] : [])
   ],
   
