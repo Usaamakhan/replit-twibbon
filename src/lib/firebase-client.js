@@ -18,12 +18,14 @@ export const useFirebase = () => {
   });
 
   useEffect(() => {
-    console.log('🔍 Firebase useEffect triggered - Route:', window.location.pathname);
+    const startTime = performance.now();
+    console.log('🔍 Firebase useEffect triggered - Route:', window.location.pathname, 'Time:', new Date().toISOString());
     console.log('📊 Firebase initialization status:', { isInitialized, isConfigured: Boolean(firebaseApp) });
     
     // Only initialize once on the client
     if (isInitialized) {
-      console.log('✅ Firebase already initialized, returning cached values');
+      const cacheTime = performance.now() - startTime;
+      console.log('✅ Firebase already initialized, returning cached values. Time taken:', cacheTime.toFixed(2) + 'ms');
       setFirebase({
         app: firebaseApp,
         auth: firebaseAuth,
@@ -36,10 +38,20 @@ export const useFirebase = () => {
 
     const initializeFirebase = async () => {
       try {
+        const envCheckStart = performance.now();
+        console.log('🔧 Starting Firebase initialization...', new Date().toISOString());
+        
         // Check environment variables BEFORE importing anything
         const apiKey = process.env.NEXT_PUBLIC_FIREBASE_API_KEY;
         const projectId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
         const appId = process.env.NEXT_PUBLIC_FIREBASE_APP_ID;
+
+        const envCheckTime = performance.now() - envCheckStart;
+        console.log('⚙️ Environment check completed in:', envCheckTime.toFixed(2) + 'ms', {
+          hasApiKey: !!apiKey, 
+          hasProjectId: !!projectId, 
+          hasAppId: !!appId
+        });
 
         if (!apiKey || !projectId || !appId) {
           console.log('❌ Firebase not configured - missing variables:', { 
@@ -60,6 +72,9 @@ export const useFirebase = () => {
         }
 
         // Only import Firebase modules if properly configured
+        const importStart = performance.now();
+        console.log('📦 Starting Firebase module imports...', new Date().toISOString());
+        
         const [
           { initializeApp, getApps, getApp },
           { getAuth },
@@ -70,6 +85,10 @@ export const useFirebase = () => {
           import('firebase/firestore')
         ]);
 
+        const importTime = performance.now() - importStart;
+        console.log('📦 Firebase modules imported in:', importTime.toFixed(2) + 'ms');
+
+        const configStart = performance.now();
         const firebaseConfig = {
           apiKey,
           authDomain: `${projectId}.firebaseapp.com`,
@@ -78,16 +97,29 @@ export const useFirebase = () => {
           appId,
         };
 
+        const configTime = performance.now() - configStart;
+        console.log('⚙️ Firebase config created in:', configTime.toFixed(2) + 'ms');
+
         // Initialize Firebase
+        const initStart = performance.now();
         firebaseApp = getApps().length ? getApp() : initializeApp(firebaseConfig);
         firebaseAuth = getAuth(firebaseApp);
         firebaseDb = getFirestore(firebaseApp);
         isInitialized = true;
+        const initTime = performance.now() - initStart;
 
+        const totalTime = performance.now() - startTime;
         console.log('🔥 Firebase initialized successfully!', {
           route: window.location.pathname,
           projectId: projectId,
-          timestamp: new Date().toISOString()
+          timestamp: new Date().toISOString(),
+          timing: {
+            envCheck: envCheckTime.toFixed(2) + 'ms',
+            imports: importTime.toFixed(2) + 'ms', 
+            config: configTime.toFixed(2) + 'ms',
+            initialization: initTime.toFixed(2) + 'ms',
+            total: totalTime.toFixed(2) + 'ms'
+          }
         });
 
         setFirebase({
