@@ -404,14 +404,7 @@ export default function WelcomePopup({ isOpen, onClose, onComplete }) {
           </div>
 
           {/* Actions */}
-          <div className="flex justify-end space-x-3 mt-8">
-            <button
-              type="button"
-              onClick={onClose}
-              className="text-gray-600 px-6 py-3 rounded-lg hover:bg-gray-100 transition-colors font-medium"
-            >
-              Skip for now
-            </button>
+          <div className="flex justify-end mt-8">
             <button
               type="button"
               onClick={handleComplete}
