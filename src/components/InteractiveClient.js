@@ -143,7 +143,7 @@ export default function InteractiveClient({ children }) {
       
       const formData = new FormData(e.target);
       const rawData = {
-        fullName: formData.get('fullName'),
+        name: formData.get('name'),
         email: formData.get('email'),
         password: formData.get('password')
       };
@@ -155,9 +155,9 @@ export default function InteractiveClient({ children }) {
         return;
       }
       
-      const { fullName, email, password } = validationResult.data;
+      const { name, email, password } = validationResult.data;
       
-      const result = await signUpWithEmail(email, password, fullName);
+      const result = await signUpWithEmail(email, password, name);
       if (result.success) {
         if (result.requiresVerification) {
           setAuthSuccessMessage('Account created successfully! Please check your email and click the verification link to complete your registration.');

@@ -117,7 +117,7 @@ export function AuthProvider({ children }) {
     }
   };
 
-  const signUpWithEmail = async (email, password, fullName) => {
+  const signUpWithEmail = async (email, password, name) => {
     try {
       setLoading(true);
       
@@ -125,10 +125,10 @@ export function AuthProvider({ children }) {
       
       const result = await createUserWithEmailAndPassword(firebase.auth, email, password);
       
-      // Update user profile with full name
-      if (fullName) {
+      // Update user profile with name
+      if (name) {
         await updateProfile(result.user, {
-          displayName: fullName
+          displayName: name
         });
       }
       

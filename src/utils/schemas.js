@@ -20,8 +20,8 @@ export const signInPasswordSchema = z
   .string()
   .min(1, 'Password is required');
 
-// Full name schema
-export const fullNameSchema = z
+// Name schema
+export const nameSchema = z
   .string()
   .min(1, 'Name is required')
   .min(2, 'Name must be at least 2 characters long')
@@ -37,7 +37,7 @@ export const signInSchema = z.object({
 
 // Sign Up Form Schema
 export const signUpSchema = z.object({
-  fullName: fullNameSchema,
+  name: nameSchema,
   email: emailSchema,
   password: passwordSchema,
 });

@@ -75,13 +75,13 @@ export default function SignUpModal({
                   </div>
                 )}
                 <div>
-                  <label htmlFor="signup-fullname" className="block text-sm font-medium text-gray-800 mb-1">
+                  <label htmlFor="signup-name" className="block text-sm font-medium text-gray-800 mb-1">
                     Name
                   </label>
                   <input
-                    id="signup-fullname"
+                    id="signup-name"
                     type="text"
-                    name="fullName"
+                    name="name"
                     required
                     placeholder="Enter your name"
                     className="w-full px-3 sm:px-4 py-2 border border-gray-300 rounded-full focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none transition-all text-sm sm:text-base text-gray-900 placeholder-gray-600"
