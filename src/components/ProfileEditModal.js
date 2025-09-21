@@ -60,6 +60,20 @@ export default function ProfileEditModal({ isOpen, onClose, userData, onUpdate }
     }
   }, [userData]);
 
+  // Prevent body scroll when modal is open
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+    
+    // Cleanup on unmount
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, [isOpen]);
+
   // Function to check username availability with debouncing
   const checkUsernameAvailability = async (username) => {
     if (!username || username.length < 3) {
@@ -196,25 +210,35 @@ export default function ProfileEditModal({ isOpen, onClose, userData, onUpdate }
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-      <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-        {/* Header */}
-        <div className="p-6 border-b border-gray-200">
-          <div className="flex items-center justify-between">
-            <h2 className="text-2xl font-bold text-gray-900">Edit Profile</h2>
-            <button
-              onClick={onClose}
-              className="text-gray-400 hover:text-gray-600 transition-colors"
-            >
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
-          </div>
-        </div>
+    <>
+      {/* Backdrop */}
+      <div 
+        className="fixed inset-0 backdrop-blur-sm z-40" 
+        onClick={onClose}
+        aria-hidden="true"
+      />
+      
+      {/* Modal */}
+      <div className="fixed inset-0 z-50 overflow-y-auto">
+        <div className="flex min-h-full items-center justify-center p-4 sm:p-6 lg:p-8">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl mx-auto border-2 border-emerald-600 my-8">
+            {/* Header */}
+            <div className="bg-yellow-400 rounded-t-xl p-4 sm:p-6 text-center relative">
+              <button
+                onClick={onClose}
+                className="absolute top-3 right-3 sm:top-4 sm:right-4 text-gray-700 hover:text-gray-900 transition-colors"
+                aria-label="Close edit profile modal"
+              >
+                <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+              <h2 className="text-xl sm:text-2xl font-bold text-emerald-700">Edit Profile</h2>
+              <p className="text-sm sm:text-base text-gray-700 mt-2">Update your profile information</p>
+            </div>
 
-        {/* Form */}
-        <div className="p-6">
+            {/* Form */}
+            <div className="p-4 sm:p-6">
           {errors.general && (
             <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-600 text-sm">
               {errors.general}
@@ -436,8 +460,10 @@ export default function ProfileEditModal({ isOpen, onClose, userData, onUpdate }
               {loading ? 'Saving...' : usernameStatus === 'checking' ? 'Checking username...' : 'Save Changes'}
             </button>
           </div>
+            </div>
+          </div>
         </div>
       </div>
-    </div>
+    </>
   );
 }
