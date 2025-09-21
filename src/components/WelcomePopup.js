@@ -28,6 +28,11 @@ export default function WelcomePopup({ isOpen, onClose, onComplete }) {
 
   const profilePicRef = useRef();
   const profileBannerRef = useRef();
+  
+  // Refs for form validation scrolling
+  const usernameRef = useRef();
+  const displayNameRef = useRef();
+  const countryRef = useRef();
 
   // Cleanup timeout on unmount
   useEffect(() => {
@@ -153,28 +158,61 @@ export default function WelcomePopup({ isOpen, onClose, onComplete }) {
     }
   };
 
+  const scrollToField = (fieldName) => {
+    const fieldRefs = {
+      username: usernameRef,
+      displayName: displayNameRef,
+      country: countryRef
+    };
+    
+    const fieldRef = fieldRefs[fieldName];
+    if (fieldRef?.current) {
+      fieldRef.current.scrollIntoView({
+        behavior: 'smooth',
+        block: 'center'
+      });
+      // Focus the field after scrolling
+      setTimeout(() => {
+        fieldRef.current.focus();
+      }, 300);
+    }
+  };
+
   const validateForm = () => {
     const newErrors = {};
+    let firstErrorField = null;
 
     if (!formData.username.trim()) {
       newErrors.username = 'Username is required';
+      if (!firstErrorField) firstErrorField = 'username';
     } else if (formData.username.length < 3) {
       newErrors.username = 'Username must be at least 3 characters';
+      if (!firstErrorField) firstErrorField = 'username';
     } else if (!/^[a-z0-9]+$/.test(formData.username)) {
       newErrors.username = 'Username can only contain lowercase letters and numbers';
+      if (!firstErrorField) firstErrorField = 'username';
     } else if (usernameStatus === 'taken') {
       newErrors.username = 'This username is already taken';
+      if (!firstErrorField) firstErrorField = 'username';
     }
 
     if (!formData.displayName.trim()) {
       newErrors.displayName = 'Display name is required';
+      if (!firstErrorField) firstErrorField = 'displayName';
     }
 
     if (!formData.country) {
       newErrors.country = 'Please select your country';
+      if (!firstErrorField) firstErrorField = 'country';
     }
 
     setErrors(newErrors);
+    
+    // If there are errors, scroll to the first error field
+    if (firstErrorField) {
+      setTimeout(() => scrollToField(firstErrorField), 100);
+    }
+    
     return Object.keys(newErrors).length === 0;
   };
 
@@ -317,6 +355,7 @@ export default function WelcomePopup({ isOpen, onClose, onComplete }) {
                   </label>
                   <div className="relative">
                     <input
+                      ref={usernameRef}
                       type="text"
                       value={formData.username}
                       onChange={(e) => handleInputChange('username', e.target.value.toLowerCase().replace(/[^a-z0-9]/g, ''))}
@@ -367,6 +406,7 @@ export default function WelcomePopup({ isOpen, onClose, onComplete }) {
                     Display Name *
                   </label>
                   <input
+                    ref={displayNameRef}
                     type="text"
                     value={formData.displayName}
                     onChange={(e) => handleInputChange('displayName', e.target.value)}
@@ -387,6 +427,7 @@ export default function WelcomePopup({ isOpen, onClose, onComplete }) {
                     Country *
                   </label>
                   <select
+                    ref={countryRef}
                     value={formData.country}
                     onChange={(e) => handleInputChange('country', e.target.value)}
                     className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none transition-all text-gray-900 ${
