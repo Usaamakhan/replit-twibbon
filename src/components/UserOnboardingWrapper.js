@@ -21,15 +21,31 @@ export default function UserOnboardingWrapper({ children }) {
       }
 
       setCheckingProfile(true);
+      
+      // Add a small delay to ensure Firebase auth state has stabilized after verification
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
       try {
         let userProfile = await getUserProfile(user.uid);
         
-        // If profile doesn't exist, it should have been created by useAuth
-        // Log this as an unexpected case for debugging
+        // If profile doesn't exist, wait a bit and try again (profile creation might be in progress)
         if (!userProfile) {
-          console.log('No user profile found for verified user:', user.email, 'This should not happen after auth state change');
+          console.log('No user profile found for verified user:', user.email, 'Retrying in 2 seconds...');
+          await new Promise(resolve => setTimeout(resolve, 2000));
+          userProfile = await getUserProfile(user.uid);
+        }
+        
+        // If still no profile, this is unexpected
+        if (!userProfile) {
+          console.warn('Still no user profile found after retry for user:', user.email);
           return;
         }
+        
+        console.log('User profile found:', { 
+          email: user.email, 
+          profileCompleted: userProfile.profileCompleted,
+          hasUsername: !!userProfile.username 
+        });
         
         // Show welcome popup if user exists but hasn't completed profile setup
         if (userProfile && !userProfile.profileCompleted) {

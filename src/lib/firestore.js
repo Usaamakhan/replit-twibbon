@@ -1,27 +1,26 @@
 "use client";
 
 // Firestore database operations for the Twibbonize app
-import { useFirebaseOptimized as useFirebase } from './firebase-optimized';
+import { db } from './firebase';
+import { 
+  doc, 
+  setDoc, 
+  getDoc, 
+  collection, 
+  addDoc, 
+  getDocs, 
+  query, 
+  where, 
+  orderBy, 
+  limit,
+  serverTimestamp,
+  updateDoc,
+  increment,
+  runTransaction 
+} from 'firebase/firestore';
 
-// Dynamic import helper for Firestore functions
+// Legacy helper function - no longer needed since we have top-level imports
 const getFirestoreHelpers = async () => {
-  const { 
-    doc, 
-    setDoc, 
-    getDoc, 
-    collection, 
-    addDoc, 
-    getDocs, 
-    query, 
-    where, 
-    orderBy, 
-    limit,
-    serverTimestamp,
-    updateDoc,
-    increment,
-    runTransaction 
-  } = await import('firebase/firestore');
-  
   return { 
     doc, 
     setDoc, 
@@ -40,10 +39,9 @@ const getFirestoreHelpers = async () => {
   };
 };
 
-// Get database instance - now expects Firebase context
-const getDatabase = (firebase) => {
-  if (typeof window === 'undefined' || !firebase?.db) return null;
-  return firebase.db;
+// Get database instance - simplified since we have direct db import
+const getDatabase = () => {
+  return db;
 };
 
 // Generate unique username with max attempts to prevent infinite loops
@@ -273,10 +271,9 @@ export const getUserProfileByUsername = async (username) => {
     console.log('🔍 getUserProfileByUsername starting for:', normalizedUsername, 'Time:', new Date().toISOString());
     
     // Get Firebase database instance
-    const firebase = useFirebase();
-    const db = getDatabase(firebase);
+    const database = getDatabase();
     
-    if (!db) {
+    if (!database) {
       console.error('Database not available for getUserProfileByUsername');
       return null;
     }
@@ -289,7 +286,7 @@ export const getUserProfileByUsername = async (username) => {
     
     // First, resolve username to userId using usernames collection
     const lookupStart = performance.now();
-    const usernameDocRef = doc(db, 'usernames', normalizedUsername);
+    const usernameDocRef = doc(database, 'usernames', normalizedUsername);
     const usernameDoc = await getDoc(usernameDocRef);
     const lookupTime = performance.now() - lookupStart;
     console.log('🔍 Username lookup completed in:', lookupTime.toFixed(2) + 'ms');
@@ -304,7 +301,7 @@ export const getUserProfileByUsername = async (username) => {
     
     // Then fetch user profile using the userId
     const profileStart = performance.now();
-    const userDocRef = doc(db, 'users', userId);
+    const userDocRef = doc(database, 'users', userId);
     const userDoc = await getDoc(userDocRef);
     const profileTime = performance.now() - profileStart;
     console.log('👤 User profile fetch completed in:', profileTime.toFixed(2) + 'ms');
