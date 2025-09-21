@@ -7,25 +7,35 @@ import { getAuth } from 'firebase-admin/auth'
 let adminApp = null
 
 if (getApps().length === 0) {
-  // For development/testing, we can use the service account key from environment
-  // In production, you would typically use a service account JSON file
-  const serviceAccount = {
-    projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
-    // Note: For full production setup, you would need to add service account credentials
-    // For now, we'll use the project ID which is sufficient for ID token verification
+  // Parse service account key from environment variable
+  let credential = null;
+  
+  if (process.env.FIREBASE_SERVICE_ACCOUNT_KEY) {
+    try {
+      const serviceAccountKey = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_KEY);
+      credential = cert(serviceAccountKey);
+    } catch (error) {
+      console.error('Error parsing Firebase service account key:', error);
+    }
   }
 
   try {
-    adminApp = initializeApp({
+    const config = {
       projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
-      // In production, add: credential: cert(serviceAccount)
-    })
+    };
+    
+    // Add credential if available
+    if (credential) {
+      config.credential = credential;
+    }
+    
+    adminApp = initializeApp(config);
   } catch (error) {
-    console.error('Firebase Admin initialization error:', error)
+    console.error('Firebase Admin initialization error:', error);
     // Fallback initialization for development
     adminApp = initializeApp({
       projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
-    })
+    });
   }
 } else {
   adminApp = getApps()[0]
