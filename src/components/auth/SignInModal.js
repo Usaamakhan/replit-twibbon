@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useFocusTrap } from '../../hooks/useFocusTrap';
 
 export default function SignInModal({ 
@@ -14,6 +14,11 @@ export default function SignInModal({
   onSwitchToForgotPassword
 }) {
   const modalRef = useFocusTrap(isOpen);
+  const [validationErrors, setValidationErrors] = useState({});
+  
+  // Refs for form validation scrolling
+  const emailRef = useRef();
+  const passwordRef = useRef();
 
   // Handle Escape key
   useEffect(() => {
@@ -28,6 +33,74 @@ export default function SignInModal({
       document.removeEventListener('modal-escape', handleEscapeEvent);
     };
   }, [isOpen, onClose]);
+
+  // Clear validation errors when modal opens
+  useEffect(() => {
+    if (isOpen) {
+      setValidationErrors({});
+    }
+  }, [isOpen]);
+
+  const scrollToField = (fieldName) => {
+    const fieldRefs = {
+      email: emailRef,
+      password: passwordRef
+    };
+    
+    const fieldRef = fieldRefs[fieldName];
+    if (fieldRef?.current) {
+      fieldRef.current.scrollIntoView({
+        behavior: 'smooth',
+        block: 'center'
+      });
+      // Focus the field after scrolling
+      setTimeout(() => {
+        fieldRef.current.focus();
+      }, 300);
+    }
+  };
+
+  const validateForm = (formData) => {
+    const newErrors = {};
+    let firstErrorField = null;
+
+    if (!formData.get('email')?.trim()) {
+      newErrors.email = 'Email is required';
+      if (!firstErrorField) firstErrorField = 'email';
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.get('email'))) {
+      newErrors.email = 'Please enter a valid email address';
+      if (!firstErrorField) firstErrorField = 'email';
+    }
+
+    if (!formData.get('password')?.trim()) {
+      newErrors.password = 'Password is required';
+      if (!firstErrorField) firstErrorField = 'password';
+    }
+
+    setValidationErrors(newErrors);
+    
+    // If there are errors, scroll to the first error field
+    if (firstErrorField) {
+      setTimeout(() => scrollToField(firstErrorField), 100);
+    }
+    
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleFormSubmit = (e) => {
+    e.preventDefault();
+    const formData = new FormData(e.target);
+    
+    if (validateForm(formData)) {
+      onEmailSignIn(e); // Pass original event to parent handler
+    }
+  };
+
+  const handleInputChange = (field) => {
+    if (validationErrors[field]) {
+      setValidationErrors(prev => ({ ...prev, [field]: '' }));
+    }
+  };
 
   if (!isOpen) return null;
 
@@ -69,7 +142,7 @@ export default function SignInModal({
             {/* Content */}
             <div className="p-4 sm:p-6">
               {/* Email Sign In Form */}
-              <form className="space-y-4 mb-6" onSubmit={onEmailSignIn} noValidate>
+              <form className="space-y-4 mb-6" onSubmit={handleFormSubmit} noValidate>
                 {error && (
                   <div id="signin-error" className="text-red-600 text-sm text-center p-2 bg-red-50 rounded-lg" role="alert">
                     {error}
@@ -80,28 +153,42 @@ export default function SignInModal({
                     Email
                   </label>
                   <input
+                    ref={emailRef}
                     id="signin-email"
                     type="email"
                     name="email"
                     required
                     placeholder="Enter your email"
-                    className="w-full px-3 sm:px-4 py-2 border border-gray-300 rounded-full focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none transition-all text-sm sm:text-base text-gray-900 placeholder-gray-600"
-                    aria-describedby={error ? "signin-error" : undefined}
+                    onChange={() => handleInputChange('email')}
+                    className={`w-full px-3 sm:px-4 py-2 border rounded-full focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none transition-all text-sm sm:text-base text-gray-900 placeholder-gray-600 ${
+                      validationErrors.email ? 'border-red-300 bg-red-50' : 'border-gray-300'
+                    }`}
+                    aria-describedby={error || validationErrors.email ? "signin-error" : undefined}
                   />
+                  {validationErrors.email && (
+                    <p className="text-red-600 text-sm mt-1">{validationErrors.email}</p>
+                  )}
                 </div>
                 <div>
                   <label htmlFor="signin-password" className="block text-sm font-medium text-gray-800 mb-1">
                     Password
                   </label>
                   <input
+                    ref={passwordRef}
                     id="signin-password"
                     type="password"
                     name="password"
                     required
                     placeholder="Enter your password"
-                    className="w-full px-3 sm:px-4 py-2 border border-gray-300 rounded-full focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none transition-all text-sm sm:text-base text-gray-900 placeholder-gray-600"
-                    aria-describedby={error ? "signin-error" : undefined}
+                    onChange={() => handleInputChange('password')}
+                    className={`w-full px-3 sm:px-4 py-2 border rounded-full focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none transition-all text-sm sm:text-base text-gray-900 placeholder-gray-600 ${
+                      validationErrors.password ? 'border-red-300 bg-red-50' : 'border-gray-300'
+                    }`}
+                    aria-describedby={error || validationErrors.password ? "signin-error" : undefined}
                   />
+                  {validationErrors.password && (
+                    <p className="text-red-600 text-sm mt-1">{validationErrors.password}</p>
+                  )}
                   <div className="text-right mt-2">
                     <button
                       type="button"
