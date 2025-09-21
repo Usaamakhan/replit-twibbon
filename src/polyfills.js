@@ -21,7 +21,9 @@ if (typeof window !== 'undefined') {
   // Add error handling for unhandled promise rejections
   window.addEventListener('unhandledrejection', function(event) {
     console.warn('Unhandled promise rejection:', event.reason);
-    // Prevent the default behavior (which would log to console)
-    event.preventDefault();
+    // Only prevent default in production to avoid masking dev errors
+    if (process.env.NODE_ENV === 'production') {
+      event.preventDefault();
+    }
   });
 }

@@ -30,18 +30,10 @@ const nextConfig = {
             key: 'Referrer-Policy',
             value: 'origin-when-cross-origin',
           },
-          // Fix cross-origin issues in Replit
+          // Security headers for Replit
           {
-            key: 'Access-Control-Allow-Origin',
-            value: '*',
-          },
-          {
-            key: 'Access-Control-Allow-Methods',
-            value: 'GET, POST, PUT, DELETE, OPTIONS',
-          },
-          {
-            key: 'Access-Control-Allow-Headers',
-            value: 'Content-Type, Authorization',
+            key: 'X-Robots-Tag',
+            value: 'noindex, nofollow',
           },
         ],
       },
@@ -68,14 +60,13 @@ const nextConfig = {
     ];
   },
   
-  // Optimize webpack for Replit environment
+  // Simplified webpack configuration for Replit
   webpack: (config, { dev, isServer }) => {
-    // Development optimizations to prevent hanging
+    // Basic development optimizations only
     if (dev) {
-      // Reduce watch polling to prevent resource exhaustion
       config.watchOptions = {
         ...config.watchOptions,
-        poll: 1000, // Poll every 1 second instead of file watching
+        poll: 1000,
         aggregateTimeout: 300,
         ignored: [
           '**/node_modules/**',
@@ -86,32 +77,6 @@ const nextConfig = {
         ]
       };
     }
-    
-    // Optimize Firebase imports for better tree shaking
-    if (!isServer) {
-      config.resolve.alias = {
-        ...config.resolve.alias,
-        'firebase/auth': 'firebase/auth',
-        'firebase/firestore': 'firebase/firestore'
-      };
-    }
-    
-    // Add optimization to prevent memory leaks
-    config.optimization = {
-      ...config.optimization,
-      moduleIds: 'deterministic',
-      runtimeChunk: 'single',
-      splitChunks: {
-        chunks: 'all',
-        cacheGroups: {
-          vendor: {
-            test: /[\\/]node_modules[\\/]/,
-            name: 'vendors',
-            chunks: 'all',
-          },
-        },
-      },
-    };
     
     return config;
   },
