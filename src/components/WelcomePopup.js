@@ -38,6 +38,20 @@ export default function WelcomePopup({ isOpen, onClose, onComplete }) {
     };
   }, []);
 
+  // Prevent body scroll when modal is open
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+    
+    // Cleanup on unmount
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, [isOpen]);
+
   // Load actual username from Firestore when component opens
   useEffect(() => {
     const loadUserData = async () => {
@@ -182,240 +196,247 @@ export default function WelcomePopup({ isOpen, onClose, onComplete }) {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-      <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-        {/* Header */}
-        <div className="p-6 border-b border-gray-200">
-          <div>
-            <h2 className="text-2xl font-bold text-gray-900">Welcome to Twibbonize!</h2>
-            <p className="text-gray-600 mt-1">Let's set up your profile to get started</p>
-          </div>
-        </div>
-
-        {/* Profile Setup Form */}
-        <div className="p-6">
-          {errors.general && (
-            <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-600 text-sm">
-              {errors.general}
-            </div>
-          )}
-
-          <div className="space-y-6">
-            {/* Profile Picture */}
-            <div>
-              <label className="block text-sm font-medium text-gray-800 mb-2">
-                Profile Picture
-              </label>
-              <div className="flex items-center space-x-4">
-                <div className="w-20 h-20 rounded-full overflow-hidden border-2 border-gray-200">
-                  {formData.profilePicPreview ? (
-                    <img
-                      src={formData.profilePicPreview}
-                      alt="Profile preview"
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <div className="w-full h-full bg-gray-100 flex items-center justify-center">
-                      <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                      </svg>
-                    </div>
-                  )}
-                </div>
-                <div className="flex-1">
-                  <input
-                    type="file"
-                    ref={profilePicRef}
-                    onChange={(e) => handleFileChange('profilePic', e.target.files[0], 'profilePicPreview')}
-                    accept="image/*"
-                    className="hidden"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => profilePicRef.current?.click()}
-                    className="bg-gray-100 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200 transition-colors"
-                  >
-                    Choose Photo
-                  </button>
-                </div>
-              </div>
-              <p className="text-sm text-gray-700 mt-1">
-                A nice profile photo helps others recognize you and builds trust
-              </p>
-            </div>
-
-            {/* Username */}
-            <div>
-              <label className="block text-sm font-medium text-gray-800 mb-2">
-                Username *
-              </label>
-              <div className="relative">
-                <input
-                  type="text"
-                  value={formData.username}
-                  onChange={(e) => handleInputChange('username', e.target.value.toLowerCase().replace(/[^a-z0-9]/g, ''))}
-                  className={`w-full px-4 py-3 pr-12 border rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none transition-all text-gray-900 placeholder:text-gray-400 ${
-                    errors.username ? 'border-red-300 bg-red-50' : 
-                    usernameStatus === 'taken' ? 'border-red-300 bg-red-50' :
-                    usernameStatus === 'available' ? 'border-emerald-300 bg-emerald-50' :
-                    'border-gray-300'
-                  }`}
-                  placeholder="johndoe123"
-                />
-                {/* Username status indicator */}
-                <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
-                  {usernameStatus === 'checking' && (
-                    <div className="w-5 h-5 border-2 border-gray-300 border-t-emerald-500 rounded-full animate-spin"></div>
-                  )}
-                  {(usernameStatus === 'available' || usernameStatus === 'unchanged') && (
-                    <svg className="w-5 h-5 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                    </svg>
-                  )}
-                  {usernameStatus === 'taken' && (
-                    <svg className="w-5 h-5 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                  )}
-                </div>
-              </div>
-              <p className="text-sm text-gray-700 mt-1">
-                This will be used for your profile URL: frame.com/u/{formData.username || 'username'}
-              </p>
-              {/* Username status message */}
-              {usernameStatus === 'taken' && (
-                <p className="text-red-600 text-sm mt-1">This username is already taken</p>
-              )}
-              {usernameStatus === 'available' && formData.username.length >= 3 && (
-                <p className="text-emerald-600 text-sm mt-1">Username is available</p>
-              )}
-              {usernameStatus === 'unchanged' && (
-                <p className="text-gray-600 text-sm mt-1">Current username</p>
-              )}
-              {errors.username && <p className="text-red-600 text-sm mt-1">{errors.username}</p>}
-            </div>
-
-            {/* Display Name */}
-            <div>
-              <label className="block text-sm font-medium text-gray-800 mb-2">
-                Display Name *
-              </label>
-              <input
-                type="text"
-                value={formData.displayName}
-                onChange={(e) => handleInputChange('displayName', e.target.value)}
-                className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none transition-all text-gray-900 placeholder:text-gray-400 ${
-                  errors.displayName ? 'border-red-300 bg-red-50' : 'border-gray-300'
-                }`}
-                placeholder="John Doe"
-              />
-              <p className="text-sm text-gray-700 mt-1">
-                This will appear as your profile name and be visible to other users
-              </p>
-              {errors.displayName && <p className="text-red-600 text-sm mt-1">{errors.displayName}</p>}
-            </div>
-
-            {/* Country */}
-            <div>
-              <label className="block text-sm font-medium text-gray-800 mb-2">
-                Country *
-              </label>
-              <select
-                value={formData.country}
-                onChange={(e) => handleInputChange('country', e.target.value)}
-                className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none transition-all text-gray-900 ${
-                  errors.country ? 'border-red-300 bg-red-50' : 'border-gray-300'
-                }`}
+    <>
+      {/* Backdrop */}
+      <div 
+        className="fixed inset-0 backdrop-blur-sm z-40" 
+        onClick={onClose}
+        aria-hidden="true"
+      />
+      
+      {/* Modal */}
+      <div className="fixed inset-0 z-50 overflow-y-auto">
+        <div className="flex min-h-full items-center justify-center p-4 sm:p-6 lg:p-8">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl mx-auto border-2 border-emerald-600 my-8">
+            {/* Header */}
+            <div className="bg-yellow-400 rounded-t-xl p-4 sm:p-6 text-center relative">
+              <button
+                onClick={onClose}
+                className="absolute top-3 right-3 sm:top-4 sm:right-4 text-gray-700 hover:text-gray-900 transition-colors"
+                aria-label="Close welcome modal"
               >
-                <option value="">Select your country</option>
-                {countries.map(country => (
-                  <option key={country.code} value={country.code}>
-                    {country.name}
-                  </option>
-                ))}
-              </select>
-              <p className="text-sm text-gray-700 mt-1">
-                This helps us show relevant content and connect you with users from your region
-              </p>
-              {errors.country && <p className="text-red-600 text-sm mt-1">{errors.country}</p>}
+                <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+              <h2 className="text-xl sm:text-2xl font-bold text-emerald-700">Welcome to Frame!</h2>
+              <p className="text-sm sm:text-base text-gray-700 mt-2">Let's set up your profile to get started</p>
             </div>
 
-            {/* Profile Banner */}
-            <div>
-              <label className="block text-sm font-medium text-gray-800 mb-2">
-                Profile Banner
-              </label>
-              <div className="space-y-3">
-                <div className="w-full h-32 rounded-lg overflow-hidden border-2 border-gray-200">
-                  {formData.profileBannerPreview ? (
-                    <img
-                      src={formData.profileBannerPreview}
-                      alt="Banner preview"
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <div className="w-full h-full bg-gradient-to-r from-emerald-400 to-emerald-600 flex items-center justify-center">
-                      <svg className="w-12 h-12 text-white/70" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                      </svg>
-                    </div>
-                  )}
+            {/* Profile Setup Form */}
+            <div className="p-4 sm:p-6">
+              {errors.general && (
+                <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-600 text-sm">
+                  {errors.general}
                 </div>
-                <input
-                  type="file"
-                  ref={profileBannerRef}
-                  onChange={(e) => handleFileChange('profileBanner', e.target.files[0], 'profileBannerPreview')}
-                  accept="image/*"
-                  className="hidden"
-                />
+              )}
+
+              <div className="space-y-6">
+                {/* Profile Banner - moved to top */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-800 mb-2">
+                    Profile Banner
+                  </label>
+                  <div className="space-y-3">
+                    <div className="w-full h-32 rounded-lg overflow-hidden border-2 border-gray-200">
+                      {formData.profileBannerPreview ? (
+                        <img
+                          src={formData.profileBannerPreview}
+                          alt="Banner preview"
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <div className="w-full h-full bg-gradient-to-r from-emerald-400 to-emerald-600 flex items-center justify-center">
+                          <svg className="w-12 h-12 text-white/70" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                          </svg>
+                        </div>
+                      )}
+                    </div>
+                    <input
+                      type="file"
+                      ref={profileBannerRef}
+                      onChange={(e) => handleFileChange('profileBanner', e.target.files[0], 'profileBannerPreview')}
+                      accept="image/*"
+                      className="hidden"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => profileBannerRef.current?.click()}
+                      className="bg-gray-100 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200 transition-colors"
+                    >
+                      Choose Banner Image
+                    </button>
+                  </div>
+                </div>
+
+                {/* Profile Picture */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-800 mb-2">
+                    Profile Picture
+                  </label>
+                  <div className="flex items-center space-x-4">
+                    <div className="w-20 h-20 rounded-full overflow-hidden border-2 border-gray-200">
+                      {formData.profilePicPreview ? (
+                        <img
+                          src={formData.profilePicPreview}
+                          alt="Profile preview"
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <div className="w-full h-full bg-gray-100 flex items-center justify-center">
+                          <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                          </svg>
+                        </div>
+                      )}
+                    </div>
+                    <div className="flex-1">
+                      <input
+                        type="file"
+                        ref={profilePicRef}
+                        onChange={(e) => handleFileChange('profilePic', e.target.files[0], 'profilePicPreview')}
+                        accept="image/*"
+                        className="hidden"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => profilePicRef.current?.click()}
+                        className="bg-gray-100 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200 transition-colors"
+                      >
+                        Choose Photo
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Username */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-800 mb-2">
+                    Username *
+                  </label>
+                  <div className="relative">
+                    <input
+                      type="text"
+                      value={formData.username}
+                      onChange={(e) => handleInputChange('username', e.target.value.toLowerCase().replace(/[^a-z0-9]/g, ''))}
+                      className={`w-full px-4 py-3 pr-12 border rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none transition-all text-gray-900 placeholder:text-gray-400 ${
+                        errors.username ? 'border-red-300 bg-red-50' : 
+                        usernameStatus === 'taken' ? 'border-red-300 bg-red-50' :
+                        usernameStatus === 'available' ? 'border-emerald-300 bg-emerald-50' :
+                        'border-gray-300'
+                      }`}
+                      placeholder="johndoe123"
+                    />
+                    {/* Username status indicator */}
+                    <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                      {usernameStatus === 'checking' && (
+                        <div className="w-5 h-5 border-2 border-gray-300 border-t-emerald-500 rounded-full animate-spin"></div>
+                      )}
+                      {(usernameStatus === 'available' || usernameStatus === 'unchanged') && (
+                        <svg className="w-5 h-5 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                        </svg>
+                      )}
+                      {usernameStatus === 'taken' && (
+                        <svg className="w-5 h-5 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                      )}
+                    </div>
+                  </div>
+                  <p className="text-sm text-gray-700 mt-1">
+                    Your profile URL: frame.com/u/{formData.username || 'username'}
+                  </p>
+                  {/* Username status message */}
+                  {usernameStatus === 'taken' && (
+                    <p className="text-red-600 text-sm mt-1">This username is already taken</p>
+                  )}
+                  {usernameStatus === 'available' && formData.username.length >= 3 && (
+                    <p className="text-emerald-600 text-sm mt-1">Username is available</p>
+                  )}
+                  {usernameStatus === 'unchanged' && (
+                    <p className="text-gray-600 text-sm mt-1">Current username</p>
+                  )}
+                  {errors.username && <p className="text-red-600 text-sm mt-1">{errors.username}</p>}
+                </div>
+
+                {/* Display Name */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-800 mb-2">
+                    Display Name *
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.displayName}
+                    onChange={(e) => handleInputChange('displayName', e.target.value)}
+                    className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none transition-all text-gray-900 placeholder:text-gray-400 ${
+                      errors.displayName ? 'border-red-300 bg-red-50' : 'border-gray-300'
+                    }`}
+                    placeholder="John Doe"
+                  />
+                  <p className="text-sm text-gray-700 mt-1">
+                    This appears as your profile name
+                  </p>
+                  {errors.displayName && <p className="text-red-600 text-sm mt-1">{errors.displayName}</p>}
+                </div>
+
+                {/* Country */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-800 mb-2">
+                    Country *
+                  </label>
+                  <select
+                    value={formData.country}
+                    onChange={(e) => handleInputChange('country', e.target.value)}
+                    className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none transition-all text-gray-900 ${
+                      errors.country ? 'border-red-300 bg-red-50' : 'border-gray-300'
+                    }`}
+                  >
+                    <option value="">Select your country</option>
+                    {countries.map(country => (
+                      <option key={country.code} value={country.code}>
+                        {country.name}
+                      </option>
+                    ))}
+                  </select>
+                  {errors.country && <p className="text-red-600 text-sm mt-1">{errors.country}</p>}
+                </div>
+
+                {/* Bio */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-800 mb-2">
+                    Bio
+                  </label>
+                  <textarea
+                    value={formData.bio}
+                    onChange={(e) => handleInputChange('bio', e.target.value)}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none transition-all resize-none text-gray-900 placeholder:text-gray-400"
+                    rows="4"
+                    placeholder="Tell others about yourself..."
+                    maxLength="500"
+                  />
+                  <div className="flex justify-end mt-1">
+                    <span className="text-sm text-gray-400">{formData.bio.length}/500</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Actions */}
+              <div className="flex justify-end mt-8">
                 <button
                   type="button"
-                  onClick={() => profileBannerRef.current?.click()}
-                  className="bg-gray-100 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200 transition-colors"
+                  onClick={handleComplete}
+                  disabled={loading || usernameStatus === 'checking'}
+                  className="bg-emerald-600 text-white px-6 py-3 rounded-lg hover:bg-emerald-700 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  Choose Banner Image
+                  {loading ? 'Setting up...' : usernameStatus === 'checking' ? 'Checking username...' : 'Complete Setup'}
                 </button>
               </div>
-              <p className="text-sm text-gray-700 mt-1">
-                A banner image appears at the top of your profile and makes it more attractive
-              </p>
             </div>
-
-            {/* Bio */}
-            <div>
-              <label className="block text-sm font-medium text-gray-800 mb-2">
-                Bio
-              </label>
-              <textarea
-                value={formData.bio}
-                onChange={(e) => handleInputChange('bio', e.target.value)}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none transition-all resize-none text-gray-900 placeholder:text-gray-400"
-                rows="4"
-                placeholder="Tell others about yourself, your interests, or what you do..."
-                maxLength="500"
-              />
-              <div className="flex justify-between mt-1">
-                <p className="text-sm text-gray-700">
-                  Share a bit about yourself - this appears on your profile page
-                </p>
-                <span className="text-sm text-gray-400">{formData.bio.length}/500</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Actions */}
-          <div className="flex justify-end mt-8">
-            <button
-              type="button"
-              onClick={handleComplete}
-              disabled={loading || usernameStatus === 'checking'}
-              className="bg-emerald-600 text-white px-6 py-3 rounded-lg hover:bg-emerald-700 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {loading ? 'Setting up...' : usernameStatus === 'checking' ? 'Checking username...' : 'Complete Setup'}
-            </button>
           </div>
         </div>
       </div>
-    </div>
+    </>
   );
 }
