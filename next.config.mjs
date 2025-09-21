@@ -85,20 +85,6 @@ const nextConfig = {
           '**/logs/**'
         ]
       };
-      
-      // Add entry configuration to prevent hanging
-      config.entry = async () => {
-        const entries = await originalEntry();
-        
-        // Add polyfills for browser compatibility
-        if (entries['main.js'] && !entries['main.js'].includes('./src/polyfills.js')) {
-          entries['main.js'].unshift('./src/polyfills.js');
-        }
-        
-        return entries;
-      };
-      
-      const originalEntry = config.entry;
     }
     
     // Optimize Firebase imports for better tree shaking
@@ -143,10 +129,11 @@ const nextConfig = {
     'https://39d4d35b-71ea-493f-a752-8a5296b5f1a3-00-3u13ci9zfz6j3.kirk.replit.dev'
   ].filter(Boolean),
   
-  // Experimental features - disable problematic ones
+  // External packages for server components
+  serverExternalPackages: ['firebase-admin'],
+  
+  // Experimental features - configure properly for Next.js 15
   experimental: {
-    // Disable features that can cause hanging
-    appDir: true, // Keep app directory
     serverActions: {
       allowedOrigins: [
         'https://*.replit.dev',
@@ -157,12 +144,7 @@ const nextConfig = {
         'http://127.0.0.1',
         ...(process.env.ALLOWED_ORIGINS ? process.env.ALLOWED_ORIGINS.split(',') : [])
       ]
-    },
-    // Disable turbopack as it can cause issues in Replit
-    turbo: false,
-    // Disable other experimental features that can cause hanging
-    optimizePackageImports: false,
-    serverComponentsExternalPackages: ['firebase-admin'],
+    }
   },
   
   // Add development server configuration
