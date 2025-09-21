@@ -23,10 +23,10 @@ export const signInPasswordSchema = z
 // Full name schema
 export const fullNameSchema = z
   .string()
-  .min(1, 'Full name is required')
-  .min(2, 'Full name must be at least 2 characters long')
-  .max(50, 'Full name must be less than 50 characters')
-  .regex(/^[a-zA-Z\s'-]+$/, 'Full name can only contain letters, spaces, hyphens, and apostrophes')
+  .min(1, 'Name is required')
+  .min(2, 'Name must be at least 2 characters long')
+  .max(50, 'Name must be less than 50 characters')
+  .regex(/^[a-zA-Z\s'-]+$/, 'Name can only contain letters, spaces, hyphens, and apostrophes')
   .transform((name) => name.trim());
 
 // Sign In Form Schema

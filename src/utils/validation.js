@@ -14,9 +14,9 @@ export const validatePassword = (password, isSignUp = false) => {
 };
 
 export const validateFullName = (fullName) => {
-  if (!fullName) return 'Full name is required';
-  if (fullName.trim().length < 2) return 'Full name must be at least 2 characters long';
-  if (fullName.length > 50) return 'Full name must be less than 50 characters';
+  if (!fullName) return 'Name is required';
+  if (fullName.trim().length < 2) return 'Name must be at least 2 characters long';
+  if (fullName.length > 50) return 'Name must be less than 50 characters';
   return null;
 };
 
