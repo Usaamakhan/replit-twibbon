@@ -69,7 +69,7 @@ export default function EmailVerification() {
             <button
               onClick={handleResendVerification}
               disabled={isResending}
-              className="text-emerald-600 hover:text-emerald-800 underline ml-1 disabled:opacity-50"
+              className="text-emerald-600 hover:text-emerald-800 underline ml-1 disabled:opacity-50 cursor-pointer disabled:cursor-not-allowed"
             >
               {isResending ? 'sending...' : 'click to resend'}
             </button>
