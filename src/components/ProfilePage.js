@@ -201,7 +201,7 @@ export default function ProfilePage({ isOwnProfile = false, username = null }) {
                   
                   {/* Bio */}
                   <div className="mt-4 w-full">
-                    <p className="text-gray-600 text-center leading-relaxed">
+                    <p className="text-gray-600 text-center leading-relaxed whitespace-pre-wrap">
                       {userData.bio}
                     </p>
                   </div>
