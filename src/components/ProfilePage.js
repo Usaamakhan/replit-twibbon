@@ -184,13 +184,6 @@ export default function ProfilePage({ isOwnProfile = false, username = null }) {
                         </span>
                       </div>
                     )}
-                    {isOwnProfile && (
-                      <button className="absolute bottom-2 right-2 bg-emerald-600 text-white p-2 rounded-full hover:bg-emerald-700 transition-colors">
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                        </svg>
-                      </button>
-                    )}
                   </div>
                   
                   {/* Name and Username */}
@@ -244,7 +237,6 @@ export default function ProfilePage({ isOwnProfile = false, username = null }) {
                   <div className="text-sm sm:text-lg lg:text-xl font-bold text-emerald-600">
                     {userData.createdAt ? 
                       new Date(userData.createdAt.seconds ? userData.createdAt.seconds * 1000 : userData.createdAt).toLocaleDateString('en-US', { 
-                        weekday: 'short',
                         month: 'short', 
                         day: 'numeric',
                         year: 'numeric' 
@@ -252,16 +244,16 @@ export default function ProfilePage({ isOwnProfile = false, username = null }) {
                       'Recently'
                     }
                   </div>
-                  <div className="text-xs sm:text-sm lg:text-base text-gray-600 font-medium">Joined</div>
+                  <div className="text-xs sm:text-sm lg:text-base text-gray-600 font-medium">Joined since</div>
                 </div>
               </div>
 
               {/* Campaigns Section */}
               <div className="bg-white rounded-2xl shadow-lg p-6">
                 <div className="flex items-center justify-between mb-6">
-                  <h2 className="text-2xl font-bold text-gray-900">Campaigns</h2>
+                  <h2 className="text-xl font-bold text-gray-900">Campaigns</h2>
                   {isOwnProfile && (
-                    <button className="bg-emerald-600 text-white px-4 py-2 rounded-lg hover:bg-emerald-700 transition-colors font-medium">
+                    <button className="bg-emerald-600 text-white px-3 py-1.5 rounded-lg hover:bg-emerald-700 transition-colors text-sm font-medium">
                       Create Campaign
                     </button>
                   )}
@@ -297,7 +289,7 @@ export default function ProfilePage({ isOwnProfile = false, username = null }) {
                     <h3 className="text-2xl font-bold text-gray-900 mb-2">No Campaigns Yet</h3>
                     <p className="text-gray-600 mb-6">Create Campaigns, and share to Frame</p>
                     {isOwnProfile && (
-                      <button className="bg-emerald-600 text-white px-6 py-3 rounded-lg hover:bg-emerald-700 transition-colors font-medium">
+                      <button className="bg-emerald-600 text-white px-4 py-2 rounded-lg hover:bg-emerald-700 transition-colors text-sm font-medium">
                         Create Your First Campaign
                       </button>
                     )}
