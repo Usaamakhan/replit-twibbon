@@ -73,21 +73,17 @@ export const generateUniqueUsername = async (baseUsername, maxAttempts = 100) =>
   return finalUsername;
 };
 
-// Check if username already exists - now uses React context
-export const checkUsernameExists = async (username, firebase) => {
-  const database = getDatabase(firebase);
-  
+// Check if username already exists
+export const checkUsernameExists = async (username) => {
   // Check if database is initialized
-  if (!database) {
+  if (!db) {
     console.error('Database not initialized - cannot check username');
     return true; // Assume exists on error to be safe
   }
   
   try {
-    const { doc, getDoc } = await getFirestoreHelpers();
-    
     // Check the usernames collection directly - more efficient and consistent
-    const usernameDocRef = doc(database, 'usernames', username.toLowerCase().trim());
+    const usernameDocRef = doc(db, 'usernames', username.toLowerCase().trim());
     const usernameDoc = await getDoc(usernameDocRef);
     return usernameDoc.exists();
   } catch (error) {
