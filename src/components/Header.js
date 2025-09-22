@@ -20,18 +20,18 @@ export default function Header({ isMenuOpen, setIsMenuOpen }) {
         >
           Frame
         </Link>
-        <div className="flex-1 max-w-xs mx-4 relative">
+        <div className="w-32 sm:w-40 mx-4 relative">
           <input
             type="text"
             placeholder="Search"
-            className="w-full px-4 py-3 pr-12 rounded-full bg-white text-black placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-emerald-700 text-base"
+            className="w-full px-3 py-2 pr-8 rounded-full bg-white text-black placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-emerald-700 text-sm"
           />
           <button 
             onClick={handleSearch}
-            className="absolute right-3 top-1/2 transform -translate-y-1/2 cursor-pointer hover:text-emerald-700 transition-colors duration-200"
+            className="absolute right-2 top-1/2 transform -translate-y-1/2 cursor-pointer hover:text-emerald-700 transition-colors duration-200"
           >
             <svg 
-              className="w-5 h-5 text-gray-500" 
+              className="w-4 h-4 text-gray-500" 
               fill="none" 
               stroke="currentColor" 
               viewBox="0 0 24 24"
