@@ -126,8 +126,8 @@ export default function ProfileEditModal({ isOpen, onClose, userData, onUpdate }
         const exists = await checkUsernameExists(username);
         console.log('📋 PROFILE MODAL - checkUsernameExists returned:', exists);
         
-        // Only update if this is still the latest request and username hasn't changed
-        if (currentRequestId === usernameRequestIdRef.current && formData.username === username) {
+        // Only update if this is still the latest request
+        if (currentRequestId === usernameRequestIdRef.current) {
           const newStatus = exists ? 'taken' : 'available';
           console.log('✅ PROFILE MODAL - Updating status to:', newStatus);
           setUsernameStatus(newStatus);
@@ -135,13 +135,12 @@ export default function ProfileEditModal({ isOpen, onClose, userData, onUpdate }
           console.log('⚠️ PROFILE MODAL - Ignoring outdated response:', {
             currentRequestId,
             latestRequestId: usernameRequestIdRef.current,
-            formUsername: formData.username,
             checkedUsername: username
           });
         }
       } catch (error) {
         console.error('❌ PROFILE MODAL - Error checking username:', error);
-        if (currentRequestId === usernameRequestIdRef.current && formData.username === username) {
+        if (currentRequestId === usernameRequestIdRef.current) {
           console.log('🚫 PROFILE MODAL - Setting status to null due to error');
           setUsernameStatus(null); // Show neutral state on error
         }

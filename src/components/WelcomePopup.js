@@ -139,8 +139,8 @@ export default function WelcomePopup({ isOpen, onClose, onComplete }) {
         const exists = await checkUsernameExists(username);
         console.log('📋 WELCOME POPUP - checkUsernameExists returned:', exists);
         
-        // Only update if this is still the latest request and username hasn't changed
-        if (currentRequestId === usernameRequestIdRef.current && formData.username === username) {
+        // Only update if this is still the latest request
+        if (currentRequestId === usernameRequestIdRef.current) {
           const newStatus = exists ? 'taken' : 'available';
           console.log('✅ WELCOME POPUP - Updating status to:', newStatus);
           setUsernameStatus(newStatus);
@@ -148,13 +148,12 @@ export default function WelcomePopup({ isOpen, onClose, onComplete }) {
           console.log('⚠️ WELCOME POPUP - Ignoring outdated response:', {
             currentRequestId,
             latestRequestId: usernameRequestIdRef.current,
-            formUsername: formData.username,
             checkedUsername: username
           });
         }
       } catch (error) {
         console.error('❌ WELCOME POPUP - Error checking username:', error);
-        if (currentRequestId === usernameRequestIdRef.current && formData.username === username) {
+        if (currentRequestId === usernameRequestIdRef.current) {
           console.log('🚫 WELCOME POPUP - Setting status to null due to error');
           setUsernameStatus(null); // Show neutral state on error
         }
