@@ -3,6 +3,8 @@ import "./globals.css";
 import ClientAuthProvider from "../components/ClientAuthProvider";
 import ErrorBoundary from "../components/ErrorBoundary";
 import TimeoutWrapper from "../components/TimeoutWrapper";
+import AuthenticatedLayout from "../components/AuthenticatedLayout";
+import AuthGate from "../components/AuthGate";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -29,7 +31,11 @@ export default function RootLayout({ children }) {
         <ErrorBoundary>
           <TimeoutWrapper timeout={15000}>
             <ClientAuthProvider>
-              {children}
+              <AuthenticatedLayout>
+                <AuthGate>
+                  {children}
+                </AuthGate>
+              </AuthenticatedLayout>
             </ClientAuthProvider>
           </TimeoutWrapper>
         </ErrorBoundary>
