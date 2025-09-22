@@ -145,7 +145,22 @@ export default function SignInModal({
               <form className="space-y-4 mb-6" onSubmit={handleFormSubmit} noValidate>
                 {error && (
                   <div id="signin-error" className="text-red-600 text-sm text-center p-2 bg-red-50 rounded-lg" role="alert">
-                    {error}
+                    <div>{error}</div>
+                    {error.toLowerCase().includes('invalid') && (error.toLowerCase().includes('email') || error.toLowerCase().includes('password')) && (
+                      <div className="mt-2 text-gray-600">
+                        <span className="text-xs">
+                          Forgot your password? Click on "
+                          <button
+                            type="button"
+                            onClick={onSwitchToForgotPassword}
+                            className="text-emerald-700 hover:text-emerald-800 underline font-medium"
+                          >
+                            Forgot Password?
+                          </button>
+                          " below to reset it.
+                        </span>
+                      </div>
+                    )}
                   </div>
                 )}
                 <div>
