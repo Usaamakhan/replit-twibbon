@@ -121,7 +121,6 @@ export const getFirebaseErrorMessage = (errorCode) => {
   }
   
   // For unknown error codes, provide a generic message without exposing technical details
-  console.warn(`Unknown Firebase error code: ${errorCode}`);
   return 'An unexpected error occurred. Please try again.';
 };
 

@@ -35,7 +35,6 @@ export default function UserOnboardingWrapper({ children }) {
         
         // If still no profile, this is unexpected
         if (!userProfile) {
-          console.warn('Still no user profile found after retry for user:', user.email);
           return;
         }
         
@@ -46,7 +45,6 @@ export default function UserOnboardingWrapper({ children }) {
         } else if (userProfile) {
         }
       } catch (error) {
-        console.error('Error checking profile status:', error);
       } finally {
         setCheckingProfile(false);
       }
@@ -86,7 +84,6 @@ export default function UserOnboardingWrapper({ children }) {
         throw new Error(result.error || 'Failed to complete profile');
       }
     } catch (error) {
-      console.error('Error completing profile:', error);
       throw error; // Re-throw to let WelcomePopup handle the error display
     }
   };
@@ -98,7 +95,6 @@ export default function UserOnboardingWrapper({ children }) {
       try {
         await updateUserProfile(user.uid, { profileCompleted: true });
       } catch (error) {
-        console.error('Error marking profile as completed:', error);
       }
     }
   };

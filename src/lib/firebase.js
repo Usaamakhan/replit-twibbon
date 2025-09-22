@@ -45,9 +45,6 @@ if (typeof window !== 'undefined' && firebaseConfigured) {
     // Initialize Cloud Firestore and get a reference to the service
     db = getFirestore(app);
     
-    if (process.env.NODE_ENV === 'development') {
-      console.log('Firebase initialized successfully with project:', firebaseEnvVars.projectId);
-    }
   } catch (error) {
     console.error('Firebase initialization failed:', error);
     app = null;
@@ -55,9 +52,6 @@ if (typeof window !== 'undefined' && firebaseConfigured) {
     db = null;
   }
 } else if (typeof window !== 'undefined' && !firebaseConfigured) {
-  if (process.env.NODE_ENV === 'development') {
-    console.log('Firebase not configured - missing variables:', missingVars);
-  }
 }
 
 // Function to initialize Firebase (for compatibility, now redundant)

@@ -46,7 +46,6 @@ export const createUserProfile = async (user) => {
           publicProfile: true
         }
       });
-      console.log('Created new user profile for:', user.email);
     } else {
       // Update last login
       await updateDoc(userRef, {
@@ -57,7 +56,6 @@ export const createUserProfile = async (user) => {
     
     return userRef;
   } catch (error) {
-    console.error('Error creating/updating user profile:', error);
     throw error;
   }
 };
@@ -75,7 +73,6 @@ export const getUserProfile = async (userId) => {
     }
     return null;
   } catch (error) {
-    console.error('Error getting user profile:', error);
     return null;
   }
 };
@@ -92,7 +89,6 @@ export const updateUserProfile = async (userId, updates) => {
     });
     return true;
   } catch (error) {
-    console.error('Error updating user profile:', error);
     return false;
   }
 };
@@ -115,7 +111,6 @@ export const createFrame = async (frameData) => {
     
     return frameDoc.id;
   } catch (error) {
-    console.error('Error creating frame:', error);
     throw error;
   }
 };
@@ -139,7 +134,6 @@ export const getUserFrames = async (userId, limitCount = 20) => {
       ...doc.data()
     }));
   } catch (error) {
-    console.error('Error getting user frames:', error);
     return [];
   }
 };
@@ -163,7 +157,6 @@ export const getPublicFrames = async (limitCount = 20) => {
       ...doc.data()
     }));
   } catch (error) {
-    console.error('Error getting public frames:', error);
     return [];
   }
 };
@@ -178,7 +171,6 @@ export const incrementFrameViews = async (frameId) => {
       views: increment(1)
     });
   } catch (error) {
-    console.error('Error incrementing frame views:', error);
   }
 };
 

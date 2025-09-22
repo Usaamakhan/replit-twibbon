@@ -96,24 +96,18 @@ export function AuthProvider({ children }) {
   const signInWithGoogle = async () => {
     try {
       setLoading(true);
-      if (process.env.NODE_ENV === 'development') {
-        console.log('Starting Google sign in...');
-      }
+
       
       const googleProvider = new GoogleAuthProvider();
       const result = await signInWithPopup(firebase.auth, googleProvider);
       
-      if (process.env.NODE_ENV === 'development') {
-        console.log('Google sign in successful:', result.user.email);
-      }
+
       
       // User state will be automatically updated via onAuthStateChanged
       setLoading(false);
       return { success: true };
     } catch (error) {
-      if (process.env.NODE_ENV === 'development') {
-        console.error('Google sign in error:', error.code, error.message);
-      }
+
       setLoading(false);
       return { success: false, error: error.code };
     }
@@ -136,16 +130,12 @@ export function AuthProvider({ children }) {
       
       // Send email verification
       await sendEmailVerification(result.user);
-      if (process.env.NODE_ENV === 'development') {
-        console.log('Email sign up successful, verification email sent to:', result.user.email);
-      }
+
       
       setLoading(false);
       return { success: true, requiresVerification: true };
     } catch (error) {
-      if (process.env.NODE_ENV === 'development') {
-        console.error('Email sign up error:', error.code, error.message);
-      }
+
       setLoading(false);
       return { success: false, error: error.code };
     }
@@ -158,15 +148,11 @@ export function AuthProvider({ children }) {
       // Static imports already available
       
       const result = await signInWithEmailAndPassword(firebase.auth, email, password);
-      if (process.env.NODE_ENV === 'development') {
-        console.log('Email sign in successful:', result.user.email);
-      }
+
       setLoading(false);
       return { success: true };
     } catch (error) {
-      if (process.env.NODE_ENV === 'development') {
-        console.error('Email sign in error:', error.code, error.message);
-      }
+
       setLoading(false);
       return { success: false, error: error.code };
     }
@@ -187,7 +173,6 @@ export function AuthProvider({ children }) {
     try {
       if (firebase.auth?.currentUser) {
         await sendEmailVerification(firebase.auth.currentUser);
-        console.log('Verification email sent');
         return { success: true };
       }
       return { success: false, error: 'No user signed in' };
@@ -204,7 +189,6 @@ export function AuthProvider({ children }) {
         await reload(firebase.auth.currentUser);
         // Update the user state so components re-render with new verification status
         setUser(firebase.auth.currentUser);
-        console.log('User reloaded, verification status:', firebase.auth.currentUser.emailVerified);
         return { verified: firebase.auth.currentUser.emailVerified };
       }
       return { verified: false };
@@ -219,9 +203,7 @@ export function AuthProvider({ children }) {
       setLoading(true);
       
       // Only log in development environment
-      if (process.env.NODE_ENV === 'development') {
-        console.log('Attempting password reset');
-      }
+
       
       await sendPasswordResetEmail(firebase.auth, email);
       setLoading(false);

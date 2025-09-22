@@ -9,7 +9,6 @@ const caveat = Caveat({ subsets: ["latin"], weight: ["700"] });
 export default function Header({ isMenuOpen, setIsMenuOpen }) {
   const handleSearch = () => {
     // Search functionality can be implemented here
-    console.log('Search clicked');
   };
 
   return (

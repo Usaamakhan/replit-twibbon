@@ -36,7 +36,6 @@ export const useFirebaseOptimized = () => {
     // Set timeout to prevent infinite loading
     const timeoutId = setTimeout(() => {
       if (!isInitialized) {
-        console.warn('Firebase initialization timeout - proceeding without Firebase');
         setFirebase({
           app: null,
           auth: null,

@@ -67,7 +67,7 @@ export const generateUniqueUsername = async (baseUsername, maxAttempts = 100) =>
   if (attempts >= maxAttempts) {
     // Fallback: use timestamp-based unique identifier
     finalUsername = `${username}${Date.now().toString().slice(-6)}`;
-    console.warn(`Max attempts reached for username generation, using fallback: ${finalUsername}`);
+
   }
   
   return finalUsername;
@@ -76,71 +76,25 @@ export const generateUniqueUsername = async (baseUsername, maxAttempts = 100) =>
 // Check if username already exists
 export const checkUsernameExists = async (username) => {
   const normalizedUsername = username.toLowerCase().trim();
-  console.log('🔍 USERNAME CHECK START:', { 
-    originalUsername: username, 
-    normalizedUsername,
-    timestamp: new Date().toISOString()
-  });
   
   // Check if database is initialized
   if (!db) {
-    console.error('❌ DATABASE NOT INITIALIZED:', {
-      db: db,
-      typeof_db: typeof db,
-      isNull: db === null,
-      isUndefined: db === undefined
-    });
     return true; // Assume exists on error to be safe
   }
   
-  console.log('✅ DATABASE INITIALIZED:', {
-    db: !!db,
-    db_app: db?.app?.name || 'unknown',
-    db_type: db?._delegate?._databaseId || 'unknown'
-  });
   
   try {
-    console.log('📝 CREATING DOC REFERENCE:', {
-      collection: 'usernames',
-      documentId: normalizedUsername,
-      fullPath: `usernames/${normalizedUsername}`
-    });
     
     // Check the usernames collection directly - more efficient and consistent
     const usernameDocRef = doc(db, 'usernames', normalizedUsername);
-    console.log('📄 DOC REFERENCE CREATED:', {
-      docRef: !!usernameDocRef,
-      docPath: usernameDocRef?.path || 'unknown'
-    });
     
-    console.log('🔄 EXECUTING FIRESTORE QUERY...');
     const usernameDoc = await getDoc(usernameDocRef);
     
     const exists = usernameDoc.exists();
-    console.log('✅ FIRESTORE QUERY COMPLETE:', {
-      exists,
-      docId: usernameDoc.id,
-      hasData: !!usernameDoc.data(),
-      metadata: {
-        fromCache: usernameDoc.metadata.fromCache,
-        hasPendingWrites: usernameDoc.metadata.hasPendingWrites
-      }
-    });
     
-    if (exists) {
-      console.log('📦 USERNAME EXISTS - DATA:', usernameDoc.data());
-    } else {
-      console.log('⭕ USERNAME AVAILABLE - NO DATA FOUND');
-    }
     
     return exists;
   } catch (error) {
-    console.error('❌ ERROR CHECKING USERNAME:', {
-      error: error.message,
-      code: error.code,
-      stack: error.stack,
-      username: normalizedUsername
-    });
     return true; // Assume exists on error to be safe
   }
 };
@@ -188,7 +142,7 @@ const reserveUsernameAtomically = async (baseUsername, userUid, userProfile) => 
     
     // Fallback: use timestamp-based unique identifier
     finalUsername = `${username}${Date.now().toString().slice(-6)}`;
-    console.warn(`Max attempts reached for username generation, using fallback: ${finalUsername}`);
+
     
     const usernameDocRef = doc(db, 'usernames', finalUsername);
     transaction.set(usernameDocRef, {
@@ -212,13 +166,12 @@ export const createUserProfile = async (user) => {
   const database = getDatabase();
   // Check if Firebase is configured
   if (!database) {
-    console.error('Firebase Firestore is not configured');
+
     return { success: false, error: 'Database not available' };
   }
   
   try {
-    console.log('Creating user profile for:', user.email, 'with UID:', user.uid);
-    const userDocRef = doc(database, 'users', user.uid);
+      const userDocRef = doc(database, 'users', user.uid);
     const userDoc = await getDoc(userDocRef);
     
     if (!userDoc.exists()) {
@@ -262,14 +215,13 @@ export const createUserProfile = async (user) => {
 
 export const getUserProfile = async (userId) => {
   if (!userId) {
-    console.warn('getUserProfile called with invalid userId');
     return null;
   }
   
   const database = getDatabase();
   // Check if Firebase is configured
   if (!database) {
-    console.error('Firebase Firestore is not configured');
+
     return null;
   }
   
@@ -292,11 +244,9 @@ export const getUserProfile = async (userId) => {
         bannerImage: userData.bannerImage || ''
       };
     } else {
-      console.log('No user profile found for userId:', userId);
       return null;
     }
   } catch (error) {
-    console.error('Error getting user profile:', error, { userId });
     return null;
   }
 };
@@ -304,26 +254,22 @@ export const getUserProfile = async (userId) => {
 // Get user profile by username (for /[username] route) - uses usernames collection for consistency
 export const getUserProfileByUsername = async (username) => {
   if (!username || typeof username !== 'string') {
-    console.warn('getUserProfileByUsername called with invalid username:', username);
     return null;
   }
   
   // Normalize username
   const normalizedUsername = username.toLowerCase().trim();
   if (!normalizedUsername) {
-    console.warn('Username is empty after normalization:', username);
     return null;
   }
   
   try {
     const startTime = performance.now();
-    console.log('🔍 getUserProfileByUsername starting for:', normalizedUsername, 'Time:', new Date().toISOString());
     
     // Get Firebase database instance
     const database = getDatabase();
     
     if (!database) {
-      console.error('Database not available for getUserProfileByUsername');
       return null;
     }
 
@@ -331,48 +277,32 @@ export const getUserProfileByUsername = async (username) => {
     const helpersStart = performance.now();
     const { doc, getDoc } = await getFirestoreHelpers();
     const helpersTime = performance.now() - helpersStart;
-    console.log('📦 Firestore helpers loaded in:', helpersTime.toFixed(2) + 'ms');
     
     // First, resolve username to userId using usernames collection
     const lookupStart = performance.now();
     const usernameDocRef = doc(database, 'usernames', normalizedUsername);
     const usernameDoc = await getDoc(usernameDocRef);
     const lookupTime = performance.now() - lookupStart;
-    console.log('🔍 Username lookup completed in:', lookupTime.toFixed(2) + 'ms');
     
     if (!usernameDoc.exists()) {
-      console.log('No username reservation found for:', normalizedUsername);
       return null;
     }
     
     const { userId } = usernameDoc.data();
-    console.log('✅ Found userId for username:', normalizedUsername, '->', userId);
     
     // Then fetch user profile using the userId
     const profileStart = performance.now();
     const userDocRef = doc(database, 'users', userId);
     const userDoc = await getDoc(userDocRef);
     const profileTime = performance.now() - profileStart;
-    console.log('👤 User profile fetch completed in:', profileTime.toFixed(2) + 'ms');
     
     if (!userDoc.exists()) {
-      console.warn('Username exists but user profile missing:', normalizedUsername, userId);
       return null;
     }
     
     const userData = userDoc.data();
     const totalTime = performance.now() - startTime;
     
-    console.log('🎯 getUserProfileByUsername completed successfully', {
-      username: normalizedUsername,
-      userId: userId,
-      timing: {
-        helpers: helpersTime.toFixed(2) + 'ms',
-        lookup: lookupTime.toFixed(2) + 'ms', 
-        profile: profileTime.toFixed(2) + 'ms',
-        total: totalTime.toFixed(2) + 'ms'
-      }
-    });
     
     // Ensure required fields exist with fallbacks
     return { 
@@ -387,7 +317,6 @@ export const getUserProfileByUsername = async (username) => {
       bannerImage: userData.bannerImage || ''
     };
   } catch (error) {
-    console.error('Error getting user profile by username:', error, { username, normalizedUsername });
     return null;
   }
 };
@@ -398,7 +327,7 @@ export const updateUserProfile = async (userId, updates) => {
   
   // Check if Firebase is configured
   if (!db) {
-    console.error('Firebase Firestore is not configured');
+
     return { success: false, error: 'Database not available' };
   }
   
@@ -415,12 +344,10 @@ export const updateUserProfile = async (userId, updates) => {
   
   // If no valid fields to update, return early
   if (Object.keys(filteredUpdates).length === 0) {
-    console.warn('No allowed fields provided for update');
     return { success: false, error: 'No valid fields to update' };
   }
 
   try {
-    console.log('Updating user profile for userId:', userId, 'with updates:', filteredUpdates);
     return await runTransaction(db, async (transaction) => {
       const userDocRef = doc(db, 'users', userId);
       const userDoc = await transaction.get(userDocRef);
@@ -510,12 +437,10 @@ export const getUserStats = async (userId) => {
 // Frame operations with comprehensive error handling
 export const createFrame = async (frameData, userId) => {
   if (!userId) {
-    console.warn('createFrame called without userId');
     return { success: false, error: 'User ID is required' };
   }
   
   if (!frameData || typeof frameData !== 'object') {
-    console.warn('createFrame called with invalid frameData');
     return { success: false, error: 'Frame data is required' };
   }
   
@@ -569,7 +494,6 @@ export const getPublicFrames = async (limitCount = 10) => {
     
     return frames;
   } catch (error) {
-    console.error('Error getting public frames:', error);
     return [];
   }
 };
@@ -599,7 +523,6 @@ export const getUserFrames = async (userId) => {
     
     return frames;
   } catch (error) {
-    console.error('Error getting user frames:', error);
     // Return empty array on permissions error or any other error
     return [];
   }
@@ -743,7 +666,6 @@ export const trackFrameUsage = async (frameId, userId) => {
       };
     });
   } catch (error) {
-    console.error('Error tracking frame usage:', error);
     return { success: false, error: error.message };
   }
 };
