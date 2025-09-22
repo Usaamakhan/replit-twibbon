@@ -3,7 +3,7 @@
 import { useAuth } from '../hooks/useAuth';
 import ProfilePage from './ProfilePage';
 
-export default function ProfilePageWrapper({ isOwnProfile = false, openSignInModal, openSignUpModal }) {
+function ProfilePageWrapper({ isOwnProfile = false, openSignInModal, openSignUpModal }) {
   const { user, loading } = useAuth();
 
   if (loading) {
@@ -51,3 +51,6 @@ export default function ProfilePageWrapper({ isOwnProfile = false, openSignInMod
   // User is authenticated or viewing someone else's profile
   return <ProfilePage isOwnProfile={isOwnProfile} />;
 }
+
+ProfilePageWrapper.displayName = 'ProfilePageWrapper';
+export default ProfilePageWrapper;

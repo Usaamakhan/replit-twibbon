@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, cloneElement, isValidElement } from 'react';
+import { useState, useEffect, cloneElement, isValidElement, Children } from 'react';
 import { useOptionalAuth } from '../hooks/useAuth';
 import { useBodyScrollLock } from '../hooks/useBodyScrollLock';
 import { getFirebaseErrorMessage } from '../utils/validation';
@@ -225,13 +225,18 @@ export default function InteractiveClient({ children }) {
       }`}>
         <Header isMenuOpen={isMenuOpen} setIsMenuOpen={setIsMenuOpen} />
         <main className="flex-1">
-          {isValidElement(children) && children.type?.name === 'ProfilePageWrapper' 
-            ? cloneElement(children, { 
+          {Children.map(children, (child) => {
+            if (isValidElement(child) && 
+                (child.type?.name === 'ProfilePageWrapper' || 
+                 child.type?.displayName === 'ProfilePageWrapper' ||
+                 child.type?.toString().includes('ProfilePageWrapper'))) {
+              return cloneElement(child, { 
                 openSignInModal, 
                 openSignUpModal 
-              })
-            : children
-          }
+              });
+            }
+            return child;
+          })}
         </main>
         <Footer />
       </div>
