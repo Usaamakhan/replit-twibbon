@@ -217,30 +217,14 @@ export default function SignInModal({
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                           </svg>
                         ) : (
-                          <div className="relative group">
-                            <svg 
-                              className="w-5 h-5 text-red-500 cursor-pointer hover:text-red-600 transition-colors" 
-                              fill="none" 
-                              stroke="currentColor" 
-                              viewBox="0 0 24 24"
-                              title={validationErrors.email || fieldValidation.email?.error || 'Invalid email format'}
-                            >
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                            </svg>
-                            {/* Tooltip - Fixed positioning and hover */}
-                            <div 
-                              className="absolute left-1/2 transform -translate-x-1/2 bottom-full mb-1 px-2 py-1 bg-gray-900 text-white text-xs rounded whitespace-nowrap opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-[9999] shadow-lg"
-                              style={{
-                                maxWidth: '200px',
-                                wordWrap: 'break-word',
-                                whiteSpace: 'normal'
-                              }}
-                            >
-                              {validationErrors.email || fieldValidation.email?.error || 'Invalid email format'}
-                              {/* Arrow */}
-                              <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-2 border-r-2 border-t-2 border-transparent border-t-gray-900"></div>
-                            </div>
-                          </div>
+                          <svg 
+                            className="w-5 h-5 text-red-500" 
+                            fill="none" 
+                            stroke="currentColor" 
+                            viewBox="0 0 24 24"
+                          >
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                          </svg>
                         )}
                       </div>
                     )}
@@ -278,30 +262,14 @@ export default function SignInModal({
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                           </svg>
                         ) : (
-                          <div className="relative group">
-                            <svg 
-                              className="w-5 h-5 text-red-500 cursor-pointer hover:text-red-600 transition-colors" 
-                              fill="none" 
-                              stroke="currentColor" 
-                              viewBox="0 0 24 24"
-                              title={validationErrors.password || fieldValidation.password?.error || 'Password is required'}
-                            >
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                            </svg>
-                            {/* Tooltip - Fixed positioning and hover */}
-                            <div 
-                              className="absolute left-1/2 transform -translate-x-1/2 bottom-full mb-1 px-2 py-1 bg-gray-900 text-white text-xs rounded whitespace-nowrap opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-[9999] shadow-lg"
-                              style={{
-                                maxWidth: '200px',
-                                wordWrap: 'break-word',
-                                whiteSpace: 'normal'
-                              }}
-                            >
-                              {validationErrors.password || fieldValidation.password?.error || 'Password is required'}
-                              {/* Arrow */}
-                              <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-2 border-r-2 border-t-2 border-transparent border-t-gray-900"></div>
-                            </div>
-                          </div>
+                          <svg 
+                            className="w-5 h-5 text-red-500" 
+                            fill="none" 
+                            stroke="currentColor" 
+                            viewBox="0 0 24 24"
+                          >
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                          </svg>
                         )}
                       </div>
                     )}
