@@ -259,7 +259,7 @@ export default function ProfileEditModal({ isOpen, onClose, userData, onUpdate }
       {/* Modal */}
       <div className="fixed inset-0 z-50 overflow-y-auto">
         <div className="flex min-h-full items-center justify-center p-4 sm:p-6 lg:p-8">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl mx-auto border-2 border-emerald-600 my-8">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl md:max-w-3xl xl:max-w-4xl mx-auto border-2 border-emerald-600 my-8">
             {/* Header */}
             <div className="bg-yellow-400 rounded-t-xl p-4 sm:p-6 text-center relative">
               <button
@@ -283,9 +283,9 @@ export default function ProfileEditModal({ isOpen, onClose, userData, onUpdate }
             </div>
           )}
 
-          <div className="space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Profile Banner - moved to top */}
-            <div>
+            <div className="md:col-span-2">
               <label className="block text-sm font-medium text-gray-800 mb-2">
                 Profile Banner
               </label>
@@ -322,8 +322,8 @@ export default function ProfileEditModal({ isOpen, onClose, userData, onUpdate }
               </div>
             </div>
 
-            {/* Profile Picture - moved to top */}
-            <div>
+            {/* Profile Picture */}
+            <div className="md:col-span-1">
               <label className="block text-sm font-medium text-gray-800 mb-2">
                 Profile Picture
               </label>
@@ -362,8 +362,29 @@ export default function ProfileEditModal({ isOpen, onClose, userData, onUpdate }
               </div>
             </div>
 
+            {/* Display Name */}
+            <div className="md:col-span-1">
+              <label className="block text-sm font-medium text-gray-800 mb-2">
+                Display Name *
+              </label>
+              <input
+                ref={displayNameRef}
+                type="text"
+                value={formData.displayName}
+                onChange={(e) => handleInputChange('displayName', e.target.value)}
+                className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none transition-all text-gray-900 placeholder:text-gray-400 ${
+                  errors.displayName ? 'border-red-300 bg-red-50' : 'border-gray-300'
+                }`}
+                placeholder="John Doe"
+              />
+              <p className="text-sm text-gray-700 mt-1">
+                This appears as your profile name
+              </p>
+              {errors.displayName && <p className="text-red-600 text-sm mt-1">{errors.displayName}</p>}
+            </div>
+
             {/* Username */}
-            <div>
+            <div className="md:col-span-1">
               <label className="block text-sm font-medium text-gray-800 mb-2">
                 Username *
               </label>
@@ -420,29 +441,8 @@ export default function ProfileEditModal({ isOpen, onClose, userData, onUpdate }
               {errors.username && <p className="text-red-600 text-sm mt-1">{errors.username}</p>}
             </div>
 
-            {/* Display Name */}
-            <div>
-              <label className="block text-sm font-medium text-gray-800 mb-2">
-                Display Name *
-              </label>
-              <input
-                ref={displayNameRef}
-                type="text"
-                value={formData.displayName}
-                onChange={(e) => handleInputChange('displayName', e.target.value)}
-                className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none transition-all text-gray-900 placeholder:text-gray-400 ${
-                  errors.displayName ? 'border-red-300 bg-red-50' : 'border-gray-300'
-                }`}
-                placeholder="John Doe"
-              />
-              <p className="text-sm text-gray-700 mt-1">
-                This appears as your profile name
-              </p>
-              {errors.displayName && <p className="text-red-600 text-sm mt-1">{errors.displayName}</p>}
-            </div>
-
             {/* Country */}
-            <div>
+            <div className="md:col-span-1">
               <label className="block text-sm font-medium text-gray-800 mb-2">
                 Country *
               </label>
@@ -465,7 +465,7 @@ export default function ProfileEditModal({ isOpen, onClose, userData, onUpdate }
             </div>
 
             {/* Bio */}
-            <div>
+            <div className="md:col-span-2">
               <label className="block text-sm font-medium text-gray-800 mb-2">
                 Bio
               </label>
@@ -484,7 +484,7 @@ export default function ProfileEditModal({ isOpen, onClose, userData, onUpdate }
           </div>
 
           {/* Actions */}
-          <div className="flex justify-end space-x-3 mt-8">
+          <div className="md:col-span-2 flex justify-end space-x-3 mt-8">
             <button
               type="button"
               onClick={onClose}
