@@ -27,6 +27,9 @@ This is a Next.js 15 application with React 19 and Tailwind CSS, designed to wor
 8. **Deployment Ready**: Application fully configured for both development and production deployment on Replit
 9. **GitHub Import Setup**: COMPLETE - Application is ready for development and external service configuration
 10. **Import Process Completed**: All systems verified working, deployment configured, application fully operational in Replit environment
+11. **Profile Edit Modal Navigation Fixed**: Removed automatic navigation to username page after profile changes - users now stay on current page after editing
+12. **Debug Logging Cleanup**: Removed all debug console.log statements from WelcomePopup, ProfileEditModal, and UserOnboardingWrapper for cleaner codebase
+13. **Global Popup Visibility**: Moved AuthGate (email verification) and UserOnboardingWrapper (welcome popup) to root layout level - these critical onboarding flows now appear on all pages, not just homepage
 
 ## Firebase Setup Status - FULLY CONFIGURED ✅
 - **Production Ready**: All Firebase environment variables successfully configured and active
