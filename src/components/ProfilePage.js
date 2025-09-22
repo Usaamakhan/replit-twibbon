@@ -312,10 +312,7 @@ export default function ProfilePage({ isOwnProfile = false, username = null }) {
           userData={userData}
           onUpdate={(updatedData) => {
             setUserData(updatedData);
-            // Navigate to new username URL if username was changed
-            if (updatedData.username !== userData.username) {
-              router.push(`/${updatedData.username}`);
-            }
+            // Keep user on the same page after profile update
           }}
         />
       )}
