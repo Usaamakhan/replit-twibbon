@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useFocusTrap } from '../../hooks/useFocusTrap';
 import { validateEmail } from '../../utils/validation';
 
@@ -14,7 +14,11 @@ export default function ForgotPasswordModal({
   onSwitchToSignIn
 }) {
   const modalRef = useFocusTrap(isOpen);
+  const [validationErrors, setValidationErrors] = useState({}); // Track form validation errors
   const [fieldValidation, setFieldValidation] = useState({}); // Track real-time validation status
+  
+  // Refs for form validation scrolling
+  const emailRef = useRef();
 
   // Handle Escape key
   useEffect(() => {
@@ -30,8 +34,60 @@ export default function ForgotPasswordModal({
     };
   }, [isOpen, onClose]);
 
+  // Clear validation errors when modal opens
+  useEffect(() => {
+    if (isOpen) {
+      setValidationErrors({});
+    }
+  }, [isOpen]);
+
+  const scrollToField = (fieldName) => {
+    const fieldRefs = {
+      email: emailRef
+    };
+    
+    const fieldRef = fieldRefs[fieldName];
+    if (fieldRef?.current) {
+      fieldRef.current.scrollIntoView({
+        behavior: 'smooth',
+        block: 'center'
+      });
+      // Focus the field after scrolling
+      setTimeout(() => {
+        fieldRef.current.focus();
+      }, 300);
+    }
+  };
+
+  const validateForm = (formData) => {
+    const newErrors = {};
+    let firstErrorField = null;
+
+    if (!formData.get('email')?.trim()) {
+      newErrors.email = 'Email is required';
+      if (!firstErrorField) firstErrorField = 'email';
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.get('email'))) {
+      newErrors.email = 'Please enter a valid email address';
+      if (!firstErrorField) firstErrorField = 'email';
+    }
+
+    setValidationErrors(newErrors);
+    
+    // If there are errors, scroll to the first error field
+    if (firstErrorField) {
+      setTimeout(() => scrollToField(firstErrorField), 100);
+    }
+    
+    return Object.keys(newErrors).length === 0;
+  };
+
   // Handle input change for real-time validation
   const handleInputChange = (field, value) => {
+    // Clear form validation errors when user starts typing
+    if (validationErrors[field]) {
+      setValidationErrors(prev => ({ ...prev, [field]: '' }));
+    }
+    
     // Perform real-time validation
     let validationError = null;
     let isValid = false;
@@ -50,6 +106,15 @@ export default function ForgotPasswordModal({
         hasValue: value.trim().length > 0
       }
     }));
+  };
+
+  const handleFormSubmit = (e) => {
+    e.preventDefault();
+    const formData = new FormData(e.target);
+    
+    if (validateForm(formData)) {
+      onForgotPassword(e); // Pass original event to parent handler
+    }
   };
 
   if (!isOpen) return null;
@@ -92,7 +157,7 @@ export default function ForgotPasswordModal({
             {/* Content */}
             <div className="p-4 sm:p-6">
               {/* Forgot Password Form */}
-              <form className="space-y-4 mb-6" onSubmit={onForgotPassword} noValidate>
+              <form className="space-y-4 mb-6" onSubmit={handleFormSubmit} noValidate>
                 {(error || successMessage) && (
                   <div 
                     id="forgot-password-alert"
@@ -112,6 +177,7 @@ export default function ForgotPasswordModal({
                   </label>
                   <div className="relative">
                     <input
+                      ref={emailRef}
                       id="forgot-password-email"
                       type="email"
                       name="email"
@@ -119,11 +185,12 @@ export default function ForgotPasswordModal({
                       placeholder="Enter your email address"
                       onChange={(e) => handleInputChange('email', e.target.value)}
                       className={`w-full px-3 sm:px-4 py-2 pr-10 border rounded-full focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none transition-all text-sm sm:text-base text-gray-900 placeholder-gray-600 ${
+                        validationErrors.email ? 'border-red-300 bg-red-50' : 
                         fieldValidation.email?.isValid ? 'border-emerald-300 bg-emerald-50' :
                         fieldValidation.email?.hasValue ? 'border-red-300 bg-red-50' :
                         'border-gray-300'
                       }`}
-                      aria-describedby={(error || successMessage) ? "forgot-password-alert" : "forgot-password-help"}
+                      aria-describedby={validationErrors.email ? "forgot-email-error" : (error || successMessage) ? "forgot-password-alert" : "forgot-password-help"}
                     />
                     {/* Validation Icon */}
                     {fieldValidation.email?.hasValue && (
@@ -138,15 +205,18 @@ export default function ForgotPasswordModal({
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                             </svg>
                             {/* Tooltip */}
-                            <div className="absolute bottom-full right-0 mb-2 p-2 bg-gray-800 text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-50">
-                              {fieldValidation.email.error}
-                              <div className="absolute top-full right-2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-800"></div>
+                            <div className="absolute bottom-full right-0 mb-2 p-2 bg-gray-900 text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-all duration-300 pointer-events-none whitespace-nowrap z-[9999] shadow-lg min-w-max">
+                              {fieldValidation.email.error || 'Enter a valid email address'}
+                              <div className="absolute top-full right-2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900"></div>
                             </div>
                           </div>
                         )}
                       </div>
                     )}
                   </div>
+                  {validationErrors.email && (
+                    <p id="forgot-email-error" className="text-red-600 text-sm mt-1">{validationErrors.email}</p>
+                  )}
                   <div id="forgot-password-help" className="text-xs text-gray-500 mt-1">
                     Enter the email address associated with your account
                   </div>
