@@ -6,6 +6,7 @@ import { useBodyScrollLock } from '../hooks/useBodyScrollLock';
 import { getFirebaseErrorMessage } from '../utils/validation';
 import { signInSchema, signUpSchema, forgotPasswordSchema, getValidationError } from '../utils/schemas';
 import Header from './Header';
+import Footer from './Footer';
 import MobileMenu from './MobileMenu';
 import SignInModal from './auth/SignInModal';
 import SignUpModal from './auth/SignUpModal';
@@ -232,6 +233,7 @@ export default function InteractiveClient({ children }) {
             : children
           }
         </main>
+        <Footer />
       </div>
 
       {/* Mobile Menu Component */}

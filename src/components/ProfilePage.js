@@ -161,8 +161,8 @@ export default function ProfilePage({ isOwnProfile = false, username = null }) {
       </div>
 
       {/* Profile Content */}
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="relative -mt-24 pb-8">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="relative">
           <div className="flex flex-col lg:flex-row gap-8">
             
             {/* Left Side - Profile Info */}
@@ -195,8 +195,16 @@ export default function ProfilePage({ isOwnProfile = false, username = null }) {
                   
                   {/* Name and Username */}
                   <div className="text-center mt-4">
-                    <h1 className="text-2xl font-bold text-gray-900">{userData.displayName}</h1>
-                    <p className="text-emerald-600 font-medium">@{userData.username}</p>
+                    <h1 className={`font-bold text-gray-900 ${
+                      userData.displayName?.length <= 15 ? 'text-2xl' :
+                      userData.displayName?.length <= 25 ? 'text-xl' :
+                      userData.displayName?.length <= 35 ? 'text-lg' : 'text-base'
+                    } break-words max-w-full leading-tight`} title={userData.displayName}>
+                      {userData.displayName}
+                    </h1>
+                    <p className={`text-emerald-600 font-medium ${
+                      userData.username?.length <= 20 ? 'text-base' : 'text-sm'
+                    } break-words`}>@{userData.username}</p>
                   </div>
                   
                   {/* Bio */}
@@ -221,33 +229,30 @@ export default function ProfilePage({ isOwnProfile = false, username = null }) {
             {/* Right Side - Stats and Content */}
             <div className="lg:w-2/3">
               {/* Stats Cards */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-                <div className="bg-white rounded-xl shadow-lg p-6 text-center">
-                  <div className="text-3xl font-bold text-emerald-600">{userStats.supportersCount}</div>
-                  <div className="text-gray-600 font-medium">Supporters</div>
-                  <div className="text-sm text-gray-500 mt-1">People who used frames</div>
+              <div className="grid grid-cols-3 gap-2 sm:gap-4 mb-8">
+                <div className="bg-white rounded-xl shadow-lg p-3 sm:p-6 text-center">
+                  <div className="text-xl sm:text-2xl lg:text-3xl font-bold text-emerald-600">{userStats.supportersCount}</div>
+                  <div className="text-xs sm:text-sm lg:text-base text-gray-600 font-medium">Supporters</div>
                 </div>
                 
-                <div className="bg-white rounded-xl shadow-lg p-6 text-center">
-                  <div className="text-3xl font-bold text-emerald-600">{userStats.campaignsCount}</div>
-                  <div className="text-gray-600 font-medium">Campaigns</div>
-                  <div className="text-sm text-gray-500 mt-1">Frames created</div>
+                <div className="bg-white rounded-xl shadow-lg p-3 sm:p-6 text-center">
+                  <div className="text-xl sm:text-2xl lg:text-3xl font-bold text-emerald-600">{userStats.campaignsCount}</div>
+                  <div className="text-xs sm:text-sm lg:text-base text-gray-600 font-medium">Campaigns</div>
                 </div>
                 
-                <div className="bg-white rounded-xl shadow-lg p-6 text-center">
-                  <div className="text-3xl font-bold text-emerald-600">
-                    {userData.createdAt ? new Date(userData.createdAt.seconds ? userData.createdAt.seconds * 1000 : userData.createdAt).getFullYear() : new Date().getFullYear()}
-                  </div>
-                  <div className="text-gray-600 font-medium">Joined Since</div>
-                  <div className="text-sm text-gray-500 mt-1">
+                <div className="bg-white rounded-xl shadow-lg p-3 sm:p-6 text-center">
+                  <div className="text-sm sm:text-lg lg:text-xl font-bold text-emerald-600">
                     {userData.createdAt ? 
                       new Date(userData.createdAt.seconds ? userData.createdAt.seconds * 1000 : userData.createdAt).toLocaleDateString('en-US', { 
-                        month: 'long', 
+                        weekday: 'short',
+                        month: 'short', 
+                        day: 'numeric',
                         year: 'numeric' 
                       }) : 
                       'Recently'
                     }
                   </div>
+                  <div className="text-xs sm:text-sm lg:text-base text-gray-600 font-medium">Joined</div>
                 </div>
               </div>
 
@@ -327,8 +332,8 @@ function ProfileSkeleton() {
       {/* Banner Skeleton */}
       <div className="h-72 bg-gray-300 animate-pulse"></div>
       
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="relative -mt-24 pb-8">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="relative">
           <div className="flex flex-col lg:flex-row gap-8">
             
             {/* Left Side Skeleton */}
@@ -350,11 +355,11 @@ function ProfileSkeleton() {
 
             {/* Right Side Skeleton */}
             <div className="lg:w-2/3">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+              <div className="grid grid-cols-3 gap-2 sm:gap-4 mb-8">
                 {[...Array(3)].map((_, i) => (
-                  <div key={i} className="bg-white rounded-xl shadow-lg p-6">
-                    <div className="h-8 bg-gray-300 rounded w-16 mx-auto animate-pulse mb-2"></div>
-                    <div className="h-4 bg-gray-300 rounded w-20 mx-auto animate-pulse"></div>
+                  <div key={i} className="bg-white rounded-xl shadow-lg p-3 sm:p-6">
+                    <div className="h-6 sm:h-8 bg-gray-300 rounded w-12 sm:w-16 mx-auto animate-pulse mb-2"></div>
+                    <div className="h-3 sm:h-4 bg-gray-300 rounded w-16 sm:w-20 mx-auto animate-pulse"></div>
                   </div>
                 ))}
               </div>
