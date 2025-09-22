@@ -1,6 +1,7 @@
 "use client";
 
 import { useOptionalAuth } from "../hooks/useAuth";
+import { useOptionalUserProfile } from "./UserProfileProvider";
 import { useRouter } from "next/navigation";
 
 export default function MobileMenu({ 
@@ -10,6 +11,7 @@ export default function MobileMenu({
   openSignUpModal 
 }) {
   const authContext = useOptionalAuth();
+  const profileContext = useOptionalUserProfile();
   
   // Provide safe defaults if no auth context
   const { user, loading, mounted, logout } = authContext || {
@@ -17,6 +19,12 @@ export default function MobileMenu({
     loading: false,
     mounted: true,
     logout: async () => ({ success: false })
+  };
+
+  // Get user profile data
+  const { userProfile, loading: profileLoading } = profileContext || {
+    userProfile: null,
+    loading: false
   };
   const router = useRouter();
 
@@ -65,7 +73,7 @@ export default function MobileMenu({
         <div className="flex-1 overflow-y-auto min-h-0">
           <div className="px-6 pb-6">
             {/* Welcome message for authenticated users */}
-            {(!mounted || loading) ? (
+            {(!mounted || loading || profileLoading) ? (
               /* Show loading skeleton during auth restoration */
               <div className="mb-6 pb-4 border-b border-gray-100">
                 <div className="h-7 bg-gray-200 rounded animate-pulse w-48"></div>
@@ -73,7 +81,7 @@ export default function MobileMenu({
             ) : user ? (
               <div className="mb-6 pb-4 border-b border-gray-100">
                 <div className="text-lg font-medium text-gray-800">
-                  Welcome {user.displayName || user.email}
+                  Welcome {userProfile?.displayName || userProfile?.username || user.displayName || user.email}
                 </div>
               </div>
             ) : null}

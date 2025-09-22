@@ -3,6 +3,7 @@
 import { useFirebaseOptimized as useFirebase } from '../lib/firebase-optimized';
 import { AuthProvider } from '../hooks/useAuth';
 import UserOnboardingWrapper from './UserOnboardingWrapper';
+import { UserProfileProvider } from './UserProfileProvider';
 
 export default function AuthenticatedLayout({ children }) {
   const mountTime = typeof window !== 'undefined' ? performance.now() : 0;
@@ -17,10 +18,12 @@ export default function AuthenticatedLayout({ children }) {
     return children;
   }
 
-  // Firebase is configured - provide user onboarding wrapper
+  // Firebase is configured - provide user profile context and onboarding wrapper
   return (
-    <UserOnboardingWrapper>
-      {children}
-    </UserOnboardingWrapper>
+    <UserProfileProvider>
+      <UserOnboardingWrapper>
+        {children}
+      </UserOnboardingWrapper>
+    </UserProfileProvider>
   );
 }

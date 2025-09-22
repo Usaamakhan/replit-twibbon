@@ -4,9 +4,11 @@ import { useState, useRef, useEffect } from 'react';
 import { countries } from '../data/countries';
 import { useAuth } from '../hooks/useAuth';
 import { getUserProfile, checkUsernameExists } from '../lib/firestore';
+import { useOptionalUserProfile } from './UserProfileProvider';
 
 export default function WelcomePopup({ isOpen, onClose, onComplete }) {
   const { user } = useAuth();
+  const profileContext = useOptionalUserProfile();
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState({});
   const [usernameStatus, setUsernameStatus] = useState(null); // 'checking', 'available', 'taken', 'unchanged'
@@ -228,6 +230,11 @@ export default function WelcomePopup({ isOpen, onClose, onComplete }) {
     try {
       // Pass the form data to the parent component
       await onComplete(formData);
+      
+      // Refresh the user profile context to update sidebar
+      if (profileContext?.refreshUserProfile) {
+        await profileContext.refreshUserProfile();
+      }
     } catch (error) {
       console.error('Error completing profile setup:', error);
       setErrors({ general: 'Failed to update profile. Please try again.' });

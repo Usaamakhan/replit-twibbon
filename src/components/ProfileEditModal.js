@@ -3,8 +3,10 @@
 import { useState, useRef, useEffect } from 'react';
 import { countries } from '../data/countries';
 import { updateUserProfile, checkUsernameExists } from '../lib/firestore';
+import { useOptionalUserProfile } from './UserProfileProvider';
 
 export default function ProfileEditModal({ isOpen, onClose, userData, onUpdate }) {
+  const profileContext = useOptionalUserProfile();
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState({});
   const [usernameStatus, setUsernameStatus] = useState(null); // 'checking', 'available', 'taken', 'unchanged'
@@ -238,6 +240,12 @@ export default function ProfileEditModal({ isOpen, onClose, userData, onUpdate }
           finalUpdates.username = result.username;
         }
         onUpdate({ ...userData, ...finalUpdates });
+        
+        // Refresh the user profile context to update sidebar
+        if (profileContext?.refreshUserProfile) {
+          await profileContext.refreshUserProfile();
+        }
+        
         onClose();
       } else {
         setErrors({ general: result.error || 'Failed to update profile. Please try again.' });
