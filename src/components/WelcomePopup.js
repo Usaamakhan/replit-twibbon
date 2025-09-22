@@ -94,21 +94,14 @@ export default function WelcomePopup({ isOpen, onClose, onComplete }) {
 
   // Function to check username availability with debouncing
   const checkUsernameAvailability = async (username) => {
-    console.log('🎯 WELCOME POPUP - Username availability check started:', {
-      username,
-      originalUsername,
-      component: 'WelcomePopup'
-    });
 
     if (!username || username.length < 3) {
-      console.log('⚠️ WELCOME POPUP - Username too short or empty:', username);
       setUsernameStatus(null);
       return;
     }
 
     // If username is unchanged from original, mark as unchanged
     if (username === originalUsername) {
-      console.log('🔄 WELCOME POPUP - Username unchanged, skipping check:', username);
       setUsernameStatus('unchanged');
       return;
     }
@@ -116,45 +109,28 @@ export default function WelcomePopup({ isOpen, onClose, onComplete }) {
     // Clear existing timeout
     if (usernameCheckTimeoutRef.current) {
       clearTimeout(usernameCheckTimeoutRef.current);
-      console.log('⏰ WELCOME POPUP - Cleared existing timeout');
     }
 
-    console.log('🔄 WELCOME POPUP - Setting status to checking');
     setUsernameStatus('checking');
     
     // Increment request ID to handle race conditions
     const currentRequestId = ++usernameRequestIdRef.current;
-    console.log('🔢 WELCOME POPUP - Request ID:', currentRequestId);
 
     // Set new timeout for debouncing
     usernameCheckTimeoutRef.current = setTimeout(async () => {
-      console.log('⏱️ WELCOME POPUP - Debounce timeout expired, executing check:', {
-        username,
-        requestId: currentRequestId,
-        currentFormUsername: formData.username
-      });
 
       try {
-        console.log('🚀 WELCOME POPUP - Calling checkUsernameExists...');
         const exists = await checkUsernameExists(username);
-        console.log('📋 WELCOME POPUP - checkUsernameExists returned:', exists);
         
         // Only update if this is still the latest request
         if (currentRequestId === usernameRequestIdRef.current) {
           const newStatus = exists ? 'taken' : 'available';
-          console.log('✅ WELCOME POPUP - Updating status to:', newStatus);
           setUsernameStatus(newStatus);
         } else {
-          console.log('⚠️ WELCOME POPUP - Ignoring outdated response:', {
-            currentRequestId,
-            latestRequestId: usernameRequestIdRef.current,
-            checkedUsername: username
-          });
         }
       } catch (error) {
         console.error('❌ WELCOME POPUP - Error checking username:', error);
         if (currentRequestId === usernameRequestIdRef.current) {
-          console.log('🚫 WELCOME POPUP - Setting status to null due to error');
           setUsernameStatus(null); // Show neutral state on error
         }
       }
