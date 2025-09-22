@@ -193,20 +193,26 @@ export default function ForgotPasswordModal({
                       aria-describedby={validationErrors.email ? "forgot-email-error" : (error || successMessage) ? "forgot-password-alert" : "forgot-password-help"}
                     />
                     {/* Validation Icon */}
-                    {fieldValidation.email?.hasValue && (
+                    {(validationErrors.email || (fieldValidation.email?.hasValue && !fieldValidation.email?.isValid)) && (
                       <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
-                        {fieldValidation.email.isValid ? (
+                        {fieldValidation.email?.isValid && !validationErrors.email ? (
                           <svg className="w-5 h-5 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                           </svg>
                         ) : (
                           <div className="relative group">
-                            <svg className="w-5 h-5 text-red-500 cursor-help" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <svg 
+                              className="w-5 h-5 text-red-500 cursor-pointer" 
+                              fill="none" 
+                              stroke="currentColor" 
+                              viewBox="0 0 24 24"
+                              title={validationErrors.email || fieldValidation.email?.error || 'Enter a valid email address'}
+                            >
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                             </svg>
                             {/* Tooltip */}
-                            <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 p-2 bg-gray-900 text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-all duration-300 pointer-events-none whitespace-nowrap z-[99999] shadow-xl min-w-max max-w-xs">
-                              {fieldValidation.email.error || 'Enter a valid email address'}
+                            <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 p-2 bg-gray-900 text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-all duration-300 pointer-events-none whitespace-nowrap z-[99999] shadow-xl min-w-max max-w-xs">
+                              {validationErrors.email || fieldValidation.email?.error || 'Enter a valid email address'}
                               <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900"></div>
                             </div>
                           </div>
