@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { useFocusTrap } from '../../hooks/useFocusTrap';
+import { validateEmail, validatePassword, validateName } from '../../utils/validation';
 
 export default function SignUpModal({ 
   isOpen,
@@ -14,6 +15,7 @@ export default function SignUpModal({
 }) {
   const modalRef = useFocusTrap(isOpen);
   const [validationErrors, setValidationErrors] = useState({});
+  const [fieldValidation, setFieldValidation] = useState({}); // Track real-time validation status
   
   // Refs for form validation scrolling
   const nameRef = useRef();
@@ -113,10 +115,36 @@ export default function SignUpModal({
     }
   };
 
-  const handleInputChange = (field) => {
+  const handleInputChange = (field, value) => {
+    // Clear form validation errors when user starts typing
     if (validationErrors[field]) {
       setValidationErrors(prev => ({ ...prev, [field]: '' }));
     }
+    
+    // Perform real-time validation
+    let validationError = null;
+    let isValid = false;
+    
+    if (field === 'name' && value.trim()) {
+      validationError = validateName(value);
+      isValid = !validationError;
+    } else if (field === 'email' && value.trim()) {
+      validationError = validateEmail(value);
+      isValid = !validationError;
+    } else if (field === 'password' && value.trim()) {
+      validationError = validatePassword(value, true); // isSignUp = true
+      isValid = !validationError;
+    }
+    
+    // Update field validation status
+    setFieldValidation(prev => ({
+      ...prev,
+      [field]: {
+        isValid,
+        error: validationError,
+        hasValue: value.trim().length > 0
+      }
+    }));
   };
 
   if (!isOpen) return null;
@@ -169,19 +197,45 @@ export default function SignUpModal({
                   <label htmlFor="signup-name" className="block text-sm font-medium text-gray-800 mb-1">
                     Name
                   </label>
-                  <input
-                    ref={nameRef}
-                    id="signup-name"
-                    type="text"
-                    name="name"
-                    required
-                    placeholder="Enter your name"
-                    onChange={() => handleInputChange('name')}
-                    className={`w-full px-3 sm:px-4 py-2 border rounded-full focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none transition-all text-sm sm:text-base text-gray-900 placeholder-gray-600 ${
-                      validationErrors.name ? 'border-red-300 bg-red-50' : 'border-gray-300'
-                    }`}
-                    aria-describedby={error || validationErrors.name ? "signup-error" : undefined}
-                  />
+                  <div className="relative">
+                    <input
+                      ref={nameRef}
+                      id="signup-name"
+                      type="text"
+                      name="name"
+                      required
+                      placeholder="Enter your name"
+                      onChange={(e) => handleInputChange('name', e.target.value)}
+                      className={`w-full px-3 sm:px-4 py-2 pr-10 border rounded-full focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none transition-all text-sm sm:text-base text-gray-900 placeholder-gray-600 ${
+                        validationErrors.name ? 'border-red-300 bg-red-50' : 
+                        fieldValidation.name?.isValid ? 'border-emerald-300 bg-emerald-50' :
+                        fieldValidation.name?.hasValue ? 'border-red-300 bg-red-50' :
+                        'border-gray-300'
+                      }`}
+                      aria-describedby={error || validationErrors.name ? "signup-error" : undefined}
+                    />
+                    {/* Validation Icon */}
+                    {fieldValidation.name?.hasValue && (
+                      <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                        {fieldValidation.name.isValid ? (
+                          <svg className="w-5 h-5 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                          </svg>
+                        ) : (
+                          <div className="relative group">
+                            <svg className="w-5 h-5 text-red-500 cursor-help" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                            {/* Tooltip */}
+                            <div className="absolute bottom-full right-0 mb-2 p-2 bg-gray-800 text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-50">
+                              {fieldValidation.name.error}
+                              <div className="absolute top-full right-2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-800"></div>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
                   {validationErrors.name && (
                     <p className="text-red-600 text-sm mt-1">{validationErrors.name}</p>
                   )}
@@ -190,19 +244,45 @@ export default function SignUpModal({
                   <label htmlFor="signup-email" className="block text-sm font-medium text-gray-800 mb-1">
                     Email
                   </label>
-                  <input
-                    ref={emailRef}
-                    id="signup-email"
-                    type="email"
-                    name="email"
-                    required
-                    placeholder="Enter your email"
-                    onChange={() => handleInputChange('email')}
-                    className={`w-full px-3 sm:px-4 py-2 border rounded-full focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none transition-all text-sm sm:text-base text-gray-900 placeholder-gray-600 ${
-                      validationErrors.email ? 'border-red-300 bg-red-50' : 'border-gray-300'
-                    }`}
-                    aria-describedby={error || validationErrors.email ? "signup-error" : undefined}
-                  />
+                  <div className="relative">
+                    <input
+                      ref={emailRef}
+                      id="signup-email"
+                      type="email"
+                      name="email"
+                      required
+                      placeholder="Enter your email"
+                      onChange={(e) => handleInputChange('email', e.target.value)}
+                      className={`w-full px-3 sm:px-4 py-2 pr-10 border rounded-full focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none transition-all text-sm sm:text-base text-gray-900 placeholder-gray-600 ${
+                        validationErrors.email ? 'border-red-300 bg-red-50' : 
+                        fieldValidation.email?.isValid ? 'border-emerald-300 bg-emerald-50' :
+                        fieldValidation.email?.hasValue ? 'border-red-300 bg-red-50' :
+                        'border-gray-300'
+                      }`}
+                      aria-describedby={error || validationErrors.email ? "signup-error" : undefined}
+                    />
+                    {/* Validation Icon */}
+                    {fieldValidation.email?.hasValue && (
+                      <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                        {fieldValidation.email.isValid ? (
+                          <svg className="w-5 h-5 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                          </svg>
+                        ) : (
+                          <div className="relative group">
+                            <svg className="w-5 h-5 text-red-500 cursor-help" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                            {/* Tooltip */}
+                            <div className="absolute bottom-full right-0 mb-2 p-2 bg-gray-800 text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-50">
+                              {fieldValidation.email.error}
+                              <div className="absolute top-full right-2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-800"></div>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
                   {validationErrors.email && (
                     <p className="text-red-600 text-sm mt-1">{validationErrors.email}</p>
                   )}
@@ -211,20 +291,46 @@ export default function SignUpModal({
                   <label htmlFor="signup-password" className="block text-sm font-medium text-gray-800 mb-1">
                     Password
                   </label>
-                  <input
-                    ref={passwordRef}
-                    id="signup-password"
-                    type="password"
-                    name="password"
-                    required
-                    placeholder="Create a password (min 8 characters)"
-                    minLength={8}
-                    onChange={() => handleInputChange('password')}
-                    className={`w-full px-3 sm:px-4 py-2 border rounded-full focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none transition-all text-sm sm:text-base text-gray-900 placeholder-gray-600 ${
-                      validationErrors.password ? 'border-red-300 bg-red-50' : 'border-gray-300'
-                    }`}
-                    aria-describedby={error || validationErrors.password ? "signup-error" : undefined}
-                  />
+                  <div className="relative">
+                    <input
+                      ref={passwordRef}
+                      id="signup-password"
+                      type="password"
+                      name="password"
+                      required
+                      placeholder="Create a password (min 8 characters)"
+                      minLength={8}
+                      onChange={(e) => handleInputChange('password', e.target.value)}
+                      className={`w-full px-3 sm:px-4 py-2 pr-10 border rounded-full focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none transition-all text-sm sm:text-base text-gray-900 placeholder-gray-600 ${
+                        validationErrors.password ? 'border-red-300 bg-red-50' : 
+                        fieldValidation.password?.isValid ? 'border-emerald-300 bg-emerald-50' :
+                        fieldValidation.password?.hasValue ? 'border-red-300 bg-red-50' :
+                        'border-gray-300'
+                      }`}
+                      aria-describedby={error || validationErrors.password ? "signup-error" : undefined}
+                    />
+                    {/* Validation Icon */}
+                    {fieldValidation.password?.hasValue && (
+                      <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                        {fieldValidation.password.isValid ? (
+                          <svg className="w-5 h-5 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                          </svg>
+                        ) : (
+                          <div className="relative group">
+                            <svg className="w-5 h-5 text-red-500 cursor-help" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                            {/* Tooltip */}
+                            <div className="absolute bottom-full right-0 mb-2 p-2 bg-gray-800 text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-50">
+                              {fieldValidation.password.error}
+                              <div className="absolute top-full right-2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-800"></div>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
                   {validationErrors.password && (
                     <p className="text-red-600 text-sm mt-1">{validationErrors.password}</p>
                   )}

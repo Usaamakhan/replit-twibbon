@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useFocusTrap } from '../../hooks/useFocusTrap';
+import { validateEmail } from '../../utils/validation';
 
 export default function ForgotPasswordModal({ 
   isOpen,
@@ -13,6 +14,7 @@ export default function ForgotPasswordModal({
   onSwitchToSignIn
 }) {
   const modalRef = useFocusTrap(isOpen);
+  const [fieldValidation, setFieldValidation] = useState({}); // Track real-time validation status
 
   // Handle Escape key
   useEffect(() => {
@@ -27,6 +29,28 @@ export default function ForgotPasswordModal({
       document.removeEventListener('modal-escape', handleEscapeEvent);
     };
   }, [isOpen, onClose]);
+
+  // Handle input change for real-time validation
+  const handleInputChange = (field, value) => {
+    // Perform real-time validation
+    let validationError = null;
+    let isValid = false;
+    
+    if (field === 'email' && value.trim()) {
+      validationError = validateEmail(value);
+      isValid = !validationError;
+    }
+    
+    // Update field validation status
+    setFieldValidation(prev => ({
+      ...prev,
+      [field]: {
+        isValid,
+        error: validationError,
+        hasValue: value.trim().length > 0
+      }
+    }));
+  };
 
   if (!isOpen) return null;
 
@@ -86,15 +110,43 @@ export default function ForgotPasswordModal({
                   <label htmlFor="forgot-password-email" className="block text-sm font-medium text-gray-800 mb-1">
                     Email Address
                   </label>
-                  <input
-                    id="forgot-password-email"
-                    type="email"
-                    name="email"
-                    required
-                    placeholder="Enter your email address"
-                    className="w-full px-3 sm:px-4 py-2 border border-gray-300 rounded-full focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none transition-all text-sm sm:text-base text-gray-900 placeholder-gray-600"
-                    aria-describedby={(error || successMessage) ? "forgot-password-alert" : "forgot-password-help"}
-                  />
+                  <div className="relative">
+                    <input
+                      id="forgot-password-email"
+                      type="email"
+                      name="email"
+                      required
+                      placeholder="Enter your email address"
+                      onChange={(e) => handleInputChange('email', e.target.value)}
+                      className={`w-full px-3 sm:px-4 py-2 pr-10 border rounded-full focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none transition-all text-sm sm:text-base text-gray-900 placeholder-gray-600 ${
+                        fieldValidation.email?.isValid ? 'border-emerald-300 bg-emerald-50' :
+                        fieldValidation.email?.hasValue ? 'border-red-300 bg-red-50' :
+                        'border-gray-300'
+                      }`}
+                      aria-describedby={(error || successMessage) ? "forgot-password-alert" : "forgot-password-help"}
+                    />
+                    {/* Validation Icon */}
+                    {fieldValidation.email?.hasValue && (
+                      <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                        {fieldValidation.email.isValid ? (
+                          <svg className="w-5 h-5 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                          </svg>
+                        ) : (
+                          <div className="relative group">
+                            <svg className="w-5 h-5 text-red-500 cursor-help" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                            {/* Tooltip */}
+                            <div className="absolute bottom-full right-0 mb-2 p-2 bg-gray-800 text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-50">
+                              {fieldValidation.email.error}
+                              <div className="absolute top-full right-2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-800"></div>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
                   <div id="forgot-password-help" className="text-xs text-gray-500 mt-1">
                     Enter the email address associated with your account
                   </div>
