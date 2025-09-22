@@ -90,11 +90,8 @@ const nextConfig = {
     'https://*.replit.dev',
     'https://*.repl.co',
     `https://${process.env.REPLIT_DEV_DOMAIN}`,
-    // Add current detected domains
-    'https://0ccf629f-d29a-4dd6-9835-68fa2a45eb1e-00-30zjgwqs0tath.janeway.replit.dev',
-    'https://0b2a5471-b708-40b2-8b96-40ed000e1142-00-34vzirawqp3yu.riker.replit.dev',
-    // Keep current domain as backup
-    'https://39d4d35b-71ea-493f-a752-8a5296b5f1a3-00-3u13ci9zfz6j3.kirk.replit.dev'
+    // Current Replit domain
+    'https://d9aaf8c1-7ac4-4224-b59f-f21e5ee68938-00-1x6zu2b68cr8d.janeway.replit.dev'
   ].filter(Boolean),
   
   // External packages for server components
