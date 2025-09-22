@@ -66,10 +66,13 @@ export default function SignUpModal({
     let firstErrorField = null;
 
     const name = formData.get('name')?.trim();
-    if (name && (name.length >= 1 && name.length <= 2)) {
+    if (!name) {
+      newErrors.name = 'Name is required';
+      if (!firstErrorField) firstErrorField = 'name';
+    } else if (name.length < 3) {
       newErrors.name = 'Name must be at least 3 characters long';
       if (!firstErrorField) firstErrorField = 'name';
-    } else if (name && name.length > 50) {
+    } else if (name.length > 50) {
       newErrors.name = 'Name must be 50 characters or less';
       if (!firstErrorField) firstErrorField = 'name';
     }
@@ -157,28 +160,22 @@ export default function SignUpModal({
             <div className="p-4 sm:p-6">
               {/* Email Sign Up Form */}
               <form className="space-y-4 mb-6" onSubmit={handleFormSubmit} noValidate>
-                {(error || Object.keys(validationErrors).length > 0) && (
+                {error && (
                   <div id="signup-error" className="text-red-600 text-sm text-center p-2 bg-red-50 rounded-lg" role="alert">
-                    {error && <div>{error}</div>}
-                    {Object.keys(validationErrors).length > 0 && (
-                      <div className={error ? "mt-2" : ""}>
-                        {Object.values(validationErrors).map((errorMsg, index) => (
-                          <div key={index}>{errorMsg}</div>
-                        ))}
-                      </div>
-                    )}
+                    {error}
                   </div>
                 )}
                 <div>
                   <label htmlFor="signup-name" className="block text-sm font-medium text-gray-800 mb-1">
-                    Name (optional)
+                    Name
                   </label>
                   <input
                     ref={nameRef}
                     id="signup-name"
                     type="text"
                     name="name"
-                    placeholder="Enter your name (3-50 characters)"
+                    required
+                    placeholder="Enter your name"
                     onChange={() => handleInputChange('name')}
                     className={`w-full px-3 sm:px-4 py-2 border rounded-full focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none transition-all text-sm sm:text-base text-gray-900 placeholder-gray-600 ${
                       validationErrors.name ? 'border-red-300 bg-red-50' : 'border-gray-300'
