@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, createContext, useContext } from 'react';
+import { useRouter } from 'next/navigation';
 import { 
   onAuthStateChanged, 
   signInWithPopup, 
@@ -23,6 +24,7 @@ export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const firebase = useFirebase();
+  const router = useRouter();
 
   useEffect(() => {
     // Don't set up auth listener until Firebase is loaded
@@ -173,6 +175,8 @@ export function AuthProvider({ children }) {
   const logout = async () => {
     try {
       await signOut(firebase.auth);
+      // Redirect to homepage after successful logout
+      router.push('/');
     } catch (error) {
       console.error('Sign-out error:', error);
     }
