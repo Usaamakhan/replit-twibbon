@@ -223,14 +223,11 @@ export default function SignUpModal({
                     className={`w-full px-3 sm:px-4 py-2 border rounded-full focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none transition-all text-sm sm:text-base text-gray-900 placeholder-gray-600 ${
                       validationErrors.password ? 'border-red-300 bg-red-50' : 'border-gray-300'
                     }`}
-                    aria-describedby={error || validationErrors.password ? "signup-error" : "password-requirements"}
+                    aria-describedby={error || validationErrors.password ? "signup-error" : undefined}
                   />
                   {validationErrors.password && (
                     <p className="text-red-600 text-sm mt-1">{validationErrors.password}</p>
                   )}
-                  <div id="password-requirements" className="text-xs text-gray-500 mt-1">
-                    Password must be at least 8 characters
-                  </div>
                 </div>
                 <button
                   type="submit"
