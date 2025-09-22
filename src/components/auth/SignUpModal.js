@@ -280,7 +280,7 @@ export default function SignUpModal({
                   Already have an account? 
                   <button 
                     onClick={onSwitchToSignIn}
-                    className="text-emerald-700 hover:text-emerald-800 font-medium ml-1"
+                    className="text-emerald-700 hover:text-emerald-800 hover:underline font-medium ml-1 cursor-pointer transition-all duration-200"
                   >
                     Sign In
                   </button>

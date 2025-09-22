@@ -193,7 +193,7 @@ export default function SignInModal({
                     <button
                       type="button"
                       onClick={onSwitchToForgotPassword}
-                      className="text-sm text-emerald-700 hover:text-emerald-800 font-medium"
+                      className="text-sm text-emerald-700 hover:text-emerald-800 hover:underline font-medium cursor-pointer transition-all duration-200"
                     >
                       Forgot Password?
                     </button>
@@ -248,7 +248,7 @@ export default function SignInModal({
                   Don't have an account? 
                   <button 
                     onClick={onSwitchToSignUp}
-                    className="text-emerald-700 hover:text-emerald-800 font-medium ml-1"
+                    className="text-emerald-700 hover:text-emerald-800 hover:underline font-medium ml-1 cursor-pointer transition-all duration-200"
                   >
                     Sign Up
                   </button>
