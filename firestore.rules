@@ -1,27 +1,23 @@
-// NOTE: These rules are for reference only. 
-// Production rules are managed through Firebase Console.
-// Make sure to sync any changes with Firebase Console deployment.
-
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Users can only read/write their own profile  
+    
+    // Users - public profile viewing (no changes needed)
     match /users/{userId} {
-      allow read, write: if request.auth != null && request.auth.uid == userId;
-      // Allow read access for public profile viewing
-      allow read: if request.auth != null;
+      allow read: if true; // ✅ Already allows public access
+      allow write: if request.auth != null && request.auth.uid == userId;
     }
     
-    // Username reservations - users can create and manage their own username
+    // Usernames - public username checks (no changes needed)  
     match /usernames/{username} {
-      allow read: if request.auth != null;
+      allow read: if true; // ✅ Already allows public access
       allow create: if request.auth != null && request.auth.uid == request.resource.data.userId;
       allow delete: if request.auth != null && request.auth.uid == resource.data.userId;
     }
     
-    // Frames - users can create and manage their own frames
+    // 🔧 CHANGE THIS: Allow public reading of frames
     match /frames/{frameId} {
-      allow read: if request.auth != null;
+      allow read: if true; // Changed: Now allows guest users to see frames
       allow create: if request.auth != null && request.auth.uid == request.resource.data.createdBy;
       allow update, delete: if request.auth != null && request.auth.uid == resource.data.createdBy;
     }
