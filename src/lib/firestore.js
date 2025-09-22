@@ -75,19 +75,72 @@ export const generateUniqueUsername = async (baseUsername, maxAttempts = 100) =>
 
 // Check if username already exists
 export const checkUsernameExists = async (username) => {
+  const normalizedUsername = username.toLowerCase().trim();
+  console.log('🔍 USERNAME CHECK START:', { 
+    originalUsername: username, 
+    normalizedUsername,
+    timestamp: new Date().toISOString()
+  });
+  
   // Check if database is initialized
   if (!db) {
-    console.error('Database not initialized - cannot check username');
+    console.error('❌ DATABASE NOT INITIALIZED:', {
+      db: db,
+      typeof_db: typeof db,
+      isNull: db === null,
+      isUndefined: db === undefined
+    });
     return true; // Assume exists on error to be safe
   }
   
+  console.log('✅ DATABASE INITIALIZED:', {
+    db: !!db,
+    db_app: db?.app?.name || 'unknown',
+    db_type: db?._delegate?._databaseId || 'unknown'
+  });
+  
   try {
+    console.log('📝 CREATING DOC REFERENCE:', {
+      collection: 'usernames',
+      documentId: normalizedUsername,
+      fullPath: `usernames/${normalizedUsername}`
+    });
+    
     // Check the usernames collection directly - more efficient and consistent
-    const usernameDocRef = doc(db, 'usernames', username.toLowerCase().trim());
+    const usernameDocRef = doc(db, 'usernames', normalizedUsername);
+    console.log('📄 DOC REFERENCE CREATED:', {
+      docRef: !!usernameDocRef,
+      docPath: usernameDocRef?.path || 'unknown'
+    });
+    
+    console.log('🔄 EXECUTING FIRESTORE QUERY...');
     const usernameDoc = await getDoc(usernameDocRef);
-    return usernameDoc.exists();
+    
+    const exists = usernameDoc.exists();
+    console.log('✅ FIRESTORE QUERY COMPLETE:', {
+      exists,
+      docId: usernameDoc.id,
+      hasData: !!usernameDoc.data(),
+      metadata: {
+        fromCache: usernameDoc.metadata.fromCache,
+        hasPendingWrites: usernameDoc.metadata.hasPendingWrites
+      }
+    });
+    
+    if (exists) {
+      console.log('📦 USERNAME EXISTS - DATA:', usernameDoc.data());
+    } else {
+      console.log('⭕ USERNAME AVAILABLE - NO DATA FOUND');
+    }
+    
+    return exists;
   } catch (error) {
-    console.error('Error checking username:', error);
+    console.error('❌ ERROR CHECKING USERNAME:', {
+      error: error.message,
+      code: error.code,
+      stack: error.stack,
+      username: normalizedUsername
+    });
     return true; // Assume exists on error to be safe
   }
 };

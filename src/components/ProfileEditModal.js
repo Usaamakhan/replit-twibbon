@@ -81,13 +81,21 @@ export default function ProfileEditModal({ isOpen, onClose, userData, onUpdate }
 
   // Function to check username availability with debouncing
   const checkUsernameAvailability = async (username) => {
+    console.log('🎯 PROFILE MODAL - Username availability check started:', {
+      username,
+      originalUsername,
+      component: 'ProfileEditModal'
+    });
+
     if (!username || username.length < 3) {
+      console.log('⚠️ PROFILE MODAL - Username too short or empty:', username);
       setUsernameStatus(null);
       return;
     }
 
     // If username is unchanged, mark as unchanged
     if (username === originalUsername) {
+      console.log('🔄 PROFILE MODAL - Username unchanged, skipping check:', username);
       setUsernameStatus('unchanged');
       return;
     }
@@ -95,24 +103,46 @@ export default function ProfileEditModal({ isOpen, onClose, userData, onUpdate }
     // Clear existing timeout
     if (usernameCheckTimeoutRef.current) {
       clearTimeout(usernameCheckTimeoutRef.current);
+      console.log('⏰ PROFILE MODAL - Cleared existing timeout');
     }
 
+    console.log('🔄 PROFILE MODAL - Setting status to checking');
     setUsernameStatus('checking');
     
     // Increment request ID to handle race conditions
     const currentRequestId = ++usernameRequestIdRef.current;
+    console.log('🔢 PROFILE MODAL - Request ID:', currentRequestId);
 
     // Set new timeout for debouncing
     usernameCheckTimeoutRef.current = setTimeout(async () => {
+      console.log('⏱️ PROFILE MODAL - Debounce timeout expired, executing check:', {
+        username,
+        requestId: currentRequestId,
+        currentFormUsername: formData.username
+      });
+
       try {
+        console.log('🚀 PROFILE MODAL - Calling checkUsernameExists...');
         const exists = await checkUsernameExists(username);
+        console.log('📋 PROFILE MODAL - checkUsernameExists returned:', exists);
+        
         // Only update if this is still the latest request and username hasn't changed
         if (currentRequestId === usernameRequestIdRef.current && formData.username === username) {
-          setUsernameStatus(exists ? 'taken' : 'available');
+          const newStatus = exists ? 'taken' : 'available';
+          console.log('✅ PROFILE MODAL - Updating status to:', newStatus);
+          setUsernameStatus(newStatus);
+        } else {
+          console.log('⚠️ PROFILE MODAL - Ignoring outdated response:', {
+            currentRequestId,
+            latestRequestId: usernameRequestIdRef.current,
+            formUsername: formData.username,
+            checkedUsername: username
+          });
         }
       } catch (error) {
-        console.error('Error checking username:', error);
+        console.error('❌ PROFILE MODAL - Error checking username:', error);
         if (currentRequestId === usernameRequestIdRef.current && formData.username === username) {
+          console.log('🚫 PROFILE MODAL - Setting status to null due to error');
           setUsernameStatus(null); // Show neutral state on error
         }
       }
