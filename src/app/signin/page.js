@@ -146,7 +146,7 @@ export default function SignInPage() {
   // Show loading state while checking auth
   if (authLoading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-blue-50 to-indigo-50 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-600 mx-auto mb-4"></div>
           <p className="text-gray-600">Loading...</p>
@@ -156,10 +156,10 @@ export default function SignInPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-blue-50 to-indigo-50 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-8">
         {/* Card */}
-        <div className="bg-white rounded-2xl shadow-2xl border-2 border-emerald-600">
+        <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-lg border border-white/20">
           {/* Header */}
           <div className="bg-yellow-400 rounded-t-xl p-4 sm:p-6 text-center">
             <h2 className="text-xl sm:text-2xl font-bold text-emerald-700">Welcome Back!</h2>
