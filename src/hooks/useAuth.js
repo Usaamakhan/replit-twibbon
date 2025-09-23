@@ -70,8 +70,8 @@ export function AuthProvider({ children }) {
     };
   }, [firebase.isLoading, firebase.isConfigured, firebase.auth]);
 
-  // Show loading state while Firebase is initializing
-  if (firebase.isLoading || loading) {
+  // Show loading state while Firebase is initializing only
+  if (firebase.isLoading) {
     const noopAsync = async () => ({ success: false });
     const noop = () => {};
     
@@ -94,31 +94,27 @@ export function AuthProvider({ children }) {
   }
 
   const signInWithGoogle = async () => {
+    if (!firebase.isConfigured || !firebase.auth) {
+      return { success: false, error: 'Authentication is not properly configured.' };
+    }
+    
     try {
-      setLoading(true);
-
-      
       const googleProvider = new GoogleAuthProvider();
       const result = await signInWithPopup(firebase.auth, googleProvider);
       
-
-      
       // User state will be automatically updated via onAuthStateChanged
-      setLoading(false);
       return { success: true };
     } catch (error) {
-
-      setLoading(false);
-      return { success: false, error: error.code };
+      return { success: false, error: getErrorMessage(error.code) };
     }
   };
 
   const signUpWithEmail = async (email, password, name) => {
+    if (!firebase.isConfigured || !firebase.auth) {
+      return { success: false, error: 'Authentication is not properly configured.' };
+    }
+    
     try {
-      setLoading(true);
-      
-      // Static imports already available
-      
       const result = await createUserWithEmailAndPassword(firebase.auth, email, password);
       
       // Update user profile with name
@@ -131,30 +127,22 @@ export function AuthProvider({ children }) {
       // Send email verification
       await sendEmailVerification(result.user);
 
-      
-      setLoading(false);
       return { success: true, requiresVerification: true };
     } catch (error) {
-
-      setLoading(false);
-      return { success: false, error: error.code };
+      return { success: false, error: getErrorMessage(error.code) };
     }
   };
 
   const signInWithEmail = async (email, password) => {
+    if (!firebase.isConfigured || !firebase.auth) {
+      return { success: false, error: 'Authentication is not properly configured.' };
+    }
+    
     try {
-      setLoading(true);
-      
-      // Static imports already available
-      
       const result = await signInWithEmailAndPassword(firebase.auth, email, password);
-
-      setLoading(false);
       return { success: true };
     } catch (error) {
-
-      setLoading(false);
-      return { success: false, error: error.code };
+      return { success: false, error: getErrorMessage(error.code) };
     }
   };
 
@@ -199,14 +187,12 @@ export function AuthProvider({ children }) {
   };
 
   const forgotPassword = async (email) => {
+    if (!firebase.isConfigured || !firebase.auth) {
+      return { success: false, error: 'Authentication is not properly configured.' };
+    }
+    
     try {
-      setLoading(true);
-      
-      // Only log in development environment
-
-      
       await sendPasswordResetEmail(firebase.auth, email);
-      setLoading(false);
       
       // Always return success message for security (prevents user enumeration)
       return { 
@@ -230,8 +216,35 @@ export function AuthProvider({ children }) {
       }
       // Note: Don't reveal 'user-not-found' to prevent user enumeration
       
-      setLoading(false);
       return { success: false, type: 'error', error: errorMessage };
+    }
+  };
+
+  // Helper function to convert Firebase error codes to user-friendly messages
+  const getErrorMessage = (errorCode) => {
+    switch (errorCode) {
+      case 'auth/invalid-credential':
+      case 'auth/user-not-found':
+      case 'auth/wrong-password':
+        return 'Invalid email or password. Please check your credentials and try again.';
+      case 'auth/email-already-in-use':
+        return 'An account with this email already exists. Please sign in instead.';
+      case 'auth/weak-password':
+        return 'Password is too weak. Please choose a stronger password.';
+      case 'auth/invalid-email':
+        return 'Please enter a valid email address.';
+      case 'auth/too-many-requests':
+        return 'Too many failed attempts. Please wait a moment before trying again.';
+      case 'auth/network-request-failed':
+        return 'Network error. Please check your connection and try again.';
+      case 'auth/popup-closed-by-user':
+        return 'Sign-in was cancelled. Please try again.';
+      case 'auth/popup-blocked':
+        return 'Popup was blocked. Please allow popups and try again.';
+      case 'auth/cancelled-popup-request':
+        return 'Another sign-in popup is already open.';
+      default:
+        return 'Something went wrong. Please try again.';
     }
   };
 
