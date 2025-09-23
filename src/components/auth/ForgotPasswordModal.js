@@ -16,6 +16,7 @@ export default function ForgotPasswordModal({
   const modalRef = useFocusTrap(isOpen);
   const [validationErrors, setValidationErrors] = useState({}); // Track form validation errors
   const [fieldValidation, setFieldValidation] = useState({}); // Track real-time validation status
+  const [messageDismissed, setMessageDismissed] = useState(false); // Track if message was dismissed
   
   // Refs for form validation scrolling
   const emailRef = useRef();
@@ -38,8 +39,16 @@ export default function ForgotPasswordModal({
   useEffect(() => {
     if (isOpen) {
       setValidationErrors({});
+      setMessageDismissed(false); // Reset message dismissed state when modal opens
     }
   }, [isOpen]);
+
+  // Reset dismissed state when new messages arrive
+  useEffect(() => {
+    if (error || successMessage) {
+      setMessageDismissed(false);
+    }
+  }, [error, successMessage]);
 
   const scrollToField = (fieldName) => {
     const fieldRefs = {
@@ -158,17 +167,43 @@ export default function ForgotPasswordModal({
             <div className="p-4 sm:p-6">
               {/* Forgot Password Form */}
               <form className="space-y-4 mb-6" onSubmit={handleFormSubmit} noValidate>
-                {(error || successMessage) && (
+                {(error || successMessage) && !messageDismissed && (
                   <div 
                     id="forgot-password-alert"
-                    className={`text-sm text-center p-2 rounded-lg ${
+                    className={`text-sm p-3 rounded-lg border relative ${
                       successMessage
-                        ? 'text-green-700 bg-green-50' 
-                        : 'text-red-600 bg-red-50'
+                        ? 'text-green-800 bg-green-50 border-green-200' 
+                        : 'text-red-800 bg-red-50 border-red-200'
                     }`}
-                    role="alert"
+                    role={successMessage ? "status" : "alert"}
                   >
-                    {successMessage || error}
+                    <button
+                      type="button"
+                      onClick={() => setMessageDismissed(true)}
+                      className={`absolute top-2 right-2 p-1 rounded-full transition-colors ${
+                        successMessage
+                          ? 'text-green-600 hover:text-green-800 hover:bg-green-100'
+                          : 'text-red-600 hover:text-red-800 hover:bg-red-100'
+                      }`}
+                      aria-label="Dismiss message"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+                    <div className="pr-8">
+                      {successMessage || error}
+                      {successMessage && (
+                        <div className="mt-2 text-xs text-green-700">
+                          <strong>Helpful tips:</strong>
+                          <ul className="mt-1 space-y-1 list-disc list-inside text-left">
+                            <li>Check your spam/junk folder if you don't see the email</li>
+                            <li>The reset link will expire in 24 hours</li>
+                            <li>You can request another reset link if needed</li>
+                          </ul>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 )}
                 <div>
@@ -190,7 +225,7 @@ export default function ForgotPasswordModal({
                         fieldValidation.email?.hasValue ? 'border-red-300 bg-red-50' :
                         'border-gray-300'
                       }`}
-                      aria-describedby={validationErrors.email ? "forgot-email-error" : (error || successMessage) ? "forgot-password-alert" : "forgot-password-help"}
+                      aria-describedby={validationErrors.email ? "forgot-email-error" : (error || successMessage) && !messageDismissed ? "forgot-password-alert" : "forgot-password-help"}
                     />
                     {/* Validation Icon */}
                     {(validationErrors.email || (fieldValidation.email?.hasValue && !fieldValidation.email?.isValid)) && (
@@ -215,8 +250,13 @@ export default function ForgotPasswordModal({
                   {validationErrors.email && (
                     <p id="forgot-email-error" className="text-red-600 text-sm mt-1">{validationErrors.email}</p>
                   )}
-                  <div id="forgot-password-help" className="text-xs text-gray-500 mt-1">
-                    Enter the email address associated with your account
+                  <div id="forgot-password-help" className="text-xs text-gray-600 mt-2 space-y-1">
+                    <p><strong>Enter the email address associated with your account</strong></p>
+                    <ul className="text-gray-500 space-y-1 list-disc list-inside">
+                      <li>We'll send a secure password reset link to this email</li>
+                      <li>Make sure to check your spam/promotions folder</li>
+                      <li>The reset link will be valid for 24 hours</li>
+                    </ul>
                   </div>
                 </div>
                 <button
