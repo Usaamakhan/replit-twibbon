@@ -1,12 +1,12 @@
 'use client';
 
 import { useAuth } from '../hooks/useAuth';
+import { useRouter } from 'next/navigation';
 import ProfilePage from './ProfilePage';
-import { useAuthModal } from '../contexts/AuthModalContext';
 
 function ProfilePageWrapper({ isOwnProfile = false }) {
   const { user, loading } = useAuth();
-  const { openSignInModal, openSignUpModal } = useAuthModal();
+  const router = useRouter();
   
 
   if (loading) {
@@ -34,13 +34,13 @@ function ProfilePageWrapper({ isOwnProfile = false }) {
           <p className="text-gray-600 mb-6">Create an account or sign in if you already have one to view and manage your profile.</p>
           <div className="space-y-3">
             <button 
-              onClick={openSignUpModal}
+              onClick={() => router.push('/signup')}
               className="w-full bg-emerald-600 text-white px-6 py-3 rounded-lg hover:bg-emerald-700 transition-colors font-medium"
             >
               Create Account
             </button>
             <button 
-              onClick={openSignInModal}
+              onClick={() => router.push('/signin')}
               className="w-full border border-emerald-600 text-emerald-600 px-6 py-3 rounded-lg hover:bg-emerald-50 transition-colors font-medium"
             >
               Sign In

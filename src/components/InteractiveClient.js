@@ -1,221 +1,38 @@
 'use client';
 
-import { useState, useEffect, cloneElement, isValidElement, Children } from 'react';
-import { useOptionalAuth } from '../hooks/useAuth';
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { useBodyScrollLock } from '../hooks/useBodyScrollLock';
-import { getFirebaseErrorMessage } from '../utils/validation';
-import { signInSchema, signUpSchema, forgotPasswordSchema, getValidationError } from '../utils/schemas';
 import Header from './Header';
 import Footer from './Footer';
 import MobileMenu from './MobileMenu';
-import SignInModal from './auth/SignInModal';
-import SignUpModal from './auth/SignUpModal';
-import ForgotPasswordModal from './auth/ForgotPasswordModal';
-import PasswordResetSuccessModal from './auth/PasswordResetSuccessModal';
 import { AuthModalProvider } from '../contexts/AuthModalContext';
 
 export default function InteractiveClient({ children }) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [activeModal, setActiveModal] = useState(null); // 'signin', 'signup', or 'forgotpassword'
-  const [authError, setAuthError] = useState('');
-  const [authSuccessMessage, setAuthSuccessMessage] = useState('');
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isWaitingForAuth, setIsWaitingForAuth] = useState(false);
-  
-  // Use optional auth that doesn't crash on pages without AuthProvider
-  const authContext = useOptionalAuth();
-  
-  // If no auth context, provide safe defaults
-  const { user, loading, signInWithGoogle, signUpWithEmail, signInWithEmail, forgotPassword, logout } = authContext || {
-    user: null,
-    loading: false,
-    signInWithGoogle: async () => ({ success: false, error: 'No auth configured' }),
-    signUpWithEmail: async () => ({ success: false, error: 'No auth configured' }),
-    signInWithEmail: async () => ({ success: false, error: 'No auth configured' }),
-    forgotPassword: async () => ({ success: false, error: 'No auth configured' }),
-    logout: async () => ({ success: false })
-  };
+  const router = useRouter();
 
-  // Prevent body scrolling when sidebar or modals are open
-  useBodyScrollLock(isMenuOpen || activeModal !== null);
+  // Prevent body scrolling when sidebar is open
+  useBodyScrollLock(isMenuOpen);
 
-  // Watch for user authentication state changes and close modal when signed in
-  useEffect(() => {
-    if (isWaitingForAuth && user && (activeModal === 'signin' || activeModal === 'signup')) {
-      // User successfully signed in, close the modal
-      setIsWaitingForAuth(false);
-      setIsSubmitting(false);
-      closeModal();
-    }
-  }, [user, isWaitingForAuth, activeModal]);
-
+  // Navigation functions for auth pages
   const openSignInModal = () => {
-    setActiveModal('signin');
-    clearAuthMessages();
+    router.push('/signin');
   };
   
   const openSignUpModal = () => {
-    setActiveModal('signup');
-    clearAuthMessages();
+    router.push('/signup');
   };
   
   const openForgotPasswordModal = () => {
-    setActiveModal('forgotpassword');
-    clearAuthMessages();
+    router.push('/forgot-password');
   };
   
   const closeModal = () => {
-    setActiveModal(null);
-    clearAuthMessages();
-    setIsSubmitting(false);
-    setIsWaitingForAuth(false);
+    // For backward compatibility - navigates to home
+    router.push('/');
   };
 
-  const clearAuthMessages = () => {
-    setAuthError('');
-    setAuthSuccessMessage('');
-  };
-
-  const handleGoogleSignIn = async () => {
-    if (isSubmitting) return;
-    
-    try {
-      setIsSubmitting(true);
-      clearAuthMessages();
-      const result = await signInWithGoogle();
-      if (result.success) {
-        // Don't close modal immediately, wait for auth state change
-        setIsWaitingForAuth(true);
-      } else {
-        setAuthError(getFirebaseErrorMessage(result.error) || 'Something went wrong. Please try again.');
-        setIsSubmitting(false);
-      }
-    } catch (error) {
-      setAuthError(getFirebaseErrorMessage(error.code) || 'An unexpected error occurred');
-      setIsSubmitting(false);
-    }
-    // Don't set isSubmitting to false here if successful - keep loading until auth state changes
-  };
-
-  const handleEmailSignIn = async (e) => {
-    e.preventDefault();
-    if (isSubmitting) return;
-    
-    try {
-      setIsSubmitting(true);
-      clearAuthMessages();
-      
-      const formData = new FormData(e.target);
-      const rawData = {
-        email: formData.get('email'),
-        password: formData.get('password')
-      };
-      
-      // Client-side validation with Zod
-      const validationResult = signInSchema.safeParse(rawData);
-      if (!validationResult.success) {
-        setAuthError(getValidationError(validationResult));
-        setIsSubmitting(false);
-        return;
-      }
-      
-      const { email, password } = validationResult.data;
-      
-      const result = await signInWithEmail(email, password);
-      if (result.success) {
-        // Don't close modal immediately, wait for auth state change
-        setIsWaitingForAuth(true);
-      } else {
-        setAuthError(getFirebaseErrorMessage(result.error) || 'Something went wrong. Please try again.');
-        setIsSubmitting(false);
-      }
-    } catch (error) {
-      setAuthError(getFirebaseErrorMessage(error?.code) || 'An unexpected error occurred');
-      setIsSubmitting(false);
-    }
-    // Don't set isSubmitting to false here if successful - keep loading until auth state changes
-  };
-
-  const handleEmailSignUp = async (e) => {
-    e.preventDefault();
-    if (isSubmitting) return;
-    
-    try {
-      setIsSubmitting(true);
-      clearAuthMessages();
-      
-      const formData = new FormData(e.target);
-      const rawData = {
-        name: formData.get('name'),
-        email: formData.get('email'),
-        password: formData.get('password')
-      };
-      
-      // Client-side validation with Zod
-      const validationResult = signUpSchema.safeParse(rawData);
-      if (!validationResult.success) {
-        setAuthError(getValidationError(validationResult));
-        return;
-      }
-      
-      const { name, email, password } = validationResult.data;
-      
-      const result = await signUpWithEmail(email, password, name);
-      if (result.success) {
-        if (result.requiresVerification) {
-          setAuthSuccessMessage('Account created successfully! Please check your email and click the verification link to complete your registration.');
-          setTimeout(() => {
-            closeModal();
-          }, 4000);
-        } else {
-          closeModal();
-        }
-      } else {
-        setAuthError(getFirebaseErrorMessage(result.error) || 'Something went wrong. Please try again.');
-      }
-    } catch (error) {
-      console.error('Sign up catch error:', error);
-      setAuthError(getFirebaseErrorMessage(error?.code) || 'An unexpected error occurred');
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  const handleForgotPassword = async (e) => {
-    e.preventDefault();
-    if (isSubmitting) return;
-    
-    try {
-      setIsSubmitting(true);
-      clearAuthMessages();
-      
-      const formData = new FormData(e.target);
-      const rawData = {
-        email: formData.get('email')
-      };
-      
-      // Client-side validation with Zod
-      const validationResult = forgotPasswordSchema.safeParse(rawData);
-      if (!validationResult.success) {
-        setAuthError(getValidationError(validationResult));
-        return;
-      }
-      
-      const { email } = validationResult.data;
-      
-      const result = await forgotPassword(email);
-      if (result.success) {
-        setAuthSuccessMessage(result.message);
-        setActiveModal('passwordResetSuccess');
-      } else {
-        setAuthError(getFirebaseErrorMessage(result.error) || 'Something went wrong. Please try again.');
-      }
-    } catch (error) {
-      setAuthError(getFirebaseErrorMessage(error?.code) || 'An unexpected error occurred');
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
 
   const authModalContextValue = {
     openSignInModal,
@@ -242,46 +59,6 @@ export default function InteractiveClient({ children }) {
       <MobileMenu 
         isMenuOpen={isMenuOpen}
         setIsMenuOpen={setIsMenuOpen}
-        openSignInModal={openSignInModal}
-        openSignUpModal={openSignUpModal}
-      />
-
-      {/* Auth Modal Components */}
-      <SignInModal 
-        isOpen={activeModal === 'signin'}
-        onClose={closeModal}
-        error={authError}
-        loading={isSubmitting || loading || isWaitingForAuth}
-        onEmailSignIn={handleEmailSignIn}
-        onGoogleSignIn={handleGoogleSignIn}
-        onSwitchToSignUp={openSignUpModal}
-        onSwitchToForgotPassword={openForgotPasswordModal}
-      />
-      
-      <SignUpModal 
-        isOpen={activeModal === 'signup'}
-        onClose={closeModal}
-        error={authError || (!authError && authSuccessMessage ? '' : authError)}
-        loading={isSubmitting || loading}
-        onEmailSignUp={handleEmailSignUp}
-        onGoogleSignIn={handleGoogleSignIn}
-        onSwitchToSignIn={openSignInModal}
-      />
-      
-      <ForgotPasswordModal 
-        isOpen={activeModal === 'forgotpassword'}
-        onClose={closeModal}
-        error={authError}
-        loading={isSubmitting || loading}
-        onForgotPassword={handleForgotPassword}
-        onSwitchToSignIn={openSignInModal}
-      />
-      
-      <PasswordResetSuccessModal 
-        isOpen={activeModal === 'passwordResetSuccess'}
-        onClose={closeModal}
-        message={authSuccessMessage}
-        onGoToSignIn={openSignInModal}
       />
       </div>
     </AuthModalProvider>

@@ -6,9 +6,7 @@ import { useRouter } from "next/navigation";
 
 export default function MobileMenu({ 
   isMenuOpen, 
-  setIsMenuOpen, 
-  openSignInModal, 
-  openSignUpModal 
+  setIsMenuOpen
 }) {
   const authContext = useOptionalAuth();
   const profileContext = useOptionalUserProfile();
@@ -207,13 +205,19 @@ export default function MobileMenu({
                 ) : (
                   <>
                     <button 
-                      onClick={openSignInModal}
+                      onClick={() => {
+                        router.push('/signin');
+                        setIsMenuOpen(false);
+                      }}
                       className="flex-1 py-3 px-4 text-sm font-medium text-emerald-700 border border-emerald-700 rounded-full hover:bg-emerald-50 transition-colors duration-200 cursor-pointer hover-zoom"
                     >
                       Sign In
                     </button>
                     <button 
-                      onClick={openSignUpModal}
+                      onClick={() => {
+                        router.push('/signup');
+                        setIsMenuOpen(false);
+                      }}
                       className="flex-1 py-3 px-4 text-sm font-medium text-white bg-emerald-700 rounded-full hover:bg-emerald-800 transition-colors duration-200 cursor-pointer hover-zoom"
                     >
                       Sign Up
