@@ -205,9 +205,7 @@ export default function InteractiveClient({ children }) {
       const result = await forgotPassword(email);
       if (result.success) {
         setAuthSuccessMessage(result.message);
-        setTimeout(() => {
-          closeModal();
-        }, 5000);
+        // Modal stays open until user manually closes it
       } else {
         setAuthError(getFirebaseErrorMessage(result.error) || 'Something went wrong. Please try again.');
       }
