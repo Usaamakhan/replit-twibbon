@@ -185,12 +185,12 @@ export default function SignUpPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-yellow-50 via-emerald-50 to-yellow-100">
+    <div className="min-h-screen bg-white">
       {/* Frame Logo */}
-      <div className="absolute top-6 left-6 z-50">
+      <div className="absolute top-6 left-6 z-50 mb-8">
         <Link 
           href="/" 
-          className={`${caveat.className} text-3xl md:text-4xl font-bold text-emerald-700 hover:text-emerald-800 transition-all duration-300 hover:scale-110`}
+          className={`${caveat.className} text-2xl md:text-3xl font-bold text-emerald-700 hover:text-emerald-800 transition-all duration-300 hover:scale-110`}
         >
           Frame
         </Link>
@@ -198,14 +198,14 @@ export default function SignUpPage() {
       
       <div className="min-h-screen flex">
         {/* Left Side - Form */}
-        <div className="flex-1 lg:w-1/2 xl:w-3/5 flex flex-col justify-center py-12 px-4 sm:px-6 lg:px-20 xl:px-24">
+        <div className="flex-1 lg:w-1/2 xl:w-3/5 flex flex-col justify-center py-8 px-4 sm:px-6 lg:px-16 xl:px-20 pt-20">
           <div className="mx-auto w-full max-w-sm lg:max-w-md">
-            <div className="text-center lg:text-left mb-8">
-              <h2 className="text-3xl font-bold text-emerald-800">Create your account</h2>
-              <p className="mt-2 text-emerald-600">Get started with your free account today.</p>
+            <div className="text-center lg:text-left mb-6">
+              <h2 className="text-2xl font-bold text-emerald-800">Create your account</h2>
+              <p className="mt-1 text-emerald-600 text-sm">Get started with your free account today.</p>
             </div>
             {/* Email Sign Up Form */}
-            <form className="space-y-4 mb-6" onSubmit={handleEmailSignUp} noValidate>
+            <form className="space-y-3 mb-4" onSubmit={handleEmailSignUp} noValidate>
               {error && (
                 <div className="text-red-600 text-sm text-center p-2 bg-red-50 rounded-lg" role="alert">
                   {error}
@@ -224,7 +224,7 @@ export default function SignUpPage() {
                     required
                     placeholder="Enter your name"
                     onChange={(e) => handleInputChange('name', e.target.value)}
-                    className={`w-full px-4 py-3 pr-10 border rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all duration-300 hover:scale-105 text-gray-900 placeholder-gray-500 ${
+                    className={`w-full px-3 py-2 pr-10 border rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all duration-300 hover:scale-105 text-gray-900 placeholder-gray-500 text-sm ${
                       validationErrors.name ? 'border-red-300 bg-red-50' : 
                       fieldValidation.name?.isValid ? 'border-emerald-300 bg-emerald-50' :
                       fieldValidation.name?.hasValue ? 'border-red-300 bg-red-50' :
@@ -268,7 +268,7 @@ export default function SignUpPage() {
                     required
                     placeholder="Enter your email"
                     onChange={(e) => handleInputChange('email', e.target.value)}
-                    className={`w-full px-4 py-3 pr-10 border rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all duration-300 hover:scale-105 text-gray-900 placeholder-gray-500 ${
+                    className={`w-full px-3 py-2 pr-10 border rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all duration-300 hover:scale-105 text-gray-900 placeholder-gray-500 text-sm ${
                       validationErrors.email ? 'border-red-300 bg-red-50' : 
                       fieldValidation.email?.isValid ? 'border-emerald-300 bg-emerald-50' :
                       fieldValidation.email?.hasValue ? 'border-red-300 bg-red-50' :
@@ -313,7 +313,7 @@ export default function SignUpPage() {
                     placeholder="Create a password (min 8 characters)"
                     minLength={8}
                     onChange={(e) => handleInputChange('password', e.target.value)}
-                    className={`w-full px-4 py-3 pr-10 border rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all duration-300 hover:scale-105 text-gray-900 placeholder-gray-500 ${
+                    className={`w-full px-3 py-2 pr-10 border rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all duration-300 hover:scale-105 text-gray-900 placeholder-gray-500 text-sm ${
                       validationErrors.password ? 'border-red-300 bg-red-50' : 
                       fieldValidation.password?.isValid ? 'border-emerald-300 bg-emerald-50' :
                       fieldValidation.password?.hasValue ? 'border-red-300 bg-red-50' :
@@ -347,19 +347,19 @@ export default function SignUpPage() {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white rounded-xl py-3 px-4 font-medium transition-all duration-300 hover:scale-105 hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed shadow-md"
+                className="w-full bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white rounded-xl py-2 px-4 font-medium transition-all duration-300 hover:scale-105 hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed shadow-md text-sm"
               >
                 {loading ? 'Creating Account...' : 'Create Account'}
               </button>
             </form>
 
             {/* Divider */}
-            <div className="relative mb-6">
+            <div className="relative mb-4">
               <div className="absolute inset-0 flex items-center">
                 <div className="w-full border-t border-gray-200"></div>
               </div>
               <div className="relative flex justify-center text-sm">
-                <span className="bg-gradient-to-br from-yellow-50 via-emerald-50 to-yellow-100 px-4 text-gray-500">or</span>
+                <span className="bg-white px-4 text-gray-500">or</span>
               </div>
             </div>
 
@@ -368,7 +368,7 @@ export default function SignUpPage() {
               <button
                 onClick={handleGoogleSignIn}
                 disabled={loading}
-                className="w-full bg-white border border-gray-300 hover:bg-yellow-50 rounded-xl py-3 px-4 flex items-center justify-center gap-3 transition-all duration-300 hover:scale-105 hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed text-gray-700 font-medium shadow-md"
+                className="w-full bg-white border border-gray-300 hover:bg-yellow-50 rounded-xl py-2 px-4 flex items-center justify-center gap-3 transition-all duration-300 hover:scale-105 hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed text-gray-700 font-medium shadow-md text-sm"
               >
                 <svg className="w-4 h-4 sm:w-5 sm:h-5" viewBox="0 0 24 24" aria-hidden="true">
                   <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
@@ -401,11 +401,11 @@ export default function SignUpPage() {
         </div>
 
         {/* Right Side - Branding */}
-        <div className="hidden lg:flex lg:w-1/2 xl:w-2/5 bg-gradient-to-br from-yellow-400 via-yellow-500 to-emerald-600 flex-col justify-center items-center px-12">
-          <div className="text-center text-white max-w-md">
-            <h1 className="text-4xl xl:text-5xl font-bold mb-6 text-emerald-800">Join Frame!</h1>
-            <p className="text-xl text-emerald-100 mb-8">Create your account and start building amazing frames. Join thousands of creators today.</p>
-            <div className="flex items-center justify-center space-x-2 text-emerald-200">
+        <div className="hidden lg:flex lg:w-1/2 xl:w-2/5 bg-yellow-400 flex-col justify-center items-center px-12">
+          <div className="text-center max-w-md">
+            <h1 className="text-4xl xl:text-5xl font-bold mb-6 text-emerald-700">Join Frame!</h1>
+            <p className="text-xl text-black mb-8">Create your account and start building amazing frames. Join thousands of creators today.</p>
+            <div className="flex items-center justify-center space-x-2 text-black">
               <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
                 <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
               </svg>
