@@ -51,7 +51,7 @@ export default function PasswordResetSuccessModal({
             <div className="bg-yellow-400 rounded-t-xl p-4 sm:p-6 text-center relative">
               <button
                 onClick={onClose}
-                className="absolute top-3 right-3 sm:top-4 sm:right-4 text-gray-700 hover:text-gray-900 transition-colors"
+                className="absolute top-3 right-3 sm:top-4 sm:right-4 text-gray-700 hover:text-gray-900 hover:bg-gray-100 rounded-full p-1 transition-all duration-200 hover:scale-110"
                 aria-label="Close success message"
               >
                 <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
