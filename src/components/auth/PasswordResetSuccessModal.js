@@ -2,7 +2,6 @@
 
 import { useEffect } from 'react';
 import { useFocusTrap } from '../../hooks/useFocusTrap';
-import { useBodyScrollLock } from '../../hooks/useBodyScrollLock';
 
 export default function PasswordResetSuccessModal({ 
   isOpen,
@@ -12,8 +11,19 @@ export default function PasswordResetSuccessModal({
 }) {
   const modalRef = useFocusTrap(isOpen);
   
-  // Ensure body scroll is locked (backup for mobile)
-  useBodyScrollLock(isOpen);
+  // Prevent body scroll when modal is open (direct approach like ProfileEditModal)
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+    
+    // Cleanup on unmount
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, [isOpen]);
 
   // Handle Escape key
   useEffect(() => {
