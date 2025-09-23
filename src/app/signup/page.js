@@ -181,18 +181,29 @@ export default function SignUpPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-blue-50 to-indigo-50 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8">
-        {/* Card */}
-        <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-lg border border-white/20">
-          {/* Header */}
-          <div className="bg-yellow-400 rounded-t-xl p-4 sm:p-6 text-center">
-            <h2 className="text-xl sm:text-2xl font-bold text-emerald-700">Join Frame!</h2>
-            <p className="text-sm sm:text-base text-gray-700 mt-2">Create your account to get started</p>
+    <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-blue-50 to-indigo-50">
+      <div className="min-h-screen flex">
+        {/* Left Side - Branding */}
+        <div className="hidden lg:flex lg:w-1/2 xl:w-2/5 bg-gradient-to-br from-emerald-600 to-emerald-800 flex-col justify-center items-center px-12">
+          <div className="text-center text-white max-w-md">
+            <h1 className="text-4xl xl:text-5xl font-bold mb-6">Join Frame!</h1>
+            <p className="text-xl text-emerald-100 mb-8">Create your account and start building amazing frames. Join thousands of creators today.</p>
+            <div className="flex items-center justify-center space-x-2 text-emerald-200">
+              <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+              </svg>
+              <span>Join the creative community</span>
+            </div>
           </div>
+        </div>
 
-          {/* Content */}
-          <div className="p-4 sm:p-6">
+        {/* Right Side - Form */}
+        <div className="flex-1 lg:w-1/2 xl:w-3/5 flex flex-col justify-center py-12 px-4 sm:px-6 lg:px-20 xl:px-24">
+          <div className="mx-auto w-full max-w-sm lg:max-w-md">
+            <div className="text-center lg:text-left mb-8">
+              <h2 className="text-3xl font-bold text-gray-900">Create your account</h2>
+              <p className="mt-2 text-gray-600">Get started with your free account today.</p>
+            </div>
             {/* Email Sign Up Form */}
             <form className="space-y-4 mb-6" onSubmit={handleEmailSignUp} noValidate>
               {error && (
@@ -213,7 +224,7 @@ export default function SignUpPage() {
                     required
                     placeholder="Enter your name"
                     onChange={(e) => handleInputChange('name', e.target.value)}
-                    className={`w-full px-3 sm:px-4 py-2 pr-10 border rounded-full focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none transition-all text-sm sm:text-base text-gray-900 placeholder-gray-600 ${
+                    className={`w-full px-4 py-3 pr-10 border rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all text-gray-900 placeholder-gray-500 ${
                       validationErrors.name ? 'border-red-300 bg-red-50' : 
                       fieldValidation.name?.isValid ? 'border-emerald-300 bg-emerald-50' :
                       fieldValidation.name?.hasValue ? 'border-red-300 bg-red-50' :
@@ -257,7 +268,7 @@ export default function SignUpPage() {
                     required
                     placeholder="Enter your email"
                     onChange={(e) => handleInputChange('email', e.target.value)}
-                    className={`w-full px-3 sm:px-4 py-2 pr-10 border rounded-full focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none transition-all text-sm sm:text-base text-gray-900 placeholder-gray-600 ${
+                    className={`w-full px-4 py-3 pr-10 border rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all text-gray-900 placeholder-gray-500 ${
                       validationErrors.email ? 'border-red-300 bg-red-50' : 
                       fieldValidation.email?.isValid ? 'border-emerald-300 bg-emerald-50' :
                       fieldValidation.email?.hasValue ? 'border-red-300 bg-red-50' :
@@ -302,7 +313,7 @@ export default function SignUpPage() {
                     placeholder="Create a password (min 8 characters)"
                     minLength={8}
                     onChange={(e) => handleInputChange('password', e.target.value)}
-                    className={`w-full px-3 sm:px-4 py-2 pr-10 border rounded-full focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none transition-all text-sm sm:text-base text-gray-900 placeholder-gray-600 ${
+                    className={`w-full px-4 py-3 pr-10 border rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all text-gray-900 placeholder-gray-500 ${
                       validationErrors.password ? 'border-red-300 bg-red-50' : 
                       fieldValidation.password?.isValid ? 'border-emerald-300 bg-emerald-50' :
                       fieldValidation.password?.hasValue ? 'border-red-300 bg-red-50' :
@@ -336,7 +347,7 @@ export default function SignUpPage() {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full bg-emerald-700 hover:bg-emerald-800 text-white rounded-full py-2.5 sm:py-3 px-4 font-medium transition-all duration-200 hover-zoom text-sm sm:text-base disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg py-3 px-4 font-medium transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
               >
                 {loading ? 'Creating Account...' : 'Create Account'}
               </button>
@@ -348,7 +359,7 @@ export default function SignUpPage() {
                 <div className="w-full border-t border-gray-200"></div>
               </div>
               <div className="relative flex justify-center text-sm">
-                <span className="bg-white px-4 text-gray-500">or</span>
+                <span className="bg-gradient-to-br from-emerald-50 via-blue-50 to-indigo-50 px-4 text-gray-500">or</span>
               </div>
             </div>
 
@@ -357,7 +368,7 @@ export default function SignUpPage() {
               <button
                 onClick={handleGoogleSignIn}
                 disabled={loading}
-                className="w-full bg-white border-2 border-gray-200 hover:border-emerald-300 rounded-full py-2.5 sm:py-3 px-4 flex items-center justify-center gap-3 transition-all duration-200 hover-zoom disabled:opacity-50 disabled:cursor-not-allowed text-gray-700 text-sm sm:text-base"
+                className="w-full bg-white border border-gray-300 hover:bg-gray-50 rounded-lg py-3 px-4 flex items-center justify-center gap-3 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed text-gray-700 font-medium shadow-sm"
               >
                 <svg className="w-4 h-4 sm:w-5 sm:h-5" viewBox="0 0 24 24" aria-hidden="true">
                   <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
@@ -380,7 +391,7 @@ export default function SignUpPage() {
                 Already have an account? 
                 <button 
                   onClick={() => router.push('/signin')}
-                  className="text-emerald-700 hover:text-emerald-800 hover:underline font-medium ml-1 cursor-pointer transition-all duration-200"
+                  className="text-emerald-600 hover:text-emerald-700 hover:underline font-medium ml-1 cursor-pointer transition-all duration-200"
                 >
                   Sign In
                 </button>
