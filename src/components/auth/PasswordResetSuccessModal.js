@@ -2,6 +2,7 @@
 
 import { useEffect } from 'react';
 import { useFocusTrap } from '../../hooks/useFocusTrap';
+import { useBodyScrollLock } from '../../hooks/useBodyScrollLock';
 
 export default function PasswordResetSuccessModal({ 
   isOpen,
@@ -10,6 +11,9 @@ export default function PasswordResetSuccessModal({
   onGoToSignIn
 }) {
   const modalRef = useFocusTrap(isOpen);
+  
+  // Ensure body scroll is locked (backup for mobile)
+  useBodyScrollLock(isOpen);
 
   // Handle Escape key
   useEffect(() => {
@@ -97,7 +101,7 @@ export default function PasswordResetSuccessModal({
                 </button>
                 <button
                   onClick={onClose}
-                  className="w-full bg-gray-100 hover:bg-gray-300 text-gray-700 rounded-full py-2.5 sm:py-3 px-4 font-medium transition-colors duration-200 text-sm sm:text-base"
+                  className="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-full py-2.5 sm:py-3 px-4 font-medium transition-all duration-200 hover-zoom text-sm sm:text-base"
                 >
                   Close
                 </button>
