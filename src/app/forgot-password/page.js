@@ -4,6 +4,10 @@ import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { validateEmail } from '../../utils/validation';
 import { useAuth } from '../../hooks/useAuth';
+import { Caveat } from "next/font/google";
+import Link from "next/link";
+
+const caveat = Caveat({ subsets: ["latin"], weight: ["700"] });
 
 export default function ForgotPasswordPage() {
   const router = useRouter();
@@ -131,48 +135,63 @@ export default function ForgotPasswordPage() {
   // Show success message
   if (success) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-blue-50 to-indigo-50 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-md w-full space-y-8">
-          {/* Card */}
-          <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-lg border border-white/20">
-            {/* Header */}
-            <div className="bg-yellow-400 rounded-t-xl p-4 sm:p-6 text-center">
-              <h2 className="text-xl sm:text-2xl font-bold text-emerald-700">Check Your Email</h2>
-              <p className="text-sm sm:text-base text-gray-700 mt-2">Reset link sent successfully</p>
+      <div className="min-h-screen bg-white flex">
+        {/* Frame Logo - Top Left */}
+        <div className="absolute top-4 left-4 z-10">
+          <h1 className="text-2xl font-bold text-emerald-700">Frame</h1>
+        </div>
+
+        {/* Left Side - Success Message */}
+        <div className="flex-1 flex items-center justify-center px-4 sm:px-6 lg:px-8 py-12">
+          <div className="max-w-sm w-full space-y-6 text-center">
+            <div className="mx-auto w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center mb-6">
+              <svg className="w-8 h-8 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+              </svg>
+            </div>
+            
+            <div>
+              <h2 className="text-2xl font-bold text-emerald-700">Check Your Email</h2>
+              <p className="text-gray-600 mt-1">Reset link sent successfully</p>
+            </div>
+              
+            <p className="text-gray-600 text-sm">
+              We've sent a password reset link to your email address. Click the link to reset your password.
+            </p>
+            
+            <div className="text-xs text-gray-500 space-y-1">
+              <p>• Check your spam/promotions folder if you don't see it</p>
+              <p>• The reset link will expire in 24 hours</p>
             </div>
 
-            {/* Content */}
-            <div className="p-4 sm:p-6 text-center">
-              <div className="mx-auto w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center mb-6">
-                <svg className="w-8 h-8 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                </svg>
-              </div>
-              
-              <p className="text-gray-600 mb-6">
-                We've sent a password reset link to your email address. Click the link to reset your password.
-              </p>
-              
-              <div className="text-sm text-gray-500 mb-6 space-y-2">
-                <p>• Check your spam/promotions folder if you don't see it</p>
-                <p>• The reset link will expire in 24 hours</p>
-                <p>• You can close this page now</p>
-              </div>
+            <div className="space-y-3">
+              <button 
+                onClick={() => router.push('/signin')}
+                className="w-full bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white rounded-xl py-2 px-4 font-medium transition-all duration-300 hover-zoom hover:shadow-lg shadow-md text-sm"
+              >
+                Back to Sign In
+              </button>
+              <button 
+                onClick={() => setSuccess(false)}
+                className="w-full bg-white border border-gray-300 hover:bg-yellow-50 rounded-xl py-2 px-4 font-medium transition-all duration-300 hover-zoom hover:shadow-lg text-gray-700 shadow-md text-sm"
+              >
+                Send Another Email
+              </button>
+            </div>
+          </div>
+        </div>
 
-              <div className="space-y-3">
-                <button 
-                  onClick={() => router.push('/signin')}
-                  className="w-full bg-emerald-700 hover:bg-emerald-800 text-white rounded-full py-2.5 sm:py-3 px-4 font-medium transition-all duration-200 text-sm sm:text-base"
-                >
-                  Back to Sign In
-                </button>
-                <button 
-                  onClick={() => setSuccess(false)}
-                  className="w-full border border-gray-300 text-gray-700 rounded-full py-2.5 sm:py-3 px-4 font-medium transition-all duration-200 text-sm sm:text-base hover:bg-gray-50"
-                >
-                  Send Another Email
-                </button>
-              </div>
+        {/* Right Side - Branding */}
+        <div className="hidden lg:flex flex-1 bg-yellow-400 items-center justify-center p-12">
+          <div className="max-w-md text-center">
+            <h1 className="text-4xl font-bold text-emerald-700 mb-4">Email Sent!</h1>
+            <p className="text-lg text-black mb-6">
+              Check your inbox and follow the instructions to reset your password.
+            </p>
+            <div className="space-y-3 text-base text-black">
+              <p>✓ Secure reset link delivered</p>
+              <p>✓ Valid for 24 hours</p>
+              <p>✓ Check spam folder if needed</p>
             </div>
           </div>
         </div>
@@ -181,20 +200,30 @@ export default function ForgotPasswordPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-blue-50 to-indigo-50 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8">
-        {/* Card */}
-        <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-lg border border-white/20">
+    <div className="min-h-screen bg-white flex">
+      {/* Frame Logo - Top Left */}
+      <div className="absolute top-4 left-4 z-10">
+        <Link 
+          href="/" 
+          className={`${caveat.className} text-2xl md:text-3xl font-bold text-emerald-700 hover:text-emerald-800 transition-all duration-300 hover:scale-110`}
+        >
+          Frame
+        </Link>
+      </div>
+
+      {/* Left Side - Form */}
+      <div className="flex-1 flex items-center justify-center px-4 sm:px-6 lg:px-8 py-12">
+        <div className="max-w-sm w-full space-y-6">
           {/* Header */}
-          <div className="bg-yellow-400 rounded-t-xl p-4 sm:p-6 text-center">
-            <h2 className="text-xl sm:text-2xl font-bold text-emerald-700">Reset Password</h2>
-            <p className="text-sm sm:text-base text-gray-700 mt-2">We'll send you a reset link</p>
+          <div className="text-center">
+            <h2 className="text-2xl font-bold text-emerald-700">Reset Password</h2>
+            <p className="text-gray-600 mt-1">We'll send you a reset link</p>
           </div>
 
           {/* Content */}
-          <div className="p-4 sm:p-6">
+          <div>
             {/* Forgot Password Form */}
-            <form className="space-y-4 mb-6" onSubmit={handleForgotPassword} noValidate>
+            <form className="space-y-4 mb-4" onSubmit={handleForgotPassword} noValidate>
               {error && (
                 <div 
                   className="text-sm p-3 rounded-lg border text-red-800 bg-red-50 border-red-200"
@@ -216,7 +245,7 @@ export default function ForgotPasswordPage() {
                     required
                     placeholder="Enter your email address"
                     onChange={(e) => handleInputChange('email', e.target.value)}
-                    className={`w-full px-3 sm:px-4 py-2 pr-10 border rounded-full focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none transition-all text-sm sm:text-base text-gray-900 placeholder-gray-600 ${
+                    className={`w-full px-3 py-2 pr-10 border rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all duration-300 text-gray-900 placeholder-gray-500 text-sm ${
                       validationErrors.email ? 'border-red-300 bg-red-50' : 
                       fieldValidation.email?.isValid ? 'border-emerald-300 bg-emerald-50' :
                       fieldValidation.email?.hasValue ? 'border-red-300 bg-red-50' :
@@ -246,19 +275,14 @@ export default function ForgotPasswordPage() {
                 {validationErrors.email && (
                   <p className="text-red-600 text-sm mt-1">{validationErrors.email}</p>
                 )}
-                <div className="text-xs text-gray-600 mt-2 space-y-1">
-                  <p><strong>Enter the email address associated with your account</strong></p>
-                  <ul className="text-gray-500 space-y-1 list-disc list-inside">
-                    <li>We'll send a secure password reset link to this email</li>
-                    <li>Make sure to check your spam/promotions folder</li>
-                    <li>The reset link will be valid for 24 hours</li>
-                  </ul>
+                <div className="text-xs text-gray-500 mt-2">
+                  <p>We'll send a secure password reset link to this email address.</p>
                 </div>
               </div>
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full bg-emerald-700 hover:bg-emerald-800 text-white rounded-full py-2.5 sm:py-3 px-4 font-medium transition-all duration-200 hover-zoom text-sm sm:text-base disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white rounded-xl py-2 px-4 font-medium transition-all duration-300 hover-zoom hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed shadow-md text-sm"
               >
                 {loading ? 'Sending...' : 'Send Reset Link'}
               </button>
@@ -275,6 +299,21 @@ export default function ForgotPasswordPage() {
                 </button>
               </p>
             </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Right Side - Branding */}
+      <div className="hidden lg:flex flex-1 bg-yellow-400 items-center justify-center p-12">
+        <div className="max-w-md text-center">
+          <h1 className="text-4xl font-bold text-emerald-700 mb-4">Reset Your Password</h1>
+          <p className="text-lg text-black mb-6">
+            Don't worry, we'll help you get back into your account securely.
+          </p>
+          <div className="space-y-3 text-base text-black">
+            <p>✓ Secure password reset process</p>
+            <p>✓ Quick email delivery</p>
+            <p>✓ 24-hour reset link validity</p>
           </div>
         </div>
       </div>

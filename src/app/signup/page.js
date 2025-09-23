@@ -224,7 +224,7 @@ export default function SignUpPage() {
                     required
                     placeholder="Enter your name"
                     onChange={(e) => handleInputChange('name', e.target.value)}
-                    className={`w-full px-3 py-2 pr-10 border rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all duration-300 hover-zoom text-gray-900 placeholder-gray-500 text-sm ${
+                    className={`w-full px-3 py-2 pr-10 border rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all duration-300 text-gray-900 placeholder-gray-500 text-sm ${
                       validationErrors.name ? 'border-red-300 bg-red-50' : 
                       fieldValidation.name?.isValid ? 'border-emerald-300 bg-emerald-50' :
                       fieldValidation.name?.hasValue ? 'border-red-300 bg-red-50' :
@@ -268,7 +268,7 @@ export default function SignUpPage() {
                     required
                     placeholder="Enter your email"
                     onChange={(e) => handleInputChange('email', e.target.value)}
-                    className={`w-full px-3 py-2 pr-10 border rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all duration-300 hover-zoom text-gray-900 placeholder-gray-500 text-sm ${
+                    className={`w-full px-3 py-2 pr-10 border rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all duration-300 text-gray-900 placeholder-gray-500 text-sm ${
                       validationErrors.email ? 'border-red-300 bg-red-50' : 
                       fieldValidation.email?.isValid ? 'border-emerald-300 bg-emerald-50' :
                       fieldValidation.email?.hasValue ? 'border-red-300 bg-red-50' :
@@ -313,7 +313,7 @@ export default function SignUpPage() {
                     placeholder="Create a password (min 8 characters)"
                     minLength={8}
                     onChange={(e) => handleInputChange('password', e.target.value)}
-                    className={`w-full px-3 py-2 pr-10 border rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all duration-300 hover-zoom text-gray-900 placeholder-gray-500 text-sm ${
+                    className={`w-full px-3 py-2 pr-10 border rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all duration-300 text-gray-900 placeholder-gray-500 text-sm ${
                       validationErrors.password ? 'border-red-300 bg-red-50' : 
                       fieldValidation.password?.isValid ? 'border-emerald-300 bg-emerald-50' :
                       fieldValidation.password?.hasValue ? 'border-red-300 bg-red-50' :
