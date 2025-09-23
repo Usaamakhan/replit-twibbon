@@ -20,7 +20,7 @@ export default function Header({ isMenuOpen, setIsMenuOpen }) {
         >
           Frame
         </Link>
-        <div className="w-32 sm:w-40 mx-4 relative">
+        <div className="w-48 sm:w-64 md:w-80 lg:w-96 mx-4 relative">
           <input
             type="text"
             placeholder="Search"
