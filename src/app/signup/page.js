@@ -200,9 +200,9 @@ export default function SignUpPage() {
         {/* Left Side - Form */}
         <div className="flex-1 w-full flex flex-col justify-center py-8 px-4 sm:px-6 lg:px-16 xl:px-20 pt-20">
           <div className="mx-auto w-full max-w-sm lg:max-w-md">
-            <div className="text-center lg:text-left mb-6">
-              <h2 className="text-2xl font-bold text-emerald-800 bg-yellow-400 px-3 py-2 rounded-lg mb-2">Create your account</h2>
-              <p className="mt-1 text-emerald-900 text-sm bg-yellow-200 px-3 py-2 rounded-lg">Get started with your free account today.</p>
+            <div className="text-center mb-6 bg-yellow-400 px-4 py-3 rounded-lg">
+              <h2 className="text-2xl font-bold text-emerald-700">Create your account</h2>
+              <p className="mt-1 text-black text-sm">Get started with your free account today.</p>
             </div>
             {/* Email Sign Up Form */}
             <form className="space-y-3 mb-4" onSubmit={handleEmailSignUp} noValidate>

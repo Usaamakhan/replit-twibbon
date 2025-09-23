@@ -206,9 +206,9 @@ export default function ForgotPasswordPage() {
       <div className="flex-1 flex items-center justify-center px-4 sm:px-6 lg:px-8 py-12">
         <div className="max-w-sm w-full space-y-6">
           {/* Header */}
-          <div className="text-center">
-            <h2 className="text-2xl font-bold text-emerald-700 bg-yellow-400 px-3 py-2 rounded-lg mb-2">Reset Password</h2>
-            <p className="text-gray-900 mt-1 bg-yellow-200 px-3 py-2 rounded-lg">We'll send you a reset link</p>
+          <div className="text-center bg-yellow-400 px-4 py-3 rounded-lg">
+            <h2 className="text-2xl font-bold text-emerald-700">Reset Password</h2>
+            <p className="mt-1 text-black text-sm">We'll send you a reset link</p>
           </div>
 
           {/* Content */}
