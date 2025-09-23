@@ -137,8 +137,13 @@ export default function ForgotPasswordPage() {
     return (
       <div className="min-h-screen bg-white flex">
         {/* Frame Logo - Top Left */}
-        <div className="absolute top-4 left-4 z-10">
-          <h1 className="text-2xl font-bold text-emerald-700">Frame</h1>
+        <div className="absolute top-6 left-6 z-10">
+          <Link 
+            href="/" 
+            className={`${caveat.className} text-2xl md:text-3xl font-bold text-emerald-700 hover:text-emerald-800 transition-all duration-300 hover:scale-110`}
+          >
+            Frame
+          </Link>
         </div>
 
         {/* Left Side - Success Message */}
@@ -202,7 +207,7 @@ export default function ForgotPasswordPage() {
   return (
     <div className="min-h-screen bg-white flex">
       {/* Frame Logo - Top Left */}
-      <div className="absolute top-4 left-4 z-10">
+      <div className="absolute top-6 left-6 z-10">
         <Link 
           href="/" 
           className={`${caveat.className} text-2xl md:text-3xl font-bold text-emerald-700 hover:text-emerald-800 transition-all duration-300 hover:scale-110`}
