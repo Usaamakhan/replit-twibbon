@@ -132,7 +132,7 @@ export default function SignInPage() {
       validationError = validateEmail(value);
       isValid = !validationError;
     } else if (field === 'password' && value.trim()) {
-      validationError = validatePassword(value, false);
+      validationError = validatePassword(value, true);
       isValid = !validationError;
     }
     
@@ -175,7 +175,7 @@ export default function SignInPage() {
         {/* Left Side - Form */}
         <div className="flex-1 w-full flex flex-col justify-center py-8 px-4 sm:px-6 lg:px-16 xl:px-20 pt-20">
           <div className="mx-auto w-full max-w-sm lg:max-w-md">
-            <div className="text-center mb-6 bg-yellow-400 px-4 py-3 rounded-lg">
+            <div className="text-center mb-6 bg-yellow-400 px-4 py-3 rounded-t-lg">
               <h2 className="text-2xl font-bold text-emerald-700">Sign in to your account</h2>
               <p className="mt-1 text-black text-sm">Welcome back! Please enter your details.</p>
             </div>
