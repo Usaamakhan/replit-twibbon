@@ -125,9 +125,9 @@ export default function ForgotPasswordPage() {
   // Show success message
   if (success) {
     return (
-      <div className="min-h-screen bg-white flex">
-        {/* Frame Logo - Top Left */}
-        <div className="absolute top-6 left-6 z-10">
+      <div className="min-h-screen bg-white">
+        {/* Frame Logo */}
+        <div className="absolute top-6 left-6 z-50 mb-8">
           <Link 
             href="/" 
             className={`${caveat.className} text-2xl md:text-3xl font-bold text-emerald-700 hover:text-emerald-800 transition-all duration-300 hover:scale-110`}
@@ -135,47 +135,51 @@ export default function ForgotPasswordPage() {
             Frame
           </Link>
         </div>
-
-        {/* Left Side - Success Message */}
-        <div className="flex-1 flex items-center justify-center px-4 sm:px-6 lg:px-8 py-12">
-          <div className="max-w-sm w-full space-y-6 text-center">
-            <div className="mx-auto w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center mb-6">
-              <svg className="w-8 h-8 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-              </svg>
-            </div>
-            
-            <div>
-              <h2 className="text-2xl font-bold text-emerald-700">Check Your Email</h2>
-              <p className="text-gray-600 mt-1">Reset link sent successfully</p>
-            </div>
+        
+        <div className="min-h-screen flex">
+          {/* Left Side - Success Message */}
+          <div className="flex-1 w-full flex flex-col justify-center py-8 px-4 sm:px-6 lg:px-16 xl:px-20 pt-20">
+            <div className="mx-auto w-full max-w-sm lg:max-w-md">
+              {/* Header with Yellow Background */}
+              <div className="text-center mb-6 bg-yellow-400 px-4 py-3 rounded-t-lg">
+                <div className="mx-auto w-12 h-12 bg-emerald-100 rounded-full flex items-center justify-center mb-3">
+                  <svg className="w-6 h-6 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                </div>
+                <h2 className="text-2xl font-bold text-emerald-700">Check Your Email</h2>
+                <p className="mt-1 text-black text-sm">Reset link sent successfully</p>
+              </div>
               
-            <p className="text-gray-600 text-sm">
-              We've sent a password reset link to your email address. Click the link to reset your password.
-            </p>
-            
-            <div className="text-xs text-gray-500 space-y-1">
-              <p>• Check your spam/promotions folder if you don't see it</p>
-              <p>• The reset link will expire in 24 hours</p>
-            </div>
+              {/* Content Card */}
+              <div className="bg-white rounded-b-lg border border-t-0 border-gray-200 px-6 py-6 shadow-sm">
+                <p className="text-gray-600 text-sm mb-4 text-center">
+                  We've sent a password reset link to your email address. Click the link to reset your password.
+                </p>
+                
+                <div className="text-xs text-gray-500 space-y-1 mb-6 bg-gray-50 p-3 rounded-lg">
+                  <p>• Check your spam/promotions folder if you don't see it</p>
+                  <p>• The reset link will expire in 24 hours</p>
+                </div>
 
-            <div className="space-y-3">
-              <button 
-                onClick={() => router.push('/signin')}
-                className="w-full bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white rounded-xl py-2 px-4 font-medium transition-all duration-300 hover-zoom hover:shadow-lg shadow-md text-sm"
-              >
-                Back to Sign In
-              </button>
-              <button 
-                onClick={() => setSuccess(false)}
-                className="w-full bg-white border border-gray-300 hover:bg-yellow-50 rounded-xl py-2 px-4 font-medium transition-all duration-300 hover-zoom hover:shadow-lg text-gray-700 shadow-md text-sm"
-              >
-                Send Another Email
-              </button>
+                <div className="space-y-3">
+                  <button 
+                    onClick={() => router.push('/signin')}
+                    className="w-full bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white rounded-xl py-3 px-4 font-medium transition-all duration-300 hover:shadow-lg shadow-md text-sm"
+                  >
+                    Back to Sign In
+                  </button>
+                  <button 
+                    onClick={() => setSuccess(false)}
+                    className="w-full bg-white border border-gray-300 hover:bg-yellow-50 rounded-xl py-3 px-4 font-medium transition-all duration-300 hover:shadow-lg text-gray-700 shadow-md text-sm"
+                  >
+                    Send Another Email
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
         </div>
-
       </div>
     );
   }

@@ -37,6 +37,11 @@ This is a Next.js 15 application with React 19 and Tailwind CSS, designed to wor
 11. **Profile Edit Modal Navigation Fixed**: Removed automatic navigation to username page after profile changes - users now stay on current page after editing
 12. **Debug Logging Cleanup**: Removed all debug console.log statements from WelcomePopup, ProfileEditModal, and UserOnboardingWrapper for cleaner codebase
 13. **Global Popup Visibility**: Moved AuthGate (email verification) and UserOnboardingWrapper (welcome popup) to root layout level - these critical onboarding flows now appear on all pages, not just homepage
+14. **Authentication UX Improvements (September 23, 2025)**: 
+    - Fixed full-page loading overlays that were hiding authentication forms during sign-in/sign-up actions
+    - Implemented user-friendly error messages replacing technical Firebase error codes
+    - Added yellow background styling to forgot-password success page for consistent design across all auth flows
+    - Enhanced authentication forms to remain visible with button-level loading states only
 
 ## Firebase Setup Status - FULLY CONFIGURED ✅
 - **Production Ready**: All Firebase environment variables successfully configured and active
