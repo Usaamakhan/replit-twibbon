@@ -2,7 +2,6 @@
 
 import { useEffect } from 'react';
 import { useFocusTrap } from '../../hooks/useFocusTrap';
-import { useBodyScrollLock } from '../../hooks/useBodyScrollLock';
 
 export default function PasswordResetSuccessModal({ 
   isOpen,
@@ -11,9 +10,6 @@ export default function PasswordResetSuccessModal({
   onGoToSignIn
 }) {
   const modalRef = useFocusTrap(isOpen);
-  
-  // Lock body scroll when modal is open (comprehensive mobile support)
-  useBodyScrollLock(isOpen);
 
   // Handle Escape key
   useEffect(() => {
@@ -55,7 +51,7 @@ export default function PasswordResetSuccessModal({
             <div className="bg-yellow-400 rounded-t-xl p-4 sm:p-6 text-center relative">
               <button
                 onClick={onClose}
-                className="absolute top-3 right-3 sm:top-4 sm:right-4 text-gray-700 hover:text-gray-900 hover:bg-gray-200 hover:shadow-md rounded-full p-1.5 transition-all duration-200 hover:scale-110 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-opacity-50"
+                className="absolute top-3 right-3 sm:top-4 sm:right-4 text-gray-700 hover:text-gray-900 transition-colors"
                 aria-label="Close success message"
               >
                 <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -101,7 +97,7 @@ export default function PasswordResetSuccessModal({
                 </button>
                 <button
                   onClick={onClose}
-                  className="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-full py-2.5 sm:py-3 px-4 font-medium transition-all duration-200 text-sm sm:text-base"
+                  className="w-full bg-gray-100 hover:bg-gray-300 text-gray-700 rounded-full py-2.5 sm:py-3 px-4 font-medium transition-colors duration-200 text-sm sm:text-base"
                 >
                   Close
                 </button>
