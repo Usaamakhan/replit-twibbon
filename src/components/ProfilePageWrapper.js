@@ -2,9 +2,12 @@
 
 import { useAuth } from '../hooks/useAuth';
 import ProfilePage from './ProfilePage';
+import { useAuthModal } from '../contexts/AuthModalContext';
 
-function ProfilePageWrapper({ isOwnProfile = false, openSignInModal, openSignUpModal }) {
+function ProfilePageWrapper({ isOwnProfile = false }) {
   const { user, loading } = useAuth();
+  const { openSignInModal, openSignUpModal } = useAuthModal();
+  
 
   if (loading) {
     return (

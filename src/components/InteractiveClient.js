@@ -11,6 +11,7 @@ import MobileMenu from './MobileMenu';
 import SignInModal from './auth/SignInModal';
 import SignUpModal from './auth/SignUpModal';
 import ForgotPasswordModal from './auth/ForgotPasswordModal';
+import { AuthModalProvider } from '../contexts/AuthModalContext';
 
 export default function InteractiveClient({ children }) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -217,29 +218,26 @@ export default function InteractiveClient({ children }) {
     }
   };
 
+  const authModalContextValue = {
+    openSignInModal,
+    openSignUpModal,
+    openForgotPasswordModal,
+    closeModal
+  };
+
   return (
-    <div className="min-h-screen flex flex-col relative">
-      {/* Main Content with blur effect */}
-      <div className={`min-h-screen flex flex-col transition-all duration-300 ${
-        isMenuOpen ? 'blur-sm' : ''
-      }`}>
-        <Header isMenuOpen={isMenuOpen} setIsMenuOpen={setIsMenuOpen} />
-        <main className="flex-1">
-          {Children.map(children, (child) => {
-            if (isValidElement(child) && 
-                (child.type?.name === 'ProfilePageWrapper' || 
-                 child.type?.displayName === 'ProfilePageWrapper' ||
-                 child.type?.toString().includes('ProfilePageWrapper'))) {
-              return cloneElement(child, { 
-                openSignInModal, 
-                openSignUpModal 
-              });
-            }
-            return child;
-          })}
-        </main>
-        <Footer />
-      </div>
+    <AuthModalProvider value={authModalContextValue}>
+      <div className="min-h-screen flex flex-col relative">
+        {/* Main Content with blur effect */}
+        <div className={`min-h-screen flex flex-col transition-all duration-300 ${
+          isMenuOpen ? 'blur-sm' : ''
+        }`}>
+          <Header isMenuOpen={isMenuOpen} setIsMenuOpen={setIsMenuOpen} />
+          <main className="flex-1">
+            {children}
+          </main>
+          <Footer />
+        </div>
 
       {/* Mobile Menu Component */}
       <MobileMenu 
@@ -280,6 +278,7 @@ export default function InteractiveClient({ children }) {
         onForgotPassword={handleForgotPassword}
         onSwitchToSignIn={openSignInModal}
       />
-    </div>
+      </div>
+    </AuthModalProvider>
   );
 }
