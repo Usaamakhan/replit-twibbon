@@ -11,6 +11,7 @@ import MobileMenu from './MobileMenu';
 import SignInModal from './auth/SignInModal';
 import SignUpModal from './auth/SignUpModal';
 import ForgotPasswordModal from './auth/ForgotPasswordModal';
+import PasswordResetSuccessModal from './auth/PasswordResetSuccessModal';
 import { AuthModalProvider } from '../contexts/AuthModalContext';
 
 export default function InteractiveClient({ children }) {
@@ -205,7 +206,7 @@ export default function InteractiveClient({ children }) {
       const result = await forgotPassword(email);
       if (result.success) {
         setAuthSuccessMessage(result.message);
-        // Modal stays open until user manually closes it
+        setActiveModal('passwordResetSuccess');
       } else {
         setAuthError(getFirebaseErrorMessage(result.error) || 'Something went wrong. Please try again.');
       }
@@ -271,10 +272,16 @@ export default function InteractiveClient({ children }) {
         isOpen={activeModal === 'forgotpassword'}
         onClose={closeModal}
         error={authError}
-        successMessage={authSuccessMessage}
         loading={isSubmitting || loading}
         onForgotPassword={handleForgotPassword}
         onSwitchToSignIn={openSignInModal}
+      />
+      
+      <PasswordResetSuccessModal 
+        isOpen={activeModal === 'passwordResetSuccess'}
+        onClose={closeModal}
+        message={authSuccessMessage}
+        onGoToSignIn={openSignInModal}
       />
       </div>
     </AuthModalProvider>
