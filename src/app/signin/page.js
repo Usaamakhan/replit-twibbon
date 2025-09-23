@@ -214,7 +214,7 @@ export default function SignInPage() {
                     required
                     placeholder="Enter your email"
                     onChange={(e) => handleInputChange('email', e.target.value)}
-                    className={`w-full px-3 py-2 pr-10 border rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all duration-300 hover:scale-105 text-gray-900 placeholder-gray-500 text-sm ${
+                    className={`w-full px-3 py-2 pr-10 border rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all duration-300 hover-zoom text-gray-900 placeholder-gray-500 text-sm ${
                       validationErrors.email ? 'border-red-300 bg-red-50' : 
                       fieldValidation.email?.isValid ? 'border-emerald-300 bg-emerald-50' :
                       fieldValidation.email?.hasValue ? 'border-red-300 bg-red-50' :
@@ -258,7 +258,7 @@ export default function SignInPage() {
                     required
                     placeholder="Enter your password"
                     onChange={(e) => handleInputChange('password', e.target.value)}
-                    className={`w-full px-3 py-2 pr-10 border rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all duration-300 hover:scale-105 text-gray-900 placeholder-gray-500 text-sm ${
+                    className={`w-full px-3 py-2 pr-10 border rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all duration-300 hover-zoom text-gray-900 placeholder-gray-500 text-sm ${
                       validationErrors.password ? 'border-red-300 bg-red-50' : 
                       fieldValidation.password?.isValid ? 'border-emerald-300 bg-emerald-50' :
                       fieldValidation.password?.hasValue ? 'border-red-300 bg-red-50' :
@@ -301,7 +301,7 @@ export default function SignInPage() {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white rounded-xl py-2 px-4 font-medium transition-all duration-300 hover:scale-105 hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed shadow-md text-sm"
+                className="w-full bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white rounded-xl py-2 px-4 font-medium transition-all duration-300 hover-zoom hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed shadow-md text-sm"
               >
                 {loading ? 'Signing In...' : 'Sign In'}
               </button>
@@ -322,7 +322,7 @@ export default function SignInPage() {
               <button
                 onClick={handleGoogleSignIn}
                 disabled={loading}
-                className="w-full bg-white border border-gray-300 hover:bg-yellow-50 rounded-xl py-2 px-4 flex items-center justify-center gap-3 transition-all duration-300 hover:scale-105 hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed text-gray-700 font-medium shadow-md text-sm"
+                className="w-full bg-white border border-gray-300 hover:bg-yellow-50 rounded-xl py-2 px-4 flex items-center justify-center gap-3 transition-all duration-300 hover-zoom hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed text-gray-700 font-medium shadow-md text-sm"
               >
                 <svg className="w-4 h-4 sm:w-5 sm:h-5" viewBox="0 0 24 24" aria-hidden="true">
                   <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
