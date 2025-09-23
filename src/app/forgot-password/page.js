@@ -186,20 +186,6 @@ export default function ForgotPasswordPage() {
           </div>
         </div>
 
-        {/* Right Side - Branding */}
-        <div className="hidden lg:flex flex-1 bg-yellow-400 items-center justify-center p-12">
-          <div className="max-w-md text-center">
-            <h1 className="text-4xl font-bold text-emerald-700 mb-4">Email Sent!</h1>
-            <p className="text-lg text-black mb-6">
-              Check your inbox and follow the instructions to reset your password.
-            </p>
-            <div className="space-y-3 text-base text-black">
-              <p>✓ Secure reset link delivered</p>
-              <p>✓ Valid for 24 hours</p>
-              <p>✓ Check spam folder if needed</p>
-            </div>
-          </div>
-        </div>
       </div>
     );
   }
@@ -221,8 +207,8 @@ export default function ForgotPasswordPage() {
         <div className="max-w-sm w-full space-y-6">
           {/* Header */}
           <div className="text-center">
-            <h2 className="text-2xl font-bold text-emerald-700">Reset Password</h2>
-            <p className="text-gray-600 mt-1">We'll send you a reset link</p>
+            <h2 className="text-2xl font-bold text-emerald-700 bg-yellow-400 px-3 py-2 rounded-lg mb-2">Reset Password</h2>
+            <p className="text-gray-900 mt-1 bg-yellow-200 px-3 py-2 rounded-lg">We'll send you a reset link</p>
           </div>
 
           {/* Content */}
@@ -308,20 +294,6 @@ export default function ForgotPasswordPage() {
         </div>
       </div>
 
-      {/* Right Side - Branding */}
-      <div className="hidden lg:flex flex-1 bg-yellow-400 items-center justify-center p-12">
-        <div className="max-w-md text-center">
-          <h1 className="text-4xl font-bold text-emerald-700 mb-4">Reset Your Password</h1>
-          <p className="text-lg text-black mb-6">
-            Don't worry, we'll help you get back into your account securely.
-          </p>
-          <div className="space-y-3 text-base text-black">
-            <p>✓ Secure password reset process</p>
-            <p>✓ Quick email delivery</p>
-            <p>✓ 24-hour reset link validity</p>
-          </div>
-        </div>
-      </div>
     </div>
   );
 }

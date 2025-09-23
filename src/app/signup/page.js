@@ -198,11 +198,11 @@ export default function SignUpPage() {
       
       <div className="min-h-screen flex">
         {/* Left Side - Form */}
-        <div className="flex-1 lg:w-1/2 xl:w-3/5 flex flex-col justify-center py-8 px-4 sm:px-6 lg:px-16 xl:px-20 pt-20">
+        <div className="flex-1 w-full flex flex-col justify-center py-8 px-4 sm:px-6 lg:px-16 xl:px-20 pt-20">
           <div className="mx-auto w-full max-w-sm lg:max-w-md">
             <div className="text-center lg:text-left mb-6">
-              <h2 className="text-2xl font-bold text-emerald-800">Create your account</h2>
-              <p className="mt-1 text-emerald-600 text-sm">Get started with your free account today.</p>
+              <h2 className="text-2xl font-bold text-emerald-800 bg-yellow-400 px-3 py-2 rounded-lg mb-2">Create your account</h2>
+              <p className="mt-1 text-emerald-900 text-sm bg-yellow-200 px-3 py-2 rounded-lg">Get started with your free account today.</p>
             </div>
             {/* Email Sign Up Form */}
             <form className="space-y-3 mb-4" onSubmit={handleEmailSignUp} noValidate>
@@ -400,19 +400,6 @@ export default function SignUpPage() {
           </div>
         </div>
 
-        {/* Right Side - Branding */}
-        <div className="hidden lg:flex lg:w-1/2 xl:w-2/5 bg-yellow-400 flex-col justify-center items-center px-12">
-          <div className="text-center max-w-md">
-            <h1 className="text-4xl xl:text-5xl font-bold mb-6 text-emerald-700">Join Frame!</h1>
-            <p className="text-xl text-black mb-8">Create your account and start building amazing frames. Join thousands of creators today.</p>
-            <div className="flex items-center justify-center space-x-2 text-black">
-              <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-              </svg>
-              <span>Join the creative community</span>
-            </div>
-          </div>
-        </div>
       </div>
     </div>
   );
