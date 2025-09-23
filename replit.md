@@ -29,7 +29,7 @@ This is a Next.js 15 application with React 19 and Tailwind CSS, designed to wor
 10. **Import Process Completed**: All systems verified working, deployment configured, application fully operational in Replit environment
 11. **Fresh Import Setup (Current Session - September 23, 2025)**: Fresh GitHub clone successfully configured for Replit environment:
     - Dependencies installed (Next.js 15, React 19, Firebase, Supabase, Tailwind CSS)
-    - Domain updated to current Replit domain (e48878b2-cede-452e-a06d-2098ce129fec-00-2vcjksqam1t7g.janeway.replit.dev)
+    - Domain updated to current Replit domain (4b7ad3fc-9f3e-44af-98ea-ccdea5bb5db4-00-o1q8lq6urpkv.sisko.replit.dev)
     - Development server running successfully on port 5000
     - Application tested and fully operational
     - Deployment configured for autoscale production deployment with build and start commands
