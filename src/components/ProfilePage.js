@@ -145,7 +145,7 @@ export default function ProfilePage({ isOwnProfile = false, username = null }) {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Banner Section */}
-      <div className="relative h-72 bg-gradient-to-r from-emerald-500 to-emerald-600 overflow-hidden">
+      <div className="relative h-48 sm:h-56 md:h-64 lg:h-80 bg-gradient-to-r from-emerald-500 to-emerald-600 overflow-hidden">
         {userData.bannerImage && userData.bannerImage.trim() ? (
           <img
             src={userData.bannerImage}
@@ -308,7 +308,7 @@ function ProfileSkeleton() {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Banner Skeleton */}
-      <div className="h-72 bg-gray-300 animate-pulse"></div>
+      <div className="h-48 sm:h-56 md:h-64 lg:h-80 bg-gray-300 animate-pulse"></div>
       
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="relative">

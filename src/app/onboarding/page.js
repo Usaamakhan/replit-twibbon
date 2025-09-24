@@ -190,6 +190,13 @@ export default function OnboardingPage() {
   };
 
   const handleRemoveImage = (field, previewField) => {
+    const imageType = field === 'profilePic' ? 'profile photo' : 'banner';
+    const confirmed = window.confirm(`Are you sure you want to remove your ${imageType}? This action cannot be undone.`);
+    
+    if (!confirmed) {
+      return; // User cancelled, don't remove the image
+    }
+    
     setFormData(prev => ({
       ...prev,
       [field]: null,
@@ -365,7 +372,7 @@ export default function OnboardingPage() {
                     Profile Banner
                   </label>
                   <div className="space-y-3">
-                    <div className="w-full h-72 rounded-lg overflow-hidden border-2 border-gray-200">
+                    <div className="w-full h-48 sm:h-56 md:h-64 lg:h-80 rounded-lg overflow-hidden border-2 border-gray-200">
                       {formData.profileBannerPreview ? (
                         <img
                           src={formData.profileBannerPreview}
@@ -377,7 +384,7 @@ export default function OnboardingPage() {
                           <svg className="w-12 h-12 text-white/70 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 002 2v12a2 2 0 002 2z" />
                           </svg>
-                          <p className="text-white/70 text-sm font-medium">Recommended: 1200x288px</p>
+                          <p className="text-white/70 text-sm font-medium">Recommended: 1500x500px</p>
                         </div>
                       )}
                     </div>
