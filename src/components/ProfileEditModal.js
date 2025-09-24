@@ -303,7 +303,7 @@ export default function ProfileEditModal({ isOpen, onClose, userData, onUpdate }
                 Profile Banner
               </label>
               <div className="space-y-3">
-                <div className="w-full h-32 rounded-lg overflow-hidden border-2 border-gray-200">
+                <div className="w-full h-72 rounded-lg overflow-hidden border-2 border-gray-200">
                   {formData.profileBannerPreview ? (
                     <img
                       src={formData.profileBannerPreview}

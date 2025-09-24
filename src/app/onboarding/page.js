@@ -317,7 +317,7 @@ export default function OnboardingPage() {
                     Profile Banner
                   </label>
                   <div className="space-y-3">
-                    <div className="w-full h-40 rounded-lg overflow-hidden border-2 border-gray-200">
+                    <div className="w-full h-72 rounded-lg overflow-hidden border-2 border-gray-200">
                       {formData.profileBannerPreview ? (
                         <img
                           src={formData.profileBannerPreview}
@@ -511,7 +511,7 @@ export default function OnboardingPage() {
                   type="button"
                   onClick={handleComplete}
                   disabled={loading || usernameStatus === 'checking'}
-                  className="bg-emerald-600 text-white px-8 py-3 rounded-lg hover:bg-emerald-700 hover:scale-105 transition-all font-medium disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                  className="bg-emerald-600 text-white px-8 py-3 rounded-lg hover:bg-emerald-700 hover-zoom font-medium disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
                 >
                   {loading ? 'Setting up...' : usernameStatus === 'checking' ? 'Checking username...' : 'Complete Setup'}
                 </button>
