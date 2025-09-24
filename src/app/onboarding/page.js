@@ -42,10 +42,17 @@ export default function OnboardingPage() {
   const displayNameRef = useRef();
   const countryRef = useRef();
 
-  // Redirect if not authenticated
+  // Redirect based on authentication and email verification status
   useEffect(() => {
-    if (!authLoading && !user) {
-      router.push('/signin');
+    if (!authLoading) {
+      if (!user) {
+        // Not authenticated - redirect to sign in
+        router.replace('/signin');
+      } else if (!user.emailVerified) {
+        // Authenticated but email not verified - AuthGate will handle this at the root level
+        // But we can also redirect to prevent any edge cases
+        router.replace('/');
+      }
     }
   }, [user, authLoading, router]);
 
@@ -275,9 +282,16 @@ export default function OnboardingPage() {
     );
   }
 
-  // Don't render if user is not authenticated (redirect will handle this)
-  if (!user) {
-    return null;
+  // Don't render if user is not authenticated or email not verified (redirects will handle this)
+  if (!user || !user.emailVerified) {
+    return (
+      <div className="min-h-screen bg-white flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-8 h-8 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-gray-600">Redirecting...</p>
+        </div>
+      </div>
+    );
   }
 
   return (
