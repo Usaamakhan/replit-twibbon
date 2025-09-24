@@ -1,13 +1,13 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { useAuth } from '../hooks/useAuth';
-import WelcomePopup from './WelcomePopup';
-import { completeUserProfile, getUserProfile, updateUserProfile } from '../lib/firestore';
+import { getUserProfile } from '../lib/firestore';
 
 export default function UserOnboardingWrapper({ children }) {
   const { user, loading } = useAuth();
-  const [showWelcome, setShowWelcome] = useState(false);
+  const router = useRouter();
   const [checkingProfile, setCheckingProfile] = useState(false);
 
   useEffect(() => {
@@ -39,10 +39,9 @@ export default function UserOnboardingWrapper({ children }) {
         }
         
         
-        // Show welcome popup if user exists but hasn't completed profile setup
+        // Navigate to onboarding page if user exists but hasn't completed profile setup
         if (userProfile && !userProfile.profileCompleted) {
-          setShowWelcome(true);
-        } else if (userProfile) {
+          router.push('/onboarding');
         }
       } catch (error) {
       } finally {
@@ -53,66 +52,11 @@ export default function UserOnboardingWrapper({ children }) {
     checkProfileStatus();
   }, [user, loading]);
 
-  const handleCompleteProfile = async (formData) => {
-    if (!user) return;
-
-    try {
-      // Prepare profile data
-      const profileData = {
-        username: formData.username,
-        displayName: formData.displayName,
-        country: formData.country,
-        bio: formData.bio,
-      };
-
-      // Handle profile image (in a real app, you'd upload to storage service)
-      if (formData.profilePicPreview && formData.profilePicPreview !== user.photoURL) {
-        profileData.profileImage = formData.profilePicPreview;
-      }
-
-      // Handle banner image
-      if (formData.profileBannerPreview) {
-        profileData.bannerImage = formData.profileBannerPreview;
-      }
-
-      const result = await completeUserProfile(user.uid, profileData);
-      
-      if (result.success) {
-        setShowWelcome(false);
-        // Optional: Show success message or redirect
-      } else {
-        throw new Error(result.error || 'Failed to complete profile');
-      }
-    } catch (error) {
-      throw error; // Re-throw to let WelcomePopup handle the error display
-    }
-  };
-
-  const handleSkipWelcome = async () => {
-    setShowWelcome(false);
-    // Mark as completed but with minimal info (no username validation needed)
-    if (user) {
-      try {
-        await updateUserProfile(user.uid, { profileCompleted: true });
-      } catch (error) {
-      }
-    }
-  };
 
   // Don't render welcome popup if still loading or checking
   if (loading || checkingProfile) {
     return children;
   }
 
-  return (
-    <>
-      {children}
-      
-      <WelcomePopup
-        isOpen={showWelcome}
-        onClose={handleSkipWelcome}
-        onComplete={handleCompleteProfile}
-      />
-    </>
-  );
+  return children;
 }
