@@ -2,16 +2,16 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { countries } from '../../data/countries';
-import { useAuth } from '../../hooks/useAuth';
-import { getUserProfile, checkUsernameExists, updateUserProfile } from '../../lib/firestore';
-import { useOptionalUserProfile } from '../../components/UserProfileProvider';
+import { countries } from '../../../data/countries';
+import { useAuth } from '../../../hooks/useAuth';
+import { getUserProfile, checkUsernameExists, updateUserProfile } from '../../../lib/firestore';
+import { useOptionalUserProfile } from '../../../components/UserProfileProvider';
 import { Caveat } from "next/font/google";
 import Link from "next/link";
 
 const caveat = Caveat({ subsets: ["latin"], weight: ["700"] });
 
-export default function SettingsPage() {
+export default function ProfileEditPage() {
   const router = useRouter();
   const { user, loading: authLoading } = useAuth();
   const profileContext = useOptionalUserProfile();
@@ -322,7 +322,7 @@ export default function SettingsPage() {
           <div className="mx-auto w-full max-w-4xl">
             {/* Header */}
             <div className="text-center mb-8 bg-yellow-400 px-6 py-6 rounded-t-xl">
-              <h1 className="text-2xl sm:text-3xl font-bold text-emerald-700">Profile Settings</h1>
+              <h1 className="text-2xl sm:text-3xl font-bold text-emerald-700">Edit Profile</h1>
               <p className="text-base sm:text-lg text-gray-700 mt-2">Update your profile information</p>
             </div>
             

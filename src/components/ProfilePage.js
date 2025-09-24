@@ -207,7 +207,7 @@ export default function ProfilePage({ isOwnProfile = false, username = null }) {
                   
                   {isOwnProfile && (
                     <button 
-                      onClick={() => router.push('/settings')}
+                      onClick={() => router.push('/profile/edit')}
                       className="mt-4 w-full bg-emerald-600 text-white py-2 px-4 rounded-lg hover:bg-emerald-700 transition-colors font-medium cursor-pointer"
                     >
                       Edit Profile
