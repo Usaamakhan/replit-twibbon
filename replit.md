@@ -3,6 +3,52 @@
 ## Overview
 This is a Next.js 15 application with React 19 and Tailwind CSS, designed to work in the Replit environment. The project was successfully imported from GitHub and configured for optimal performance in Replit's proxy environment.
 
+## 🎯 CORE PRODUCT SPECIFICATION & USER FLOW
+**⚠️ CRITICAL: All development decisions must align with this user flow specification ⚠️**
+
+### User Types & Core Philosophy
+The website "Frame" (Twibbonize) is designed around **accessibility for everyone** with two distinct user types:
+
+#### **Visitors (Non-authenticated Users) - Primary Focus**
+- **Discovery**: Homepage displays public gallery of trending frames, filterable by time periods and country
+- **Search**: Global search functionality to find specific frames 
+- **Frame Selection**: Click any frame to view its dedicated page with full details
+- **Usage**: Upload personal photos and automatically overlay frames onto them
+- **Download**: Download final framed photos **WITHOUT requiring account creation** - completely seamless experience
+- **Analytics Access**: View public analytics for any frame (usage stats, popularity, country data)
+
+#### **Creators (Authenticated Users) - Secondary Focus**  
+- **Account Creation**: Required ONLY for uploading custom frames (not for using existing frames)
+- **Frame Upload**: Access dedicated upload page with frame design, naming, descriptions, and tagging
+- **Frame Management**: Personal dashboard to view, edit, delete uploaded frames and track performance
+- **Public Profile**: Creator profiles with their uploaded frames and statistics
+
+### Core Features (Implementation Priority)
+1. **Public Gallery** (Primary Feature)
+   - Heart of the website - displays all publicly available frames
+   - All content and analytics are completely public and accessible without accounts
+   - Primary visitor interaction point
+
+2. **Frame Analytics** (Key Differentiator)
+   - **Completely public** usage statistics for transparency
+   - Track: number of uses, downloads, popularity over time, country-based metrics
+   - Creates engaging, transparent community environment
+
+3. **Trending & Top Creators**
+   - Highlight most popular frames and successful creators
+   - Rankings based on actual usage data
+   - Motivates quality content creation
+
+4. **User Accounts** (Creators Only)
+   - Streamlined system focused on content creation and management tools
+   - Keep simple - only essential features for frame uploading and management
+
+### Development Guidelines Based on User Flow
+- **Visitor Experience Priority**: Any feature should work for non-authenticated users first
+- **Minimal Account Requirements**: Never require accounts unless absolutely necessary (only for frame uploads)
+- **Public-First Design**: All analytics, trending, and discovery features must be publicly accessible
+- **Seamless Frame Usage**: Photo upload → frame overlay → download should be frictionless for visitors
+
 ## Project Architecture
 - **Framework**: Next.js 15.5.2 with App Router
 - **UI**: React 19.1.0 with Tailwind CSS 4
@@ -34,6 +80,7 @@ This is a Next.js 15 application with React 19 and Tailwind CSS, designed to wor
     - Application tested and fully operational in Replit proxy environment
     - Deployment configured for autoscale production deployment with build and start commands
     - Environment variables checked - app gracefully handles missing Firebase/Supabase configs
+    - **Product Specification Added**: Core user flow and feature specification documented to guide all future development decisions
     - Import process completed successfully
 11. **Profile Edit Modal Navigation Fixed**: Removed automatic navigation to username page after profile changes - users now stay on current page after editing
 12. **Debug Logging Cleanup**: Removed all debug console.log statements from WelcomePopup, ProfileEditModal, and UserOnboardingWrapper for cleaner codebase
