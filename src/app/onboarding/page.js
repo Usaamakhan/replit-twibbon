@@ -4,7 +4,7 @@ import { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { countries } from '../../data/countries';
 import { useAuth } from '../../hooks/useAuth';
-import { getUserProfile, checkUsernameExists, completeUserProfile, updateUserProfile } from '../../lib/firestore';
+import { getUserProfile, checkUsernameExists, completeUserProfile } from '../../lib/firestore';
 import { useOptionalUserProfile } from '../../components/UserProfileProvider';
 import { Caveat } from "next/font/google";
 import Link from "next/link";
@@ -262,22 +262,6 @@ export default function OnboardingPage() {
     }
   };
 
-  const handleSkip = async () => {
-    // Mark as completed but with minimal info (no username validation needed)
-    if (user) {
-      try {
-        await updateUserProfile(user.uid, { profileCompleted: true });
-        // Refresh the user profile context if available
-        if (profileContext?.refreshUserProfile) {
-          await profileContext.refreshUserProfile();
-        }
-      } catch (error) {
-        console.error('Error updating profile completion status:', error);
-        // Still redirect even if the update fails to prevent being stuck
-      }
-    }
-    router.push('/');
-  };
 
   // Show loading state while auth is loading
   if (authLoading) {
@@ -333,7 +317,7 @@ export default function OnboardingPage() {
                     Profile Banner
                   </label>
                   <div className="space-y-3">
-                    <div className="w-full h-32 rounded-lg overflow-hidden border-2 border-gray-200">
+                    <div className="w-full h-40 rounded-lg overflow-hidden border-2 border-gray-200">
                       {formData.profileBannerPreview ? (
                         <img
                           src={formData.profileBannerPreview}
@@ -341,10 +325,11 @@ export default function OnboardingPage() {
                           className="w-full h-full object-cover"
                         />
                       ) : (
-                        <div className="w-full h-full bg-gradient-to-r from-emerald-400 to-emerald-600 flex items-center justify-center">
-                          <svg className="w-12 h-12 text-white/70" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        <div className="w-full h-full bg-gradient-to-r from-emerald-400 to-emerald-600 flex flex-col items-center justify-center">
+                          <svg className="w-12 h-12 text-white/70 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 002 2v12a2 2 0 002 2z" />
                           </svg>
+                          <p className="text-white/70 text-sm font-medium">Recommended: 1200x320px</p>
                         </div>
                       )}
                     </div>
@@ -358,9 +343,9 @@ export default function OnboardingPage() {
                     <button
                       type="button"
                       onClick={() => profileBannerRef.current?.click()}
-                      className="bg-gray-100 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200 transition-colors"
+                      className="bg-gray-100 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200 transition-colors cursor-pointer"
                     >
-                      Choose Banner Image
+                      Choose Banner Photo
                     </button>
                   </div>
                 </div>
@@ -397,7 +382,7 @@ export default function OnboardingPage() {
                       <button
                         type="button"
                         onClick={() => profilePicRef.current?.click()}
-                        className="bg-gray-100 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200 transition-colors"
+                        className="bg-gray-100 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200 transition-colors cursor-pointer"
                       >
                         Choose Photo
                       </button>
@@ -418,7 +403,7 @@ export default function OnboardingPage() {
                     className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none transition-all text-gray-900 placeholder:text-gray-400 ${
                       errors.displayName ? 'border-red-300 bg-red-50' : 'border-gray-300'
                     }`}
-                    placeholder="John Doe"
+                    placeholder="Enter your name"
                   />
                   <p className="text-sm text-gray-700 mt-1">
                     This appears as your profile name
@@ -443,7 +428,7 @@ export default function OnboardingPage() {
                         usernameStatus === 'available' ? 'border-emerald-300 bg-emerald-50' :
                         'border-gray-300'
                       }`}
-                      placeholder="johndoe123"
+                      placeholder="username"
                     />
                     {/* Username status indicator */}
                     <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
@@ -487,7 +472,7 @@ export default function OnboardingPage() {
                     ref={countryRef}
                     value={formData.country}
                     onChange={(e) => handleInputChange('country', e.target.value)}
-                    className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none transition-all text-gray-900 ${
+                    className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none transition-all text-gray-900 cursor-pointer ${
                       errors.country ? 'border-red-300 bg-red-50' : 'border-gray-300'
                     }`}
                   >
@@ -521,19 +506,12 @@ export default function OnboardingPage() {
               </div>
 
               {/* Actions */}
-              <div className="flex flex-col sm:flex-row gap-3 justify-between mt-8 pt-6 border-t border-gray-200">
-                <button
-                  type="button"
-                  onClick={handleSkip}
-                  className="px-6 py-3 text-gray-600 hover:text-gray-800 font-medium transition-colors"
-                >
-                  Skip for now
-                </button>
+              <div className="flex justify-end mt-8 pt-6 border-t border-gray-200">
                 <button
                   type="button"
                   onClick={handleComplete}
                   disabled={loading || usernameStatus === 'checking'}
-                  className="bg-emerald-600 text-white px-8 py-3 rounded-lg hover:bg-emerald-700 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="bg-emerald-600 text-white px-8 py-3 rounded-lg hover:bg-emerald-700 hover:scale-105 transition-all font-medium disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
                 >
                   {loading ? 'Setting up...' : usernameStatus === 'checking' ? 'Checking username...' : 'Complete Setup'}
                 </button>
