@@ -91,12 +91,15 @@ export default function EmailVerification() {
             <p className="text-sm text-gray-500 text-center mb-3">
               Don't want to verify right now?
             </p>
-            <button
-              onClick={logout}
-              className="w-full text-gray-600 hover:text-gray-800 text-sm underline transition-colors"
-            >
-              Sign out and continue without account
-            </button>
+            <p className="text-sm text-gray-600 text-center">
+              <button
+                onClick={logout}
+                className="text-emerald-600 hover:text-emerald-800 underline cursor-pointer"
+              >
+                Sign out
+              </button>
+              {" "}and continue without account
+            </p>
           </div>
 
         </div>
