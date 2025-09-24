@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '../hooks/useAuth';
 
 export default function EmailVerification() {
-  const { user, sendVerificationEmail, checkEmailVerification } = useAuth();
+  const { user, sendVerificationEmail, checkEmailVerification, logout } = useAuth();
   const [isResending, setIsResending] = useState(false);
   const [message, setMessage] = useState('');
 
@@ -77,7 +77,7 @@ export default function EmailVerification() {
 
           {/* Message Display */}
           {message && (
-            <div className={`text-sm text-center p-3 rounded-lg ${
+            <div className={`text-sm text-center p-3 rounded-lg mb-4 ${
               message.includes('Error') 
                 ? 'bg-red-50 text-red-700' 
                 : 'bg-emerald-50 text-emerald-700'
@@ -85,6 +85,19 @@ export default function EmailVerification() {
               {message}
             </div>
           )}
+
+          {/* Logout Option */}
+          <div className="pt-4 border-t border-gray-200">
+            <p className="text-sm text-gray-500 text-center mb-3">
+              Don't want to verify right now?
+            </p>
+            <button
+              onClick={logout}
+              className="w-full text-gray-600 hover:text-gray-800 text-sm underline transition-colors"
+            >
+              Sign out and continue without account
+            </button>
+          </div>
 
         </div>
       </div>
