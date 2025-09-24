@@ -159,7 +159,7 @@ export default function ForgotPasswordPage() {
                 
                 <div className="text-xs text-gray-500 space-y-1 mb-6 bg-gray-50 p-3 rounded-lg">
                   <p>• Check your spam/promotions folder if you don't see it</p>
-                  <p>• The reset link will expire in 24 hours</p>
+                  <p>• The reset link will expire in 1 hour</p>
                 </div>
 
                 <div className="space-y-3">
@@ -205,8 +205,8 @@ export default function ForgotPasswordPage() {
             <p className="mt-1 text-black text-sm">We'll send you a reset link</p>
           </div>
 
-          {/* Content */}
-          <div>
+          {/* Content Card with Shadow Border */}
+          <div className="bg-white rounded-b-lg border border-t-0 border-gray-200 px-6 py-6 shadow-sm">
             {/* Forgot Password Form */}
             <form className="space-y-4 mb-4" onSubmit={handleForgotPassword} noValidate>
               {error && (

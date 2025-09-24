@@ -194,6 +194,9 @@ export default function SignUpPage() {
               <h2 className="text-2xl font-bold text-emerald-700">Create your account</h2>
               <p className="mt-1 text-black text-sm">Join the creative community and start building amazing frames.</p>
             </div>
+            
+            {/* Content Card with Shadow Border */}
+            <div className="bg-white rounded-b-lg border border-t-0 border-gray-200 px-6 py-6 shadow-sm">
             {/* Email Sign Up Form */}
             <form className="space-y-3 mb-4" onSubmit={handleEmailSignUp} noValidate>
               {error && (
@@ -386,6 +389,7 @@ export default function SignUpPage() {
                   Sign In
                 </button>
               </p>
+            </div>
             </div>
           </div>
         </div>
