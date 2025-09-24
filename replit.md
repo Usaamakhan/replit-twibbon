@@ -75,7 +75,7 @@ The website "Frame" (Twibbonize) is designed around **accessibility for everyone
 10. **Import Process Completed**: All systems verified working, deployment configured, application fully operational in Replit environment
 11. **Fresh Import Setup (Current Session - September 24, 2025)**: Fresh GitHub clone successfully configured for Replit environment:
     - Dependencies installed (Next.js 15, React 19, Firebase, Supabase, Tailwind CSS)
-    - Domain updated to current Replit domain (baabdf39-af64-4969-b797-37dff9674119-00-8cpfe9e14g1q.riker.replit.dev)
+    - Domain updated to current Replit domain (d9f506fd-cdc9-47bb-b6b9-9b30914a5b65-00-3ui417nurkphf.janeway.replit.dev)
     - Development server running successfully on port 5000 with host 0.0.0.0
     - Application tested and fully operational in Replit proxy environment
     - Deployment configured for autoscale production deployment with build and start commands
