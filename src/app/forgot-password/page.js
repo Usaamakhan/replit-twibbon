@@ -162,19 +162,25 @@ export default function ForgotPasswordPage() {
                   <p>• The reset link will expire in 1 hour</p>
                 </div>
 
-                <div className="space-y-3">
+                <div className="space-y-4">
                   <button 
                     onClick={() => router.push('/signin')}
-                    className="w-full bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white rounded-xl py-3 px-4 font-medium transition-all duration-300 hover:shadow-lg shadow-md text-sm"
+                    className="w-full bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white rounded-xl py-3 px-4 font-medium transition-all duration-300 hover-zoom hover:shadow-lg shadow-md text-sm"
                   >
                     Back to Sign In
                   </button>
-                  <button 
-                    onClick={() => setSuccess(false)}
-                    className="w-full bg-white border border-gray-300 hover:bg-yellow-50 rounded-xl py-3 px-4 font-medium transition-all duration-300 hover:shadow-lg text-gray-700 shadow-md text-sm"
-                  >
-                    Send Another Email
-                  </button>
+                  
+                  <div className="text-center">
+                    <p className="text-sm text-gray-500">
+                      Didn't receive the email? 
+                      <button 
+                        onClick={() => setSuccess(false)}
+                        className="text-emerald-600 hover:text-emerald-700 hover:underline font-medium ml-1 cursor-pointer transition-all duration-200"
+                      >
+                        Send another reset link
+                      </button>
+                    </p>
+                  </div>
                 </div>
               </div>
             </div>
