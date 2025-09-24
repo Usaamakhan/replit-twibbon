@@ -9,7 +9,6 @@ import {
   getUserStats,
   getUserFrames 
 } from '../lib/firestore';
-import ProfileEditModal from './ProfileEditModal';
 
 export default function ProfilePage({ isOwnProfile = false, username = null }) {
   const { user, loading } = useAuth();
@@ -19,7 +18,6 @@ export default function ProfilePage({ isOwnProfile = false, username = null }) {
   const [userStats, setUserStats] = useState({ supportersCount: 0, campaignsCount: 0 });
   const [campaigns, setCampaigns] = useState([]);
   const [error, setError] = useState(null);
-  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
   useEffect(() => {
     // If viewing own profile, redirect to login if not authenticated
@@ -209,8 +207,8 @@ export default function ProfilePage({ isOwnProfile = false, username = null }) {
                   
                   {isOwnProfile && (
                     <button 
-                      onClick={() => setIsEditModalOpen(true)}
-                      className="mt-4 w-full bg-emerald-600 text-white py-2 px-4 rounded-lg hover:bg-emerald-700 transition-colors font-medium"
+                      onClick={() => router.push('/settings')}
+                      className="mt-4 w-full bg-emerald-600 text-white py-2 px-4 rounded-lg hover:bg-emerald-700 transition-colors font-medium cursor-pointer"
                     >
                       Edit Profile
                     </button>
@@ -301,18 +299,6 @@ export default function ProfilePage({ isOwnProfile = false, username = null }) {
         </div>
       </div>
       
-      {/* Profile Edit Modal */}
-      {isOwnProfile && (
-        <ProfileEditModal
-          isOpen={isEditModalOpen}
-          onClose={() => setIsEditModalOpen(false)}
-          userData={userData}
-          onUpdate={(updatedData) => {
-            setUserData(updatedData);
-            // Keep user on the same page after profile update
-          }}
-        />
-      )}
     </div>
   );
 }
