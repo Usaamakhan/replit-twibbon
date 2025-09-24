@@ -148,17 +148,45 @@ export default function OnboardingPage() {
   };
 
   const handleFileChange = (field, file, previewField) => {
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        setFormData(prev => ({
-          ...prev,
-          [field]: file,
-          [previewField]: e.target.result
-        }));
-      };
-      reader.readAsDataURL(file);
+    if (!file) return;
+    
+    // Clear any previous file-related errors
+    const fileErrorKey = field === 'profilePic' ? 'profilePic' : 'profileBanner';
+    if (errors[fileErrorKey]) {
+      setErrors(prev => ({ ...prev, [fileErrorKey]: '' }));
     }
+    
+    // File size validation (5MB limit)
+    const maxSize = 5 * 1024 * 1024; // 5MB in bytes
+    if (file.size > maxSize) {
+      const fileName = field === 'profilePic' ? 'Profile picture' : 'Banner image';
+      setErrors(prev => ({
+        ...prev,
+        [fileErrorKey]: `${fileName} must be smaller than 5MB. Current size: ${(file.size / (1024 * 1024)).toFixed(1)}MB`
+      }));
+      return;
+    }
+    
+    // File type validation
+    if (!file.type.startsWith('image/')) {
+      const fileName = field === 'profilePic' ? 'Profile picture' : 'Banner image';
+      setErrors(prev => ({
+        ...prev,
+        [fileErrorKey]: `${fileName} must be an image file (JPG, PNG, GIF, etc.)`
+      }));
+      return;
+    }
+    
+    // File is valid, proceed with reading
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      setFormData(prev => ({
+        ...prev,
+        [field]: file,
+        [previewField]: e.target.result
+      }));
+    };
+    reader.readAsDataURL(file);
   };
 
   const scrollToField = (fieldName) => {
@@ -347,6 +375,9 @@ export default function OnboardingPage() {
                     >
                       Choose Banner Photo
                     </button>
+                    {errors.profileBanner && (
+                      <p className="text-red-600 text-sm mt-1">{errors.profileBanner}</p>
+                    )}
                   </div>
                 </div>
 
@@ -388,6 +419,9 @@ export default function OnboardingPage() {
                       </button>
                     </div>
                   </div>
+                  {errors.profilePic && (
+                    <p className="text-red-600 text-sm mt-1">{errors.profilePic}</p>
+                  )}
                 </div>
 
                 {/* Display Name */}
