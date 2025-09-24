@@ -186,6 +186,26 @@ export default function ProfileEditPage() {
     reader.readAsDataURL(file);
   };
 
+  const handleRemoveImage = (field, previewField) => {
+    setFormData(prev => ({
+      ...prev,
+      [field]: null,
+      [previewField]: ''
+    }));
+    
+    // Clear the file input value to allow re-uploading the same file
+    const inputRef = field === 'profilePic' ? profilePicRef : profileBannerRef;
+    if (inputRef.current) {
+      inputRef.current.value = '';
+    }
+    
+    // Clear any file-related errors
+    const fileErrorKey = field === 'profilePic' ? 'profilePic' : 'profileBanner';
+    if (errors[fileErrorKey]) {
+      setErrors(prev => ({ ...prev, [fileErrorKey]: '' }));
+    }
+  };
+
   const scrollToField = (fieldName) => {
     const fieldRefs = {
       username: usernameRef,
@@ -258,13 +278,17 @@ export default function ProfileEditPage() {
       };
 
       // Handle profile image (in a real app, you'd upload to storage service)
-      if (formData.profilePicPreview && formData.profilePicPreview !== userData?.profileImage) {
-        profileData.profileImage = formData.profilePicPreview;
+      if (formData.profilePicPreview !== userData?.profileImage) {
+        // If preview is empty but userData has image, user removed it
+        // If preview has content different from userData, user changed it
+        profileData.profileImage = formData.profilePicPreview || null;
       }
 
       // Handle banner image
-      if (formData.profileBannerPreview && formData.profileBannerPreview !== userData?.bannerImage) {
-        profileData.bannerImage = formData.profileBannerPreview;
+      if (formData.profileBannerPreview !== userData?.bannerImage) {
+        // If preview is empty but userData has image, user removed it
+        // If preview has content different from userData, user changed it
+        profileData.bannerImage = formData.profileBannerPreview || null;
       }
 
       const result = await updateUserProfile(userData.id, profileData);
@@ -353,7 +377,7 @@ export default function ProfileEditPage() {
                           <svg className="w-12 h-12 text-white/70 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 002 2v12a2 2 0 002 2z" />
                           </svg>
-                          <p className="text-white/70 text-sm font-medium">Recommended: 1200x320px</p>
+                          <p className="text-white/70 text-sm font-medium">Recommended: 1200x288px</p>
                         </div>
                       )}
                     </div>
@@ -364,13 +388,24 @@ export default function ProfileEditPage() {
                       accept="image/*"
                       className="hidden"
                     />
-                    <button
-                      type="button"
-                      onClick={() => profileBannerRef.current?.click()}
-                      className="bg-gray-100 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200 transition-colors cursor-pointer"
-                    >
-                      Change Banner Photo
-                    </button>
+                    <div className="flex gap-3">
+                      <button
+                        type="button"
+                        onClick={() => profileBannerRef.current?.click()}
+                        className="bg-gray-100 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200 transition-colors cursor-pointer"
+                      >
+                        {formData.profileBannerPreview ? 'Change Banner Photo' : 'Choose Banner Photo'}
+                      </button>
+                      {formData.profileBannerPreview && (
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveImage('profileBanner', 'profileBannerPreview')}
+                          className="bg-red-100 text-red-700 px-4 py-2 rounded-lg hover:bg-red-200 transition-colors cursor-pointer"
+                        >
+                          Remove Banner
+                        </button>
+                      )}
+                    </div>
                     {errors.profileBanner && (
                       <p className="text-red-600 text-sm mt-1">{errors.profileBanner}</p>
                     )}
@@ -406,13 +441,24 @@ export default function ProfileEditPage() {
                         accept="image/*"
                         className="hidden"
                       />
-                      <button
-                        type="button"
-                        onClick={() => profilePicRef.current?.click()}
-                        className="bg-gray-100 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200 transition-colors cursor-pointer"
-                      >
-                        Change Photo
-                      </button>
+                      <div className="flex gap-2 flex-col">
+                        <button
+                          type="button"
+                          onClick={() => profilePicRef.current?.click()}
+                          className="bg-gray-100 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200 transition-colors cursor-pointer"
+                        >
+                          {formData.profilePicPreview ? 'Change Photo' : 'Choose Photo'}
+                        </button>
+                        {formData.profilePicPreview && (
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveImage('profilePic', 'profilePicPreview')}
+                            className="bg-red-100 text-red-700 px-4 py-2 rounded-lg hover:bg-red-200 transition-colors cursor-pointer text-sm"
+                          >
+                            Remove Photo
+                          </button>
+                        )}
+                      </div>
                     </div>
                   </div>
                   {errors.profilePic && (
