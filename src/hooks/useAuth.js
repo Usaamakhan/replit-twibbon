@@ -16,6 +16,7 @@ import {
 } from 'firebase/auth';
 import { useFirebaseOptimized as useFirebase } from '../lib/firebase-optimized';
 import { createUserProfile } from '../lib/firestore';
+import { getFirebaseErrorMessage } from '../utils/validation';
 
 // Create Auth Context
 const AuthContext = createContext(null);
@@ -105,7 +106,7 @@ export function AuthProvider({ children }) {
       // User state will be automatically updated via onAuthStateChanged
       return { success: true };
     } catch (error) {
-      return { success: false, error: getErrorMessage(error.code) };
+      return { success: false, error: getFirebaseErrorMessage(error.code) };
     }
   };
 
@@ -129,7 +130,7 @@ export function AuthProvider({ children }) {
 
       return { success: true, requiresVerification: true };
     } catch (error) {
-      return { success: false, error: getErrorMessage(error.code) };
+      return { success: false, error: getFirebaseErrorMessage(error.code) };
     }
   };
 
@@ -142,7 +143,8 @@ export function AuthProvider({ children }) {
       const result = await signInWithEmailAndPassword(firebase.auth, email, password);
       return { success: true };
     } catch (error) {
-      return { success: false, error: getErrorMessage(error.code) };
+      // Security: Always return generic message for sign-in to prevent user enumeration
+      return { success: false, error: 'Invalid email or password. Please check your credentials and try again.' };
     }
   };
 
@@ -166,7 +168,7 @@ export function AuthProvider({ children }) {
       return { success: false, error: 'No user signed in' };
     } catch (error) {
       console.error('Error sending verification email:', error);
-      return { success: false, error: error.message };
+      return { success: false, error: getFirebaseErrorMessage(error.code) };
     }
   };
 
@@ -208,45 +210,23 @@ export function AuthProvider({ children }) {
       
       let errorMessage = 'Something went wrong. Please try again.';
       
-      // Only show specific error for client-side validation issues
+      // Security: Only show specific errors for client validation, avoid user enumeration
       if (error.code === 'auth/invalid-email') {
-        errorMessage = 'Please enter a valid email address.';
+        return { success: false, type: 'error', error: 'Please enter a valid email address.' };
       } else if (error.code === 'auth/too-many-requests') {
-        errorMessage = 'Too many requests. Please wait a moment before trying again.';
+        return { success: false, type: 'error', error: 'Too many requests. Please wait a moment before trying again.' };
       }
-      // Note: Don't reveal 'user-not-found' to prevent user enumeration
       
-      return { success: false, type: 'error', error: errorMessage };
+      // For all other errors (including user-not-found), return success to prevent enumeration
+      return { 
+        success: true, 
+        type: 'success',
+        message: 'If an account exists with this email address, we\'ve sent you a password reset link. Please check your inbox and follow the instructions.' 
+      };
     }
   };
 
-  // Helper function to convert Firebase error codes to user-friendly messages
-  const getErrorMessage = (errorCode) => {
-    switch (errorCode) {
-      case 'auth/invalid-credential':
-      case 'auth/user-not-found':
-      case 'auth/wrong-password':
-        return 'Invalid email or password. Please check your credentials and try again.';
-      case 'auth/email-already-in-use':
-        return 'An account with this email already exists. Please sign in instead.';
-      case 'auth/weak-password':
-        return 'Password is too weak. Please choose a stronger password.';
-      case 'auth/invalid-email':
-        return 'Please enter a valid email address.';
-      case 'auth/too-many-requests':
-        return 'Too many failed attempts. Please wait a moment before trying again.';
-      case 'auth/network-request-failed':
-        return 'Network error. Please check your connection and try again.';
-      case 'auth/popup-closed-by-user':
-        return 'Sign-in was cancelled. Please try again.';
-      case 'auth/popup-blocked':
-        return 'Popup was blocked. Please allow popups and try again.';
-      case 'auth/cancelled-popup-request':
-        return 'Another sign-in popup is already open.';
-      default:
-        return 'Something went wrong. Please try again.';
-    }
-  };
+  // Note: Using centralized error handling from utils/validation.js
 
   const value = {
     user,
