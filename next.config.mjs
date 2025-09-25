@@ -91,8 +91,8 @@ const nextConfig = {
     'https://*.repl.co',
     `https://${process.env.REPLIT_DEV_DOMAIN}`,
     // Current Replit domain
-    'https://6160f107-c1c9-48e5-8024-85ca4d8c11aa-00-1wz7fcnh6xoul.worf.replit.dev',
-    '6160f107-c1c9-48e5-8024-85ca4d8c11aa-00-1wz7fcnh6xoul.worf.replit.dev',
+    'https://6a7e5cab-35a9-4103-86fe-de93ba8fbe6e-00-1sychj9fwnqrm.worf.replit.dev',
+    '6a7e5cab-35a9-4103-86fe-de93ba8fbe6e-00-1sychj9fwnqrm.worf.replit.dev',
     // Allow local origins for development
     '127.0.0.1',
     'localhost'
