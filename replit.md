@@ -71,6 +71,18 @@ The website "Frame" (Twibbonize) is designed around **accessibility for everyone
    - Production deployment configured for autoscale with proper build and start commands
    - Import process completed successfully ✅
 
+2. **Authentication Error Message Improvements (September 25, 2025 - COMPLETED)**: Enhanced user experience with specific error messages:
+   - **Sign-in Page**: Now shows specific messages for wrong email vs wrong password scenarios
+     - "No account found with this email address" for non-existent emails
+     - "Incorrect password. If you forgot your password, click 'Forgot Password?' below" for wrong passwords
+   - **Forgot Password Page**: Now shows specific feedback for non-existent email addresses
+     - "No account found with this email address" when email doesn't exist in system
+   - **Feature Flag Support**: Added NEXT_PUBLIC_AUTH_VERBOSE_ERRORS environment variable (defaults to true)
+     - Set to 'false' to revert to generic security-focused messages for production if needed
+     - Enables easy toggle between user-friendly and security-focused error messages
+   - **Consistent with Signup**: Maintains consistency with existing signup page error handling
+   - Authentication error improvements completed successfully ✅
+
 2. **Simple Loading States Implementation (September 25, 2025 - COMPLETED)**: Added appropriate loading states for this simple project:
    - **Global Loading**: Single loading.js file for all routes with consistent "Loading..." message
    - **Essential Components**: Kept only LoadingSpinner and PageLoader components - removed overcomplicated skeleton components
