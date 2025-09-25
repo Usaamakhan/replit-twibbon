@@ -176,8 +176,34 @@ export function AuthProvider({ children }) {
         };
       }
       
-      // Security: For actual authentication errors, return generic message to prevent user enumeration
-      return { success: false, error: 'Invalid email or password. Please check your credentials and try again.' };
+      // Check if verbose error messages are enabled (default: true for simple app)
+      const verboseErrors = process.env.NEXT_PUBLIC_AUTH_VERBOSE_ERRORS !== 'false';
+      
+      if (verboseErrors) {
+        // Provide specific error messages for better user experience
+        if (error.code === 'auth/user-not-found') {
+          return { success: false, error: 'No account found with this email address' };
+        } else if (error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
+          return { success: false, error: 'Incorrect password. If you forgot your password, click "Forgot Password?" below' };
+        } else if (error.code === 'auth/invalid-email') {
+          return { success: false, error: 'Please enter a valid email address' };
+        } else if (error.code === 'auth/too-many-requests') {
+          return { success: false, error: 'Too many attempts. Please try again in a few minutes' };
+        }
+        
+        // For other errors, use the existing error message mapping
+        return { success: false, error: getFirebaseErrorMessage(error.code) };
+      } else {
+        // Security mode: Use generic message to prevent user enumeration
+        if (error.code === 'auth/invalid-email') {
+          return { success: false, error: 'Please enter a valid email address' };
+        } else if (error.code === 'auth/too-many-requests') {
+          return { success: false, error: 'Too many attempts. Please try again in a few minutes' };
+        }
+        
+        // Generic message for authentication errors
+        return { success: false, error: 'Invalid email or password. Please check your credentials and try again.' };
+      }
     }
   };
 
@@ -241,11 +267,11 @@ export function AuthProvider({ children }) {
     try {
       await sendPasswordResetEmail(firebase.auth, email);
       
-      // Always return success message for security (prevents user enumeration)
+      // Return specific success message
       return { 
         success: true, 
         type: 'success',
-        message: 'If this email is associated with an account, we\'ve sent a password reset link. Please check your inbox and spam folder.' 
+        message: 'Password reset link sent! Check your email and spam folder.' 
       };
     } catch (error) {
       // Log detailed errors only in development
@@ -264,19 +290,36 @@ export function AuthProvider({ children }) {
         };
       }
       
-      // Security: Only show specific errors for client validation, avoid user enumeration
-      if (error.code === 'auth/invalid-email') {
-        return { success: false, type: 'error', error: 'Please enter a valid email address.' };
-      } else if (error.code === 'auth/too-many-requests') {
-        return { success: false, type: 'error', error: 'Too many requests. Please wait a moment before trying again.' };
-      }
+      // Check if verbose error messages are enabled (default: true for simple app)
+      const verboseErrors = process.env.NEXT_PUBLIC_AUTH_VERBOSE_ERRORS !== 'false';
       
-      // For all other errors (including user-not-found), return success to prevent enumeration
-      return { 
-        success: true, 
-        type: 'success',
-        message: 'If this email is associated with an account, we\'ve sent a password reset link. Please check your inbox and spam folder.' 
-      };
+      if (verboseErrors) {
+        // Provide specific error messages for better user experience
+        if (error.code === 'auth/user-not-found') {
+          return { success: false, type: 'error', error: 'No account found with this email address' };
+        } else if (error.code === 'auth/invalid-email') {
+          return { success: false, type: 'error', error: 'Please enter a valid email address' };
+        } else if (error.code === 'auth/too-many-requests') {
+          return { success: false, type: 'error', error: 'Too many reset requests. Please wait before trying again' };
+        }
+        
+        // For other errors, use the existing error message mapping
+        return { success: false, type: 'error', error: getFirebaseErrorMessage(error.code) };
+      } else {
+        // Security mode: Prevent user enumeration
+        if (error.code === 'auth/invalid-email') {
+          return { success: false, type: 'error', error: 'Please enter a valid email address' };
+        } else if (error.code === 'auth/too-many-requests') {
+          return { success: false, type: 'error', error: 'Too many reset requests. Please wait before trying again' };
+        }
+        
+        // For all other errors (including user-not-found), return success to prevent enumeration
+        return { 
+          success: true, 
+          type: 'success',
+          message: 'If this email is associated with an account, we\'ve sent a password reset link. Please check your inbox and spam folder.' 
+        };
+      }
     }
   };
 
