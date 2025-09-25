@@ -65,7 +65,7 @@ The website "Frame" (Twibbonize) is designed around **accessibility for everyone
 ## Recent Changes (September 25, 2025)
 1. **Fresh GitHub Import Setup (September 25, 2025 - COMPLETED)**: Successfully imported and configured fresh GitHub clone:
    - Dependencies installed successfully (Next.js 15, React 19, Firebase, Supabase, Tailwind CSS)
-   - Domain configuration updated to current Replit domain (6a7e5cab-35a9-4103-86fe-de93ba8fbe6e-00-1sychj9fwnqrm.worf.replit.dev)
+   - Domain configuration updated to current Replit domain (fddcdfe4-aa19-4690-993b-f8ed36e9f42f-00-2obgqwd3qwgyl.janeway.replit.dev)
    - Development server running successfully on port 5000 with host 0.0.0.0
    - Application tested and verified working in Replit proxy environment
    - Production deployment configured for autoscale with proper build and start commands
