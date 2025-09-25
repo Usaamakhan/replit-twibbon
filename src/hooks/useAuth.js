@@ -17,6 +17,7 @@ import {
 import { useFirebaseOptimized as useFirebase } from '../lib/firebase-optimized';
 import { createUserProfile } from '../lib/firestore';
 import { getFirebaseErrorMessage } from '../utils/validation';
+import { isLikelyNetworkError, getContextualErrorMessage, isOnline } from '../utils/networkUtils';
 
 // Create Auth Context
 const AuthContext = createContext(null);
@@ -106,6 +107,17 @@ export function AuthProvider({ children }) {
       // User state will be automatically updated via onAuthStateChanged
       return { success: true };
     } catch (error) {
+      // Check if this is a network connectivity issue
+      const isNetworkIssue = await isLikelyNetworkError(error);
+      
+      if (isNetworkIssue) {
+        return { 
+          success: false, 
+          error: await getContextualErrorMessage(error, 'Unable to connect to Google. Please check your internet connection and try again.') 
+        };
+      }
+      
+      // For actual authentication errors, show specific user-friendly messages
       return { success: false, error: getFirebaseErrorMessage(error.code) };
     }
   };
@@ -130,6 +142,17 @@ export function AuthProvider({ children }) {
 
       return { success: true, requiresVerification: true };
     } catch (error) {
+      // Check if this is a network connectivity issue
+      const isNetworkIssue = await isLikelyNetworkError(error);
+      
+      if (isNetworkIssue) {
+        return { 
+          success: false, 
+          error: await getContextualErrorMessage(error, 'Unable to connect. Please check your internet connection and try again.') 
+        };
+      }
+      
+      // For actual Firebase errors, show specific user-friendly messages
       return { success: false, error: getFirebaseErrorMessage(error.code) };
     }
   };
@@ -143,7 +166,17 @@ export function AuthProvider({ children }) {
       const result = await signInWithEmailAndPassword(firebase.auth, email, password);
       return { success: true };
     } catch (error) {
-      // Security: Always return generic message for sign-in to prevent user enumeration
+      // Check if this is likely a network connectivity issue
+      const isNetworkIssue = await isLikelyNetworkError(error);
+      
+      if (isNetworkIssue) {
+        return { 
+          success: false, 
+          error: await getContextualErrorMessage(error, 'Unable to connect. Please check your internet connection and try again.') 
+        };
+      }
+      
+      // Security: For actual authentication errors, return generic message to prevent user enumeration
       return { success: false, error: 'Invalid email or password. Please check your credentials and try again.' };
     }
   };
@@ -168,6 +201,18 @@ export function AuthProvider({ children }) {
       return { success: false, error: 'No user signed in' };
     } catch (error) {
       console.error('Error sending verification email:', error);
+      
+      // Check if this is a network connectivity issue
+      const isNetworkIssue = await isLikelyNetworkError(error);
+      
+      if (isNetworkIssue) {
+        return { 
+          success: false, 
+          error: await getContextualErrorMessage(error, 'Unable to send verification email. Please check your internet connection and try again.') 
+        };
+      }
+      
+      // For actual Firebase errors, show specific user-friendly messages
       return { success: false, error: getFirebaseErrorMessage(error.code) };
     }
   };
@@ -200,7 +245,7 @@ export function AuthProvider({ children }) {
       return { 
         success: true, 
         type: 'success',
-        message: 'If an account exists with this email address, we\'ve sent you a password reset link. Please check your inbox and follow the instructions.' 
+        message: 'If this email is associated with an account, we\'ve sent a password reset link. Please check your inbox and spam folder.' 
       };
     } catch (error) {
       // Log detailed errors only in development
@@ -208,7 +253,16 @@ export function AuthProvider({ children }) {
         console.error('Password reset error:', error.code);
       }
       
-      let errorMessage = 'Something went wrong. Please try again.';
+      // Check for network connectivity issues first
+      const isNetworkIssue = await isLikelyNetworkError(error);
+      
+      if (isNetworkIssue) {
+        return { 
+          success: false, 
+          type: 'error', 
+          error: await getContextualErrorMessage(error, 'Unable to connect. Please check your internet connection and try again.') 
+        };
+      }
       
       // Security: Only show specific errors for client validation, avoid user enumeration
       if (error.code === 'auth/invalid-email') {
@@ -221,7 +275,7 @@ export function AuthProvider({ children }) {
       return { 
         success: true, 
         type: 'success',
-        message: 'If an account exists with this email address, we\'ve sent you a password reset link. Please check your inbox and follow the instructions.' 
+        message: 'If this email is associated with an account, we\'ve sent a password reset link. Please check your inbox and spam folder.' 
       };
     }
   };

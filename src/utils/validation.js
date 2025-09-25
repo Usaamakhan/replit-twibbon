@@ -35,8 +35,8 @@ export const getFirebaseErrorMessage = (errorCode) => {
     'auth/operation-not-allowed': 'This sign-in method is not enabled',
     'auth/weak-password': 'Password is too weak. Please choose a stronger password',
     'auth/too-many-requests': 'Too many unsuccessful attempts. Please try again later',
-    'auth/network-request-failed': 'Network error. Please check your connection and try again',
-    'auth/invalid-credential': 'Invalid email or password',
+    'auth/network-request-failed': 'Unable to connect. Please check your internet connection and try again',
+    'auth/invalid-credential': 'Invalid email or password. Please check your credentials and try again',
     'auth/account-exists-with-different-credential': 'An account already exists with this email but different sign-in method',
     'auth/popup-closed-by-user': 'Sign-in cancelled',
     'auth/popup-blocked': 'Sign-in popup blocked. Please allow popups and try again',
@@ -83,7 +83,7 @@ export const getFirebaseErrorMessage = (errorCode) => {
     'auth/email-change-needs-verification': 'Email change needs verification',
     'auth/expired-action-code': 'Action code expired',
     'auth/cancelled-popup-request': 'Sign-in cancelled',
-    'auth/internal-error': 'An internal error occurred. Please try again',
+    'auth/internal-error': 'A temporary error occurred. Please check your connection and try again',
     'auth/invalid-app-credential': 'Invalid app credential',
     'auth/invalid-app-id': 'Invalid app ID',
     'auth/invalid-auth-event': 'Invalid authentication event',
@@ -109,7 +109,7 @@ export const getFirebaseErrorMessage = (errorCode) => {
     'auth/rejected-credential': 'Credential rejected',
     'auth/second-factor-limit-exceeded': 'Second factor limit exceeded',
     'auth/tenant-id-mismatch': 'Tenant ID mismatch',
-    'auth/timeout': 'Operation timed out',
+    'auth/timeout': 'Request timed out. Please check your connection and try again',
     'auth/user-token-expired': 'User token expired',
     'auth/web-storage-unsupported': 'Web storage not supported'
   };
