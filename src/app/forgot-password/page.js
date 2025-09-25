@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { validateEmail } from '../../utils/validation';
+import { validateEmail, validateForm } from '../../utils/validation';
 import { useAuth } from '../../hooks/useAuth';
 import { Caveat } from "next/font/google";
 import Link from "next/link";
@@ -47,26 +47,17 @@ export default function ForgotPasswordPage() {
     }
   };
 
-  const validateForm = (formData) => {
-    const newErrors = {};
-    let firstErrorField = null;
-
-    if (!formData.get('email')?.trim()) {
-      newErrors.email = 'Email is required';
-      if (!firstErrorField) firstErrorField = 'email';
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.get('email'))) {
-      newErrors.email = 'Please enter a valid email address';
-      if (!firstErrorField) firstErrorField = 'email';
-    }
-
-    setValidationErrors(newErrors);
+  const validateFormFields = (formData) => {
+    const validation = validateForm(formData, 'forgot-password');
+    
+    setValidationErrors(validation.errors);
     
     // If there are errors, scroll to the first error field
-    if (firstErrorField) {
-      setTimeout(() => scrollToField(firstErrorField), 100);
+    if (validation.firstErrorField) {
+      setTimeout(() => scrollToField(validation.firstErrorField), 100);
     }
     
-    return Object.keys(newErrors).length === 0;
+    return validation.isValid;
   };
 
   const handleInputChange = (field, value) => {
@@ -99,7 +90,7 @@ export default function ForgotPasswordPage() {
     e.preventDefault();
     const formData = new FormData(e.target);
     
-    if (!validateForm(formData)) {
+    if (!validateFormFields(formData)) {
       return;
     }
 

@@ -24,11 +24,51 @@ export const normalizeEmail = (email) => {
   return email ? email.toLowerCase().trim() : '';
 };
 
+// Shared form validation function for all authentication forms
+export const validateForm = (formData, formType = 'signin') => {
+  const errors = {};
+  let firstErrorField = null;
+
+  // Name validation (signup only)
+  if (formType === 'signup') {
+    const name = formData.get('name')?.trim();
+    const nameError = validateName(name);
+    if (nameError) {
+      errors.name = nameError;
+      if (!firstErrorField) firstErrorField = 'name';
+    }
+  }
+
+  // Email validation (all forms)
+  const email = formData.get('email')?.trim();
+  const emailError = validateEmail(email);
+  if (emailError) {
+    errors.email = emailError;
+    if (!firstErrorField) firstErrorField = 'email';
+  }
+
+  // Password validation (signin and signup only)
+  if (formType !== 'forgot-password') {
+    const password = formData.get('password')?.trim();
+    const passwordError = validatePassword(password, formType === 'signup');
+    if (passwordError) {
+      errors.password = passwordError;
+      if (!firstErrorField) firstErrorField = 'password';
+    }
+  }
+
+  return {
+    isValid: Object.keys(errors).length === 0,
+    errors,
+    firstErrorField
+  };
+};
+
 // Firebase error code to user-friendly message mapping (cleaned up duplicates)
 export const getFirebaseErrorMessage = (errorCode) => {
   const errorMessages = {
-    'auth/user-not-found': 'No account found with this email address',
-    'auth/wrong-password': 'Incorrect password',
+    'auth/user-not-found': 'Invalid email or password. Please check your credentials and try again',
+    'auth/wrong-password': 'Invalid email or password. Please check your credentials and try again',
     'auth/invalid-email': 'Please enter a valid email address',
     'auth/user-disabled': 'This account has been disabled',
     'auth/email-already-in-use': 'An account with this email already exists',

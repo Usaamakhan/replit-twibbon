@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { validateEmail, validatePassword } from '../../utils/validation';
+import { validateEmail, validatePassword, validateForm } from '../../utils/validation';
 import { useAuth } from '../../hooks/useAuth';
 import { Caveat } from "next/font/google";
 import Link from "next/link";
@@ -48,38 +48,24 @@ export default function SignInPage() {
     }
   };
 
-  const validateForm = (formData) => {
-    const newErrors = {};
-    let firstErrorField = null;
-
-    if (!formData.get('email')?.trim()) {
-      newErrors.email = 'Email is required';
-      if (!firstErrorField) firstErrorField = 'email';
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.get('email'))) {
-      newErrors.email = 'Please enter a valid email address';
-      if (!firstErrorField) firstErrorField = 'email';
-    }
-
-    if (!formData.get('password')?.trim()) {
-      newErrors.password = 'Password is required';
-      if (!firstErrorField) firstErrorField = 'password';
-    }
-
-    setValidationErrors(newErrors);
+  const validateFormFields = (formData) => {
+    const validation = validateForm(formData, 'signin');
+    
+    setValidationErrors(validation.errors);
     
     // If there are errors, scroll to the first error field
-    if (firstErrorField) {
-      setTimeout(() => scrollToField(firstErrorField), 100);
+    if (validation.firstErrorField) {
+      setTimeout(() => scrollToField(validation.firstErrorField), 100);
     }
     
-    return Object.keys(newErrors).length === 0;
+    return validation.isValid;
   };
 
   const handleEmailSignIn = async (e) => {
     e.preventDefault();
     const formData = new FormData(e.target);
     
-    if (!validateForm(formData)) {
+    if (!validateFormFields(formData)) {
       return;
     }
 

@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { validateEmail, validatePassword, validateName } from '../../utils/validation';
+import { validateEmail, validatePassword, validateName, validateForm } from '../../utils/validation';
 import { useAuth } from '../../hooks/useAuth';
 import { Caveat } from "next/font/google";
 import Link from "next/link";
@@ -50,54 +50,24 @@ export default function SignUpPage() {
     }
   };
 
-  const validateForm = (formData) => {
-    const newErrors = {};
-    let firstErrorField = null;
-
-    const name = formData.get('name')?.trim();
-    if (!name) {
-      newErrors.name = 'Name is required';
-      if (!firstErrorField) firstErrorField = 'name';
-    } else if (name.length < 3) {
-      newErrors.name = 'Name must be at least 3 characters long';
-      if (!firstErrorField) firstErrorField = 'name';
-    } else if (name.length > 50) {
-      newErrors.name = 'Name must be 50 characters or less';
-      if (!firstErrorField) firstErrorField = 'name';
-    }
-
-    if (!formData.get('email')?.trim()) {
-      newErrors.email = 'Email is required';
-      if (!firstErrorField) firstErrorField = 'email';
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.get('email'))) {
-      newErrors.email = 'Please enter a valid email address';
-      if (!firstErrorField) firstErrorField = 'email';
-    }
-
-    const password = formData.get('password');
-    if (!password?.trim()) {
-      newErrors.password = 'Password is required';
-      if (!firstErrorField) firstErrorField = 'password';
-    } else if (password.length < 8) {
-      newErrors.password = 'Password must be at least 8 characters';
-      if (!firstErrorField) firstErrorField = 'password';
-    }
-
-    setValidationErrors(newErrors);
+  const validateFormFields = (formData) => {
+    const validation = validateForm(formData, 'signup');
+    
+    setValidationErrors(validation.errors);
     
     // If there are errors, scroll to the first error field
-    if (firstErrorField) {
-      setTimeout(() => scrollToField(firstErrorField), 100);
+    if (validation.firstErrorField) {
+      setTimeout(() => scrollToField(validation.firstErrorField), 100);
     }
     
-    return Object.keys(newErrors).length === 0;
+    return validation.isValid;
   };
 
   const handleEmailSignUp = async (e) => {
     e.preventDefault();
     const formData = new FormData(e.target);
     
-    if (!validateForm(formData)) {
+    if (!validateFormFields(formData)) {
       return;
     }
 
