@@ -82,7 +82,9 @@ export default function ProfileEditPage() {
           setUsernameStatus('unchanged');
         }
       } catch (error) {
-        console.error('Error loading user data:', error);
+        if (process.env.NODE_ENV === 'development') {
+          console.error('Error loading user data:', error);
+        }
         setErrors({ general: 'Failed to load profile data. Please try again.' });
       }
     };
@@ -124,7 +126,9 @@ export default function ProfileEditPage() {
           setUsernameStatus(newStatus);
         }
       } catch (error) {
-        console.error('Error checking username:', error);
+        if (process.env.NODE_ENV === 'development') {
+          console.error('Error checking username:', error);
+        }
         if (currentRequestId === usernameRequestIdRef.current) {
           setUsernameStatus(null); // Show neutral state on error
         }

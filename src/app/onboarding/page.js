@@ -80,7 +80,9 @@ export default function OnboardingPage() {
           checkUsernameAvailability(initialUsername);
         }
       } catch (error) {
-        console.error('Error loading user data:', error);
+        if (process.env.NODE_ENV === 'development') {
+          console.error('Error loading user data:', error);
+        }
         // Fallback to display name/email
         const fallbackUsername = user?.displayName?.toLowerCase().replace(/[^a-z0-9]/g, '') || 
                                 user?.email?.split('@')[0]?.toLowerCase().replace(/[^a-z0-9]/g, '') || 
@@ -127,7 +129,9 @@ export default function OnboardingPage() {
           setUsernameStatus(newStatus);
         }
       } catch (error) {
-        console.error('Error checking username:', error);
+        if (process.env.NODE_ENV === 'development') {
+          console.error('Error checking username:', error);
+        }
         if (currentRequestId === usernameRequestIdRef.current) {
           setUsernameStatus(null); // Show neutral state on error
         }

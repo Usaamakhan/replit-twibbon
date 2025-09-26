@@ -56,14 +56,18 @@ export function AuthProvider({ children }) {
             try {
               await createUserProfile(user);
             } catch (error) {
-              console.error('Error creating user profile:', error);
+              if (process.env.NODE_ENV === 'development') {
+                console.error('Error creating user profile:', error);
+              }
             }
           }
           setUser(user);
           setLoading(false);
         });
       } catch (error) {
-        console.error('Failed to set up auth listener:', error);
+        if (process.env.NODE_ENV === 'development') {
+          console.error('Failed to set up auth listener:', error);
+        }
         setLoading(false);
       }
     };

@@ -26,7 +26,9 @@ export function UserProfileProvider({ children }) {
         const profile = await getUserProfile(user.uid);
         setUserProfile(profile);
       } catch (error) {
-        console.error('Error fetching user profile:', error);
+        if (process.env.NODE_ENV === 'development') {
+          console.error('Error fetching user profile:', error);
+        }
         setUserProfile(null);
       } finally {
         setLoading(false);
@@ -51,7 +53,9 @@ export function UserProfileProvider({ children }) {
       const profile = await getUserProfile(user.uid);
       setUserProfile(profile);
     } catch (error) {
-      console.error('Error refreshing user profile:', error);
+      if (process.env.NODE_ENV === 'development') {
+        console.error('Error refreshing user profile:', error);
+      }
     }
   };
 
