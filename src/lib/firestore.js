@@ -249,25 +249,14 @@ export const getUserProfileByUsername = async (username) => {
   }
   
   try {
-    const startTime = performance.now();
-    
-    // Get Firebase database instance
-    const database = getDatabase();
-    
-    if (!database) {
+    // Check if database is available
+    if (!db) {
       return null;
     }
 
-    // Get Firestore helpers with timing
-    const helpersStart = performance.now();
-    const { doc, getDoc } = await getFirestoreHelpers();
-    const helpersTime = performance.now() - helpersStart;
-    
     // First, resolve username to userId using usernames collection
-    const lookupStart = performance.now();
-    const usernameDocRef = doc(database, 'usernames', normalizedUsername);
+    const usernameDocRef = doc(db, 'usernames', normalizedUsername);
     const usernameDoc = await getDoc(usernameDocRef);
-    const lookupTime = performance.now() - lookupStart;
     
     if (!usernameDoc.exists()) {
       return null;
@@ -276,18 +265,14 @@ export const getUserProfileByUsername = async (username) => {
     const { userId } = usernameDoc.data();
     
     // Then fetch user profile using the userId
-    const profileStart = performance.now();
-    const userDocRef = doc(database, 'users', userId);
+    const userDocRef = doc(db, 'users', userId);
     const userDoc = await getDoc(userDocRef);
-    const profileTime = performance.now() - profileStart;
     
     if (!userDoc.exists()) {
       return null;
     }
     
     const userData = userDoc.data();
-    const totalTime = performance.now() - startTime;
-    
     
     // Ensure required fields exist with fallbacks
     return { 
@@ -464,7 +449,8 @@ export const createFrame = async (frameData, userId) => {
     if (process.env.NODE_ENV === 'development') {
       console.error('Error creating frame:', error, { userId, frameData: { ...frameData, imageData: '[redacted]' } });
     }
-    return { success: false, error: getFirebaseErrorMessage(error.code) || 'Failed to create frame. Please try again.' };
+    const errorResponse = await handleFirebaseError(error, 'firestore', { returnType: 'string' });
+    return { success: false, error: errorResponse || 'Failed to create frame. Please try again.' };
   }
 };
 
