@@ -1,7 +1,7 @@
 "use client";
 
 // Firestore database operations for the Twibbonize app
-import { db } from './firebase';
+import { db } from './firebase-optimized';
 import { handleFirebaseError } from '../utils/firebaseErrorHandler';
 import { 
   doc, 
@@ -209,7 +209,9 @@ export const createUserProfile = async (user) => {
     
     return { success: true, docRef: userDocRef, existing: true };
   } catch (error) {
-    console.error('Error creating user profile:', error);
+    if (process.env.NODE_ENV === 'development') {
+      console.error('Error creating user profile:', error);
+    }
     const errorResponse = await handleFirebaseError(error, 'firestore', { returnType: 'string' });
     return { success: false, error: errorResponse || 'Failed to complete operation. Please try again.' };
   }
@@ -408,7 +410,9 @@ export const updateUserProfile = async (userId, updates) => {
       return { success: true, username: filteredUpdates.username || currentData.username };
     });
   } catch (error) {
-    console.error('Error updating user profile:', error);
+    if (process.env.NODE_ENV === 'development') {
+      console.error('Error updating user profile:', error);
+    }
     const errorResponse = await handleFirebaseError(error, 'firestore', { returnType: 'string' });
     return { success: false, error: errorResponse || 'Failed to complete operation. Please try again.' };
   }
@@ -432,7 +436,9 @@ export const getUserStats = async (userId) => {
       return { supportersCount: 0, campaignsCount: 0, framesCreated: 0, framesUsed: 0 };
     }
   } catch (error) {
-    console.error('Error getting user stats:', error);
+    if (process.env.NODE_ENV === 'development') {
+      console.error('Error getting user stats:', error);
+    }
     return { supportersCount: 0, campaignsCount: 0, framesCreated: 0, framesUsed: 0 };
   }
 };
@@ -474,7 +480,9 @@ export const createFrame = async (frameData, userId) => {
       return { success: true, frameId: frameRef.id };
     });
   } catch (error) {
-    console.error('Error creating frame:', error, { userId, frameData: { ...frameData, imageData: '[redacted]' } });
+    if (process.env.NODE_ENV === 'development') {
+      console.error('Error creating frame:', error, { userId, frameData: { ...frameData, imageData: '[redacted]' } });
+    }
     return { success: false, error: getFirebaseErrorMessage(error.code) || 'Failed to create frame. Please try again.' };
   }
 };
@@ -506,7 +514,9 @@ export const getUserFrames = async (userId) => {
   
   // Check if database is initialized
   if (!db) {
-    console.error('Database not initialized - cannot get user frames');
+    if (process.env.NODE_ENV === 'development') {
+      console.error('Database not initialized - cannot get user frames');
+    }
     return [];
   }
   
@@ -609,7 +619,9 @@ export const completeUserProfile = async (userId, profileData) => {
       return { success: true, username: updateData.username };
     });
   } catch (error) {
-    console.error('Error completing user profile:', error);
+    if (process.env.NODE_ENV === 'development') {
+      console.error('Error completing user profile:', error);
+    }
     const errorResponse = await handleFirebaseError(error, 'firestore', { returnType: 'string' });
     return { success: false, error: errorResponse || 'Failed to complete operation. Please try again.' };
   }

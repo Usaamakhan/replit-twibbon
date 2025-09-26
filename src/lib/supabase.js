@@ -1,7 +1,7 @@
 "use client";
 
 // Secure client-side storage utilities using server-side API
-import { auth } from './firebase'
+import { auth } from './firebase-optimized'
 
 // Helper function to get Firebase ID token
 const getAuthToken = async () => {
@@ -67,7 +67,9 @@ export const uploadFile = async (file, folder = 'uploads') => {
       type: file.type
     }
   } catch (error) {
-    console.error('Error uploading file:', error)
+    if (process.env.NODE_ENV === 'development') {
+      console.error('Error uploading file:', error);
+    }
     throw error
   }
 }
@@ -82,7 +84,9 @@ export const getSignedUrl = async (path, expiresIn = 3600) => {
 
     return signedUrl
   } catch (error) {
-    console.error('Error getting signed URL:', error)
+    if (process.env.NODE_ENV === 'development') {
+      console.error('Error getting signed URL:', error);
+    }
     throw error
   }
 }
@@ -97,7 +101,9 @@ export const deleteFile = async (path) => {
 
     return true
   } catch (error) {
-    console.error('Error deleting file:', error)
+    if (process.env.NODE_ENV === 'development') {
+      console.error('Error deleting file:', error);
+    }
     throw error
   }
 }
@@ -112,7 +118,9 @@ export const listFiles = async (folder = 'uploads', limit = 100, offset = 0) => 
 
     return files
   } catch (error) {
-    console.error('Error listing files:', error)
+    if (process.env.NODE_ENV === 'development') {
+      console.error('Error listing files:', error);
+    }
     throw error
   }
 }
@@ -165,7 +173,9 @@ export const uploadFileWithProgress = async (file, folder = 'uploads', onProgres
       xhr.send(file)
     })
   } catch (error) {
-    console.error('Error uploading file with progress:', error)
+    if (process.env.NODE_ENV === 'development') {
+      console.error('Error uploading file with progress:', error);
+    }
     throw error
   }
 }
