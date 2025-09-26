@@ -20,25 +20,6 @@ import {
   runTransaction 
 } from 'firebase/firestore';
 
-// Legacy helper function - no longer needed since we have top-level imports
-const getFirestoreHelpers = async () => {
-  return { 
-    doc, 
-    setDoc, 
-    getDoc, 
-    collection, 
-    addDoc, 
-    getDocs, 
-    query, 
-    where, 
-    orderBy, 
-    limit,
-    serverTimestamp,
-    updateDoc,
-    increment,
-    runTransaction 
-  };
-};
 
 // Get database instance - simplified since we have direct db import
 const getDatabase = () => {
