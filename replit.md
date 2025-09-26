@@ -71,17 +71,17 @@ The website "Frame" (Twibbonize) is designed around **accessibility for everyone
    - Production deployment configured for autoscale with proper build and start commands
    - Import process completed successfully ✅
 
-2. **Authentication Error Message Improvements (September 25, 2025 - COMPLETED)**: Enhanced user experience with specific error messages:
-   - **Sign-in Page**: Now shows specific messages for wrong email vs wrong password scenarios
-     - "No account found with this email address" for non-existent emails
-     - "Incorrect password. If you forgot your password, click 'Forgot Password?' below" for wrong passwords
-   - **Forgot Password Page**: Now shows specific feedback for non-existent email addresses
-     - "No account found with this email address" when email doesn't exist in system
-   - **Feature Flag Support**: Added NEXT_PUBLIC_AUTH_VERBOSE_ERRORS environment variable (defaults to true)
-     - Set to 'false' to revert to generic security-focused messages for production if needed
-     - Enables easy toggle between user-friendly and security-focused error messages
-   - **Consistent with Signup**: Maintains consistency with existing signup page error handling
-   - Authentication error improvements completed successfully ✅
+2. **Authentication Error Handling Fix (September 26, 2025 - COMPLETED)**: Fixed incorrect error messages in authentication system:
+   - **Issue Resolved**: Sign-in page was showing "Incorrect password" for non-existent emails, and forgot-password page was showing "No account found" for existing emails
+   - **Root Cause**: Modern Firebase returns `auth/invalid-credential` for security reasons instead of specific error codes like `auth/user-not-found` or `auth/wrong-password`
+   - **Solution Implemented**:
+     - Updated `signInWithEmail` function to properly handle `auth/invalid-credential` as primary error case
+     - Removed flawed user existence pre-check in `forgotPassword` function
+     - Now provides appropriate generic messages: "Invalid email or password" for sign-in failures
+     - Maintains legacy error code support for older Firebase configurations
+     - Enhanced security with proper user enumeration prevention
+   - **Recommendation**: Set `NEXT_PUBLIC_AUTH_VERBOSE_ERRORS=false` in production for enhanced security
+   - Authentication error handling improvements completed successfully ✅
 
 2. **Simple Loading States Implementation (September 25, 2025 - COMPLETED)**: Added appropriate loading states for this simple project:
    - **Global Loading**: Single loading.js file for all routes with consistent "Loading..." message

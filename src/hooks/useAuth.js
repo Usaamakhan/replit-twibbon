@@ -185,19 +185,23 @@ export function AuthProvider({ children }) {
           console.log('Firebase signin error code:', error.code);
         }
         
-        // Provide specific error messages for better user experience
-        if (error.code === 'auth/user-not-found') {
+        // Handle modern Firebase authentication errors
+        if (error.code === 'auth/invalid-credential') {
+          // Modern Firebase returns this for most authentication failures (user-not-found, wrong-password)
+          // This is more secure but less specific - provide helpful generic message
+          return { success: false, error: 'Invalid email or password. Please check your credentials and try again.' };
+        } else if (error.code === 'auth/user-not-found') {
+          // Legacy error code - may still occur in some cases
           return { success: false, error: 'No account found with this email address' };
         } else if (error.code === 'auth/wrong-password') {
-          return { success: false, error: 'Incorrect password. If you forgot your password, click "Forgot Password?" below' };
-        } else if (error.code === 'auth/invalid-credential') {
-          // Modern Firebase often returns this instead of specific codes
-          // For user experience, we'll treat this as wrong password since user exists enough to get a credential check
+          // Legacy error code - may still occur in some cases
           return { success: false, error: 'Incorrect password. If you forgot your password, click "Forgot Password?" below' };
         } else if (error.code === 'auth/invalid-email') {
           return { success: false, error: 'Please enter a valid email address' };
+        } else if (error.code === 'auth/user-disabled') {
+          return { success: false, error: 'This account has been disabled. Please contact support.' };
         } else if (error.code === 'auth/too-many-requests') {
-          return { success: false, error: 'Too many attempts. Please try again in a few minutes' };
+          return { success: false, error: 'Too many failed attempts. Please try again in a few minutes' };
         }
         
         // For unknown errors, provide a generic helpful message
@@ -207,10 +211,10 @@ export function AuthProvider({ children }) {
         if (error.code === 'auth/invalid-email') {
           return { success: false, error: 'Please enter a valid email address' };
         } else if (error.code === 'auth/too-many-requests') {
-          return { success: false, error: 'Too many attempts. Please try again in a few minutes' };
+          return { success: false, error: 'Too many failed attempts. Please try again in a few minutes' };
         }
         
-        // Generic message for authentication errors
+        // Generic message for all authentication errors (including invalid-credential)
         return { success: false, error: 'Invalid email or password. Please check your credentials and try again.' };
       }
     }
@@ -277,18 +281,8 @@ export function AuthProvider({ children }) {
     const verboseErrors = process.env.NEXT_PUBLIC_AUTH_VERBOSE_ERRORS !== 'false';
     
     if (verboseErrors) {
-      // For simple app with verbose errors, try to check if user exists first
+      // For simple app with verbose errors, attempt to send password reset email directly
       try {
-        // First check if the user exists by trying to get user methods
-        // This is a workaround since Firebase no longer provides user-not-found for password reset
-        const methods = await import('firebase/auth').then(auth => auth.fetchSignInMethodsForEmail(firebase.auth, email));
-        
-        if (methods.length === 0) {
-          // No sign-in methods means user doesn't exist
-          return { success: false, type: 'error', error: 'No account found with this email address' };
-        }
-        
-        // User exists, proceed with password reset
         await sendPasswordResetEmail(firebase.auth, email);
         return { 
           success: true, 
@@ -319,10 +313,12 @@ export function AuthProvider({ children }) {
         } else if (error.code === 'auth/too-many-requests') {
           return { success: false, type: 'error', error: 'Too many reset requests. Please wait before trying again' };
         } else if (error.code === 'auth/user-not-found') {
+          // This may still occur in some Firebase configurations
           return { success: false, type: 'error', error: 'No account found with this email address' };
         }
         
-        // For unknown errors, provide a helpful generic message
+        // For most modern Firebase setups, sendPasswordResetEmail succeeds even for non-existent users
+        // So if we get here with an unknown error, we'll provide a generic message
         return { success: false, type: 'error', error: 'Unable to send reset email. Please try again.' };
       }
     } else {
