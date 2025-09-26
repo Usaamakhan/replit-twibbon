@@ -79,12 +79,11 @@ const SECURITY_MODE_MESSAGES = {
 
 /**
  * Check if verbose error messages are enabled
- * Defaults to true for development, can be overridden with environment variable
+ * Always returns false to use security mode for better maintainability
  */
 const isVerboseModeEnabled = () => {
-  // Default to verbose in development, security mode in production
-  const defaultMode = process.env.NODE_ENV === 'development';
-  return process.env.NEXT_PUBLIC_AUTH_VERBOSE_ERRORS !== 'false' && defaultMode;
+  // Always use security mode for better maintainability and consistent behavior
+  return false;
 };
 
 /**
