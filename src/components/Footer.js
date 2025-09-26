@@ -220,8 +220,8 @@ export default function Footer() {
               © 2024 Frame. All rights reserved.
             </div>
             <div className="flex flex-wrap gap-6 text-sm">
-              <a href="#" className="text-gray-600 hover:text-emerald-700 transition-colors duration-200">Privacy Policy</a>
-              <a href="#" className="text-gray-600 hover:text-emerald-700 transition-colors duration-200">Terms & Conditions</a>
+              <a href="/privacy" className="text-gray-600 hover:text-emerald-700 transition-colors duration-200">Privacy Policy</a>
+              <a href="/terms" className="text-gray-600 hover:text-emerald-700 transition-colors duration-200">Terms & Conditions</a>
               <a href="#" className="text-gray-600 hover:text-emerald-700 transition-colors duration-200">Cookie Policy</a>
               <a href="#" className="text-gray-600 hover:text-emerald-700 transition-colors duration-200">Site Map</a>
             </div>
