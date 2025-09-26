@@ -2,7 +2,7 @@
 
 // Firestore database operations for the Twibbonize app
 import { db } from './firebase';
-import { getFirebaseErrorMessage } from '../utils/validation';
+import { handleFirebaseError } from '../utils/firebaseErrorHandler';
 import { 
   doc, 
   setDoc, 
@@ -210,7 +210,8 @@ export const createUserProfile = async (user) => {
     return { success: true, docRef: userDocRef, existing: true };
   } catch (error) {
     console.error('Error creating user profile:', error);
-    return { success: false, error: getFirebaseErrorMessage(error.code) || 'Failed to complete operation. Please try again.' };
+    const errorResponse = await handleFirebaseError(error, 'firestore', { returnType: 'string' });
+    return { success: false, error: errorResponse || 'Failed to complete operation. Please try again.' };
   }
 };
 
@@ -408,7 +409,8 @@ export const updateUserProfile = async (userId, updates) => {
     });
   } catch (error) {
     console.error('Error updating user profile:', error);
-    return { success: false, error: getFirebaseErrorMessage(error.code) || 'Failed to complete operation. Please try again.' };
+    const errorResponse = await handleFirebaseError(error, 'firestore', { returnType: 'string' });
+    return { success: false, error: errorResponse || 'Failed to complete operation. Please try again.' };
   }
 };
 
@@ -608,7 +610,8 @@ export const completeUserProfile = async (userId, profileData) => {
     });
   } catch (error) {
     console.error('Error completing user profile:', error);
-    return { success: false, error: getFirebaseErrorMessage(error.code) || 'Failed to complete operation. Please try again.' };
+    const errorResponse = await handleFirebaseError(error, 'firestore', { returnType: 'string' });
+    return { success: false, error: errorResponse || 'Failed to complete operation. Please try again.' };
   }
 };
 
@@ -667,6 +670,7 @@ export const trackFrameUsage = async (frameId, userId) => {
       };
     });
   } catch (error) {
-    return { success: false, error: getFirebaseErrorMessage(error.code) || 'Failed to complete operation. Please try again.' };
+    const errorResponse = await handleFirebaseError(error, 'firestore', { returnType: 'string' });
+    return { success: false, error: errorResponse || 'Failed to complete operation. Please try again.' };
   }
 };

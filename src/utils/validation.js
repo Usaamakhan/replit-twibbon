@@ -64,6 +64,8 @@ export const validateForm = (formData, formType = 'signin') => {
   };
 };
 
+// @deprecated: Use centralized error handling from utils/firebaseErrorHandler.js instead
+// This function is kept for backward compatibility but will be removed in future versions
 // Firebase error code to user-friendly message mapping (cleaned up duplicates)
 export const getFirebaseErrorMessage = (errorCode) => {
   const errorMessages = {

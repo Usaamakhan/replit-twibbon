@@ -16,8 +16,14 @@ import {
 } from 'firebase/auth';
 import { useFirebaseOptimized as useFirebase } from '../lib/firebase-optimized';
 import { createUserProfile } from '../lib/firestore';
-import { getFirebaseErrorMessage } from '../utils/validation';
-import { isLikelyNetworkError, getContextualErrorMessage, isOnline } from '../utils/networkUtils';
+import { 
+  handleSignInError, 
+  handleSignUpError, 
+  handlePasswordResetError, 
+  handleEmailVerificationError,
+  handleGoogleSignInError,
+  getPasswordResetSuccessMessage 
+} from '../utils/firebaseErrorHandler';
 
 // Create Auth Context
 const AuthContext = createContext(null);
@@ -107,18 +113,8 @@ export function AuthProvider({ children }) {
       // User state will be automatically updated via onAuthStateChanged
       return { success: true };
     } catch (error) {
-      // Check if this is a network connectivity issue
-      const isNetworkIssue = await isLikelyNetworkError(error);
-      
-      if (isNetworkIssue) {
-        return { 
-          success: false, 
-          error: await getContextualErrorMessage(error, 'Unable to connect to Google. Please check your internet connection and try again.') 
-        };
-      }
-      
-      // For actual authentication errors, show specific user-friendly messages
-      return { success: false, error: getFirebaseErrorMessage(error.code) };
+      // Use centralized error handling for Google sign-in
+      return await handleGoogleSignInError(error);
     }
   };
 
@@ -142,18 +138,8 @@ export function AuthProvider({ children }) {
 
       return { success: true, requiresVerification: true };
     } catch (error) {
-      // Check if this is a network connectivity issue
-      const isNetworkIssue = await isLikelyNetworkError(error);
-      
-      if (isNetworkIssue) {
-        return { 
-          success: false, 
-          error: await getContextualErrorMessage(error, 'Unable to connect. Please check your internet connection and try again.') 
-        };
-      }
-      
-      // For actual Firebase errors, show specific user-friendly messages
-      return { success: false, error: getFirebaseErrorMessage(error.code) };
+      // Use centralized error handling for sign-up
+      return await handleSignUpError(error);
     }
   };
 
@@ -166,57 +152,8 @@ export function AuthProvider({ children }) {
       const result = await signInWithEmailAndPassword(firebase.auth, email, password);
       return { success: true };
     } catch (error) {
-      // Check if this is likely a network connectivity issue
-      const isNetworkIssue = await isLikelyNetworkError(error);
-      
-      if (isNetworkIssue) {
-        return { 
-          success: false, 
-          error: await getContextualErrorMessage(error, 'Unable to connect. Please check your internet connection and try again.') 
-        };
-      }
-      
-      // Check if verbose error messages are enabled (default: true for simple app)
-      const verboseErrors = process.env.NEXT_PUBLIC_AUTH_VERBOSE_ERRORS !== 'false';
-      
-      if (verboseErrors) {
-        // Debug: Log actual error code to understand Firebase behavior
-        if (process.env.NODE_ENV === 'development') {
-          console.log('Firebase signin error code:', error.code);
-        }
-        
-        // Handle modern Firebase authentication errors
-        if (error.code === 'auth/invalid-credential') {
-          // Modern Firebase returns this for most authentication failures (user-not-found, wrong-password)
-          // This is more secure but less specific - provide helpful generic message
-          return { success: false, error: 'Invalid email or password. Please check your credentials and try again.' };
-        } else if (error.code === 'auth/user-not-found') {
-          // Legacy error code - may still occur in some cases
-          return { success: false, error: 'No account found with this email address' };
-        } else if (error.code === 'auth/wrong-password') {
-          // Legacy error code - may still occur in some cases
-          return { success: false, error: 'Incorrect password. If you forgot your password, click "Forgot Password?" below' };
-        } else if (error.code === 'auth/invalid-email') {
-          return { success: false, error: 'Please enter a valid email address' };
-        } else if (error.code === 'auth/user-disabled') {
-          return { success: false, error: 'This account has been disabled. Please contact support.' };
-        } else if (error.code === 'auth/too-many-requests') {
-          return { success: false, error: 'Too many failed attempts. Please try again in a few minutes' };
-        }
-        
-        // For unknown errors, provide a generic helpful message
-        return { success: false, error: 'Sign in failed. Please check your email and password and try again.' };
-      } else {
-        // Security mode: Use generic message to prevent user enumeration
-        if (error.code === 'auth/invalid-email') {
-          return { success: false, error: 'Please enter a valid email address' };
-        } else if (error.code === 'auth/too-many-requests') {
-          return { success: false, error: 'Too many failed attempts. Please try again in a few minutes' };
-        }
-        
-        // Generic message for all authentication errors (including invalid-credential)
-        return { success: false, error: 'Invalid email or password. Please check your credentials and try again.' };
-      }
+      // Use centralized error handling for sign-in
+      return await handleSignInError(error);
     }
   };
 
@@ -241,18 +178,8 @@ export function AuthProvider({ children }) {
     } catch (error) {
       console.error('Error sending verification email:', error);
       
-      // Check if this is a network connectivity issue
-      const isNetworkIssue = await isLikelyNetworkError(error);
-      
-      if (isNetworkIssue) {
-        return { 
-          success: false, 
-          error: await getContextualErrorMessage(error, 'Unable to send verification email. Please check your internet connection and try again.') 
-        };
-      }
-      
-      // For actual Firebase errors, show specific user-friendly messages
-      return { success: false, error: getFirebaseErrorMessage(error.code) };
+      // Use centralized error handling for email verification
+      return await handleEmailVerificationError(error);
     }
   };
 
@@ -277,78 +204,31 @@ export function AuthProvider({ children }) {
       return { success: false, error: 'Authentication is not properly configured.' };
     }
     
-    // Check if verbose error messages are enabled (default: true for simple app)
-    const verboseErrors = process.env.NEXT_PUBLIC_AUTH_VERBOSE_ERRORS !== 'false';
-    
-    if (verboseErrors) {
-      // For simple app with verbose errors, attempt to send password reset email directly
-      try {
-        await sendPasswordResetEmail(firebase.auth, email);
-        return { 
-          success: true, 
-          type: 'success',
-          message: 'Password reset link sent! Check your email and spam folder.' 
-        };
-        
-      } catch (error) {
-        // Debug: Log actual error code to understand Firebase behavior
-        if (process.env.NODE_ENV === 'development') {
-          console.log('Firebase forgot password error code:', error.code);
-        }
-        
-        // Check for network connectivity issues first
-        const isNetworkIssue = await isLikelyNetworkError(error);
-        
-        if (isNetworkIssue) {
-          return { 
-            success: false, 
-            type: 'error', 
-            error: await getContextualErrorMessage(error, 'Unable to connect. Please check your internet connection and try again.') 
-          };
-        }
-        
-        // Handle specific error cases
-        if (error.code === 'auth/invalid-email') {
-          return { success: false, type: 'error', error: 'Please enter a valid email address' };
-        } else if (error.code === 'auth/too-many-requests') {
-          return { success: false, type: 'error', error: 'Too many reset requests. Please wait before trying again' };
-        } else if (error.code === 'auth/user-not-found') {
-          // This may still occur in some Firebase configurations
-          return { success: false, type: 'error', error: 'No account found with this email address' };
-        }
-        
-        // For most modern Firebase setups, sendPasswordResetEmail succeeds even for non-existent users
-        // So if we get here with an unknown error, we'll provide a generic message
-        return { success: false, type: 'error', error: 'Unable to send reset email. Please try again.' };
+    try {
+      await sendPasswordResetEmail(firebase.auth, email);
+      
+      // Return success with appropriate message
+      return { 
+        success: true, 
+        type: 'success',
+        message: getPasswordResetSuccessMessage()
+      };
+      
+    } catch (error) {
+      // Use centralized error handling for password reset
+      const result = await handlePasswordResetError(error);
+      
+      // If centralized handler treats this as success (security mode), return it
+      if (result.success) {
+        return result;
       }
-    } else {
-      // Security mode: Always return success to prevent user enumeration
-      try {
-        await sendPasswordResetEmail(firebase.auth, email);
-        return { 
-          success: true, 
-          type: 'success',
-          message: 'If this email is associated with an account, we\'ve sent a password reset link. Please check your inbox and spam folder.' 
-        };
-      } catch (error) {
-        // Only show specific errors for client-side validation issues
-        if (error.code === 'auth/invalid-email') {
-          return { success: false, type: 'error', error: 'Please enter a valid email address' };
-        } else if (error.code === 'auth/too-many-requests') {
-          return { success: false, type: 'error', error: 'Too many reset requests. Please wait before trying again' };
-        }
-        
-        // For all other errors, return success to prevent enumeration
-        return { 
-          success: true, 
-          type: 'success',
-          message: 'If this email is associated with an account, we\'ve sent a password reset link. Please check your inbox and spam folder.' 
-        };
-      }
+      
+      // Otherwise return the error
+      return result;
     }
   };
 
-  // Note: Using centralized error handling from utils/validation.js
+  // Note: Using centralized Firebase error handling from utils/firebaseErrorHandler.js
 
   const value = {
     user,

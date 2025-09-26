@@ -71,17 +71,24 @@ The website "Frame" (Twibbonize) is designed around **accessibility for everyone
    - Production deployment configured for autoscale with proper build and start commands
    - Import process completed successfully ✅
 
-2. **Authentication Error Handling Fix (September 26, 2025 - COMPLETED)**: Fixed incorrect error messages in authentication system:
-   - **Issue Resolved**: Sign-in page was showing "Incorrect password" for non-existent emails, and forgot-password page was showing "No account found" for existing emails
-   - **Root Cause**: Modern Firebase returns `auth/invalid-credential` for security reasons instead of specific error codes like `auth/user-not-found` or `auth/wrong-password`
+2. **Centralized Firebase Error Handling Refactor (September 26, 2025 - COMPLETED)**: Completely refactored Firebase error handling to a fully centralized approach:
+   - **Issue Resolved**: Inconsistent error handling across authentication functions with hardcoded messages and mixed approaches
+   - **Root Cause**: Error handling was distributed across multiple files with different patterns, leading to inconsistent user experience
    - **Solution Implemented**:
-     - Updated `signInWithEmail` function to properly handle `auth/invalid-credential` as primary error case
-     - Removed flawed user existence pre-check in `forgotPassword` function
-     - Now provides appropriate generic messages: "Invalid email or password" for sign-in failures
-     - Maintains legacy error code support for older Firebase configurations
-     - Enhanced security with proper user enumeration prevention
-   - **Recommendation**: Set `NEXT_PUBLIC_AUTH_VERBOSE_ERRORS=false` in production for enhanced security
-   - Authentication error handling improvements completed successfully ✅
+     - **Created centralized error handler** (`utils/firebaseErrorHandler.js`) with modern Firebase v9+ error codes
+     - **Updated all authentication functions** to use specialized handlers (signIn, signUp, passwordReset, etc.)
+     - **Simplified error messages** to be user-friendly and understandable without technical jargon
+     - **Enhanced security modes** with proper user enumeration prevention in production
+     - **Network error handling** integrated for better connectivity issue detection
+     - **Deprecated old error handler** in validation.js with backward compatibility
+     - **Updated Firestore operations** to use centralized error handling for consistency
+   - **Key Features**:
+     - Handles modern Firebase behavior where `auth/invalid-credential` replaces specific error codes
+     - Simple messages like "Invalid email or password" instead of technical error codes
+     - Automatic verbose (development) vs security (production) mode switching
+     - Consistent error response format across all Firebase operations
+   - **Architect Review**: Passed review - follows best practices with consistent, secure error handling
+   - Centralized Firebase error handling refactor completed successfully ✅
 
 2. **Simple Loading States Implementation (September 25, 2025 - COMPLETED)**: Added appropriate loading states for this simple project:
    - **Global Loading**: Single loading.js file for all routes with consistent "Loading..." message
