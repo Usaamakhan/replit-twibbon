@@ -2,33 +2,77 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     
-    // Users - public profile viewing with field validation
+    // Users - public profile viewing with secure field protection
     match /users/{userId} {
-      allow read: if true; // ✅ Allows public access for profile viewing
-      allow write: if request.auth != null && 
+      allow read: if true; // ✅ Public access as intended
+      
+      // Allow profile updates by owner only
+      allow update: if request.auth != null && 
                    request.auth.uid == userId &&
-                   request.resource.data.keys().hasAll(['email', 'createdAt']) &&
+                   // Only allow specific profile fields to be updated
+                   request.resource.data.diff(resource.data).affectedKeys()
+                     .hasOnly(['bio', 'bannerImage', 'profileImage', 'displayName', 'country', 'username', 'profileCompleted', 'updatedAt']) &&
+                   // Protect system fields from tampering
+                   request.resource.data.email == resource.data.email &&
+                   request.resource.data.createdAt == resource.data.createdAt &&
+                   // Enforce username format when present
                    (!('username' in request.resource.data) || 
                     request.resource.data.username.matches('^[a-z0-9]{3,}$'));
+      
+      // Allow secure counter updates (owner only, incremental only)
+      allow update: if request.auth != null &&
+                   request.auth.uid == userId &&
+                   // Only allow counter fields to be updated
+                   request.resource.data.diff(resource.data).affectedKeys()
+                     .hasOnly(['framesCreated', 'campaignsCount', 'framesUsed', 'updatedAt']) &&
+                   // Protect system fields
+                   request.resource.data.email == resource.data.email &&
+                   request.resource.data.createdAt == resource.data.createdAt &&
+                   // Ensure counters only increase by 1 (prevent manipulation)
+                   (!('framesCreated' in request.resource.data.diff(resource.data).changedKeys()) ||
+                    request.resource.data.framesCreated == resource.data.framesCreated + 1) &&
+                   (!('campaignsCount' in request.resource.data.diff(resource.data).changedKeys()) ||
+                    request.resource.data.campaignsCount == resource.data.campaignsCount + 1) &&
+                   (!('framesUsed' in request.resource.data.diff(resource.data).changedKeys()) ||
+                    request.resource.data.framesUsed == resource.data.framesUsed + 1);
+      
+      allow create: if request.auth != null && request.auth.uid == userId;
+      // Don't allow delete - prevents breaking username mappings
     }
     
-    // Usernames - public username checks with validation  
+    // Usernames - public username checks with format validation  
     match /usernames/{username} {
-      allow read: if true; // ✅ Allows public access for username checking
+      allow read: if true; // ✅ Public access for username checking
       allow create: if request.auth != null && 
                    request.auth.uid == request.resource.data.userId &&
                    username.matches('^[a-z0-9]{3,}$'); // Enforce username format
       allow delete: if request.auth != null && request.auth.uid == resource.data.userId;
     }
     
-    // 🔧 CHANGE THIS: Allow public reading of frames
+    // Frames - public reading with secure usage tracking
     match /frames/{frameId} {
-      allow read: if true; // Changed: Now allows guest users to see frames
+      allow read: if true; // ✅ Public access for guest users
       allow create: if request.auth != null && request.auth.uid == request.resource.data.createdBy;
+      
+      // Allow frame owner full control
       allow update, delete: if request.auth != null && request.auth.uid == resource.data.createdBy;
+      
+      // Allow secure usage tracking by authenticated users
+      allow update: if request.auth != null &&
+                   // Only allow usage tracking fields
+                   request.resource.data.diff(resource.data).affectedKeys()
+                     .hasOnly(['usageCount', 'supporters', 'updatedAt']) &&
+                   // Ensure usageCount only increases by 1
+                   request.resource.data.usageCount == resource.data.usageCount + 1 &&
+                   // Only allow adding self to supporters, no other changes
+                   (let supportersDiff = request.resource.data.supporters.diff(resource.data.supporters);
+                    supportersDiff.removedKeys().size() == 0 &&
+                    supportersDiff.changedKeys().size() == 0 &&
+                    supportersDiff.addedKeys().hasOnly([request.auth.uid]) &&
+                    supportersDiff.addedKeys().size() <= 1);
     }
     
-    // All other documents require authentication but are read-only by default
+    // All other documents require authentication
     match /{document=**} {
       allow read: if request.auth != null;
     }
