@@ -21,10 +21,8 @@ export const useFirebaseOptimized = () => {
   });
 
   useEffect(() => {
-    console.log('Firebase useEffect running, isInitialized:', isInitialized);
     // Only initialize once on the client
     if (isInitialized) {
-      console.log('Firebase already initialized');
       setFirebase({
         app: firebaseApp,
         auth: firebaseAuth,
@@ -38,7 +36,6 @@ export const useFirebaseOptimized = () => {
     // Set timeout to prevent infinite loading
     const timeoutId = setTimeout(() => {
       if (!isInitialized) {
-        console.log('Firebase initialization timeout - setting as not configured');
         setFirebase({
           app: null,
           auth: null,
