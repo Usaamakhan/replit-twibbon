@@ -27,7 +27,7 @@ export default function SignUpPage() {
   // Redirect if already signed in
   useEffect(() => {
     if (user && !authLoading) {
-      router.push('/');
+      router.replace(user.emailVerified ? '/' : '/verify-email');
     }
   }, [user, authLoading, router]);
 
@@ -82,7 +82,7 @@ export default function SignUpPage() {
         formData.get('name')
       );
       if (result.success) {
-        router.push('/');
+        router.replace('/verify-email');
       } else {
         setError(result.error || 'Failed to create account');
       }

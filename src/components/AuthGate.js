@@ -2,6 +2,7 @@
 
 import { useOptionalAuth } from '../hooks/useAuth';
 import EmailVerification from './EmailVerification';
+import PageLoader from './PageLoader';
 
 export default function AuthGate({ children }) {
   
@@ -14,9 +15,13 @@ export default function AuthGate({ children }) {
   
   const { user, loading } = authContext;
   
+  // Show full-screen loader while auth is loading
+  if (loading) {
+    return <PageLoader message="Loading..." />;
+  }
 
   // Show email verification screen for unverified users
-  if (user && !loading && !user.emailVerified) {
+  if (user && !user.emailVerified) {
     return <EmailVerification />;
   }
 
