@@ -40,6 +40,7 @@ export function AuthProvider({ children }) {
     
     // If Firebase is not configured, set loading to false and return
     if (!firebase.isConfigured || !firebase.auth) {
+      console.log('Firebase not configured, setting auth loading to false');
       setLoading(false);
       return;
     }
