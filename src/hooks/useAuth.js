@@ -32,6 +32,7 @@ export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [pendingSignupUserId, setPendingSignupUserId] = useState(null);
+  const [logoutInProgress, setLogoutInProgress] = useState(false);
   const firebase = useFirebase();
   const router = useRouter();
 
@@ -65,6 +66,9 @@ export function AuthProvider({ children }) {
             // Clear pending signup flag if this user was pending (using functional update to always see latest value)
             setPendingSignupUserId(current => current === user.uid ? null : current);
           }
+          
+          // Clear logout in progress flag on any auth state change
+          setLogoutInProgress(false);
           setUser(user);
           setLoading(false);
         });
@@ -96,6 +100,7 @@ export function AuthProvider({ children }) {
         user: null, 
         loading: true, 
         mounted: true,
+        logoutInProgress: false,
         signInWithGoogle: noopAsync, 
         signUpWithEmail: noopAsync, 
         signInWithEmail: noopAsync, 
@@ -172,6 +177,8 @@ export function AuthProvider({ children }) {
 
   const logout = async () => {
     try {
+      // Set logout in progress flag to prevent redirects
+      setLogoutInProgress(true);
       // Clear any pending signup state before signing out
       setPendingSignupUserId(null);
       await signOut(firebase.auth);
@@ -179,6 +186,8 @@ export function AuthProvider({ children }) {
       router.replace('/');
     } catch (error) {
       console.error('Sign-out error:', error);
+      // Clear logout flag on error
+      setLogoutInProgress(false);
     }
   };
 
@@ -249,6 +258,7 @@ export function AuthProvider({ children }) {
     user,
     loading,
     pendingSignupUserId,
+    logoutInProgress,
     mounted: true,
     signInWithGoogle,
     signUpWithEmail,

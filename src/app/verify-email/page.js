@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '../../hooks/useAuth';
 import EmailVerification from '../../components/EmailVerification';
@@ -8,19 +8,40 @@ import PageLoader from '../../components/PageLoader';
 
 export default function VerifyEmailPage() {
   const router = useRouter();
-  const { user, loading, pendingSignupUserId } = useAuth();
+  const { user, loading, pendingSignupUserId, logoutInProgress } = useAuth();
+  const safetyTimeoutRef = useRef(null);
 
   useEffect(() => {
     // Redirect to homepage if user is verified
     if (user && !loading && user.emailVerified) {
       router.replace('/');
+      return;
     }
-    // Only redirect to signin if auth is done loading, there's no user, AND no pending signup
-    // This prevents the race condition during signup flow
-    if (!loading && !user && !pendingSignupUserId) {
-      router.replace('/signin');
+    
+    // Clear any existing safety timeout
+    if (safetyTimeoutRef.current) {
+      clearTimeout(safetyTimeoutRef.current);
+      safetyTimeoutRef.current = null;
     }
-  }, [user, loading, pendingSignupUserId, router]);
+    
+    // Only redirect to signin if auth is done loading, there's no user, no pending signup,
+    // AND logout is not in progress (prevents redirect override on intentional logout)
+    if (!loading && !user && !pendingSignupUserId && !logoutInProgress) {
+      // Add safety fallback with debounce to avoid stuck loader state
+      safetyTimeoutRef.current = setTimeout(() => {
+        router.replace('/signin');
+      }, 500);
+    }
+  }, [user, loading, pendingSignupUserId, logoutInProgress, router]);
+
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (safetyTimeoutRef.current) {
+        clearTimeout(safetyTimeoutRef.current);
+      }
+    };
+  }, []);
 
   // Show loader while auth is loading
   if (loading) {
