@@ -19,6 +19,8 @@ export default function OnboardingPage() {
   const [errors, setErrors] = useState({});
   const [usernameStatus, setUsernameStatus] = useState(null); // 'checking', 'available', 'taken', 'unchanged'
   const [originalUsername, setOriginalUsername] = useState('');
+  const [userData, setUserData] = useState(null);
+  const [hasChanges, setHasChanges] = useState(false);
   const usernameCheckTimeoutRef = useRef(null);
   const usernameRequestIdRef = useRef(0);
   
@@ -58,24 +60,43 @@ export default function OnboardingPage() {
     };
   }, []);
 
-  // Load actual username from Firestore when component mounts
+  // Load user data when component mounts - same as profile/edit page
   useEffect(() => {
     const loadUserData = async () => {
       if (!user) return;
       
       try {
         const userProfile = await getUserProfile(user.uid);
-        if (userProfile && userProfile.username) {
-          // User already has a stored username, use that
-          setFormData(prev => ({ ...prev, username: userProfile.username }));
-          setOriginalUsername(userProfile.username);
-          setUsernameStatus('unchanged'); // It's their existing username
+        if (userProfile) {
+          // User has existing profile data, prefill everything
+          setUserData(userProfile);
+          setFormData({
+            username: userProfile.username || '',
+            displayName: userProfile.displayName || user?.displayName || '',
+            country: userProfile.country || '',
+            profilePic: null,
+            profilePicPreview: userProfile.profileImage || user?.photoURL || '',
+            profileBanner: null,
+            profileBannerPreview: userProfile.bannerImage || '',
+            bio: userProfile.bio || ''
+          });
+          setOriginalUsername(userProfile.username || '');
+          setUsernameStatus('unchanged');
         } else {
-          // No stored username, initialize from display name/email
+          // No existing profile, use auth data as fallback
           const initialUsername = user?.displayName?.toLowerCase().replace(/[^a-z0-9]/g, '') || 
                                 user?.email?.split('@')[0]?.toLowerCase().replace(/[^a-z0-9]/g, '') || 
                                 'user123';
-          setFormData(prev => ({ ...prev, username: initialUsername }));
+          setFormData({
+            username: initialUsername,
+            displayName: user?.displayName || '',
+            country: '',
+            profilePic: null,
+            profilePicPreview: user?.photoURL || '',
+            profileBanner: null,
+            profileBannerPreview: '',
+            bio: ''
+          });
           // Check if this initial username is available
           checkUsernameAvailability(initialUsername);
         }
@@ -83,11 +104,20 @@ export default function OnboardingPage() {
         if (process.env.NODE_ENV === 'development') {
           console.error('Error loading user data:', error);
         }
-        // Fallback to display name/email
+        // Fallback to auth data
         const fallbackUsername = user?.displayName?.toLowerCase().replace(/[^a-z0-9]/g, '') || 
                                 user?.email?.split('@')[0]?.toLowerCase().replace(/[^a-z0-9]/g, '') || 
                                 'user123';
-        setFormData(prev => ({ ...prev, username: fallbackUsername }));
+        setFormData({
+          username: fallbackUsername,
+          displayName: user?.displayName || '',
+          country: '',
+          profilePic: null,
+          profilePicPreview: user?.photoURL || '',
+          profileBanner: null,
+          profileBannerPreview: '',
+          bio: ''
+        });
         checkUsernameAvailability(fallbackUsername);
       }
     };
@@ -139,8 +169,34 @@ export default function OnboardingPage() {
     }, 500); // 500ms debounce
   };
 
+  // Check if form has changes compared to original data
+  const checkForChanges = (currentFormData) => {
+    if (!userData) {
+      // If no existing userData, check if any field has meaningful content
+      const hasContent = currentFormData.username.trim() || 
+                        currentFormData.displayName.trim() || 
+                        currentFormData.country || 
+                        currentFormData.profilePicPreview !== (user?.photoURL || '') ||
+                        currentFormData.profileBannerPreview ||
+                        currentFormData.bio.trim();
+      setHasChanges(hasContent);
+      return;
+    }
+    
+    // Compare with existing userData
+    const hasChanged = currentFormData.username !== (userData.username || '') ||
+                      currentFormData.displayName !== (userData.displayName || user?.displayName || '') ||
+                      currentFormData.country !== (userData.country || '') ||
+                      currentFormData.profilePicPreview !== (userData.profileImage || user?.photoURL || '') ||
+                      currentFormData.profileBannerPreview !== (userData.bannerImage || '') ||
+                      currentFormData.bio !== (userData.bio || '');
+    
+    setHasChanges(hasChanged);
+  };
+
   const handleInputChange = (field, value) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+    const newFormData = { ...formData, [field]: value };
+    setFormData(newFormData);
     if (errors[field]) {
       setErrors(prev => ({ ...prev, [field]: '' }));
     }
@@ -149,6 +205,9 @@ export default function OnboardingPage() {
     if (field === 'username') {
       checkUsernameAvailability(value);
     }
+    
+    // Check for changes
+    checkForChanges(newFormData);
   };
 
   const handleFileChange = (field, file, previewField) => {
@@ -184,11 +243,14 @@ export default function OnboardingPage() {
     // File is valid, proceed with reading
     const reader = new FileReader();
     reader.onload = (e) => {
-      setFormData(prev => ({
-        ...prev,
+      const newFormData = {
+        ...formData,
         [field]: file,
         [previewField]: e.target.result
-      }));
+      };
+      setFormData(newFormData);
+      // Check for changes
+      checkForChanges(newFormData);
     };
     reader.readAsDataURL(file);
   };
@@ -201,11 +263,12 @@ export default function OnboardingPage() {
       return; // User cancelled, don't remove the image
     }
     
-    setFormData(prev => ({
-      ...prev,
+    const newFormData = {
+      ...formData,
       [field]: null,
       [previewField]: ''
-    }));
+    };
+    setFormData(newFormData);
     
     // Clear the file input value to allow re-uploading the same file
     const inputRef = field === 'profilePic' ? profilePicRef : profileBannerRef;
@@ -218,6 +281,9 @@ export default function OnboardingPage() {
     if (errors[fileErrorKey]) {
       setErrors(prev => ({ ...prev, [fileErrorKey]: '' }));
     }
+    
+    // Check for changes
+    checkForChanges(newFormData);
   };
 
   const scrollToField = (fieldName) => {
@@ -597,8 +663,14 @@ export default function OnboardingPage() {
                 <button
                   type="button"
                   onClick={handleComplete}
-                  disabled={loading || usernameStatus === 'checking'}
-                  className="bg-emerald-600 text-white px-8 py-3 rounded-lg hover:bg-emerald-700 hover-zoom font-medium disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                  disabled={loading || usernameStatus === 'checking' || !hasChanges}
+                  className={`px-8 py-3 rounded-lg font-medium transition-all duration-300 ${
+                    !hasChanges 
+                      ? 'bg-gray-300 text-gray-500 cursor-not-allowed' 
+                      : loading || usernameStatus === 'checking'
+                        ? 'bg-emerald-600 text-white opacity-50 cursor-not-allowed'
+                        : 'bg-emerald-600 text-white hover:bg-emerald-700 hover-zoom cursor-pointer'
+                  }`}
                 >
                   {loading ? 'Setting up...' : usernameStatus === 'checking' ? 'Checking username...' : 'Complete Setup'}
                 </button>

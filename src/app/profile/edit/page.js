@@ -20,6 +20,7 @@ export default function ProfileEditPage() {
   const [usernameStatus, setUsernameStatus] = useState(null); // 'checking', 'available', 'taken', 'unchanged'
   const [originalUsername, setOriginalUsername] = useState('');
   const [userData, setUserData] = useState(null);
+  const [hasChanges, setHasChanges] = useState(false);
   const usernameCheckTimeoutRef = useRef(null);
   const usernameRequestIdRef = useRef(0);
   
@@ -136,8 +137,27 @@ export default function ProfileEditPage() {
     }, 500); // 500ms debounce
   };
 
+  // Check if form has changes compared to original data
+  const checkForChanges = (currentFormData) => {
+    if (!userData) {
+      setHasChanges(false);
+      return;
+    }
+    
+    // Compare with existing userData
+    const hasChanged = currentFormData.username !== (userData.username || '') ||
+                      currentFormData.displayName !== (userData.displayName || '') ||
+                      currentFormData.country !== (userData.country || '') ||
+                      currentFormData.profilePicPreview !== (userData.profileImage || '') ||
+                      currentFormData.profileBannerPreview !== (userData.bannerImage || '') ||
+                      currentFormData.bio !== (userData.bio || '');
+    
+    setHasChanges(hasChanged);
+  };
+
   const handleInputChange = (field, value) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+    const newFormData = { ...formData, [field]: value };
+    setFormData(newFormData);
     if (errors[field]) {
       setErrors(prev => ({ ...prev, [field]: '' }));
     }
@@ -146,6 +166,9 @@ export default function ProfileEditPage() {
     if (field === 'username') {
       checkUsernameAvailability(value);
     }
+    
+    // Check for changes
+    checkForChanges(newFormData);
   };
 
   const handleFileChange = (field, file, previewField) => {
@@ -181,11 +204,14 @@ export default function ProfileEditPage() {
     // File is valid, proceed with reading
     const reader = new FileReader();
     reader.onload = (e) => {
-      setFormData(prev => ({
-        ...prev,
+      const newFormData = {
+        ...formData,
         [field]: file,
         [previewField]: e.target.result
-      }));
+      };
+      setFormData(newFormData);
+      // Check for changes
+      checkForChanges(newFormData);
     };
     reader.readAsDataURL(file);
   };
@@ -198,11 +224,12 @@ export default function ProfileEditPage() {
       return; // User cancelled, don't remove the image
     }
     
-    setFormData(prev => ({
-      ...prev,
+    const newFormData = {
+      ...formData,
       [field]: null,
       [previewField]: ''
-    }));
+    };
+    setFormData(newFormData);
     
     // Clear the file input value to allow re-uploading the same file
     const inputRef = field === 'profilePic' ? profilePicRef : profileBannerRef;
@@ -215,6 +242,9 @@ export default function ProfileEditPage() {
     if (errors[fileErrorKey]) {
       setErrors(prev => ({ ...prev, [fileErrorKey]: '' }));
     }
+    
+    // Check for changes
+    checkForChanges(newFormData);
   };
 
   const scrollToField = (fieldName) => {
@@ -604,8 +634,14 @@ export default function ProfileEditPage() {
                 <button
                   type="button"
                   onClick={handleSave}
-                  disabled={loading || usernameStatus === 'checking'}
-                  className="bg-emerald-600 text-white px-8 py-3 rounded-lg hover:bg-emerald-700 hover-zoom font-medium disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                  disabled={loading || usernameStatus === 'checking' || !hasChanges}
+                  className={`px-8 py-3 rounded-lg font-medium transition-all duration-300 ${
+                    !hasChanges 
+                      ? 'bg-gray-300 text-gray-500 cursor-not-allowed' 
+                      : loading || usernameStatus === 'checking'
+                        ? 'bg-emerald-600 text-white opacity-50 cursor-not-allowed'
+                        : 'bg-emerald-600 text-white hover:bg-emerald-700 hover-zoom cursor-pointer'
+                  }`}
                 >
                   {loading ? 'Saving...' : usernameStatus === 'checking' ? 'Checking username...' : 'Save Changes'}
                 </button>
