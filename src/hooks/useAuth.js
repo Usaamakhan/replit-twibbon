@@ -172,9 +172,11 @@ export function AuthProvider({ children }) {
 
   const logout = async () => {
     try {
+      // Clear any pending signup state before signing out
+      setPendingSignupUserId(null);
       await signOut(firebase.auth);
-      // Redirect to homepage after successful logout
-      router.push('/');
+      // Use replace instead of push to prevent back button issues
+      router.replace('/');
     } catch (error) {
       console.error('Sign-out error:', error);
     }
