@@ -2,6 +2,15 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     
+    // Helper function for supporters validation
+    function isValidSupporterUpdate() {
+      let supportersDiff = request.resource.data.supporters.diff(resource.data.supporters);
+      return supportersDiff.removedKeys().size() == 0 &&
+             supportersDiff.changedKeys().size() == 0 &&
+             supportersDiff.addedKeys().hasOnly([request.auth.uid]) &&
+             supportersDiff.addedKeys().size() <= 1;
+    }
+    
     // Users - public profile viewing with secure field protection
     match /users/{userId} {
       allow read: if true; // ✅ Public access as intended
@@ -64,12 +73,8 @@ service cloud.firestore {
                      .hasOnly(['usageCount', 'supporters', 'updatedAt']) &&
                    // Ensure usageCount only increases by 1
                    request.resource.data.usageCount == resource.data.usageCount + 1 &&
-                   // Only allow adding self to supporters, no other changes
-                   (let supportersDiff = request.resource.data.supporters.diff(resource.data.supporters);
-                    supportersDiff.removedKeys().size() == 0 &&
-                    supportersDiff.changedKeys().size() == 0 &&
-                    supportersDiff.addedKeys().hasOnly([request.auth.uid]) &&
-                    supportersDiff.addedKeys().size() <= 1);
+                   // Use helper function for supporters validation
+                   isValidSupporterUpdate();
     }
     
     // All other documents require authentication
