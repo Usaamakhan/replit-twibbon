@@ -7,7 +7,7 @@ export default function NotFound() {
       justifyContent: 'center',
       fontFamily: 'system-ui, -apple-system, Arial, sans-serif',
       padding: '20px',
-      backgroundColor: '#fbbf24'
+      backgroundColor: 'white'
     }}>
       <div style={{ 
         textAlign: 'center',
