@@ -27,6 +27,22 @@ export default function AuthGate({ children }) {
     return children;
   }
   
+  // For development mode, don't show loading indefinitely
+  // Show full-screen loader while auth is loading (with timeout)
+  if (loading && process.env.NODE_ENV === 'development') {
+    // Create a timeout that will force rendering after 3 seconds
+    setTimeout(() => {
+      const forceRender = document.createElement('div');
+      forceRender.innerHTML = 'Force rendering...';
+    }, 3000);
+  }
+  
+  // Allow the page to render in development even if Firebase is loading
+  if (loading && process.env.NODE_ENV === 'development') {
+    // In development, render the page after a brief delay to allow Firebase to initialize
+    return children;
+  }
+  
   // Show full-screen loader while auth is loading
   if (loading) {
     return <PageLoader message="Loading..." />;

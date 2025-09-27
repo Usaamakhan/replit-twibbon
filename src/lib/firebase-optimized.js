@@ -21,8 +21,10 @@ export const useFirebaseOptimized = () => {
   });
 
   useEffect(() => {
+    console.log('Firebase useEffect running, isInitialized:', isInitialized);
     // Only initialize once on the client
     if (isInitialized) {
+      console.log('Firebase already initialized');
       setFirebase({
         app: firebaseApp,
         auth: firebaseAuth,
@@ -36,6 +38,7 @@ export const useFirebaseOptimized = () => {
     // Set timeout to prevent infinite loading
     const timeoutId = setTimeout(() => {
       if (!isInitialized) {
+        console.log('Firebase initialization timeout - setting as not configured');
         setFirebase({
           app: null,
           auth: null,
@@ -45,7 +48,7 @@ export const useFirebaseOptimized = () => {
         });
         isInitialized = true;
       }
-    }, 3000);
+    }, 2000);
 
     const initializeFirebase = () => {
       try {
@@ -54,8 +57,11 @@ export const useFirebaseOptimized = () => {
         const projectId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
         const appId = process.env.NEXT_PUBLIC_FIREBASE_APP_ID;
 
+        // Check if Firebase should be disabled
         if (!apiKey || !projectId || !appId || 
-            apiKey === 'not needed' || projectId === 'not needed' || appId === 'not needed') {
+            apiKey === 'not needed' || projectId === 'not needed' || appId === 'not needed' ||
+            apiKey === '' || projectId === '' || appId === '') {
+          console.log('Firebase disabled - no valid configuration found');
           setFirebase({
             app: null,
             auth: null,
@@ -64,6 +70,7 @@ export const useFirebaseOptimized = () => {
             isConfigured: false
           });
           isInitialized = true;
+          clearTimeout(timeoutId);
           return;
         }
 
