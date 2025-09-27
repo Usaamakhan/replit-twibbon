@@ -32,7 +32,9 @@ export default function RootLayout({ children }) {
           <TimeoutWrapper timeout={15000}>
             <ClientAuthProvider>
               <AuthenticatedLayout>
-                {children}
+                <AuthGate>
+                  {children}
+                </AuthGate>
               </AuthenticatedLayout>
             </ClientAuthProvider>
           </TimeoutWrapper>

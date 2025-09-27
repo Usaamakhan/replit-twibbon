@@ -12,11 +12,11 @@ export default function Header({ isMenuOpen, setIsMenuOpen }) {
   };
 
   return (
-    <header className="bg-white text-gray-900 py-4 sm:py-5 md:py-6 border-b border-gray-200 relative z-40">
+    <header className="bg-yellow-400 text-black py-4 sm:py-5 md:py-6 border-0 shadow-none relative z-40">
       <div className="mx-auto w-full max-w-screen-xl px-3 sm:px-4 md:px-6 flex items-center justify-between">
         <Link 
           href="/" 
-          className={`${caveat.className} text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 hover:text-gray-700 transition-colors duration-200`}
+          className={`${caveat.className} text-2xl sm:text-3xl md:text-4xl font-bold text-emerald-700 hover:text-emerald-800 transition-colors duration-200`}
         >
           Frame
         </Link>
@@ -24,11 +24,11 @@ export default function Header({ isMenuOpen, setIsMenuOpen }) {
           <input
             type="text"
             placeholder="Search"
-            className="w-full px-3 py-2 pr-8 rounded-lg bg-gray-100 text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-gray-400 text-sm border-0"
+            className="w-full px-3 py-2 pr-8 rounded-full bg-white text-black placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-emerald-700 text-sm"
           />
           <button 
             onClick={handleSearch}
-            className="absolute right-2 top-1/2 transform -translate-y-1/2 cursor-pointer hover:text-gray-700 transition-colors duration-200"
+            className="absolute right-2 top-1/2 transform -translate-y-1/2 cursor-pointer hover:text-emerald-700 transition-colors duration-200"
           >
             <svg 
               className="w-4 h-4 text-gray-500" 
@@ -48,7 +48,7 @@ export default function Header({ isMenuOpen, setIsMenuOpen }) {
         <div className="relative">
           <button
             onClick={() => setIsMenuOpen(!isMenuOpen)}
-            className="p-2 rounded-lg bg-gray-100 hover:bg-gray-200 transition-colors duration-200 relative z-50"
+            className="p-2 rounded-full bg-white hover:bg-gray-100 transition-colors duration-200 relative z-50"
           >
             <svg 
               className="w-6 h-6 text-black" 

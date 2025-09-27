@@ -33,14 +33,28 @@ export const useFirebaseOptimized = () => {
       return;
     }
 
+    // Set timeout to prevent infinite loading
+    const timeoutId = setTimeout(() => {
+      if (!isInitialized) {
+        setFirebase({
+          app: null,
+          auth: null,
+          db: null,
+          isLoading: false,
+          isConfigured: false
+        });
+        isInitialized = true;
+      }
+    }, 2000);
+
     const initializeFirebase = () => {
       try {
-        // Check environment variables immediately
+        // Check environment variables
         const apiKey = process.env.NEXT_PUBLIC_FIREBASE_API_KEY;
         const projectId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
         const appId = process.env.NEXT_PUBLIC_FIREBASE_APP_ID;
 
-        // Check if Firebase should be disabled - immediate response
+        // Check if Firebase should be disabled
         if (!apiKey || !projectId || !appId || 
             apiKey === 'not needed' || projectId === 'not needed' || appId === 'not needed' ||
             apiKey === '' || projectId === '' || appId === '') {
@@ -53,6 +67,7 @@ export const useFirebaseOptimized = () => {
             isConfigured: false
           });
           isInitialized = true;
+          clearTimeout(timeoutId);
           return;
         }
 
@@ -77,6 +92,7 @@ export const useFirebaseOptimized = () => {
           isLoading: false,
           isConfigured: true
         });
+        clearTimeout(timeoutId);
       } catch (error) {
         console.error('Firebase initialization failed:', error);
         setFirebase({
@@ -87,11 +103,16 @@ export const useFirebaseOptimized = () => {
           isConfigured: false
         });
         isInitialized = true;
+        clearTimeout(timeoutId);
       }
     };
 
-    // Initialize immediately
+    // Initialize immediately without dynamic imports
     initializeFirebase();
+
+    return () => {
+      clearTimeout(timeoutId);
+    };
   }, []);
 
   return firebase;
