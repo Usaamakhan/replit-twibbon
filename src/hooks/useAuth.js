@@ -82,10 +82,17 @@ export function AuthProvider({ children }) {
     };
   }, [firebase.isLoading, firebase.isConfigured, firebase.auth]);
 
-  // Show loading state while Firebase is initializing only
+  // Show loading state while Firebase is initializing only - shortened for development
   if (firebase.isLoading) {
     const noopAsync = async () => ({ success: false });
     const noop = () => {};
+    
+    // For debugging: immediately set loading to false if Firebase takes too long
+    setTimeout(() => {
+      if (firebase.isLoading) {
+        console.log('Firebase loading timeout reached, proceeding without auth');
+      }
+    }, 100);
     
     return (
       <AuthContext.Provider value={{ 

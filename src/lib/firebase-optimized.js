@@ -33,7 +33,7 @@ export const useFirebaseOptimized = () => {
       return;
     }
 
-    // Set timeout to prevent infinite loading
+    // Set timeout to prevent infinite loading - much shorter for development
     const timeoutId = setTimeout(() => {
       if (!isInitialized) {
         setFirebase({
@@ -45,7 +45,7 @@ export const useFirebaseOptimized = () => {
         });
         isInitialized = true;
       }
-    }, 3000);
+    }, 500);
 
     const initializeFirebase = () => {
       try {
@@ -56,6 +56,7 @@ export const useFirebaseOptimized = () => {
 
         if (!apiKey || !projectId || !appId || 
             apiKey === 'not needed' || projectId === 'not needed' || appId === 'not needed') {
+          console.log('Firebase environment variables not configured, running without Firebase authentication');
           setFirebase({
             app: null,
             auth: null,
@@ -64,6 +65,7 @@ export const useFirebaseOptimized = () => {
             isConfigured: false
           });
           isInitialized = true;
+          clearTimeout(timeoutId);
           return;
         }
 
