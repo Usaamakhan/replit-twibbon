@@ -40,7 +40,6 @@ export function AuthProvider({ children }) {
     
     // If Firebase is not configured, set loading to false and return
     if (!firebase.isConfigured || !firebase.auth) {
-      console.log('Firebase not configured, setting auth loading to false');
       setLoading(false);
       return;
     }
@@ -83,17 +82,10 @@ export function AuthProvider({ children }) {
     };
   }, [firebase.isLoading, firebase.isConfigured, firebase.auth]);
 
-  // Show loading state while Firebase is initializing only - shortened for development
+  // Show loading state while Firebase is initializing only
   if (firebase.isLoading) {
     const noopAsync = async () => ({ success: false });
     const noop = () => {};
-    
-    // For debugging: immediately set loading to false if Firebase takes too long
-    setTimeout(() => {
-      if (firebase.isLoading) {
-        console.log('Firebase loading timeout reached, proceeding without auth');
-      }
-    }, 100);
     
     return (
       <AuthContext.Provider value={{ 
