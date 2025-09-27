@@ -31,6 +31,7 @@ const AuthContext = createContext(null);
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [pendingSignupUserId, setPendingSignupUserId] = useState(null);
   const firebase = useFirebase();
   const router = useRouter();
 
@@ -60,6 +61,9 @@ export function AuthProvider({ children }) {
                 console.error('Error creating user profile:', error);
               }
             }
+            
+            // Clear pending signup flag if this user was pending (using functional update to always see latest value)
+            setPendingSignupUserId(current => current === user.uid ? null : current);
           }
           setUser(user);
           setLoading(false);
@@ -130,6 +134,9 @@ export function AuthProvider({ children }) {
     try {
       const result = await createUserWithEmailAndPassword(firebase.auth, email, password);
       
+      // Set pending signup flag to prevent race condition in verify-email page
+      setPendingSignupUserId(result.user.uid);
+      
       // Update user profile with name
       if (name) {
         await updateProfile(result.user, {
@@ -142,6 +149,8 @@ export function AuthProvider({ children }) {
 
       return { success: true, requiresVerification: true };
     } catch (error) {
+      // Clear pending signup flag on error
+      setPendingSignupUserId(null);
       // Use centralized error handling for sign-up
       return await handleSignUpError(error);
     }
@@ -237,6 +246,7 @@ export function AuthProvider({ children }) {
   const value = {
     user,
     loading,
+    pendingSignupUserId,
     mounted: true,
     signInWithGoogle,
     signUpWithEmail,

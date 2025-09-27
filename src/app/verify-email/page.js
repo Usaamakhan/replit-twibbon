@@ -8,22 +8,28 @@ import PageLoader from '../../components/PageLoader';
 
 export default function VerifyEmailPage() {
   const router = useRouter();
-  const { user, loading } = useAuth();
+  const { user, loading, pendingSignupUserId } = useAuth();
 
   useEffect(() => {
     // Redirect to homepage if user is verified
     if (user && !loading && user.emailVerified) {
       router.replace('/');
     }
-    // Redirect to signin if no user and not loading
-    if (!loading && !user) {
+    // Only redirect to signin if auth is done loading, there's no user, AND no pending signup
+    // This prevents the race condition during signup flow
+    if (!loading && !user && !pendingSignupUserId) {
       router.replace('/signin');
     }
-  }, [user, loading, router]);
+  }, [user, loading, pendingSignupUserId, router]);
 
   // Show loader while auth is loading
   if (loading) {
     return <PageLoader message="Loading..." />;
+  }
+
+  // Show loader while pending signup (waiting for auth state to update)
+  if (pendingSignupUserId) {
+    return <PageLoader message="Setting up your account..." />;
   }
 
   // Show loader while redirecting if no user
