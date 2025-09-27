@@ -1,189 +1,37 @@
 # Twibbonize App - Next.js Project
 
-## Overview
-This is a Next.js 15 application with React 19 and Tailwind CSS, designed to work in the Replit environment. The project was successfully imported from GitHub and configured for optimal performance in Replit's proxy environment.
+### Overview
+This is a Next.js 15 application with React 19 and Tailwind CSS, designed for creating and sharing "Twibbons" (frames for photos). The core purpose is to provide a seamless experience for visitors to discover, use, and download framed photos without requiring account creation. For creators, it offers tools to upload, manage, and track the performance of their custom frames. The project prioritizes accessibility and public transparency, making frame usage and analytics available to all users.
 
-## 🎯 CORE PRODUCT SPECIFICATION & USER FLOW
-**⚠️ CRITICAL: All development decisions must align with this user flow specification ⚠️**
-
-### User Types & Core Philosophy
-The website "Frame" (Twibbonize) is designed around **accessibility for everyone** with two distinct user types:
-
-#### **Visitors (Non-authenticated Users) - Primary Focus**
-- **Discovery**: Homepage displays public gallery of trending frames, filterable by time periods and country
-- **Search**: Global search functionality to find specific frames 
-- **Frame Selection**: Click any frame to view its dedicated page with full details
-- **Usage**: Upload personal photos and automatically overlay frames onto them
-- **Download**: Download final framed photos **WITHOUT requiring account creation** - completely seamless experience
-- **Analytics Access**: View public analytics for any frame (usage stats, popularity, country data)
-
-#### **Creators (Authenticated Users) - Secondary Focus**  
-- **Account Creation**: Required ONLY for uploading custom frames (not for using existing frames)
-- **Frame Upload**: Access dedicated upload page with frame design, naming, descriptions, and tagging
-- **Frame Management**: Personal dashboard to view, edit, delete uploaded frames and track performance
-- **Public Profile**: Creator profiles with their uploaded frames and statistics
-
-### Core Features (Implementation Priority)
-1. **Public Gallery** (Primary Feature)
-   - Heart of the website - displays all publicly available frames
-   - All content and analytics are completely public and accessible without accounts
-   - Primary visitor interaction point
-
-2. **Frame Analytics** (Key Differentiator)
-   - **Completely public** usage statistics for transparency
-   - Track: number of uses, downloads, popularity over time, country-based metrics
-   - Creates engaging, transparent community environment
-
-3. **Trending & Top Creators**
-   - Highlight most popular frames and successful creators
-   - Rankings based on actual usage data
-   - Motivates quality content creation
-
-4. **User Accounts** (Creators Only)
-   - Streamlined system focused on content creation and management tools
-   - Keep simple - only essential features for frame uploading and management
-
-### Development Guidelines Based on User Flow
-- **Visitor Experience Priority**: Any feature should work for non-authenticated users first
-- **Minimal Account Requirements**: Never require accounts unless absolutely necessary (only for frame uploads)
-- **Public-First Design**: All analytics, trending, and discovery features must be publicly accessible
-- **Seamless Frame Usage**: Photo upload → frame overlay → download should be frictionless for visitors
-
-## Project Architecture
-- **Framework**: Next.js 15.5.2 with App Router
-- **UI**: React 19.1.0 with Tailwind CSS 4
-- **Build Tool**: Next.js built-in bundler (Turbopack disabled for compatibility)
-- **Development Server**: Running on port 5000 with host 0.0.0.0
-- **Deployment**: Configured for Replit's autoscale deployment
-
-## Configuration
-- **Host Configuration**: Set to 0.0.0.0:5000 for Replit proxy compatibility
-- **CORS Headers**: Configured to allow cross-origin requests
-- **Cache Control**: Disabled caching for development
-- **Turbopack**: Disabled due to compatibility issues with Replit environment
-
-## Recent Changes (September 27, 2025)
-1. **Fresh GitHub Import Setup (September 27, 2025 - COMPLETED)**: Successfully imported and configured fresh GitHub clone:
-   - Dependencies installed successfully (Next.js 15, React 19, Firebase, Supabase, Tailwind CSS)
-   - Domain configuration updated to current Replit domain (5eaba47e-c8f4-40b7-823d-8d8930cd9c16-00-1qc61smu022ch.spock.replit.dev)
-   - Development server running successfully on port 5000 with host 0.0.0.0
-   - Application tested and verified working in Replit proxy environment
-   - Production deployment configured for autoscale with proper build commands
-   - Homepage loads successfully with full functionality
-   - Import process completed successfully ✅
-
-## Previous Changes (September 27, 2025)
-1. **Password Field UX Improvements (September 27, 2025 - COMPLETED)**: Enhanced password field functionality on authentication pages:
-   - **Issue Addressed**: User requested removal of error icons from signin password field and addition of show/hide password functionality
-   - **Changes Implemented**:
-     - **Signin Page**: Removed validation error icons from password field only while maintaining error styling and messages
-     - **Show/Hide Password**: Added password visibility toggle (eye icon) to both signin and signup pages
-     - **Accessibility Enhanced**: Added proper ARIA labels, aria-pressed states, and titles to toggle buttons
-     - **Focus Management**: Improved keyboard navigation with visible focus rings instead of outline-none
-     - **Layout Optimization**: Positioned toggle buttons to avoid overlap with validation icons on signup page
-   - **Technical Details**:
-     - Signin password field: Simplified to show only toggle button, no validation icons
-     - Signup password field: Maintains both validation icons and toggle button with proper spacing (pr-16, right-8 for toggle, right-3 for validation)
-     - Both pages use showPassword state to toggle input type between "password" and "text"
-     - Proper keyboard accessibility with aria-label, aria-pressed, and title attributes
-   - **Architect Review**: Passed review - implementation meets requirements with proper accessibility practices
-   - Password field UX improvements completed successfully ✅
-
-## Previous Changes (September 26, 2025)
-1. **Fresh GitHub Import Setup (September 26, 2025 - COMPLETED)**: Successfully imported and configured fresh GitHub clone:
-   - Dependencies installed successfully (Next.js 15, React 19, Firebase, Supabase, Tailwind CSS)
-   - Domain configuration updated to current Replit domain (5eaba47e-c8f4-40b7-823d-8d8930cd9c16-00-1qc61smu022ch.spock.replit.dev)
-   - Development server running successfully on port 5000 with host 0.0.0.0
-   - Application tested and verified working in Replit proxy environment
-   - Production deployment configured for autoscale with proper build and start commands
-   - Import process completed successfully ✅
-
-2. **Centralized Firebase Error Handling Refactor (September 26, 2025 - COMPLETED)**: Completely refactored Firebase error handling to a fully centralized approach:
-   - **Issue Resolved**: Inconsistent error handling across authentication functions with hardcoded messages and mixed approaches
-   - **Root Cause**: Error handling was distributed across multiple files with different patterns, leading to inconsistent user experience
-   - **Solution Implemented**:
-     - **Created centralized error handler** (`utils/firebaseErrorHandler.js`) with modern Firebase v9+ error codes
-     - **Updated all authentication functions** to use specialized handlers (signIn, signUp, passwordReset, etc.)
-     - **Simplified error messages** to be user-friendly and understandable without technical jargon
-     - **Enhanced security modes** with proper user enumeration prevention in production
-     - **Network error handling** integrated for better connectivity issue detection
-     - **Deprecated old error handler** in validation.js with backward compatibility
-     - **Updated Firestore operations** to use centralized error handling for consistency
-   - **Key Features**:
-     - Handles modern Firebase behavior where `auth/invalid-credential` replaces specific error codes
-     - Simple messages like "Invalid email or password" instead of technical error codes
-     - Automatic verbose (development) vs security (production) mode switching
-     - Consistent error response format across all Firebase operations
-   - **Architect Review**: Passed review - follows best practices with consistent, secure error handling
-   - Centralized Firebase error handling refactor completed successfully ✅
-
-2. **Simple Loading States Implementation (September 25, 2025 - COMPLETED)**: Added appropriate loading states for this simple project:
-   - **Global Loading**: Single loading.js file for all routes with consistent "Loading..." message
-   - **Essential Components**: Kept only LoadingSpinner and PageLoader components - removed overcomplicated skeleton components
-   - **Server Component Architecture**: Maintained server-side rendering for optimal performance
-   - **Simplified Approach**: Followed principle of not over-engineering for a simple project scope
-   - **Clean Codebase**: Removed unnecessary route-specific loading files and unused components
-   - **User Experience**: Users see appropriate feedback without code bloat
-   - Simple loading implementation completed successfully ✅
-
-## Previous Changes (September 22, 2025)
-1. **Fresh GitHub Import Complete**: Successfully imported fresh project from GitHub
-2. **Dependencies Installed**: All Node.js packages installed successfully (Next.js 15, React 19, Firebase, Supabase, Tailwind CSS) 
-3. **Development Server**: Configured and running on port 5000 with host 0.0.0.0 for Replit proxy compatibility
-4. **Domain Configuration**: Updated allowedDevOrigins with current Replit domain (559d7b3a-ff12-4c31-b6e3-e0924b7a83b3-00-3mtsq23u52pd7.janeway.replit.dev) for cross-origin compatibility
-5. **Workflow Setup**: Next.js Dev Server workflow configured and running successfully
-6. **Production Build Configuration**: Set up for Replit's autoscale deployment with proper build and start commands
-7. **Cross-Origin Configuration**: Added local origins to allowedDevOrigins to prevent cross-origin warnings
-8. **Deployment Ready**: Application fully configured for both development and production deployment on Replit
-9. **GitHub Import Setup**: COMPLETE - Application is ready for development and external service configuration
-10. **Import Process Completed**: All systems verified working, deployment configured, application fully operational in Replit environment
-11. **Fresh Import Setup (September 24, 2025 - COMPLETED)**: Fresh GitHub clone successfully configured for Replit environment:
-    - Dependencies installed (Next.js 15, React 19, Firebase, Supabase, Tailwind CSS)
-    - Domain updated to current Replit domain (6a7e5cab-35a9-4103-86fe-de93ba8fbe6e-00-1sychj9fwnqrm.worf.replit.dev)
-    - Development server running successfully on port 5000 with host 0.0.0.0
-    - Application tested and fully operational in Replit proxy environment
-    - Deployment configured for autoscale production deployment with build and start commands
-    - Environment variables checked - app gracefully handles missing Firebase/Supabase configs
-    - **Product Specification Preserved**: Core user flow and feature specification maintained from previous setup
-    - Import process completed successfully ✅
-11. **Profile Edit Modal Navigation Fixed**: Removed automatic navigation to username page after profile changes - users now stay on current page after editing
-12. **Debug Logging Cleanup**: Removed all debug console.log statements from WelcomePopup, ProfileEditModal, and UserOnboardingWrapper for cleaner codebase
-13. **Global Popup Visibility**: Moved AuthGate (email verification) and UserOnboardingWrapper (welcome popup) to root layout level - these critical onboarding flows now appear on all pages, not just homepage
-15. **Authentication Modal Cleanup (September 24, 2025)**: Removed unused authentication modal components and context system as app now uses dedicated pages for all auth flows (/signin, /signup, /forgot-password)
-16. **Onboarding Page Conversion (September 24, 2025)**: Converted welcome popup modal to dedicated `/onboarding` page while maintaining identical functionality:
-    - Users are automatically redirected to `/onboarding` when profile setup is incomplete
-    - All original features preserved: username validation, profile pictures, country selection, bio
-    - Improved UX with full-page layout instead of modal overlay
-    - Authentication required to access onboarding page
-14. **Authentication UX Improvements (September 23, 2025)**: 
-    - Fixed full-page loading overlays that were hiding authentication forms during sign-in/sign-up actions
-    - Implemented user-friendly error messages replacing technical Firebase error codes
-    - Added yellow background styling to forgot-password success page for consistent design across all auth flows
-    - Enhanced authentication forms to remain visible with button-level loading states only
-
-## Firebase Setup Status - FULLY CONFIGURED ✅
-- **Production Ready**: All Firebase environment variables successfully configured and active
-- **Authentication Active**: Firebase initialized successfully with project "replit-twibbon"
-- **Environment Variables Set**: NEXT_PUBLIC_FIREBASE_API_KEY, NEXT_PUBLIC_FIREBASE_PROJECT_ID, NEXT_PUBLIC_FIREBASE_APP_ID, FIREBASE_SERVICE_ACCOUNT_KEY
-- **Supabase Integration**: NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY configured
-- Authentication provider fully operational with Google sign-in and email/password flows
-- User should add Replit dev domain and production domain to Firebase Console authorized domains
-- AuthProvider gracefully handles both configured and unconfigured states
-
-## Development Workflow
-- **Start Development**: `npm run dev` (automatically configured in workflow)
-- **Build**: `npm run build`
-- **Production**: `npm run start`
-- **Linting**: `npm run lint`
-
-## Production Deployment Notes
-- **Firestore Indexes Required**: Before going live, create these composite indexes in Firebase Console:
-  1. Collection: `frames` - Fields: `createdBy` (ASC), `createdAt` (DESC)
-  2. Collection: `frames` - Fields: `isPublic` (ASC), `createdAt` (DESC)
-- **Domain Configuration**: Add your production domain to Firebase Console authorized domains
-- **Build Verified**: Production build passes successfully with only non-blocking warnings
-
-## User Preferences
+### User Preferences
 - Prefer stability over experimental features
 - Focus on compatibility with Replit environment
 - Maintain clean, working codebase structure
+
+### System Architecture
+The application is built with Next.js 15.5.2 (App Router) and React 19.1.0, styled using Tailwind CSS 4. It's configured for optimal performance within the Replit environment, including specific host and CORS settings.
+
+**Core Features (Implementation Priority):**
+1.  **Public Gallery:** Displays all publicly available frames, serving as the primary visitor interaction point. All content and analytics are publicly accessible.
+2.  **Frame Analytics:** Provides public usage statistics (uses, downloads, popularity over time, country-based metrics) for transparency and community engagement.
+3.  **Trending & Top Creators:** Highlights popular frames and successful creators based on actual usage data.
+4.  **User Accounts (Creators Only):** Streamlined system for frame upload and management.
+
+**Development Guidelines:**
+- Prioritize the visitor experience; features must work for non-authenticated users first.
+- Account requirements are minimal, only for frame uploads.
+- Public-first design for all discovery and analytics features.
+- Seamless frame usage: frictionless photo upload, frame overlay, and download for visitors.
+
+**Technical Implementations:**
+- Centralized Firebase error handling for consistent, secure, and user-friendly error messages.
+- Simple global loading states using `loading.js` for consistent user feedback.
+- Authentication flows utilize dedicated pages (`/signin`, `/signup`, `/forgot-password`) rather than modals.
+- User onboarding (e.g., profile setup) is managed via a dedicated `/onboarding` page, accessible after authentication.
+
+### External Dependencies
+- **Firebase:** Used for authentication (Google sign-in, email/password) and backend services.
+- **Supabase:** Integrated for database functionalities.
+- **Next.js:** Web framework.
+- **React:** UI library.
+- **Tailwind CSS:** For styling and UI development.
