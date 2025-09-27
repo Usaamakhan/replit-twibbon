@@ -26,7 +26,7 @@ export default function SignInPage() {
   // Redirect if already signed in
   useEffect(() => {
     if (user && !authLoading) {
-      router.push('/');
+      router.replace(user.emailVerified ? '/' : '/verify-email');
     }
   }, [user, authLoading, router]);
 
@@ -76,7 +76,7 @@ export default function SignInPage() {
     try {
       const result = await signInWithEmail(formData.get('email'), formData.get('password'));
       if (result.success) {
-        router.push('/');
+        // Will be handled by useEffect redirect based on email verification status
       } else {
         setError(result.error || 'Failed to sign in');
       }
@@ -94,7 +94,7 @@ export default function SignInPage() {
     try {
       const result = await signInWithGoogle();
       if (result.success) {
-        router.push('/');
+        // Will be handled by useEffect redirect based on email verification status
       } else {
         setError(result.error || 'Failed to sign in with Google');
       }
