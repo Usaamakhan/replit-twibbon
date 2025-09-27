@@ -151,6 +151,7 @@ export default function ForgotPasswordPage() {
                 <div className="text-xs text-gray-500 space-y-1 mb-6 bg-gray-50 p-3 rounded-lg">
                   <p>• Check your spam/promotions folder if you don't see it</p>
                   <p>• The reset link will expire in 1 hour</p>
+                  <p>• If you don't receive an email, you may not have an account yet</p>
                 </div>
 
                 <div className="space-y-4">
