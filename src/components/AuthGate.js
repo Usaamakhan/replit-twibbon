@@ -10,19 +10,22 @@ export default function AuthGate({ children }) {
   const pathname = usePathname();
   const authContext = useOptionalAuth();
   
+  // Extract auth data (safe to call even if authContext is null)
+  const user = authContext?.user;
+  const loading = authContext?.loading;
+  
+  // Redirect unverified users to /verify-email (except if already there)
+  // Must be called before any conditional returns
+  useEffect(() => {
+    if (authContext && user && !loading && !user.emailVerified && pathname !== '/verify-email') {
+      router.replace('/verify-email');
+    }
+  }, [authContext, user, loading, pathname, router]);
+  
   // If no auth context, just render children
   if (!authContext) {
     return children;
   }
-  
-  const { user, loading } = authContext;
-  
-  // Redirect unverified users to /verify-email (except if already there)
-  useEffect(() => {
-    if (user && !loading && !user.emailVerified && pathname !== '/verify-email') {
-      router.replace('/verify-email');
-    }
-  }, [user, loading, pathname, router]);
   
   // Show full-screen loader while auth is loading
   if (loading) {
