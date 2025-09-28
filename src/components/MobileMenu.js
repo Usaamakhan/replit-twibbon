@@ -49,7 +49,7 @@ export default function MobileMenu({
         <div className="flex-shrink-0 flex justify-end p-4">
           <button
             onClick={() => setIsMenuOpen(false)}
-            className="p-2 rounded-full hover:bg-gray-100 transition-colors duration-200 cursor-pointer"
+            className="btn-base btn-secondary p-2 rounded-full"
           >
             <svg 
               className="w-6 h-6 text-gray-600" 
@@ -97,7 +97,7 @@ export default function MobileMenu({
                 <div className="py-2 px-4">
                   <button 
                     onClick={handleProfileClick}
-                    className="w-full inline-flex items-center gap-3 py-2 px-3 text-base font-normal text-gray-800 hover:bg-emerald-50 hover:text-emerald-700 rounded-lg transition-colors duration-200 cursor-pointer"
+                    className="w-full btn-base btn-secondary py-2 px-3 gap-3 text-base font-normal text-gray-800 hover:bg-emerald-50 hover:text-emerald-700"
                   >
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />

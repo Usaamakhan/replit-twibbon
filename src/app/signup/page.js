@@ -331,7 +331,7 @@ export default function SignUpPage() {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white rounded-xl py-2 px-4 font-medium transition-all duration-300 hover-zoom hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed shadow-md text-sm"
+                className="w-full btn-base btn-primary py-2 px-4 text-sm"
               >
                 {loading ? 'Creating Account...' : 'Create Account'}
               </button>
@@ -352,7 +352,7 @@ export default function SignUpPage() {
               <button
                 onClick={handleGoogleSignIn}
                 disabled={loading}
-                className="w-full bg-white border border-gray-300 hover:bg-yellow-50 rounded-xl py-2 px-4 flex items-center justify-center gap-3 transition-all duration-300 hover-zoom hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed text-gray-700 font-medium shadow-md text-sm"
+                className="w-full btn-base btn-google py-2 px-4 gap-3 text-sm"
               >
                 <svg className="w-4 h-4 sm:w-5 sm:h-5" viewBox="0 0 24 24" aria-hidden="true">
                   <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
@@ -382,7 +382,7 @@ export default function SignUpPage() {
                 Already have an account? 
                 <button 
                   onClick={() => router.push('/signin')}
-                  className="text-emerald-600 hover:text-emerald-700 hover:underline font-medium ml-1 cursor-pointer transition-all duration-200"
+                  className="btn-link font-medium ml-1"
                 >
                   Sign In
                 </button>

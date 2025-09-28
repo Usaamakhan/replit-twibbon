@@ -476,7 +476,7 @@ export default function OnboardingPage() {
                       <button
                         type="button"
                         onClick={() => profileBannerRef.current?.click()}
-                        className="bg-gray-100 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200 transition-colors cursor-pointer"
+                        className="btn-base btn-secondary px-4 py-2"
                       >
                         {formData.profileBannerPreview ? 'Change Banner Photo' : 'Choose Banner Photo'}
                       </button>
@@ -484,7 +484,7 @@ export default function OnboardingPage() {
                         <button
                           type="button"
                           onClick={() => handleRemoveImage('profileBanner', 'profileBannerPreview')}
-                          className="bg-red-100 text-red-700 px-4 py-2 rounded-lg hover:bg-red-200 transition-colors cursor-pointer"
+                          className="btn-base btn-danger px-4 py-2"
                         >
                           Remove Banner
                         </button>
@@ -529,7 +529,7 @@ export default function OnboardingPage() {
                         <button
                           type="button"
                           onClick={() => profilePicRef.current?.click()}
-                          className="bg-gray-100 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200 transition-colors cursor-pointer"
+                          className="btn-base btn-secondary px-4 py-2"
                         >
                           {formData.profilePicPreview ? 'Change Photo' : 'Choose Photo'}
                         </button>
@@ -537,7 +537,7 @@ export default function OnboardingPage() {
                           <button
                             type="button"
                             onClick={() => handleRemoveImage('profilePic', 'profilePicPreview')}
-                            className="bg-red-100 text-red-700 px-4 py-2 rounded-lg hover:bg-red-200 transition-colors cursor-pointer text-sm"
+                            className="btn-base btn-danger px-4 py-2 text-sm"
                           >
                             Remove Photo
                           </button>
@@ -671,12 +671,12 @@ export default function OnboardingPage() {
                   type="button"
                   onClick={handleComplete}
                   disabled={loading || usernameStatus === 'checking' || !hasChanges}
-                  className={`px-8 py-3 rounded-lg font-medium transition-all duration-300 ${
+                  className={`btn-base px-8 py-3 ${
                     !hasChanges 
                       ? 'bg-gray-300 text-gray-500 cursor-not-allowed' 
                       : loading || usernameStatus === 'checking'
                         ? 'bg-emerald-600 text-white opacity-50 cursor-not-allowed'
-                        : 'bg-emerald-600 text-white hover:bg-emerald-700 hover-zoom cursor-pointer'
+                        : 'btn-primary'
                   }`}
                 >
                   {loading ? 'Setting up...' : usernameStatus === 'checking' ? 'Checking username...' : 'Complete Setup'}
