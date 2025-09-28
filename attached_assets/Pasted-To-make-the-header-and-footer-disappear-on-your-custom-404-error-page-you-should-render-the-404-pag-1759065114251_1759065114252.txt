@@ -1,0 +1,60 @@
+To make the header and footer disappear on your custom 404 error page, you should render the 404 page outside of the main layout component. The layout is typically what includes the header and footer, so by rendering the 404 page separately, you bypass the layout's structure.
+
+The Problem 😕
+In Next.js, when you define a layout component and wrap all your pages with it, that layout will be applied to every page that uses it. This is usually managed in the _app.js or _app.tsx file. Because the custom 404.js or 404.tsx file is treated as another page in your application's file system, it's automatically rendered within the layout, causing the header and footer to appear.
+
+The Solution 💡
+The recommended approach is to modify your _app.js or _app.tsx file to check the current page component and conditionally apply the layout. You can do this by checking for a special property on the page component itself.
+
+Steps to Implement:
+Create a New Layout Property: Define a new property on your page components to indicate whether they need the layout. Let's call it getLayout.
+
+Modify Your _app.js or _app.tsx:
+
+Open your _app.js (or _app.tsx) file.
+
+Change the default component to a function that checks for the getLayout property.
+
+If getLayout exists, use it to render the page with the layout.
+
+If it doesn't exist (like for your 404 page), simply render the page component directly.
+
+Update Your 404 Page (404.js or 404.tsx):
+
+Ensure your 404 page does not have the getLayout property.
+
+It should be a simple component that returns the content for your error page, without being wrapped in the header/footer layout.
+
+Example Code:
+Here's how your _app.js file should look:
+
+JavaScript
+
+import '../styles/globals.css';
+import Layout from '../components/layout'; // assuming your layout is in this path
+
+function MyApp({ Component, pageProps }) {
+  // Check if the page has a layout defined
+  const getLayout = Component.getLayout || ((page) => <Layout>{page}</Layout>);
+
+  return getLayout(<Component {...pageProps} />);
+}
+
+export default MyApp;
+And here's how your pages/404.js file should be:
+
+JavaScript
+
+import React from 'react';
+
+const Custom404 = () => {
+  return (
+    <div style={{ textAlign: 'center', marginTop: '50px' }}>
+      <h1>404 - Page Not Found</h1>
+      <p>Oops! The page you're looking for doesn't exist.</p>
+    </div>
+  );
+};
+
+export default Custom404;
+All other pages that need the header and footer would have a getLayout function, or your main layout would be applied by default as in the example above. This method is a common and robust pattern in Next.js for managing different layouts for different pages, including special pages like 404s.
