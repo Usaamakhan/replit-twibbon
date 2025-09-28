@@ -693,7 +693,7 @@ export default function OnboardingPage() {
         onClose={() => setConfirmModal({ isOpen: false, field: null, previewField: null, imageType: '' })}
         onConfirm={confirmRemoveImage}
         title="Remove Image"
-        message={`Are you sure you want to remove your ${confirmModal.imageType}? This action cannot be undone.`}
+        message={`Are you sure you want to remove your ${confirmModal.imageType}?`}
         confirmText="Remove"
         cancelText="Cancel"
         type="danger"
