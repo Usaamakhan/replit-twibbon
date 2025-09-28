@@ -26,10 +26,6 @@ export default function MobileMenu({
   };
   const router = useRouter();
 
-  const handleProfileClick = () => {
-    router.push('/profile');
-    setIsMenuOpen(false); // Close the menu after navigation
-  };
 
   return (
     <>
@@ -95,15 +91,15 @@ export default function MobileMenu({
                 </div>
               ) : user ? (
                 <div className="py-2 px-4">
-                  <button 
-                    onClick={handleProfileClick}
+                  <a 
+                    href="/profile"
                     className="inline-flex items-center gap-3 py-2 px-3 text-base font-normal text-gray-800 hover:bg-emerald-50 hover:text-emerald-700 rounded-lg transition-colors duration-200"
                   >
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                     </svg>
                     Profile
-                  </button>
+                  </a>
                 </div>
               ) : null}
               
