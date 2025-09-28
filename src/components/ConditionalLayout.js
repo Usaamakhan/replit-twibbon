@@ -5,6 +5,7 @@ import { useState } from 'react';
 import Header from './Header';
 import Footer from './Footer';
 import MobileMenu from './MobileMenu';
+import { useLayoutVisibility } from './LayoutVisibilityContext';
 
 // Pages where header/footer should NOT be shown
 const EXCLUDED_PAGES = [
@@ -18,9 +19,10 @@ const EXCLUDED_PAGES = [
 export default function ConditionalLayout({ children }) {
   const pathname = usePathname();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const { hideChrome } = useLayoutVisibility();
   
   // Check if current page should exclude header/footer
-  const shouldExcludeLayout = EXCLUDED_PAGES.includes(pathname);
+  const shouldExcludeLayout = hideChrome || EXCLUDED_PAGES.includes(pathname);
   
   // If layout should be excluded, just return children
   if (shouldExcludeLayout) {
