@@ -1,5 +1,4 @@
 // User profile route with /u/ prefix to avoid conflicts
-import InteractiveClient from "../../../components/InteractiveClient";
 import ProfilePage from "../../../components/ProfilePage";
 
 export async function generateMetadata({ params }) {
@@ -14,8 +13,6 @@ export default async function UserProfile({ params }) {
   const { username } = await params;
   
   return (
-    <InteractiveClient>
-      <ProfilePage isOwnProfile={false} username={username} />
-    </InteractiveClient>
+    <ProfilePage isOwnProfile={false} username={username} />
   );
 }

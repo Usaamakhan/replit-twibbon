@@ -5,6 +5,7 @@ import ErrorBoundary from "../components/ErrorBoundary";
 import TimeoutWrapper from "../components/TimeoutWrapper";
 import AuthenticatedLayout from "../components/AuthenticatedLayout";
 import AuthGate from "../components/AuthGate";
+import ConditionalLayout from "../components/ConditionalLayout";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -33,7 +34,9 @@ export default function RootLayout({ children }) {
             <ClientAuthProvider>
               <AuthenticatedLayout>
                 <AuthGate>
-                  {children}
+                  <ConditionalLayout>
+                    {children}
+                  </ConditionalLayout>
                 </AuthGate>
               </AuthenticatedLayout>
             </ClientAuthProvider>

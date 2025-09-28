@@ -1,5 +1,4 @@
 // Profile page for the authenticated user
-import InteractiveClient from "../../components/InteractiveClient";
 import ProfilePageWrapper from "../../components/ProfilePageWrapper";
 
 export const metadata = {
@@ -8,9 +7,5 @@ export const metadata = {
 };
 
 export default function Profile() {
-  return (
-    <InteractiveClient>
-      <ProfilePageWrapper isOwnProfile={true} />
-    </InteractiveClient>
-  );
+  return <ProfilePageWrapper isOwnProfile={true} />;
 }
