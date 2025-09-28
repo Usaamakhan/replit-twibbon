@@ -157,7 +157,7 @@ export default function ForgotPasswordPage() {
                 <div className="space-y-4">
                   <button 
                     onClick={() => router.push('/signin')}
-                    className="w-full bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white rounded-xl py-3 px-4 font-medium transition-all duration-300 hover-zoom hover:shadow-lg shadow-md text-sm"
+                    className="btn-base btn-primary w-full py-3 px-4 font-medium text-sm"
                   >
                     Back to Sign In
                   </button>
@@ -167,7 +167,7 @@ export default function ForgotPasswordPage() {
                       Didn't receive the email? 
                       <button 
                         onClick={() => setSuccess(false)}
-                        className="text-emerald-600 hover:text-emerald-700 hover:underline font-medium ml-1 cursor-pointer transition-all duration-200"
+                        className="btn-link font-medium ml-1"
                       >
                         Send another reset link
                       </button>
@@ -276,7 +276,7 @@ export default function ForgotPasswordPage() {
                 Remember your password? 
                 <button 
                   onClick={() => router.push('/signin')}
-                  className="text-emerald-700 hover:text-emerald-800 hover:underline font-medium ml-1 cursor-pointer transition-all duration-200"
+                  className="btn-link font-medium ml-1"
                 >
                   Sign In
                 </button>
