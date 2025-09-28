@@ -69,7 +69,7 @@ export default function EmailVerification() {
             <button
               onClick={handleResendVerification}
               disabled={isResending}
-              className="text-emerald-600 hover:text-emerald-800 underline ml-1 disabled:opacity-50 cursor-pointer disabled:cursor-not-allowed"
+              className="btn-base btn-link ml-1"
             >
               {isResending ? 'sending...' : 'click to resend'}
             </button>
@@ -94,7 +94,7 @@ export default function EmailVerification() {
             <p className="text-sm text-gray-600 text-center">
               <button
                 onClick={logout}
-                className="text-emerald-600 hover:text-emerald-800 underline cursor-pointer"
+                className="btn-base btn-link"
               >
                 Sign out
               </button>

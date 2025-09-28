@@ -85,6 +85,21 @@
   outline-offset: 2px;
 }
 
+/* Warning button styling */
+.btn-warning {
+  background: #eab308; /* yellow-500 */
+  color: white;
+}
+
+.btn-warning:hover {
+  background: #ca8a04; /* yellow-600 */
+}
+
+.btn-warning:focus {
+  outline: 2px solid #facc15; /* yellow-400 focus ring for warning buttons */
+  outline-offset: 2px;
+}
+
 /* Google/Social button styling */
 .btn-google {
   background: white;

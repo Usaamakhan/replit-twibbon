@@ -167,7 +167,7 @@ export default function ForgotPasswordPage() {
                       Didn't receive the email? 
                       <button 
                         onClick={() => setSuccess(false)}
-                        className="btn-link font-medium ml-1"
+                        className="btn-base btn-link font-medium ml-1"
                       >
                         Send another reset link
                       </button>
@@ -265,7 +265,7 @@ export default function ForgotPasswordPage() {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white rounded-xl py-2 px-4 font-medium transition-all duration-300 hover-zoom hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed shadow-md text-sm"
+                className="w-full btn-base btn-primary py-2 px-4 text-sm"
               >
                 {loading ? 'Sending...' : 'Send Reset Link'}
               </button>
@@ -276,7 +276,7 @@ export default function ForgotPasswordPage() {
                 Remember your password? 
                 <button 
                   onClick={() => router.push('/signin')}
-                  className="btn-link font-medium ml-1"
+                  className="btn-base btn-link font-medium ml-1"
                 >
                   Sign In
                 </button>

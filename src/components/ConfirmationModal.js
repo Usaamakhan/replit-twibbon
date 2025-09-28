@@ -86,10 +86,10 @@ export default function ConfirmationModal({
           </button>
           <button
             onClick={handleConfirm}
-            className={`btn-base px-4 py-2 text-sm text-white ${
+            className={`btn-base px-4 py-2 text-sm ${
               type === "danger" 
                 ? "btn-danger" 
-                : "bg-yellow-600 hover:bg-yellow-700"
+                : "btn-warning"
             }`}
           >
             {confirmText}
