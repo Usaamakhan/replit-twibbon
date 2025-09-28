@@ -129,7 +129,7 @@ export default function ProfilePage({ isOwnProfile = false, username = null }) {
           <p className="text-gray-600 mb-6">The profile you're looking for could not be found.</p>
           <button 
             onClick={() => router.push('/')}
-            className="bg-emerald-600 text-white px-6 py-3 rounded-lg hover:bg-emerald-700 transition-colors font-medium"
+            className="btn-base btn-primary px-6 py-3 font-medium"
           >
             Go Back Home
           </button>
@@ -208,7 +208,7 @@ export default function ProfilePage({ isOwnProfile = false, username = null }) {
                   {isOwnProfile && (
                     <button 
                       onClick={() => router.push('/profile/edit')}
-                      className="mt-4 w-full bg-emerald-600 text-white py-2 px-4 rounded-lg hover:bg-emerald-700 transition-colors font-medium cursor-pointer"
+                      className="btn-base btn-primary mt-4 w-full py-2 px-4 font-medium"
                     >
                       Edit Profile
                     </button>
@@ -251,7 +251,7 @@ export default function ProfilePage({ isOwnProfile = false, username = null }) {
                 <div className="flex items-center justify-between mb-6">
                   <h2 className="text-xl font-bold text-gray-900">Campaigns</h2>
                   {isOwnProfile && (
-                    <button className="bg-emerald-600 text-white px-3 py-1.5 rounded-lg hover:bg-emerald-700 transition-colors text-sm font-medium">
+                    <button className="btn-base btn-primary px-3 py-1.5 text-sm font-medium">
                       Create Campaign
                     </button>
                   )}
@@ -287,7 +287,7 @@ export default function ProfilePage({ isOwnProfile = false, username = null }) {
                     <h3 className="text-2xl font-bold text-gray-900 mb-2">No Campaigns Yet</h3>
                     <p className="text-gray-600 mb-6">Create Campaigns, and share to Frame</p>
                     {isOwnProfile && (
-                      <button className="bg-emerald-600 text-white px-4 py-2 rounded-lg hover:bg-emerald-700 transition-colors text-sm font-medium">
+                      <button className="btn-base btn-primary px-4 py-2 text-sm font-medium">
                         Create Your First Campaign
                       </button>
                     )}

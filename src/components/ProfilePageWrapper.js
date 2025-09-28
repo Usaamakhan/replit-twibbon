@@ -35,13 +35,13 @@ function ProfilePageWrapper({ isOwnProfile = false }) {
           <div className="space-y-3">
             <button 
               onClick={() => router.push('/signup')}
-              className="w-full bg-emerald-600 text-white px-6 py-3 rounded-lg hover:bg-emerald-700 transition-colors font-medium"
+              className="btn-base btn-primary w-full px-6 py-3 font-medium"
             >
               Create Account
             </button>
             <button 
               onClick={() => router.push('/signin')}
-              className="w-full border border-emerald-600 text-emerald-600 px-6 py-3 rounded-lg hover:bg-emerald-50 transition-colors font-medium"
+              className="btn-base btn-secondary w-full px-6 py-3 font-medium"
             >
               Sign In
             </button>

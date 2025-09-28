@@ -28,7 +28,7 @@ export default function Header({ isMenuOpen, setIsMenuOpen }) {
           />
           <button 
             onClick={handleSearch}
-            className="absolute right-2 top-1/2 transform -translate-y-1/2 cursor-pointer hover:text-emerald-700 transition-colors duration-200"
+            className="btn-base absolute right-2 top-1/2 transform -translate-y-1/2 p-1 rounded hover:text-emerald-700"
           >
             <svg 
               className="w-4 h-4 text-gray-500" 
@@ -48,7 +48,7 @@ export default function Header({ isMenuOpen, setIsMenuOpen }) {
         <div className="relative">
           <button
             onClick={() => setIsMenuOpen(!isMenuOpen)}
-            className="p-2 rounded-full bg-white hover:bg-gray-100 transition-colors duration-200 relative z-50"
+            className="btn-base btn-secondary p-2 rounded-full relative z-50"
           >
             <svg 
               className="w-6 h-6 text-black" 

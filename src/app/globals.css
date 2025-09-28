@@ -28,7 +28,7 @@
 }
 
 .btn-base:hover {
-  transform: scale(1.05);
+  transform: scale(1.03);
 }
 
 .btn-base:focus {
@@ -132,7 +132,7 @@
 }
 
 .hover-zoom:hover {
-  transform: scale(1.05);
+  transform: scale(1.03);
 }
 
 @media (prefers-color-scheme: dark) {

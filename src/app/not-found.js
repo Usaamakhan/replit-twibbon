@@ -42,17 +42,7 @@ export default function NotFound() {
         </p>
         <a 
           href="/" 
-          style={{ 
-            color: '#047857', 
-            textDecoration: 'none',
-            fontSize: '14px',
-            fontWeight: '600',
-            padding: '10px 20px',
-            border: '2px solid #047857',
-            borderRadius: '9999px',
-            display: 'inline-block',
-            backgroundColor: 'transparent'
-          }}
+          className="btn-base btn-secondary border-2 border-emerald-700 text-emerald-700 px-5 py-2 text-sm font-semibold rounded-full"
         >
           Go to homepage
         </a>
