@@ -6,6 +6,7 @@ import { countries } from '../../data/countries';
 import { useAuth } from '../../hooks/useAuth';
 import { getUserProfile, checkUsernameExists, completeUserProfile } from '../../lib/firestore';
 import { useOptionalUserProfile } from '../../components/UserProfileProvider';
+import ConfirmationModal from '../../components/ConfirmationModal';
 import { Caveat } from "next/font/google";
 import Link from "next/link";
 
@@ -21,6 +22,7 @@ export default function OnboardingPage() {
   const [originalUsername, setOriginalUsername] = useState('');
   const [userData, setUserData] = useState(null);
   const [hasChanges, setHasChanges] = useState(false);
+  const [confirmModal, setConfirmModal] = useState({ isOpen: false, field: null, previewField: null, imageType: '' });
   const usernameCheckTimeoutRef = useRef(null);
   const usernameRequestIdRef = useRef(0);
   
@@ -257,11 +259,16 @@ export default function OnboardingPage() {
 
   const handleRemoveImage = (field, previewField) => {
     const imageType = field === 'profilePic' ? 'profile photo' : 'banner';
-    const confirmed = window.confirm(`Are you sure you want to remove your ${imageType}? This action cannot be undone.`);
-    
-    if (!confirmed) {
-      return; // User cancelled, don't remove the image
-    }
+    setConfirmModal({
+      isOpen: true,
+      field,
+      previewField,
+      imageType
+    });
+  };
+
+  const confirmRemoveImage = () => {
+    const { field, previewField } = confirmModal;
     
     const newFormData = {
       ...formData,
@@ -679,6 +686,18 @@ export default function OnboardingPage() {
           </div>
         </div>
       </div>
+      
+      {/* Confirmation Modal */}
+      <ConfirmationModal
+        isOpen={confirmModal.isOpen}
+        onClose={() => setConfirmModal({ isOpen: false, field: null, previewField: null, imageType: '' })}
+        onConfirm={confirmRemoveImage}
+        title="Remove Image"
+        message={`Are you sure you want to remove your ${confirmModal.imageType}? This action cannot be undone.`}
+        confirmText="Remove"
+        cancelText="Cancel"
+        type="danger"
+      />
     </div>
   );
 }
