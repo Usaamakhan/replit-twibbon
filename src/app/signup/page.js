@@ -380,12 +380,12 @@ export default function SignUpPage() {
             <div className="text-center">
               <p className="text-sm text-gray-500">
                 Already have an account? 
-                <button 
-                  onClick={() => router.push('/signin')}
+                <a 
+                  href="/signin"
                   className="btn-link font-medium ml-1"
                 >
                   Sign In
-                </button>
+                </a>
               </p>
             </div>
             </div>

@@ -267,13 +267,12 @@ export default function SignInPage() {
                   <p className="text-red-600 text-sm mt-1">{validationErrors.password}</p>
                 )}
                 <div className="text-right mt-2">
-                  <button
-                    type="button"
-                    onClick={() => router.push('/forgot-password')}
+                  <a
+                    href="/forgot-password"
                     className="btn-link text-sm font-medium"
                   >
                     Forgot Password?
-                  </button>
+                  </a>
                 </div>
               </div>
               <button
@@ -315,12 +314,12 @@ export default function SignInPage() {
             <div className="text-center">
               <p className="text-sm text-gray-500">
                 Don't have an account? 
-                <button 
-                  onClick={() => router.push('/signup')}
+                <a 
+                  href="/signup"
                   className="btn-link font-medium ml-1"
                 >
                   Sign Up
-                </button>
+                </a>
               </p>
             </div>
             </div>
