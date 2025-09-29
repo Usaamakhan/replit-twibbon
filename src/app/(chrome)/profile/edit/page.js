@@ -19,6 +19,7 @@ export default function ProfileEditPage() {
   const [userData, setUserData] = useState(null);
   const [hasChanges, setHasChanges] = useState(false);
   const [confirmModal, setConfirmModal] = useState({ isOpen: false, field: null, previewField: null, imageType: '' });
+  const [leaveConfirmModal, setLeaveConfirmModal] = useState({ isOpen: false, actionType: null, action: null });
   const usernameCheckTimeoutRef = useRef(null);
   const usernameRequestIdRef = useRef(0);
   
@@ -77,14 +78,18 @@ export default function ProfileEditPage() {
 
     const handlePopState = (e) => {
       if (hasChanges) {
-        const confirmLeave = window.confirm(
-          'You have unsaved changes. Do you want to save them before leaving?\n\nClick "OK" to stay and save your changes, or "Cancel" to leave without saving.'
-        );
-        if (confirmLeave) {
-          // User wants to stay - prevent the back navigation
-          window.history.pushState(null, '', currentUrl);
-        }
-        // If user cancels (wants to leave), let navigation proceed
+        // Prevent the navigation temporarily
+        window.history.pushState(null, '', currentUrl);
+        // Show custom confirmation modal
+        setLeaveConfirmModal({
+          isOpen: true,
+          actionType: 'navigation',
+          action: () => {
+            // User confirmed they want to leave - allow navigation
+            setHasChanges(false);
+            window.history.back();
+          }
+        });
       }
     };
 
@@ -93,12 +98,17 @@ export default function ProfileEditPage() {
         // Check if it's a navigation link
         const target = e.target.closest('a');
         if (target && target.href && target.href !== window.location.href) {
-          const confirmLeave = window.confirm(
-            'You have unsaved changes. Do you want to save them before leaving?\n\nClick "OK" to stay and save your changes, or "Cancel" to leave without saving.'
-          );
-          if (confirmLeave) {
-            e.preventDefault();
-          }
+          e.preventDefault();
+          // Show custom confirmation modal
+          setLeaveConfirmModal({
+            isOpen: true,
+            actionType: 'link',
+            action: () => {
+              // User confirmed they want to leave - navigate to the link
+              setHasChanges(false);
+              window.location.href = target.href;
+            }
+          });
         }
       }
     };
@@ -317,6 +327,17 @@ export default function ProfileEditPage() {
     
     // Check for changes
     checkForChanges(newFormData);
+  };
+
+  const handleLeaveConfirm = () => {
+    if (leaveConfirmModal.action) {
+      leaveConfirmModal.action();
+    }
+    setLeaveConfirmModal({ isOpen: false, actionType: null, action: null });
+  };
+
+  const handleLeaveCancel = () => {
+    setLeaveConfirmModal({ isOpen: false, actionType: null, action: null });
   };
 
   const scrollToField = (fieldName) => {
@@ -724,6 +745,18 @@ export default function ProfileEditPage() {
         confirmText="Remove"
         cancelText="Cancel"
         type="danger"
+      />
+
+      {/* Leave Confirmation Modal */}
+      <ConfirmationModal
+        isOpen={leaveConfirmModal.isOpen}
+        onClose={handleLeaveCancel}
+        onConfirm={handleLeaveConfirm}
+        title="Unsaved Changes"
+        message="You have unsaved changes. Do you want to save them before leaving?"
+        confirmText="Leave Without Saving"
+        cancelText="Stay & Keep Changes"
+        type="warning"
       />
     </div>
   );
