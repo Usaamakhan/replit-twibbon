@@ -571,13 +571,13 @@ export const completeUserProfile = async (userId, profileData) => {
         updatedAt: serverTimestamp(),
       };
 
-      // Handle profile image
-      if (profileData.profileImage) {
+      // Handle profile image - include null values to support removals
+      if (profileData.hasOwnProperty('profileImage')) {
         updateData.profileImage = profileData.profileImage;
       }
 
-      // Handle banner image  
-      if (profileData.bannerImage) {
+      // Handle banner image - include null values to support removals
+      if (profileData.hasOwnProperty('bannerImage')) {
         updateData.bannerImage = profileData.bannerImage;
       }
 

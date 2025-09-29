@@ -361,7 +361,7 @@ export default function OnboardingPage() {
       };
 
       // Handle profile image (in a real app, you'd upload to storage service)
-      if (formData.profilePicPreview !== (userData?.profileImage || user?.photoURL || '')) {
+      if (formData.profilePicPreview !== (userData?.profileImage || user?.photoURL)) {
         // If preview is empty but user had image, user removed it
         // If preview has content different from original, user changed it
         profileData.profileImage = formData.profilePicPreview || null;
