@@ -211,11 +211,6 @@ export default function ProfileEditPage() {
 
   // Check if form has changes compared to original data
   const checkForChanges = (currentFormData) => {
-    if (!userHasEdited) {
-      setHasChanges(false);
-      return;
-    }
-
     if (!initialFormData) {
       setHasChanges(false);
       return;
@@ -289,6 +284,7 @@ export default function ProfileEditPage() {
         [previewField]: e.target.result
       };
       setFormData(newFormData);
+      setUserHasEdited(true); // Mark that user has made edits
       // Check for changes
       checkForChanges(newFormData);
     };
@@ -314,6 +310,7 @@ export default function ProfileEditPage() {
       [previewField]: ''
     };
     setFormData(newFormData);
+    setUserHasEdited(true); // Mark that user has made edits
     
     // Clear the file input value to allow re-uploading the same file
     const inputRef = field === 'profilePic' ? profilePicRef : profileBannerRef;
