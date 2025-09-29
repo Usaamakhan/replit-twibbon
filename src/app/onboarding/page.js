@@ -713,7 +713,7 @@ export default function OnboardingPage() {
                     ref={countryRef}
                     value={formData.country}
                     onChange={(e) => handleInputChange('country', e.target.value)}
-                    className={`w-full pl-4 pr-8 sm:pr-10 py-3 border rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none transition-all text-gray-900 cursor-pointer ${
+                    className={`w-full max-w-xs px-4 py-3 border rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none transition-all text-gray-900 cursor-pointer ${
                       errors.country ? 'border-red-300 bg-red-50' : 'border-gray-300'
                     }`}
                   >
