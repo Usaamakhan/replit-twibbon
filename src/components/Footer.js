@@ -2,6 +2,7 @@
 
 import { Caveat } from "next/font/google";
 import { useState, useRef, useEffect } from "react";
+import Link from "next/link";
 
 const caveat = Caveat({ subsets: ["latin"], weight: ["700"] });
 
@@ -63,9 +64,12 @@ export default function Footer() {
           
           {/* Brand and App Downloads */}
           <div className="lg:col-span-2">
-            <div className={`${caveat.className} text-3xl font-bold text-emerald-700 mb-6`}>
+            <Link 
+              href="/" 
+              className={`${caveat.className} text-3xl font-bold text-emerald-700 hover:text-emerald-800 transition-colors duration-200 mb-6 inline-block`}
+            >
               Frame
-            </div>
+            </Link>
             
             {/* App Download Buttons */}
             <div className="mb-6">
