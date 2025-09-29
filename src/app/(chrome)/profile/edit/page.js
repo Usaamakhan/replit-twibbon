@@ -427,7 +427,7 @@ export default function ProfileEditPage() {
                       <button
                         type="button"
                         onClick={() => profileBannerRef.current?.click()}
-                        className="btn-base btn-secondary px-4 py-2"
+                        className="btn-base btn-secondary px-3 py-1.5 text-sm"
                       >
                         {formData.profileBannerPreview ? 'Change Banner Photo' : 'Choose Banner Photo'}
                       </button>
@@ -435,7 +435,7 @@ export default function ProfileEditPage() {
                         <button
                           type="button"
                           onClick={() => handleRemoveImage('profileBanner', 'profileBannerPreview')}
-                          className="btn-base btn-danger px-4 py-2"
+                          className="btn-base btn-danger px-3 py-1.5 text-sm"
                         >
                           Remove Banner
                         </button>
@@ -480,7 +480,7 @@ export default function ProfileEditPage() {
                         <button
                           type="button"
                           onClick={() => profilePicRef.current?.click()}
-                          className="btn-base btn-secondary px-4 py-2"
+                          className="btn-base btn-secondary px-3 py-1.5 text-sm"
                         >
                           {formData.profilePicPreview ? 'Change Photo' : 'Choose Photo'}
                         </button>
@@ -488,7 +488,7 @@ export default function ProfileEditPage() {
                           <button
                             type="button"
                             onClick={() => handleRemoveImage('profilePic', 'profilePicPreview')}
-                            className="btn-base btn-danger px-4 py-2 text-sm"
+                            className="btn-base btn-danger px-3 py-1.5 text-sm"
                           >
                             Remove Photo
                           </button>
