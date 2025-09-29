@@ -7,10 +7,6 @@ import { useAuth } from '../../hooks/useAuth';
 import { getUserProfile, checkUsernameExists, completeUserProfile } from '../../lib/firestore';
 import { useOptionalUserProfile } from '../../components/UserProfileProvider';
 import ConfirmationModal from '../../components/ConfirmationModal';
-import { Caveat } from "next/font/google";
-import Link from "next/link";
-
-const caveat = Caveat({ subsets: ["latin"], weight: ["700"] });
 
 export default function OnboardingPage() {
   const router = useRouter();
@@ -365,13 +361,17 @@ export default function OnboardingPage() {
       };
 
       // Handle profile image (in a real app, you'd upload to storage service)
-      if (formData.profilePicPreview && formData.profilePicPreview !== user.photoURL) {
-        profileData.profileImage = formData.profilePicPreview;
+      if (formData.profilePicPreview !== (userData?.profileImage || user?.photoURL || '')) {
+        // If preview is empty but user had image, user removed it
+        // If preview has content different from original, user changed it
+        profileData.profileImage = formData.profilePicPreview || null;
       }
 
       // Handle banner image
-      if (formData.profileBannerPreview) {
-        profileData.bannerImage = formData.profileBannerPreview;
+      if (formData.profileBannerPreview !== (userData?.bannerImage || '')) {
+        // If preview is empty but user had banner, user removed it
+        // If preview has content different from original, user changed it
+        profileData.bannerImage = formData.profileBannerPreview || null;
       }
 
       const result = await completeUserProfile(user.uid, profileData);
@@ -414,15 +414,6 @@ export default function OnboardingPage() {
 
   return (
     <div className="min-h-screen bg-white">
-      {/* Frame Logo */}
-      <div className="absolute top-6 left-6 z-50 mb-8">
-        <Link 
-          href="/" 
-          className={`${caveat.className} text-2xl md:text-3xl font-bold text-emerald-700 hover:text-emerald-800 transition-all duration-300 hover:scale-110`}
-        >
-          Frame
-        </Link>
-      </div>
       
       <div className="min-h-screen flex">
         {/* Main Content */}
