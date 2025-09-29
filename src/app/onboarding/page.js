@@ -68,14 +68,6 @@ export default function OnboardingPage() {
 
   // Prevent navigation when there are unsaved changes
   useEffect(() => {
-    const handleBeforeUnload = (e) => {
-      if (hasChanges) {
-        e.preventDefault();
-        e.returnValue = 'You have unsaved changes. Are you sure you want to leave?';
-        return 'You have unsaved changes. Are you sure you want to leave?';
-      }
-    };
-
     const handlePopState = (e) => {
       if (hasChanges) {
         // Prevent the navigation temporarily
@@ -114,12 +106,10 @@ export default function OnboardingPage() {
     };
 
     if (hasChanges) {
-      window.addEventListener('beforeunload', handleBeforeUnload);
       window.addEventListener('popstate', handlePopState);
       document.addEventListener('click', handleLinkClick, true);
       
       return () => {
-        window.removeEventListener('beforeunload', handleBeforeUnload);
         window.removeEventListener('popstate', handlePopState);
         document.removeEventListener('click', handleLinkClick, true);
       };
