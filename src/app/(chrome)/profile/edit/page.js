@@ -712,7 +712,20 @@ export default function ProfileEditPage() {
               <div className="flex justify-between mt-8 pt-6 border-t border-gray-200">
                 <button
                   type="button"
-                  onClick={() => router.push('/profile')}
+                  onClick={() => {
+                    if (hasChanges) {
+                      setLeaveConfirmModal({
+                        isOpen: true,
+                        actionType: 'cancel',
+                        action: () => {
+                          setHasChanges(false);
+                          router.push('/profile');
+                        }
+                      });
+                    } else {
+                      router.push('/profile');
+                    }
+                  }}
                   className="text-gray-600 px-6 py-3 rounded-lg hover:bg-gray-100 transition-colors font-medium cursor-pointer"
                 >
                   Cancel

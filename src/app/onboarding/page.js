@@ -178,7 +178,7 @@ export default function OnboardingPage() {
         const fallbackUsername = user?.displayName?.toLowerCase().replace(/[^a-z0-9]/g, '') || 
                                 user?.email?.split('@')[0]?.toLowerCase().replace(/[^a-z0-9]/g, '') || 
                                 'user123';
-        setFormData({
+        const fallbackData = {
           username: fallbackUsername,
           displayName: user?.displayName || '',
           country: '',
@@ -187,7 +187,9 @@ export default function OnboardingPage() {
           profileBanner: null,
           profileBannerPreview: '',
           bio: ''
-        });
+        };
+        setFormData(fallbackData);
+        setInitialFormData(fallbackData); // Set baseline for change detection
         checkUsernameAvailability(fallbackUsername);
       }
     };
