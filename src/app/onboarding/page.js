@@ -368,7 +368,7 @@ export default function OnboardingPage() {
       }
 
       // Handle banner image
-      if (formData.profileBannerPreview !== (userData?.bannerImage || '')) {
+      if (formData.profileBannerPreview !== userData?.bannerImage) {
         // If preview is empty but user had banner, user removed it
         // If preview has content different from original, user changed it
         profileData.bannerImage = formData.profileBannerPreview || null;
