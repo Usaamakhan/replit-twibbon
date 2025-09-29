@@ -135,7 +135,7 @@ export default function ProfileEditPage() {
         const userProfile = await getUserProfile(user.uid);
         if (userProfile) {
           setUserData(userProfile);
-          setFormData({
+          const initialData = {
             username: userProfile.username || '',
             displayName: userProfile.displayName || '',
             country: userProfile.country || '',
@@ -144,7 +144,9 @@ export default function ProfileEditPage() {
             profileBanner: null,
             profileBannerPreview: userProfile.bannerImage || '',
             bio: userProfile.bio || ''
-          });
+          };
+          setFormData(initialData);
+          setInitialFormData(initialData); // Set baseline for change detection
           setOriginalUsername(userProfile.username || '');
           setUsernameStatus('unchanged');
         }
