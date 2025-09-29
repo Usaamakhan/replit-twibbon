@@ -712,7 +712,7 @@ export default function ProfileEditPage() {
               <div className="flex justify-between mt-8 pt-6 border-t border-gray-200">
                 <button
                   type="button"
-                  onClick={() => router.back()}
+                  onClick={() => router.push('/profile')}
                   className="text-gray-600 px-6 py-3 rounded-lg hover:bg-gray-100 transition-colors font-medium cursor-pointer"
                 >
                   Cancel
