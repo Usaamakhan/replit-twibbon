@@ -247,11 +247,6 @@ export default function OnboardingPage() {
 
   // Check if form has changes compared to original data
   const checkForChanges = (currentFormData) => {
-    if (!userHasEdited) {
-      setHasChanges(false);
-      return;
-    }
-
     if (!initialFormData) {
       setHasChanges(false);
       return;
