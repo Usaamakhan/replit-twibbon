@@ -566,10 +566,16 @@ export const completeUserProfile = async (userId, profileData) => {
         displayName: profileData.displayName || currentData.displayName,
         username: profileData.username || currentData.username,
         country: profileData.country || currentData.country,
-        bio: profileData.bio || currentData.bio || '',
         profileCompleted: true,
         updatedAt: serverTimestamp(),
       };
+
+      // Handle bio - include empty string values to support clearing
+      if (profileData.hasOwnProperty('bio')) {
+        updateData.bio = profileData.bio;
+      } else {
+        updateData.bio = currentData.bio || '';
+      }
 
       // Handle profile image - include null values to support removals
       if (profileData.hasOwnProperty('profileImage')) {
