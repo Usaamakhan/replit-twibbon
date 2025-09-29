@@ -1,5 +1,5 @@
 // User profile route with /u/ prefix to avoid conflicts
-import ProfilePage from "../../../components/ProfilePage";
+import ProfilePage from "../../../../components/ProfilePage";
 
 export async function generateMetadata({ params }) {
   const { username } = await params;

@@ -2,11 +2,11 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { countries } from '../../../data/countries';
-import { useAuth } from '../../../hooks/useAuth';
-import { getUserProfile, checkUsernameExists, updateUserProfile } from '../../../lib/firestore';
-import { useOptionalUserProfile } from '../../../components/UserProfileProvider';
-import ConfirmationModal from '../../../components/ConfirmationModal';
+import { countries } from '../../../../data/countries';
+import { useAuth } from '../../../../hooks/useAuth';
+import { getUserProfile, checkUsernameExists, updateUserProfile } from '../../../../lib/firestore';
+import { useOptionalUserProfile } from '../../../../components/UserProfileProvider';
+import ConfirmationModal from '../../../../components/ConfirmationModal';
 import { Caveat } from "next/font/google";
 import Link from "next/link";
 

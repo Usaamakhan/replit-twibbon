@@ -1,5 +1,5 @@
 // Profile page for the authenticated user
-import ProfilePageWrapper from "../../components/ProfilePageWrapper";
+import ProfilePageWrapper from "../../../components/ProfilePageWrapper";
 
 export const metadata = {
   title: "Profile - Frame Your Voice",
