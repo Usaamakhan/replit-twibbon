@@ -58,6 +58,64 @@ export default function ProfileEditPage() {
     };
   }, []);
 
+  // Track initial URL for proper back button handling
+  const [currentUrl, setCurrentUrl] = useState('');
+  
+  useEffect(() => {
+    setCurrentUrl(window.location.pathname);
+  }, []);
+
+  // Prevent navigation when there are unsaved changes
+  useEffect(() => {
+    const handleBeforeUnload = (e) => {
+      if (hasChanges) {
+        e.preventDefault();
+        e.returnValue = 'You have unsaved changes. Are you sure you want to leave?';
+        return 'You have unsaved changes. Are you sure you want to leave?';
+      }
+    };
+
+    const handlePopState = (e) => {
+      if (hasChanges) {
+        const confirmLeave = window.confirm(
+          'You have unsaved changes. Do you want to save them before leaving?\n\nClick "OK" to stay and save your changes, or "Cancel" to leave without saving.'
+        );
+        if (confirmLeave) {
+          // User wants to stay - prevent the back navigation
+          window.history.pushState(null, '', currentUrl);
+        }
+        // If user cancels (wants to leave), let navigation proceed
+      }
+    };
+
+    const handleLinkClick = (e) => {
+      if (hasChanges) {
+        // Check if it's a navigation link
+        const target = e.target.closest('a');
+        if (target && target.href && target.href !== window.location.href) {
+          const confirmLeave = window.confirm(
+            'You have unsaved changes. Do you want to save them before leaving?\n\nClick "OK" to stay and save your changes, or "Cancel" to leave without saving.'
+          );
+          if (confirmLeave) {
+            e.preventDefault();
+          }
+        }
+      }
+    };
+
+    if (hasChanges) {
+      window.addEventListener('beforeunload', handleBeforeUnload);
+      window.addEventListener('popstate', handlePopState);
+      document.addEventListener('click', handleLinkClick, true);
+      
+      return () => {
+        window.removeEventListener('beforeunload', handleBeforeUnload);
+        window.removeEventListener('popstate', handlePopState);
+        document.removeEventListener('click', handleLinkClick, true);
+      };
+    }
+  }, [hasChanges, currentUrl]);
+
   // Load user data when component mounts
   useEffect(() => {
     const loadUserData = async () => {
@@ -135,20 +193,29 @@ export default function ProfileEditPage() {
     }, 500); // 500ms debounce
   };
 
+  // Track if user has made any edits (not just has content)
+  const [userHasEdited, setUserHasEdited] = useState(false);
+  const [initialFormData, setInitialFormData] = useState(null);
+
   // Check if form has changes compared to original data
   const checkForChanges = (currentFormData) => {
-    if (!userData) {
+    if (!userHasEdited) {
+      setHasChanges(false);
+      return;
+    }
+
+    if (!initialFormData) {
       setHasChanges(false);
       return;
     }
     
-    // Compare with existing userData
-    const hasChanged = currentFormData.username !== (userData.username || '') ||
-                      currentFormData.displayName !== (userData.displayName || '') ||
-                      currentFormData.country !== (userData.country || '') ||
-                      currentFormData.profilePicPreview !== (userData.profileImage || '') ||
-                      currentFormData.profileBannerPreview !== (userData.bannerImage || '') ||
-                      currentFormData.bio !== (userData.bio || '');
+    // Compare with initial form data
+    const hasChanged = currentFormData.username !== initialFormData.username ||
+                      currentFormData.displayName !== initialFormData.displayName ||
+                      currentFormData.country !== initialFormData.country ||
+                      currentFormData.profilePicPreview !== initialFormData.profilePicPreview ||
+                      currentFormData.profileBannerPreview !== initialFormData.profileBannerPreview ||
+                      currentFormData.bio !== initialFormData.bio;
     
     setHasChanges(hasChanged);
   };
@@ -156,6 +223,8 @@ export default function ProfileEditPage() {
   const handleInputChange = (field, value) => {
     const newFormData = { ...formData, [field]: value };
     setFormData(newFormData);
+    setUserHasEdited(true); // Mark that user has made edits
+    
     if (errors[field]) {
       setErrors(prev => ({ ...prev, [field]: '' }));
     }

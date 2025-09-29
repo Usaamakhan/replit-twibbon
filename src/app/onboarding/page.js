@@ -58,6 +58,64 @@ export default function OnboardingPage() {
     };
   }, []);
 
+  // Track initial URL for proper back button handling
+  const [currentUrl, setCurrentUrl] = useState('');
+  
+  useEffect(() => {
+    setCurrentUrl(window.location.pathname);
+  }, []);
+
+  // Prevent navigation when there are unsaved changes
+  useEffect(() => {
+    const handleBeforeUnload = (e) => {
+      if (hasChanges) {
+        e.preventDefault();
+        e.returnValue = 'You have unsaved changes. Are you sure you want to leave?';
+        return 'You have unsaved changes. Are you sure you want to leave?';
+      }
+    };
+
+    const handlePopState = (e) => {
+      if (hasChanges) {
+        const confirmLeave = window.confirm(
+          'You have unsaved changes. Do you want to save them before leaving?\n\nClick "OK" to stay and save your changes, or "Cancel" to leave without saving.'
+        );
+        if (confirmLeave) {
+          // User wants to stay - prevent the back navigation
+          window.history.pushState(null, '', currentUrl);
+        }
+        // If user cancels (wants to leave), let navigation proceed
+      }
+    };
+
+    const handleLinkClick = (e) => {
+      if (hasChanges) {
+        // Check if it's a navigation link
+        const target = e.target.closest('a');
+        if (target && target.href && target.href !== window.location.href) {
+          const confirmLeave = window.confirm(
+            'You have unsaved changes. Do you want to save them before leaving?\n\nClick "OK" to stay and save your changes, or "Cancel" to leave without saving.'
+          );
+          if (confirmLeave) {
+            e.preventDefault();
+          }
+        }
+      }
+    };
+
+    if (hasChanges) {
+      window.addEventListener('beforeunload', handleBeforeUnload);
+      window.addEventListener('popstate', handlePopState);
+      document.addEventListener('click', handleLinkClick, true);
+      
+      return () => {
+        window.removeEventListener('beforeunload', handleBeforeUnload);
+        window.removeEventListener('popstate', handlePopState);
+        document.removeEventListener('click', handleLinkClick, true);
+      };
+    }
+  }, [hasChanges, currentUrl]);
+
   // Load user data when component mounts - same as profile/edit page
   useEffect(() => {
     const loadUserData = async () => {
@@ -68,7 +126,7 @@ export default function OnboardingPage() {
         if (userProfile) {
           // User has existing profile data, prefill everything
           setUserData(userProfile);
-          setFormData({
+          const initialData = {
             username: userProfile.username || '',
             displayName: userProfile.displayName || user?.displayName || '',
             country: userProfile.country || '',
@@ -77,7 +135,9 @@ export default function OnboardingPage() {
             profileBanner: null,
             profileBannerPreview: userProfile.bannerImage || '',
             bio: userProfile.bio || ''
-          });
+          };
+          setFormData(initialData);
+          setInitialFormData(initialData); // Set baseline for change detection
           setOriginalUsername(userProfile.username || '');
           setUsernameStatus('unchanged');
         } else {
@@ -85,7 +145,7 @@ export default function OnboardingPage() {
           const initialUsername = user?.displayName?.toLowerCase().replace(/[^a-z0-9]/g, '') || 
                                 user?.email?.split('@')[0]?.toLowerCase().replace(/[^a-z0-9]/g, '') || 
                                 'user123';
-          setFormData({
+          const initialData = {
             username: initialUsername,
             displayName: user?.displayName || '',
             country: '',
@@ -94,7 +154,9 @@ export default function OnboardingPage() {
             profileBanner: null,
             profileBannerPreview: '',
             bio: ''
-          });
+          };
+          setFormData(initialData);
+          setInitialFormData(initialData); // Set baseline for change detection
           // Check if this initial username is available
           checkUsernameAvailability(initialUsername);
         }
@@ -167,27 +229,29 @@ export default function OnboardingPage() {
     }, 500); // 500ms debounce
   };
 
+  // Track if user has made any edits (not just has content)
+  const [userHasEdited, setUserHasEdited] = useState(false);
+  const [initialFormData, setInitialFormData] = useState(null);
+
   // Check if form has changes compared to original data
   const checkForChanges = (currentFormData) => {
-    if (!userData) {
-      // If no existing userData, check if any field has meaningful content
-      const hasContent = currentFormData.username.trim() || 
-                        currentFormData.displayName.trim() || 
-                        currentFormData.country || 
-                        currentFormData.profilePicPreview !== (user?.photoURL || '') ||
-                        currentFormData.profileBannerPreview ||
-                        currentFormData.bio.trim();
-      setHasChanges(hasContent);
+    if (!userHasEdited) {
+      setHasChanges(false);
+      return;
+    }
+
+    if (!initialFormData) {
+      setHasChanges(false);
       return;
     }
     
-    // Compare with existing userData
-    const hasChanged = currentFormData.username !== (userData.username || '') ||
-                      currentFormData.displayName !== (userData.displayName || user?.displayName || '') ||
-                      currentFormData.country !== (userData.country || '') ||
-                      currentFormData.profilePicPreview !== (userData.profileImage || user?.photoURL || '') ||
-                      currentFormData.profileBannerPreview !== (userData.bannerImage || '') ||
-                      currentFormData.bio !== (userData.bio || '');
+    // Compare with initial form data
+    const hasChanged = currentFormData.username !== initialFormData.username ||
+                      currentFormData.displayName !== initialFormData.displayName ||
+                      currentFormData.country !== initialFormData.country ||
+                      currentFormData.profilePicPreview !== initialFormData.profilePicPreview ||
+                      currentFormData.profileBannerPreview !== initialFormData.profileBannerPreview ||
+                      currentFormData.bio !== initialFormData.bio;
     
     setHasChanges(hasChanged);
   };
@@ -195,6 +259,8 @@ export default function OnboardingPage() {
   const handleInputChange = (field, value) => {
     const newFormData = { ...formData, [field]: value };
     setFormData(newFormData);
+    setUserHasEdited(true); // Mark that user has made edits
+    
     if (errors[field]) {
       setErrors(prev => ({ ...prev, [field]: '' }));
     }
@@ -247,6 +313,7 @@ export default function OnboardingPage() {
         [previewField]: e.target.result
       };
       setFormData(newFormData);
+      setUserHasEdited(true); // Mark that user has made edits
       // Check for changes
       checkForChanges(newFormData);
     };
@@ -272,6 +339,7 @@ export default function OnboardingPage() {
       [previewField]: ''
     };
     setFormData(newFormData);
+    setUserHasEdited(true); // Mark that user has made edits
     
     // Clear the file input value to allow re-uploading the same file
     const inputRef = field === 'profilePic' ? profilePicRef : profileBannerRef;
@@ -377,6 +445,10 @@ export default function OnboardingPage() {
       const result = await completeUserProfile(user.uid, profileData);
       
       if (result.success) {
+        // Clear hasChanges before navigation to prevent warnings
+        setHasChanges(false);
+        setUserHasEdited(false);
+        
         // Refresh the user profile context to update sidebar
         if (profileContext?.refreshUserProfile) {
           await profileContext.refreshUserProfile();
