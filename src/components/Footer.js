@@ -56,7 +56,7 @@ export default function Footer() {
   };
 
   return (
-    <footer className="bg-white text-black">
+    <footer className="bg-white text-black border-t border-gray-100 shadow-sm">
       {/* Main Footer Section */}
       <div className="mx-auto w-full max-w-screen-xl px-3 sm:px-4 md:px-6 py-12">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-8">
