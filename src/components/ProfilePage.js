@@ -145,7 +145,7 @@ export default function ProfilePage({ isOwnProfile = false, username = null }) {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Banner Section */}
-      <div className="relative h-48 sm:h-56 md:h-64 lg:h-80 bg-gradient-to-r from-emerald-500 to-emerald-600 overflow-hidden">
+      <div className="relative w-full aspect-[3/1] bg-gradient-to-r from-emerald-500 to-emerald-600 overflow-hidden">
         {userData.bannerImage && userData.bannerImage.trim() ? (
           <img
             src={userData.bannerImage}

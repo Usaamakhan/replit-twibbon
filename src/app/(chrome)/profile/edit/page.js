@@ -489,7 +489,7 @@ export default function ProfileEditPage() {
                     Profile Banner
                   </label>
                   <div className="space-y-3">
-                    <div className="w-full h-48 sm:h-56 md:h-64 lg:h-80 rounded-lg overflow-hidden border-2 border-gray-200">
+                    <div className="w-full aspect-[3/1] rounded-lg overflow-hidden border-2 border-gray-200">
                       {formData.profileBannerPreview ? (
                         <img
                           src={formData.profileBannerPreview}
