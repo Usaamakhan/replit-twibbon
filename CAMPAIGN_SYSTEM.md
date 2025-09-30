@@ -26,16 +26,24 @@ The application supports two types of creator uploads:
   type: "frame" | "background",           // Required (IMMUTABLE after publish)
   title: "Campaign Title",                // Required (editable with restrictions)
   description: "Optional description",    // Optional (editable with restrictions)
-  slug: "unique-url-slug",                // Auto-generated from title (IMMUTABLE)
+  slug: "unique-url-slug",                // Auto-generated from title + random suffix (IMMUTABLE)
   imageUrl: "supabase-storage-url",       // Required (IMMUTABLE after publish)
   creatorId: "firebase-user-id",          // Required (IMMUTABLE)
   captionTemplate: "Share text template", // Optional (editable with restrictions)
   supportersCount: 0,                     // Increment on download
+  reportsCount: 0,                        // Number of reports received
+  moderationStatus: "active",             // "active" | "under-review" | "removed"
   createdAt: timestamp,                   // Auto (publish time)
   updatedAt: timestamp,                   // Last edit time (optional)
   firstUsedAt: timestamp,                 // When first supporter used it (optional)
 }
 ```
+
+**Country for Campaigns:**
+- Campaigns do NOT store a country field directly
+- Country is derived from creator's user profile (`userProfile.country`)
+- For filtering "Top Campaigns by Country", use the creator's current country
+- Benefits: Single source of truth, no data duplication
 
 **Editing Policy - Limited Editing with Hybrid Restrictions:**
 - **Editable Fields:** title, description, captionTemplate (metadata only)
@@ -50,9 +58,32 @@ The application supports two types of creator uploads:
 - **Confirmation Required:** Yes - popup warning "This action cannot be undone"
 - **What Gets Deleted:** 
   - Campaign document from Firestore
-  - Campaign image from Supabase Storage
+  - Campaign image from Supabase Storage (path: `campaigns/{userId}/{campaignId}.png`)
   - All associated data (irreversible)
 - **Impact:** Supporters who already downloaded keep their files, but campaign page becomes 404
+
+### Reports Collection (Firestore: `reports`)
+```javascript
+{
+  id: "auto-generated-id",
+  campaignId: "campaign-id",              // Required
+  campaignSlug: "campaign-slug",          // For easy navigation
+  reportedBy: "user-id" | "anonymous",    // Optional (can report without auth)
+  reason: "inappropriate" | "spam" | "copyright" | "other",  // Required
+  details: "Optional explanation text",   // Optional
+  status: "pending" | "reviewed" | "resolved" | "dismissed",  // Default: pending
+  createdAt: timestamp,
+  reviewedAt: timestamp,                  // When admin reviewed (optional)
+  reviewedBy: "admin-user-id",            // Admin who reviewed (optional)
+  action: "removed" | "warned" | "no-action"  // What action was taken (optional)
+}
+```
+
+**Report Policy:**
+- Any visitor can report a campaign (no auth required)
+- Predefined reasons: Inappropriate, Spam, Copyright violation, Other
+- Reports are reviewed by admins (manual process in Phase 1)
+- Auto-moderation triggers (Phase 2): 3+ reports = flag, 10+ reports = auto-hide
 
 ---
 
@@ -94,6 +125,18 @@ The application supports two types of creator uploads:
 7. **Download** button (disabled until photo uploaded)
 8. Download final composed image
 9. Increment campaign's `supportersCount`
+
+### Visitor Flow - Report Campaign
+1. On any `/campaign/[slug]` page, click "Report" button
+2. **Report Modal Opens:**
+   - Select reason: Inappropriate, Spam, Copyright, Other
+   - Optional: Add explanation text
+   - No authentication required
+3. Submit report → Saved to `reports` collection
+4. Show confirmation: "Thank you, we'll review this"
+5. Prevent duplicate reports (same user/IP + same campaign)
+6. Campaign's `reportsCount` increments
+7. If threshold reached (3+ reports), set `moderationStatus: "under-review"`
 
 ---
 
@@ -182,7 +225,17 @@ The application supports two types of creator uploads:
 - Used for social sharing
 - Pre-fills share text
 
-#### 12. Authentication Flow
+#### 12. Campaign Reporting System
+- Add "Report" button to `/campaign/[slug]` pages
+- Create report modal component with predefined reasons
+- Allow anonymous reporting (no auth required)
+- Store reports in `reports` collection
+- Track `reportsCount` on campaign documents
+- Update `moderationStatus` based on report threshold
+- Prevent duplicate reports from same user/IP
+- Show confirmation message after submission
+
+#### 13. Authentication Flow
 - Allow unauthenticated users to fill entire form
 - Show auth popup only when clicking "Publish"
 - Modal with "Sign In" and "Go Back" options
@@ -244,6 +297,10 @@ The application supports two types of creator uploads:
   - Frames: 1500x1500px (square) or 1500x500px (banner style)
   - Backgrounds: 1920x1080px or higher
 - **Storage:** Supabase Storage with public access
+- **Storage Structure:** `campaigns/{userId}/{campaignId}.png`
+  - Organized by creator for easier management
+  - Example path: `campaigns/user123abc/campaign456def.png`
+  - Benefits: Easy batch deletion, clear ownership, simpler debugging
 
 ### Transparency Detection Algorithm
 ```javascript
@@ -281,8 +338,26 @@ function hasTransparency(imageFile) {
 - Convert title to lowercase
 - Replace spaces with hyphens
 - Remove special characters
-- Ensure uniqueness by checking Firestore and appending counter if needed
-- Example: "Save Earth 2025" → "save-earth-2025"
+- Append random 4-character suffix (alphanumeric, base36)
+- No uniqueness check needed (collision probability extremely low)
+- Example: "Save Earth 2025" → "save-earth-2025-k8m3"
+
+```javascript
+function generateSlug(title) {
+  const baseSlug = title
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9\s-]/g, '')  // Remove special chars
+    .replace(/\s+/g, '-')           // Spaces to hyphens
+    .replace(/-+/g, '-')            // Multiple hyphens to single
+    .substring(0, 50);              // Max 50 chars
+  
+  // Generate 4-char random suffix (0-9, a-z)
+  const suffix = Math.random().toString(36).substring(2, 6);
+  
+  return `${baseSlug}-${suffix}`;
+}
+```
 
 ### Image Adjustment System
 ```javascript
@@ -396,7 +471,8 @@ function DeleteConfirmationModal({ campaignTitle, onConfirm, onCancel }) {
 
 ### 1. Setup Data Structure
 - [ ] Create Firestore collection: `campaigns`
-- [ ] Set up Supabase storage bucket: `campaigns`
+- [ ] Create Firestore collection: `reports`
+- [ ] Set up Supabase storage bucket: `campaigns` (organized by user: `campaigns/{userId}/{campaignId}.png`)
 - [ ] Define data model interfaces
 
 ### 2. Build Entry Point
@@ -424,9 +500,9 @@ function DeleteConfirmationModal({ campaignTitle, onConfirm, onCancel }) {
 
 ### 6. Storage Integration
 - [ ] Create Supabase upload API routes
-- [ ] Handle file uploads with progress
+- [ ] Handle file uploads with progress (path: `campaigns/{userId}/{campaignId}.png`)
 - [ ] Store metadata in Firestore
-- [ ] Generate unique slugs
+- [ ] Generate unique slugs with random suffix (no duplicate check needed)
 
 ### 7. Build Campaign View Page
 - [ ] Create `/campaign/[slug]/page.js`
@@ -468,14 +544,14 @@ function DeleteConfirmationModal({ campaignTitle, onConfirm, onCancel }) {
 ### 10. Create Campaigns Gallery
 - [ ] Build `/campaigns/page.js`
 - [ ] Fetch campaigns from Firestore
-- [ ] Filter by country, time period, type
+- [ ] Filter by country (use creator's profile country), time period, type
 - [ ] Grid layout with campaign cards
 - [ ] Sorting options
 
 ### 11. Create Top Creators Page
 - [ ] Build `/creators/page.js`
-- [ ] Aggregate creator stats
-- [ ] Filter by country and time
+- [ ] Aggregate creator stats (use creator's profile country for filtering)
+- [ ] Filter by country and time period
 - [ ] Leaderboard layout
 
 ### 12. Add Navigation
@@ -488,6 +564,18 @@ function DeleteConfirmationModal({ campaignTitle, onConfirm, onCancel }) {
 - [ ] Disable download button initially
 - [ ] Enable only after user photo uploaded
 - [ ] Show helpful message when disabled
+
+### 14. Campaign Reporting System
+- [ ] Create Firestore collection: `reports`
+- [ ] Add "Report" button to campaign view page
+- [ ] Create `ReportModal` component with reason selection
+- [ ] Allow anonymous reporting (no auth required)
+- [ ] Add API route to handle report submissions
+- [ ] Increment `reportsCount` on campaign when reported
+- [ ] Update `moderationStatus` if threshold reached (3+ reports)
+- [ ] Prevent duplicate reports (check user ID or IP)
+- [ ] Show confirmation message after report submitted
+- [ ] Add report count badge for admin view (Phase 2)
 
 ---
 
@@ -522,6 +610,7 @@ src/
 │   ├── CampaignCard.js              # NEW: Gallery card component
 │   ├── AuthPopup.js                 # NEW: Sign-in prompt modal
 │   ├── DeleteConfirmationModal.js   # NEW: Campaign deletion confirmation
+│   ├── ReportModal.js               # NEW: Campaign report modal
 │   └── ShareButtons.js              # NEW: Social sharing component
 │
 └── utils/                           # Existing folder - add new utilities here
