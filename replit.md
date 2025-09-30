@@ -1,7 +1,7 @@
 # Twibbonize App
 
 ### Overview
-Twibbonize is a Next.js application designed for creating, sharing, and discovering "Twibbons" (photo frames) and backgrounds. It enables visitors to easily find, use, and download framed photos, while providing creators with tools to upload, manage, and track their custom content. The project prioritizes public accessibility and transparency, making frame usage and analytics available to all users. The core ambition is to offer a seamless experience for visitors and robust, public-first tools for creators.
+Twibbonize is a Next.js 15 application for creating and sharing "Campaigns" (photo frames and backgrounds). Visitors can discover, customize, and download photos with frames or backgrounds. Creators can upload and manage campaigns with public analytics.
 
 ### User Preferences
 - Prefer stability over experimental features
@@ -9,29 +9,65 @@ Twibbonize is a Next.js application designed for creating, sharing, and discover
 - Maintain clean, working codebase structure
 
 ### System Architecture
-The application is built with Next.js 15.5.2 (App Router) and React 19.1.0, utilizing Tailwind CSS 4 for styling, and optimized for the Replit environment.
+Built with Next.js 15.5.2 (App Router), React 19.1.0, Tailwind CSS 4, Firebase (auth), and Supabase (database/storage).
 
 **Core Features:**
-*   **Public Content Discovery:** A gallery for all publicly available frames and backgrounds, with trending content and top creators highlighted.
-*   **Campaign Management (Creators):** A system for creators to upload, manage, and track their frames and backgrounds, including public usage analytics.
-*   **Visitor Interaction:** Frictionless process for visitors to upload photos, overlay them with frames/backgrounds, adjust, and download the composed image.
-*   **Public Transparency:** Analytics and usage statistics for campaigns are publicly accessible.
+1. **Campaign System** - Upload and manage frames (with transparency) and backgrounds
+2. **Public Gallery** - Browse campaigns with filters (country, time, type)
+3. **Image Composition** - Canvas-based photo overlay with adjustment tools
+4. **Top Creators** - Leaderboard by country and time period
+5. **Public Analytics** - Transparent usage statistics for all campaigns
 
 **Design Principles:**
-*   **Visitor-First Experience:** Features are designed primarily for non-authenticated users.
-*   **Minimal Account Requirements:** Accounts are only necessary for content creation.
-*   **Public-First Design:** All discovery and analytics features are publicly transparent.
+- Visitor-first experience (no auth required for browsing/using)
+- Minimal account requirements (only for campaign creation)
+- Public-first design for discovery and analytics
+- Frictionless workflow with delayed authentication
 
 **Technical Implementations:**
-*   **Image Composition:** Uses Canvas API for overlaying user photos with frames or placing them on backgrounds, including real-time adjustments (resize, reposition).
-*   **Transparency Detection:** Canvas API is used to detect transparency in uploaded frame images (minimum 5-10% transparency required).
-*   **Slug Generation:** Unique, URL-friendly identifiers are generated from campaign titles.
-*   **Authentication Flow:** Supports unauthenticated access for campaign creation, prompting for sign-in only at the point of publishing, with form data preserved.
-*   **Global States:** Centralized Firebase error handling and global loading states using `loading.js`.
+- **Campaign Types:** Frames (require transparency detection) and Backgrounds (no transparency)
+- **Transparency Detection:** Canvas API validates 5-10% minimum transparency for frames
+- **Image Composition:** Canvas API for overlaying/underlaying user photos
+- **Image Adjustment:** Zoom, move, fit controls for visitor photos
+- **Slug Generation:** Unique URL-friendly identifiers from titles
+- **Delayed Auth:** Users fill forms unauthenticated, prompted only at publish
+- **Download Prevention:** Disabled until user uploads their photo
+- **Unified Gallery:** Single `/campaigns` page for both frames and backgrounds
+
+### Current Setup Status (2025-09-30)
+✅ Fresh GitHub import configured for Replit
+✅ All dependencies installed (540 packages, 0 vulnerabilities)
+✅ Next.js dev server running on 0.0.0.0:5000
+✅ Deployment configured for autoscale
+✅ Profile banner aspect ratio fixed to 3:1 across all pages
+✅ Search bar height increased in header
+
+### Campaign System Documentation
+📄 See **CAMPAIGN_SYSTEM.md** for complete implementation guide including:
+- Data schemas (Firestore structure)
+- User flows (creator & visitor)
+- Phase 1 (implement now) & Phase 2 (future features)
+- Technical requirements & algorithms
+- Development steps with checkboxes
+- File structure
 
 ### External Dependencies
-*   **Firebase:** Used for authentication and backend services.
-*   **Supabase:** Utilized for database management and image storage.
-*   **Next.js:** The primary web framework.
-*   **React:** The UI library.
-*   **Tailwind CSS:** For styling the application.
+- **Firebase:** Authentication and backend services
+- **Supabase:** Database and image storage
+- **Next.js:** Web framework (v15.5.2)
+- **React:** UI library (v19.1.0)
+- **Tailwind CSS:** Styling (v4)
+
+### Route Structure
+```
+/                          # Home with hero
+/create                    # Choose: frame or background
+/create/frame              # Upload frame
+/create/background         # Upload background
+/campaign/[slug]           # Campaign view & usage
+/campaigns                 # Unified gallery with filters
+/creators                  # Top creators leaderboard
+/profile                   # User profile
+/profile/edit              # Edit profile
+/onboarding                # New user setup
+```
