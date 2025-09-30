@@ -9,28 +9,29 @@ This document tracks all inconsistencies between the current codebase and CAMPAI
 ## 🔴 HIGH PRIORITY (Breaks Current Functionality)
 
 ### 1. Collection Names Mismatch
-**Status:** ❌ Not Fixed
+**Status:** ✅ FIXED (September 30, 2025)
 
-**Current Codebase:**
-- Uses Firestore collection: `frames`
-- All functions in `src/lib/firestore.js` reference `frames`:
-  - Line 425: `collection(db, 'frames')`
-  - Line 460: `collection(db, 'frames')`
-  - Line 492: `collection(db, 'frames')`
+**Resolution:**
+- Changed all Firestore collection references from `frames` to `campaigns`
+- Renamed all related functions for consistency:
+  - `createFrame` → `createCampaign`
+  - `getUserFrames` → `getUserCampaigns`
+  - `getPublicFrames` → `getPublicCampaigns`
+  - `trackFrameUsage` → `trackCampaignUsage`
 
-**Documentation Expects:**
-- Collection name: `campaigns` (not `frames`)
-- Should store both frames AND backgrounds in single collection
-- Differentiated by `type: "frame" | "background"` field
+**Files Updated:**
+- [x] `src/lib/firestore.js` - all collection references updated to 'campaigns'
+  - Line 428: `collection(db, 'campaigns')`
+  - Line 463: `collection(db, 'campaigns')`
+  - Line 495: `collection(db, 'campaigns')`
+  - Line 613: `doc(db, 'campaigns', campaignId)`
+- [x] `src/components/ProfilePage.js` - updated to use `getUserCampaigns`
+- [x] All function names updated to use "campaign" terminology
 
-**Decision Needed:**
-- [ ] Rename `frames` → `campaigns` in all code
-- [ ] OR update documentation to use `frames` consistently
-
-**Files to Update:**
-- [ ] `src/lib/firestore.js` - all collection references
-- [ ] All components that query frames
-- [ ] Firestore security rules (if any)
+**Firestore Collection Structure:**
+- Collection is now: `campaigns`
+- Ready to store both frames AND backgrounds
+- Will use `type: "frame" | "background"` field (to be added in issue #3)
 
 ---
 
