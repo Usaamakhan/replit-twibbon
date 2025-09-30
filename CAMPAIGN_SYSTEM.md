@@ -286,6 +286,68 @@ The application supports two types of creator uploads:
 - Time-based charts and trends
 - Export data as CSV
 
+#### 7. Admin Dashboard (Content Moderation) 🔮
+**Priority: Phase 2 - Essential for scaling**
+
+**Admin Routes:**
+- `/admin` - Admin dashboard home
+- `/admin/reports` - View and manage all reports
+- `/admin/campaigns` - Browse and moderate all campaigns
+- `/admin/users` - User management (view, ban, warn)
+- `/admin/analytics` - Platform-wide statistics
+
+**Core Features:**
+
+**Report Management:**
+- View all reports with filters (pending, reviewed, resolved, dismissed)
+- Sort by: date, campaign, report count, status
+- Batch actions: approve multiple, dismiss multiple
+- Quick actions per report:
+  - View campaign details
+  - View reporter info (if authenticated)
+  - Remove campaign (with reason)
+  - Warn creator (send notification)
+  - Dismiss report (mark as false/spam)
+- Add internal admin notes to reports
+- Track admin who took action and timestamp
+
+**Campaign Moderation:**
+- View all campaigns with moderation status badges
+- Filter by: moderation status, type, country, date
+- Quick actions:
+  - Preview campaign
+  - View creator profile
+  - See all reports for this campaign
+  - Temporarily hide campaign
+  - Permanently remove campaign
+  - Restore removed campaign (undo within 30 days)
+- Bulk moderation actions
+
+**User Management:**
+- View all users with activity stats
+- Filter users by: role, country, join date, activity
+- User actions:
+  - View user's campaigns
+  - View user's reports (as reporter)
+  - Ban user (hide all campaigns, prevent new uploads)
+  - Warn user (send notification)
+  - View user activity log
+- Track banned users and ban reasons
+
+**Admin Analytics:**
+- Total campaigns, users, reports
+- Reports by reason breakdown
+- Moderation actions timeline
+- Top reported campaigns
+- Active moderators leaderboard
+- Platform health metrics
+
+**Access Control:**
+- Admin role stored in user profile: `role: "admin" | "user"`
+- Middleware protection on all `/admin/*` routes
+- Admin-only API endpoints with token verification
+- Audit log of all admin actions
+
 ---
 
 ## Technical Requirements
@@ -625,6 +687,117 @@ src/
 - **Components folder**: Already exists - add NEW campaign components here
 - **Utils folder**: Already exists - add NEW utility functions here
 - **Existing files**: Keep all existing files - don't modify unless necessary
+
+---
+
+## Admin Dashboard File Structure (Phase 2)
+
+**Note:** Admin pages require authentication and admin role verification.
+
+```
+src/
+├── app/
+│   ├── (chrome)/                        # Existing folder
+│   │   └── admin/                       # NEW (Phase 2): Admin dashboard pages
+│   │       ├── layout.js                # Admin layout with sidebar navigation
+│   │       ├── page.js                  # Admin dashboard home
+│   │       ├── reports/
+│   │       │   └── page.js              # Reports management page
+│   │       ├── campaigns/
+│   │       │   └── page.js              # All campaigns moderation
+│   │       ├── users/
+│   │       │   └── page.js              # User management page
+│   │       └── analytics/
+│   │           └── page.js              # Platform analytics
+│   │
+│   └── api/                             # Existing folder
+│       └── admin/                       # NEW (Phase 2): Admin API routes
+│           ├── reports/
+│           │   ├── list/
+│           │   │   └── route.js         # GET all reports with filters
+│           │   ├── update/
+│           │   │   └── route.js         # PUT update report status
+│           │   └── bulk-action/
+│           │       └── route.js         # POST batch actions on reports
+│           ├── campaigns/
+│           │   ├── moderate/
+│           │   │   └── route.js         # POST remove/hide campaign
+│           │   └── restore/
+│           │       └── route.js         # POST restore removed campaign
+│           ├── users/
+│           │   ├── ban/
+│           │   │   └── route.js         # POST ban user
+│           │   └── warn/
+│           │       └── route.js         # POST send warning to user
+│           └── analytics/
+│               └── route.js             # GET platform statistics
+│
+├── components/
+│   └── admin/                           # NEW (Phase 2): Admin-specific components
+│       ├── AdminSidebar.js              # Admin navigation sidebar
+│       ├── ReportCard.js                # Report display card
+│       ├── ReportFilters.js             # Filter controls for reports
+│       ├── CampaignModerationCard.js    # Campaign card with admin actions
+│       ├── UserManagementTable.js       # User list/table component
+│       ├── BanUserModal.js              # Ban user confirmation modal
+│       ├── RemoveCampaignModal.js       # Remove campaign modal with reason
+│       ├── AdminStatsCard.js            # Dashboard statistics card
+│       └── AdminActionLog.js            # Action history/audit log
+│
+├── middleware.js                        # UPDATE: Add admin route protection
+│
+└── utils/
+    └── admin/                           # NEW (Phase 2): Admin utilities
+        ├── adminAuth.js                 # Check if user is admin
+        ├── moderationActions.js         # Moderation action helpers
+        └── adminAnalytics.js            # Analytics aggregation functions
+```
+
+**Admin Access Control:**
+```javascript
+// middleware.js - Add admin route protection
+export async function middleware(request) {
+  const { pathname } = request.nextUrl;
+  
+  // Protect admin routes
+  if (pathname.startsWith('/admin')) {
+    const user = await getCurrentUser(request);
+    
+    if (!user) {
+      return NextResponse.redirect(new URL('/signin', request.url));
+    }
+    
+    // Check admin role from user profile
+    const userProfile = await getUserProfile(user.uid);
+    if (userProfile?.role !== 'admin') {
+      return NextResponse.redirect(new URL('/', request.url));
+    }
+  }
+  
+  return NextResponse.next();
+}
+
+// Admin role in user profile schema
+{
+  uid: "user-id",
+  email: "user@example.com",
+  displayName: "User Name",
+  role: "admin" | "user",  // NEW field for admin access
+  ...other fields
+}
+```
+
+**Admin Dashboard Layout:**
+- Sidebar navigation with sections:
+  - Dashboard (overview)
+  - Reports (pending count badge)
+  - Campaigns (moderation queue count)
+  - Users (total active users)
+  - Analytics (platform stats)
+- Top bar with admin name and logout
+- Main content area for each section
+- Action confirmation modals
+- Real-time notifications for new reports (optional)
 
 ---
 
