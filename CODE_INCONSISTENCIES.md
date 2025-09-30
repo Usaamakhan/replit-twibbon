@@ -26,6 +26,8 @@ This document tracks all inconsistencies between the current codebase and CAMPAI
   - Line 495: `collection(db, 'campaigns')`
   - Line 613: `doc(db, 'campaigns', campaignId)`
 - [x] `src/components/ProfilePage.js` - updated to use `getUserCampaigns`
+- [x] `firestore.rules` - updated security rules from 'frames' to 'campaigns'
+  - Line 65: `match /campaigns/{campaignId}`
 - [x] All function names updated to use "campaign" terminology
 
 **Firestore Collection Structure:**

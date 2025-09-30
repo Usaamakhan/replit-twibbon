@@ -58,12 +58,12 @@ service cloud.firestore {
       allow delete: if request.auth != null && request.auth.uid == resource.data.userId;
     }
     
-    // Frames - public reading with secure usage tracking
-    match /frames/{frameId} {
+    // Campaigns - public reading with secure usage tracking
+    match /campaigns/{campaignId} {
       allow read: if true; // ✅ Public access for guest users
       allow create: if request.auth != null && request.auth.uid == request.resource.data.createdBy;
       
-      // Allow frame owner full control
+      // Allow campaign owner full control
       allow update, delete: if request.auth != null && request.auth.uid == resource.data.createdBy;
       
       // Allow secure usage tracking by authenticated users
