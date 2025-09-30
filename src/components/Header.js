@@ -24,7 +24,7 @@ export default function Header({ isMenuOpen, setIsMenuOpen }) {
           <input
             type="text"
             placeholder="Search"
-            className="w-full px-3 py-2 pr-8 rounded-full bg-white text-black placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-emerald-700 text-sm"
+            className="w-full px-3 py-3 pr-8 rounded-full bg-white text-black placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-emerald-700 text-sm min-h-[44px]"
           />
           <button 
             onClick={handleSearch}
