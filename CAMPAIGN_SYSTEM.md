@@ -23,21 +23,26 @@ The application supports two types of creator uploads:
 ```javascript
 {
   id: "auto-generated-id",
-  type: "frame" | "background",           // Required
-  title: "Campaign Title",                // Required
-  description: "Optional description",    // Optional
-  slug: "unique-url-slug",                // Auto-generated from title
-  imageUrl: "supabase-storage-url",       // Required (frame or background image)
-  creatorId: "firebase-user-id",          // Required
-  captionTemplate: "Share text template", // Optional (for both frames and backgrounds)
+  type: "frame" | "background",           // Required (IMMUTABLE after publish)
+  title: "Campaign Title",                // Required (editable with restrictions)
+  description: "Optional description",    // Optional (editable with restrictions)
+  slug: "unique-url-slug",                // Auto-generated from title (IMMUTABLE)
+  imageUrl: "supabase-storage-url",       // Required (IMMUTABLE after publish)
+  creatorId: "firebase-user-id",          // Required (IMMUTABLE)
+  captionTemplate: "Share text template", // Optional (editable with restrictions)
   supportersCount: 0,                     // Increment on download
-  createdAt: timestamp,                   // Auto
+  createdAt: timestamp,                   // Auto (publish time)
+  updatedAt: timestamp,                   // Last edit time (optional)
+  firstUsedAt: timestamp,                 // When first supporter used it (optional)
 }
 ```
 
-**Note:** 
-- No `updatedAt` field - editing after publish may be restricted or only allowed before first use
-- No `privacyStatus` field initially - all campaigns are public (Phase 2 feature)
+**Editing Policy - Limited Editing with Hybrid Restrictions:**
+- **Editable Fields:** title, description, captionTemplate (metadata only)
+- **Immutable Fields:** type, imageUrl, slug, creatorId (locked forever after publish)
+- **Edit Window:** Allowed for **7 days after publish** OR **until 10 supporters**, whichever comes first
+- **After Lock:** Campaign becomes permanently read-only
+- **Rationale:** Protects supporter trust while allowing creators to fix mistakes
 
 ---
 
@@ -212,12 +217,11 @@ The application supports two types of creator uploads:
 - Add text, shapes, effects
 - Advanced feature for premium users
 
-#### 6. Edit Campaign After Publish 🔮
-- Allow editing metadata (title, description, caption)
-- Editing restrictions:
-  - Only allowed before first use by any visitor, OR
-  - Only allowed within X hours of publish
-- No editing of image after publish
+#### 6. Advanced Analytics Dashboard 🔮
+- Detailed creator analytics page
+- Track: views, downloads, shares, geographic data
+- Time-based charts and trends
+- Export data as CSV
 
 ---
 
@@ -281,6 +285,67 @@ function hasTransparency(imageFile) {
 }
 ```
 
+### Edit Permission Logic (Hybrid Restrictions)
+```javascript
+// Check if campaign can be edited
+function canEditCampaign(campaign) {
+  const now = new Date();
+  const publishDate = campaign.createdAt.toDate();
+  const daysSincePublish = (now - publishDate) / (1000 * 60 * 60 * 24);
+  
+  // Check 1: Within 7 days of publish?
+  const within7Days = daysSincePublish <= 7;
+  
+  // Check 2: Less than 10 supporters?
+  const lessThan10Supporters = campaign.supportersCount < 10;
+  
+  // Can edit if BOTH conditions are true
+  return within7Days && lessThan10Supporters;
+}
+
+// Display edit status to creator
+function getEditStatus(campaign) {
+  const now = new Date();
+  const publishDate = campaign.createdAt.toDate();
+  const daysRemaining = 7 - Math.floor((now - publishDate) / (1000 * 60 * 60 * 24));
+  const supportersRemaining = 10 - campaign.supportersCount;
+  
+  if (canEditCampaign(campaign)) {
+    return {
+      canEdit: true,
+      message: `Editable for ${daysRemaining} more days or ${supportersRemaining} more supporters`
+    };
+  } else {
+    return {
+      canEdit: false,
+      message: "Campaign locked (7 days passed or 10+ supporters)"
+    };
+  }
+}
+
+// On first download, track firstUsedAt
+function onCampaignDownload(campaignId) {
+  const campaignRef = db.collection('campaigns').doc(campaignId);
+  
+  // Use transaction to safely increment and set firstUsedAt
+  db.runTransaction(async (transaction) => {
+    const campaign = await transaction.get(campaignRef);
+    const currentCount = campaign.data().supportersCount;
+    
+    const updates = {
+      supportersCount: currentCount + 1
+    };
+    
+    // Set firstUsedAt on first download only
+    if (currentCount === 0) {
+      updates.firstUsedAt = new Date();
+    }
+    
+    transaction.update(campaignRef, updates);
+  });
+}
+```
+
 ---
 
 ## Development Steps (Phase 1)
@@ -328,33 +393,43 @@ function hasTransparency(imageFile) {
 - [ ] Download button (disabled until user photo uploaded)
 - [ ] Sharing options integration
 
-### 8. Image Composition System
+### 8. Implement Campaign Editing (Hybrid Restrictions)
+- [ ] Add "Edit Campaign" button on creator's own campaigns
+- [ ] Implement `canEditCampaign()` permission check
+- [ ] Show edit status: days/supporters remaining
+- [ ] Create edit form (title, description, captionTemplate only)
+- [ ] Update `updatedAt` timestamp on save
+- [ ] Track `firstUsedAt` on first download
+- [ ] Display lock message when 7 days or 10 supporters reached
+- [ ] Prevent editing of immutable fields (image, type, slug)
+
+### 9. Image Composition System
 - [ ] Canvas-based image composition utility
 - [ ] Handle frame overlays
 - [ ] Handle background underlays
 - [ ] Apply user adjustments (scale, position)
 - [ ] Export to downloadable file
 
-### 9. Create Campaigns Gallery
+### 10. Create Campaigns Gallery
 - [ ] Build `/campaigns/page.js`
 - [ ] Fetch campaigns from Firestore
 - [ ] Filter by country, time period, type
 - [ ] Grid layout with campaign cards
 - [ ] Sorting options
 
-### 10. Create Top Creators Page
+### 11. Create Top Creators Page
 - [ ] Build `/creators/page.js`
 - [ ] Aggregate creator stats
 - [ ] Filter by country and time
 - [ ] Leaderboard layout
 
-### 11. Add Navigation
+### 12. Add Navigation
 - [ ] Update header with "Create" link
 - [ ] Update sidebar/mobile menu
 - [ ] Update hero section CTA
 - [ ] Add campaigns and creators to nav
 
-### 12. Prevent Unauthorized Downloads
+### 13. Prevent Unauthorized Downloads
 - [ ] Disable download button initially
 - [ ] Enable only after user photo uploaded
 - [ ] Show helpful message when disabled
