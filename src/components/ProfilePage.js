@@ -7,7 +7,7 @@ import {
   getUserProfile, 
   getUserProfileByUsername, 
   getUserStats,
-  getUserFrames 
+  getUserCampaigns 
 } from '../lib/firestore';
 
 export default function ProfilePage({ isOwnProfile = false, username = null }) {
@@ -77,21 +77,21 @@ export default function ProfilePage({ isOwnProfile = false, username = null }) {
             setUserStats({ supportersCount: 0, campaignsCount: 0 });
           }
           
-          // Load user's campaigns/frames with safe defaults
+          // Load user's campaigns with safe defaults
           try {
-            const userFrames = await getUserFrames(profileUser.id);
-            if (Array.isArray(userFrames)) {
-              setCampaigns(userFrames.map(frame => ({
-                id: frame.id,
-                title: frame.title || 'Untitled Campaign',
-                thumbnail: frame.frameImageUrl || 'https://via.placeholder.com/300x200/059669/FFFFFF?text=Frame',
-                supportersCount: frame.usageCount || 0
+            const userCampaigns = await getUserCampaigns(profileUser.id);
+            if (Array.isArray(userCampaigns)) {
+              setCampaigns(userCampaigns.map(campaign => ({
+                id: campaign.id,
+                title: campaign.title || 'Untitled Campaign',
+                thumbnail: campaign.frameImageUrl || 'https://via.placeholder.com/300x200/059669/FFFFFF?text=Campaign',
+                supportersCount: campaign.usageCount || 0
               })));
             } else {
               setCampaigns([]);
             }
-          } catch (frameError) {
-            console.error('Error loading user frames:', frameError);
+          } catch (campaignError) {
+            console.error('Error loading user campaigns:', campaignError);
             setCampaigns([]);
           }
         }
