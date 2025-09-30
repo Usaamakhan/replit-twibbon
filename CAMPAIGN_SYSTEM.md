@@ -44,6 +44,16 @@ The application supports two types of creator uploads:
 - **After Lock:** Campaign becomes permanently read-only
 - **Rationale:** Protects supporter trust while allowing creators to fix mistakes
 
+**Deletion Policy:**
+- **Who Can Delete:** Only the campaign creator (owner)
+- **When:** Anytime after publish (no time restrictions)
+- **Confirmation Required:** Yes - popup warning "This action cannot be undone"
+- **What Gets Deleted:** 
+  - Campaign document from Firestore
+  - Campaign image from Supabase Storage
+  - All associated data (irreversible)
+- **Impact:** Supporters who already downloaded keep their files, but campaign page becomes 404
+
 ---
 
 ## User Flows
@@ -344,6 +354,40 @@ function onCampaignDownload(campaignId) {
     transaction.update(campaignRef, updates);
   });
 }
+
+// Delete campaign (creator only)
+async function deleteCampaign(campaignId, userId) {
+  const campaignRef = db.collection('campaigns').doc(campaignId);
+  const campaign = await campaignRef.get();
+  
+  // Verify ownership
+  if (campaign.data().creatorId !== userId) {
+    throw new Error('Unauthorized: Only campaign creator can delete');
+  }
+  
+  // Delete image from Supabase Storage
+  const imageUrl = campaign.data().imageUrl;
+  const imagePath = extractPathFromUrl(imageUrl);
+  await deleteFile(imagePath); // Use Supabase storage delete function
+  
+  // Delete campaign document from Firestore
+  await campaignRef.delete();
+  
+  return { success: true, message: 'Campaign deleted successfully' };
+}
+
+// Confirmation modal component (pseudocode)
+function DeleteConfirmationModal({ campaignTitle, onConfirm, onCancel }) {
+  return (
+    <Modal>
+      <h2>Delete Campaign?</h2>
+      <p>Are you sure you want to delete "{campaignTitle}"?</p>
+      <p className="warning">This action cannot be undone.</p>
+      <button onClick={onCancel}>Cancel</button>
+      <button onClick={onConfirm} className="danger">Delete Permanently</button>
+    </Modal>
+  );
+}
 ```
 
 ---
@@ -393,7 +437,8 @@ function onCampaignDownload(campaignId) {
 - [ ] Download button (disabled until user photo uploaded)
 - [ ] Sharing options integration
 
-### 8. Implement Campaign Editing (Hybrid Restrictions)
+### 8. Implement Campaign Editing & Deletion
+**Editing (Hybrid Restrictions):**
 - [ ] Add "Edit Campaign" button on creator's own campaigns
 - [ ] Implement `canEditCampaign()` permission check
 - [ ] Show edit status: days/supporters remaining
@@ -402,6 +447,16 @@ function onCampaignDownload(campaignId) {
 - [ ] Track `firstUsedAt` on first download
 - [ ] Display lock message when 7 days or 10 supporters reached
 - [ ] Prevent editing of immutable fields (image, type, slug)
+
+**Deletion:**
+- [ ] Add "Delete Campaign" button on creator's own campaigns
+- [ ] Create `DeleteConfirmationModal` component
+- [ ] Show warning: "This action cannot be undone"
+- [ ] Verify creator ownership before deletion
+- [ ] Delete image from Supabase Storage
+- [ ] Delete campaign document from Firestore
+- [ ] Redirect to profile/campaigns page after deletion
+- [ ] Handle 404 for deleted campaign pages
 
 ### 9. Image Composition System
 - [ ] Canvas-based image composition utility
@@ -466,6 +521,7 @@ src/
 │   ├── ImageComposer.js             # NEW: Canvas-based composition
 │   ├── CampaignCard.js              # NEW: Gallery card component
 │   ├── AuthPopup.js                 # NEW: Sign-in prompt modal
+│   ├── DeleteConfirmationModal.js   # NEW: Campaign deletion confirmation
 │   └── ShareButtons.js              # NEW: Social sharing component
 │
 └── utils/                           # Existing folder - add new utilities here
