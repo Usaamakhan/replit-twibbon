@@ -409,33 +409,33 @@ export const getUserStats = async (userId) => {
   }
 };
 
-// Frame operations with comprehensive error handling
-export const createFrame = async (frameData, userId) => {
+// Campaign operations with comprehensive error handling
+export const createCampaign = async (campaignData, userId) => {
   if (!userId) {
     return { success: false, error: 'User ID is required' };
   }
   
-  if (!frameData || typeof frameData !== 'object') {
-    return { success: false, error: 'Frame data is required' };
+  if (!campaignData || typeof campaignData !== 'object') {
+    return { success: false, error: 'Campaign data is required' };
   }
   
   try {
     return await runTransaction(db, async (transaction) => {
-      // Create the frame with proper defaults
-      const frameRef = doc(collection(db, 'frames'));
-      const frameDoc = {
-        ...frameData,
+      // Create the campaign with proper defaults
+      const campaignRef = doc(collection(db, 'campaigns'));
+      const campaignDoc = {
+        ...campaignData,
         createdBy: userId,
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
         usageCount: 0,
         supporters: {},
-        isPublic: frameData?.isPublic ?? true,
+        isPublic: campaignData?.isPublic ?? true,
       };
       
-      transaction.set(frameRef, frameDoc);
+      transaction.set(campaignRef, campaignDoc);
       
-      // Update user's frame counters atomically
+      // Update user's campaign counters atomically
       const userDocRef = doc(db, 'users', userId);
       transaction.update(userDocRef, {
         campaignsCount: increment(1),
@@ -443,65 +443,65 @@ export const createFrame = async (frameData, userId) => {
         updatedAt: serverTimestamp(),
       });
       
-      return { success: true, frameId: frameRef.id };
+      return { success: true, campaignId: campaignRef.id };
     });
   } catch (error) {
     if (process.env.NODE_ENV === 'development') {
-      console.error('Error creating frame:', error, { userId, frameData: { ...frameData, imageData: '[redacted]' } });
+      console.error('Error creating campaign:', error, { userId, campaignData: { ...campaignData, imageData: '[redacted]' } });
     }
     const errorResponse = await handleFirebaseError(error, 'firestore', { returnType: 'string' });
-    return { success: false, error: errorResponse || 'Failed to create frame. Please try again.' };
+    return { success: false, error: errorResponse || 'Failed to create campaign. Please try again.' };
   }
 };
 
-export const getPublicFrames = async (limitCount = 10) => {
+export const getPublicCampaigns = async (limitCount = 10) => {
   try {
     const q = query(
-      collection(db, 'frames'),
+      collection(db, 'campaigns'),
       where('isPublic', '==', true),
       orderBy('createdAt', 'desc'),
       limit(limitCount)
     );
     
     const querySnapshot = await getDocs(q);
-    const frames = [];
+    const campaigns = [];
     
     querySnapshot.forEach((doc) => {
-      frames.push({ id: doc.id, ...doc.data() });
+      campaigns.push({ id: doc.id, ...doc.data() });
     });
     
-    return frames;
+    return campaigns;
   } catch (error) {
     return [];
   }
 };
 
-export const getUserFrames = async (userId) => {
+export const getUserCampaigns = async (userId) => {
   if (!userId) return [];
   
   // Check if database is initialized
   if (!db) {
     if (process.env.NODE_ENV === 'development') {
-      console.error('Database not initialized - cannot get user frames');
+      console.error('Database not initialized - cannot get user campaigns');
     }
     return [];
   }
   
   try {
     const q = query(
-      collection(db, 'frames'),
+      collection(db, 'campaigns'),
       where('createdBy', '==', userId),
       orderBy('createdAt', 'desc')
     );
     
     const querySnapshot = await getDocs(q);
-    const frames = [];
+    const campaigns = [];
     
     querySnapshot.forEach((doc) => {
-      frames.push({ id: doc.id, ...doc.data() });
+      campaigns.push({ id: doc.id, ...doc.data() });
     });
     
-    return frames;
+    return campaigns;
   } catch (error) {
     // Return empty array on permissions error or any other error
     return [];
@@ -600,37 +600,37 @@ export const completeUserProfile = async (userId, profileData) => {
   }
 };
 
-// Track frame usage - increment usage count and update user counters with unique supporter tracking
-export const trackFrameUsage = async (frameId, userId) => {
-  if (!frameId || !userId) return { success: false, error: 'Missing frameId or userId' };
+// Track campaign usage - increment usage count and update user counters with unique supporter tracking
+export const trackCampaignUsage = async (campaignId, userId) => {
+  if (!campaignId || !userId) return { success: false, error: 'Missing campaignId or userId' };
   
   try {
     return await runTransaction(db, async (transaction) => {
-      // Get frame details to find the creator
-      const frameDocRef = doc(db, 'frames', frameId);
-      const frameDoc = await transaction.get(frameDocRef);
+      // Get campaign details to find the creator
+      const campaignDocRef = doc(db, 'campaigns', campaignId);
+      const campaignDoc = await transaction.get(campaignDocRef);
       
-      if (!frameDoc.exists()) {
-        throw new Error('Frame not found');
+      if (!campaignDoc.exists()) {
+        throw new Error('Campaign not found');
       }
       
-      const frameData = frameDoc.data();
-      const frameCreatorId = frameData.createdBy;
-      const currentSupporters = frameData.supporters || {};
-      const isNewSupporter = frameCreatorId !== userId && !currentSupporters[userId];
+      const campaignData = campaignDoc.data();
+      const campaignCreatorId = campaignData.createdBy;
+      const currentSupporters = campaignData.supporters || {};
+      const isNewSupporter = campaignCreatorId !== userId && !currentSupporters[userId];
       
-      // Update frame with usage count and supporter tracking
-      const frameUpdates = {
+      // Update campaign with usage count and supporter tracking
+      const campaignUpdates = {
         usageCount: increment(1),
         updatedAt: serverTimestamp(),
       };
       
       // Add user to supporters list if not already there and not the creator
-      if (frameCreatorId !== userId) {
-        frameUpdates[`supporters.${userId}`] = serverTimestamp();
+      if (campaignCreatorId !== userId) {
+        campaignUpdates[`supporters.${userId}`] = serverTimestamp();
       }
       
-      transaction.update(frameDocRef, frameUpdates);
+      transaction.update(campaignDocRef, campaignUpdates);
       
       // Update user's framesUsed counter
       const userDocRef = doc(db, 'users', userId);
@@ -639,9 +639,9 @@ export const trackFrameUsage = async (frameId, userId) => {
         updatedAt: serverTimestamp(),
       });
       
-      // Update frame creator's supportersCount only if this is a new unique supporter
+      // Update campaign creator's supportersCount only if this is a new unique supporter
       if (isNewSupporter) {
-        const creatorDocRef = doc(db, 'users', frameCreatorId);
+        const creatorDocRef = doc(db, 'users', campaignCreatorId);
         transaction.update(creatorDocRef, {
           supportersCount: increment(1),
           updatedAt: serverTimestamp(),
@@ -651,7 +651,7 @@ export const trackFrameUsage = async (frameId, userId) => {
       return { 
         success: true, 
         isNewSupporter,
-        frameCreatorId: frameCreatorId !== userId ? frameCreatorId : null 
+        campaignCreatorId: campaignCreatorId !== userId ? campaignCreatorId : null 
       };
     });
   } catch (error) {
