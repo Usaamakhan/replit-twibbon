@@ -363,37 +363,48 @@ function hasTransparency(imageFile) {
 
 ## File Structure
 
+**Note:** All campaign pages are placed under `(chrome)` folder to automatically include header/footer layout.
+
 ```
 src/
 ├── app/
-│   ├── create/
-│   │   ├── page.js                  # Entry: Choose frame or background
-│   │   ├── frame/
-│   │   │   └── page.js              # Frame upload workflow
-│   │   └── background/
-│   │       └── page.js              # Background upload workflow
-│   ├── campaign/
-│   │   └── [slug]/
-│   │       └── page.js              # Campaign view & usage page
-│   ├── campaigns/
-│   │   └── page.js                  # Unified gallery (frames + backgrounds)
-│   └── creators/
-│       └── page.js                  # Top creators leaderboard
-├── components/
-│   ├── CampaignChoice.js            # Frame vs background selection
-│   ├── CampaignUploadForm.js        # Reusable upload form
-│   ├── TransparencyDetector.js      # Transparency validation
-│   ├── ImageAdjustmentTools.js      # Zoom, move, fit controls
-│   ├── ImageComposer.js             # Canvas-based composition
-│   ├── CampaignCard.js              # Gallery card component
-│   ├── AuthPopup.js                 # Sign-in prompt modal
-│   └── ShareButtons.js              # Social sharing component
-└── utils/
-    ├── imageValidation.js           # Validation utilities
-    ├── slugGenerator.js             # Slug generation logic
-    ├── imageComposition.js          # Canvas manipulation
-    └── campaignFilters.js           # Filter logic for gallery
+│   └── (chrome)/                    # Pages with header/footer (existing folder)
+│       ├── create/                  # NEW: Create campaign pages
+│       │   ├── page.js              # Entry: Choose frame or background
+│       │   ├── frame/
+│       │   │   └── page.js          # Frame upload workflow
+│       │   └── background/
+│       │       └── page.js          # Background upload workflow
+│       ├── campaign/                # NEW: Campaign view pages
+│       │   └── [slug]/
+│       │       └── page.js          # Campaign view & usage page
+│       ├── campaigns/               # NEW: Gallery page
+│       │   └── page.js              # Unified gallery (frames + backgrounds)
+│       └── creators/                # NEW: Creators page
+│           └── page.js              # Top creators leaderboard
+│
+├── components/                      # Existing folder - add new components here
+│   ├── CampaignChoice.js            # NEW: Frame vs background selection
+│   ├── CampaignUploadForm.js        # NEW: Reusable upload form
+│   ├── TransparencyDetector.js      # NEW: Transparency validation
+│   ├── ImageAdjustmentTools.js      # NEW: Zoom, move, fit controls
+│   ├── ImageComposer.js             # NEW: Canvas-based composition
+│   ├── CampaignCard.js              # NEW: Gallery card component
+│   ├── AuthPopup.js                 # NEW: Sign-in prompt modal
+│   └── ShareButtons.js              # NEW: Social sharing component
+│
+└── utils/                           # Existing folder - add new utilities here
+    ├── imageValidation.js           # NEW: Validation utilities
+    ├── slugGenerator.js             # NEW: Slug generation logic
+    ├── imageComposition.js          # NEW: Canvas manipulation
+    └── campaignFilters.js           # NEW: Filter logic for gallery
 ```
+
+**What to do with folders/files:**
+- **Pages (under `(chrome)/`)**: Create NEW folders/files as needed during implementation
+- **Components folder**: Already exists - add NEW campaign components here
+- **Utils folder**: Already exists - add NEW utility functions here
+- **Existing files**: Keep all existing files - don't modify unless necessary
 
 ---
 
