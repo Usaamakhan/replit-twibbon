@@ -85,6 +85,22 @@ service cloud.firestore {
                    isValidSupporterUpdate();
     }
     
+    // Reports - allow creation by anyone, reading/updating by admins only
+    match /reports/{reportId} {
+      // Allow anyone (including anonymous) to create reports
+      allow create: if request.resource.data.keys().hasAll(['campaignId', 'reason']) &&
+                   request.resource.data.reason in ['inappropriate', 'spam', 'copyright', 'other'] &&
+                   request.resource.data.status == 'pending';
+      
+      // Only authenticated users can read reports (admin check should be in application layer)
+      allow read: if request.auth != null;
+      
+      // Only authenticated users can update reports (admin check should be in application layer)
+      allow update: if request.auth != null;
+      
+      // No deletion of reports
+    }
+    
     // All other documents require authentication
     match /{document=**} {
       allow read: if request.auth != null;

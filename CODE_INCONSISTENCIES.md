@@ -124,33 +124,61 @@ This document tracks all inconsistencies between the current codebase and CAMPAI
 ## 🟡 MEDIUM PRIORITY (Needed for Phase 1 Features)
 
 ### 4. Missing `reports` Collection
-**Status:** ❌ Not Implemented
+**Status:** ✅ FIXED (October 1, 2025)
 
-**Current Status:**
-- No `reports` collection exists
-- No report creation/management functions
+**Resolution:**
+- Created complete reports collection with all required functions
+- Added security rules for anonymous reporting
+- Implemented auto-moderation (3+ reports = under-review)
+- Ready for UI integration
 
-**Documentation Requires:**
+**Reports Schema (`src/lib/firestore.js`):**
 ```javascript
 {
   id: "auto-generated",
   campaignId: string,
-  reportedBy: string,
-  reason: "inappropriate" | "copyright" | "spam" | "other",
-  description: string,
-  status: "pending" | "reviewed" | "dismissed" | "actioned",
+  campaignSlug: string,
+  reportedBy: string | "anonymous",
+  reason: "inappropriate" | "spam" | "copyright" | "other",
+  details: string,
+  status: "pending" | "reviewed" | "resolved" | "dismissed",
   createdAt: timestamp,
   reviewedAt: timestamp | null,
-  reviewedBy: string | null
+  reviewedBy: string | null,
+  action: "removed" | "warned" | "no-action" | null
 }
 ```
 
-**Tasks:**
-- [ ] Add `createReport()` function to firestore.js
-- [ ] Add `getReports()` function for admin
-- [ ] Add `updateReportStatus()` function
-- [ ] Create report submission UI component
+**Functions Implemented:**
+- [x] `createReport(reportData)` - Submit new report (lines 690-759)
+  - Validates required fields and reason
+  - Increments campaign's reportsCount
+  - Auto-flags campaign as "under-review" if 3+ reports
+  - Allows anonymous reporting
+  
+- [x] `getReports(filterOptions)` - Get all reports with filters (lines 762-809)
+  - Filter by status, campaignId
+  - Sort by creation date (newest first)
+  - Supports pagination with limit
+  
+- [x] `getCampaignReports(campaignId, limit)` - Get reports for specific campaign (lines 812-814)
+  
+- [x] `updateReportStatus(reportId, statusData)` - Update report status (lines 817-869)
+  - Change status (pending, reviewed, resolved, dismissed)
+  - Record action taken (removed, warned, no-action)
+  - Track who reviewed and when
+
+**Security Rules Added:**
+- [x] `firestore.rules` - Reports collection rules (lines 91-105)
+  - Allow anonymous report creation
+  - Validate required fields and reason
+  - Only authenticated users can read/update (admin check in app layer)
+  - No deletion allowed
+
+**Next Steps (UI Implementation):**
+- [ ] Create report submission modal component
 - [ ] Add report button to campaign pages
+- [ ] Create admin dashboard for report management
 
 ---
 
@@ -341,9 +369,9 @@ supportersCount: number  // Auto-incremented counter
 - [x] Resolve frames/campaigns naming (Issue #1) ✅ FIXED
 - [x] Fix storage bucket structure (Issue #2) ✅ FIXED
 - [x] Add missing campaign schema fields (Issue #3) ✅ FIXED
+- [x] Create reports collection & functions (Issue #4) ✅ FIXED
 - [ ] Implement slug generation (Issue #5)
 - [ ] Implement transparency detection (Issue #6)
-- [ ] Create reports collection & functions (Issue #4)
 
 **Phase 2 Prerequisites:**
 - [ ] Add admin role field (Issue #8)

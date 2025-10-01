@@ -682,3 +682,185 @@ export const trackCampaignUsage = async (campaignId, userId) => {
     return { success: false, error: errorResponse || 'Failed to complete operation. Please try again.' };
   }
 };
+
+// Report operations for campaign moderation
+export const createReport = async (reportData) => {
+  if (!reportData || typeof reportData !== 'object') {
+    return { success: false, error: 'Report data is required' };
+  }
+  
+  // Validate required fields
+  const requiredFields = ['campaignId', 'reason'];
+  const missingFields = requiredFields.filter(field => !reportData[field]);
+  if (missingFields.length > 0) {
+    return { success: false, error: `Missing required fields: ${missingFields.join(', ')}` };
+  }
+  
+  // Validate reason is one of the allowed values
+  const validReasons = ['inappropriate', 'spam', 'copyright', 'other'];
+  if (!validReasons.includes(reportData.reason)) {
+    return { success: false, error: 'Invalid report reason' };
+  }
+  
+  try {
+    return await runTransaction(db, async (transaction) => {
+      // Create the report document
+      const reportRef = doc(collection(db, 'reports'));
+      const reportDoc = {
+        campaignId: reportData.campaignId,
+        campaignSlug: reportData.campaignSlug || '',
+        reportedBy: reportData.reportedBy || 'anonymous',
+        reason: reportData.reason,
+        details: reportData.details || '',
+        status: 'pending',
+        createdAt: serverTimestamp(),
+        reviewedAt: null,
+        reviewedBy: null,
+        action: null,
+      };
+      
+      transaction.set(reportRef, reportDoc);
+      
+      // Increment the campaign's reportsCount
+      const campaignRef = doc(db, 'campaigns', reportData.campaignId);
+      const campaignDoc = await transaction.get(campaignRef);
+      
+      if (!campaignDoc.exists()) {
+        throw new Error('Campaign not found');
+      }
+      
+      const currentReportsCount = campaignDoc.data().reportsCount || 0;
+      const newReportsCount = currentReportsCount + 1;
+      
+      const campaignUpdates = {
+        reportsCount: increment(1),
+        updatedAt: serverTimestamp(),
+      };
+      
+      // Auto-flag for review if threshold reached (3+ reports)
+      if (newReportsCount >= 3 && campaignDoc.data().moderationStatus === 'active') {
+        campaignUpdates.moderationStatus = 'under-review';
+      }
+      
+      transaction.update(campaignRef, campaignUpdates);
+      
+      return { success: true, reportId: reportRef.id };
+    });
+  } catch (error) {
+    if (process.env.NODE_ENV === 'development') {
+      console.error('Error creating report:', error);
+    }
+    const errorResponse = await handleFirebaseError(error, 'firestore', { returnType: 'string' });
+    return { success: false, error: errorResponse || 'Failed to submit report. Please try again.' };
+  }
+};
+
+// Get all reports (admin only - enforce in component)
+export const getReports = async (filterOptions = {}) => {
+  if (!db) {
+    if (process.env.NODE_ENV === 'development') {
+      console.error('Database not initialized - cannot get reports');
+    }
+    return [];
+  }
+  
+  try {
+    let q = collection(db, 'reports');
+    const constraints = [];
+    
+    // Add filters
+    if (filterOptions.status) {
+      constraints.push(where('status', '==', filterOptions.status));
+    }
+    
+    if (filterOptions.campaignId) {
+      constraints.push(where('campaignId', '==', filterOptions.campaignId));
+    }
+    
+    // Always order by creation date (newest first)
+    constraints.push(orderBy('createdAt', 'desc'));
+    
+    // Add limit if specified
+    if (filterOptions.limit) {
+      constraints.push(limit(filterOptions.limit));
+    }
+    
+    if (constraints.length > 0) {
+      q = query(q, ...constraints);
+    }
+    
+    const querySnapshot = await getDocs(q);
+    const reports = [];
+    
+    querySnapshot.forEach((doc) => {
+      reports.push({ id: doc.id, ...doc.data() });
+    });
+    
+    return reports;
+  } catch (error) {
+    if (process.env.NODE_ENV === 'development') {
+      console.error('Error getting reports:', error);
+    }
+    return [];
+  }
+};
+
+// Get reports for a specific campaign
+export const getCampaignReports = async (campaignId, limitCount = 50) => {
+  return getReports({ campaignId, limit: limitCount });
+};
+
+// Update report status (admin only - enforce in component)
+export const updateReportStatus = async (reportId, statusData) => {
+  if (!reportId || !statusData) {
+    return { success: false, error: 'Report ID and status data are required' };
+  }
+  
+  // Validate status
+  const validStatuses = ['pending', 'reviewed', 'resolved', 'dismissed'];
+  if (statusData.status && !validStatuses.includes(statusData.status)) {
+    return { success: false, error: 'Invalid status' };
+  }
+  
+  // Validate action if provided
+  const validActions = ['removed', 'warned', 'no-action'];
+  if (statusData.action && !validActions.includes(statusData.action)) {
+    return { success: false, error: 'Invalid action' };
+  }
+  
+  try {
+    const reportRef = doc(db, 'reports', reportId);
+    const reportDoc = await getDoc(reportRef);
+    
+    if (!reportDoc.exists()) {
+      return { success: false, error: 'Report not found' };
+    }
+    
+    const updateData = {
+      updatedAt: serverTimestamp(),
+    };
+    
+    if (statusData.status) {
+      updateData.status = statusData.status;
+      updateData.reviewedAt = serverTimestamp();
+    }
+    
+    if (statusData.reviewedBy) {
+      updateData.reviewedBy = statusData.reviewedBy;
+    }
+    
+    if (statusData.action) {
+      updateData.action = statusData.action;
+    }
+    
+    await updateDoc(reportRef, updateData);
+    
+    return { success: true };
+  } catch (error) {
+    if (process.env.NODE_ENV === 'development') {
+      console.error('Error updating report status:', error);
+    }
+    const errorResponse = await handleFirebaseError(error, 'firestore', { returnType: 'string' });
+    return { success: false, error: errorResponse || 'Failed to update report. Please try again.' };
+  }
+};
