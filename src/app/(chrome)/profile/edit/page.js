@@ -7,6 +7,7 @@ import { useAuth } from '../../../../hooks/useAuth';
 import { getUserProfile, checkUsernameExists, updateUserProfile } from '../../../../lib/firestore';
 import { useOptionalUserProfile } from '../../../../components/UserProfileProvider';
 import ConfirmationModal from '../../../../components/ConfirmationModal';
+import { uploadFile } from '../../../../lib/supabase';
 
 export default function ProfileEditPage() {
   const router = useRouter();
@@ -410,18 +411,28 @@ export default function ProfileEditPage() {
         bio: formData.bio,
       };
 
-      // Handle profile image (in a real app, you'd upload to storage service)
-      if (formData.profilePicPreview !== userData?.profileImage) {
-        // If preview is empty but userData has image, user removed it
-        // If preview has content different from userData, user changed it
-        profileData.profileImage = formData.profilePicPreview || null;
+      // Handle profile image upload to Supabase
+      if (formData.profilePic) {
+        // User selected a new profile image - upload to Supabase
+        const uploadResult = await uploadFile(formData.profilePic, 'profile-images');
+        // Get public URL from Supabase
+        const publicUrl = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/uploads/${uploadResult.path}`;
+        profileData.profileImage = publicUrl;
+      } else if (formData.profilePicPreview === '' && userData?.profileImage) {
+        // User removed the image
+        profileData.profileImage = null;
       }
 
-      // Handle banner image
-      if (formData.profileBannerPreview !== userData?.bannerImage) {
-        // If preview is empty but userData has image, user removed it
-        // If preview has content different from userData, user changed it
-        profileData.bannerImage = formData.profileBannerPreview || null;
+      // Handle banner image upload to Supabase
+      if (formData.profileBanner) {
+        // User selected a new banner image - upload to Supabase
+        const uploadResult = await uploadFile(formData.profileBanner, 'profile-images');
+        // Get public URL from Supabase
+        const publicUrl = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/uploads/${uploadResult.path}`;
+        profileData.bannerImage = publicUrl;
+      } else if (formData.profileBannerPreview === '' && userData?.bannerImage) {
+        // User removed the image
+        profileData.bannerImage = null;
       }
 
       const result = await updateUserProfile(userData.id, profileData);
