@@ -247,27 +247,28 @@ This document tracks all inconsistencies between the current codebase and CAMPAI
 ## 📊 Counter Fields: Terminology Inconsistency
 
 ### 11. Mixed "Frames" and "Campaigns" Terminology
-**Status:** ❌ Inconsistent
+**Status:** ✅ FIXED (October 1, 2025)
 
-**Current User Profile Counters:**
-- `framesCreated` - number of frames created
-- `framesUsed` - number of times user used frames
-- `campaignsCount` - total campaigns (confusing!)
+**Resolution:**
+- Removed `framesUsed` counter completely (not needed)
+- Renamed `framesCreated` to `campaignsCreated` for consistency
+- Standardized on "campaigns" terminology throughout
+
+**Updated User Profile Counters:**
+- `campaignsCreated` - number of campaigns created (renamed from framesCreated)
+- `campaignsCount` - total campaigns count
 - `supportersCount` - unique supporters
+- ~~`framesUsed`~~ - REMOVED (no longer tracked)
 
-**Issue:**
-- Using both "frames" and "campaigns" causes confusion
-- `campaignsCount` should be `framesCreated` OR vice versa
-
-**Decision Needed:**
-- [ ] Standardize on "campaigns" terminology
-- [ ] OR standardize on "frames" terminology
-- [ ] Update all counter field names accordingly
-
-**Files to Update:**
-- [ ] `src/lib/firestore.js` - all counter references
-- [ ] All components displaying user stats
-- [ ] Documentation
+**Files Updated:**
+- [x] `src/lib/firestore.js` - all counter references updated
+  - Line 178: User profile initialization uses `campaignsCreated`
+  - Line 227, 284: getUserProfile functions return `campaignsCreated`
+  - Line 389-407: getUserStats updated to new field names
+  - Line 441: createCampaign increments `campaignsCreated`
+  - Removed all `framesUsed` increment logic
+- [x] `firestore.rules` - security rules updated
+  - Lines 39-47: Updated allowed fields and validation rules
 
 ---
 
@@ -306,7 +307,7 @@ supportersCount: 0  // Just a counter
 ## 📝 Summary Checklist
 
 **Critical Path to Phase 1:**
-- [ ] Resolve frames/campaigns naming (Issue #1)
+- [x] Resolve frames/campaigns naming (Issue #1) ✅ FIXED
 - [ ] Fix storage bucket structure (Issue #2)
 - [ ] Add missing campaign schema fields (Issue #3)
 - [ ] Implement slug generation (Issue #5)
@@ -319,7 +320,7 @@ supportersCount: 0  // Just a counter
 - [ ] Create admin dashboard (Issue #10)
 
 **Ongoing Cleanup:**
-- [ ] Standardize terminology (Issue #11)
+- [x] Standardize terminology (Issue #11) ✅ FIXED
 - [ ] Update documentation (Issue #12)
 
 ---
