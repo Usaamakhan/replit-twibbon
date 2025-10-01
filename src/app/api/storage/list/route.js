@@ -32,7 +32,7 @@ export async function GET(request) {
     const offset = Math.max(parseInt(searchParams.get('offset')) || 0, 0) // Ensure non-negative
     
     // Validate folder
-    const allowedFolders = ['uploads', 'profile-images', 'documents', 'temp']
+    const allowedFolders = ['uploads', 'profile-images', 'documents', 'temp', 'campaigns']
     if (!allowedFolders.includes(folder)) {
       return NextResponse.json({ error: 'Invalid folder' }, { status: 400 })
     }

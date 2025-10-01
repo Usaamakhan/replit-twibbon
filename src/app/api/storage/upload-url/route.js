@@ -29,7 +29,7 @@ export async function POST(request) {
     const { fileName, fileType, folder = 'uploads' } = await request.json()
     
     // Validate folder (whitelist allowed folders)
-    const allowedFolders = ['uploads', 'profile-images', 'documents', 'temp']
+    const allowedFolders = ['uploads', 'profile-images', 'documents', 'temp', 'campaigns']
     if (!allowedFolders.includes(folder)) {
       return NextResponse.json({ error: 'Invalid folder' }, { status: 400 })
     }

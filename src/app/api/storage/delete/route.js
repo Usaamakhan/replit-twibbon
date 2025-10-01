@@ -37,7 +37,8 @@ export async function DELETE(request) {
       `uploads/${decodedToken.uid}/`,
       `profile-images/${decodedToken.uid}/`,
       `documents/${decodedToken.uid}/`,
-      `temp/${decodedToken.uid}/`
+      `temp/${decodedToken.uid}/`,
+      `campaigns/${decodedToken.uid}/`
     ]
     
     const hasValidPrefix = allowedPrefixes.some(prefix => path.startsWith(prefix))
