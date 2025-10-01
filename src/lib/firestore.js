@@ -426,6 +426,7 @@ export const createCampaign = async (campaignData, userId) => {
         updatedAt: serverTimestamp(),
         usageCount: 0,
         supporters: {},
+        supportersCount: 0,
         isPublic: campaignData?.isPublic ?? true,
       };
       
@@ -624,6 +625,10 @@ export const trackCampaignUsage = async (campaignId, userId) => {
       // Add user to supporters list if not already there and not the creator
       if (campaignCreatorId !== userId) {
         campaignUpdates[`supporters.${userId}`] = serverTimestamp();
+        // Also increment the campaign's supportersCount for new supporters
+        if (isNewSupporter) {
+          campaignUpdates.supportersCount = increment(1);
+        }
       }
       
       transaction.update(campaignDocRef, campaignUpdates);

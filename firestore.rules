@@ -68,9 +68,12 @@ service cloud.firestore {
       allow update: if request.auth != null &&
                    // Only allow usage tracking fields
                    request.resource.data.diff(resource.data).affectedKeys()
-                     .hasOnly(['usageCount', 'supporters', 'updatedAt']) &&
+                     .hasOnly(['usageCount', 'supporters', 'supportersCount', 'updatedAt']) &&
                    // Ensure usageCount only increases by 1
                    request.resource.data.usageCount == resource.data.usageCount + 1 &&
+                   // Ensure supportersCount only increases by 0 or 1 (0 if existing supporter, 1 if new)
+                   (!('supportersCount' in request.resource.data.diff(resource.data).changedKeys()) ||
+                    request.resource.data.supportersCount == resource.data.supportersCount + 1) &&
                    // Use helper function for supporters validation
                    isValidSupporterUpdate();
     }
