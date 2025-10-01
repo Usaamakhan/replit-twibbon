@@ -172,8 +172,7 @@ export const createUserProfile = async (user) => {
         campaignsCount: 0,
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
-        framesCreated: 0,
-        framesUsed: 0,
+        campaignsCreated: 0,
         profileCompleted: false, // Track if user has completed welcome popup
       };
       
@@ -222,8 +221,7 @@ export const getUserProfile = async (userId) => {
         ...userData,
         supportersCount: userData.supportersCount || 0,
         campaignsCount: userData.campaignsCount || 0,
-        framesCreated: userData.framesCreated || 0,
-        framesUsed: userData.framesUsed || 0,
+        campaignsCreated: userData.campaignsCreated || 0,
         bio: userData.bio || '',
         profileImage: userData.profileImage || '',
         bannerImage: userData.bannerImage || ''
@@ -280,8 +278,7 @@ export const getUserProfileByUsername = async (username) => {
       ...userData,
       supportersCount: userData.supportersCount || 0,
       campaignsCount: userData.campaignsCount || 0,
-      framesCreated: userData.framesCreated || 0,
-      framesUsed: userData.framesUsed || 0,
+      campaignsCreated: userData.campaignsCreated || 0,
       bio: userData.bio || '',
       profileImage: userData.profileImage || '',
       bannerImage: userData.bannerImage || ''
@@ -386,7 +383,7 @@ export const updateUserProfile = async (userId, updates) => {
 
 // Get user statistics (returns stored counters for consistency and performance)
 export const getUserStats = async (userId) => {
-  if (!userId) return { supportersCount: 0, campaignsCount: 0, framesCreated: 0, framesUsed: 0 };
+  if (!userId) return { supportersCount: 0, campaignsCount: 0, campaignsCreated: 0 };
   
   try {
     // Get stored counters from user profile for consistency
@@ -395,17 +392,16 @@ export const getUserStats = async (userId) => {
       return {
         supportersCount: userProfile.supportersCount || 0,
         campaignsCount: userProfile.campaignsCount || 0,
-        framesCreated: userProfile.framesCreated || 0,
-        framesUsed: userProfile.framesUsed || 0,
+        campaignsCreated: userProfile.campaignsCreated || 0,
       };
     } else {
-      return { supportersCount: 0, campaignsCount: 0, framesCreated: 0, framesUsed: 0 };
+      return { supportersCount: 0, campaignsCount: 0, campaignsCreated: 0 };
     }
   } catch (error) {
     if (process.env.NODE_ENV === 'development') {
       console.error('Error getting user stats:', error);
     }
-    return { supportersCount: 0, campaignsCount: 0, framesCreated: 0, framesUsed: 0 };
+    return { supportersCount: 0, campaignsCount: 0, campaignsCreated: 0 };
   }
 };
 
@@ -439,7 +435,7 @@ export const createCampaign = async (campaignData, userId) => {
       const userDocRef = doc(db, 'users', userId);
       transaction.update(userDocRef, {
         campaignsCount: increment(1),
-        framesCreated: increment(1),
+        campaignsCreated: increment(1),
         updatedAt: serverTimestamp(),
       });
       
@@ -631,13 +627,6 @@ export const trackCampaignUsage = async (campaignId, userId) => {
       }
       
       transaction.update(campaignDocRef, campaignUpdates);
-      
-      // Update user's framesUsed counter
-      const userDocRef = doc(db, 'users', userId);
-      transaction.update(userDocRef, {
-        framesUsed: increment(1),
-        updatedAt: serverTimestamp(),
-      });
       
       // Update campaign creator's supportersCount only if this is a new unique supporter
       if (isNewSupporter) {

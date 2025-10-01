@@ -33,17 +33,15 @@ service cloud.firestore {
                    request.auth.uid == userId &&
                    // Only allow counter fields to be updated
                    request.resource.data.diff(resource.data).affectedKeys()
-                     .hasOnly(['framesCreated', 'campaignsCount', 'framesUsed', 'updatedAt']) &&
+                     .hasOnly(['campaignsCreated', 'campaignsCount', 'updatedAt']) &&
                    // Protect system fields
                    request.resource.data.email == resource.data.email &&
                    request.resource.data.createdAt == resource.data.createdAt &&
                    // Ensure counters only increase by 1 (prevent manipulation)
-                   (!('framesCreated' in request.resource.data.diff(resource.data).changedKeys()) ||
-                    request.resource.data.framesCreated == resource.data.framesCreated + 1) &&
+                   (!('campaignsCreated' in request.resource.data.diff(resource.data).changedKeys()) ||
+                    request.resource.data.campaignsCreated == resource.data.campaignsCreated + 1) &&
                    (!('campaignsCount' in request.resource.data.diff(resource.data).changedKeys()) ||
-                    request.resource.data.campaignsCount == resource.data.campaignsCount + 1) &&
-                   (!('framesUsed' in request.resource.data.diff(resource.data).changedKeys()) ||
-                    request.resource.data.framesUsed == resource.data.framesUsed + 1);
+                    request.resource.data.campaignsCount == resource.data.campaignsCount + 1);
       
       allow create: if request.auth != null && request.auth.uid == userId;
       // Don't allow delete - prevents breaking username mappings
