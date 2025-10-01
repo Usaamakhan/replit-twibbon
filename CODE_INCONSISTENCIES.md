@@ -301,20 +301,84 @@ This document tracks all inconsistencies between the current codebase and CAMPAI
 ---
 
 ### 7. Storage Path Structure for Campaigns
-**Status:** ❌ Not Aligned
+**Status:** ✅ FIXED (October 1, 2025)
 
-**Current Paths:**
-- Profile images: `profile-images/{userId}/{timestamp}-{filename}`
-- Generic uploads: `uploads/{userId}/{timestamp}-{filename}`
+**Resolution:**
+- Created dedicated campaign upload endpoint with correct path structure
+- Campaign images now use predictable paths: `campaigns/{userId}/{campaignId}.png`
+- Added utility functions for consistent path handling
+- Enables easy campaign deletion and clear ownership
 
-**Documentation Needs:**
-- Campaign images: `campaigns/{userId}/{campaignId}.png`
+**Problem Analysis:**
+- ❌ **Old:** Generic upload endpoint created `campaigns/{userId}/{timestamp}-{filename}`
+- ✅ **New:** Dedicated endpoint creates `campaigns/{userId}/{campaignId}.png`
 
-**Tasks:**
-- [ ] Add campaign-specific upload endpoint
-- [ ] Validate campaignId format
-- [ ] Update path structure to match docs
-- [ ] Add campaign cleanup on deletion
+**Why This Matters:**
+1. **Predictable Deletion** - Know exact file path when deleting campaign
+2. **One Image Per Campaign** - No duplicate/orphaned files
+3. **Clear Ownership** - Easy to find all campaigns by a user
+4. **Matches Documentation** - CAMPAIGN_SYSTEM.md lines 362, 364
+
+**Implementation:**
+
+**New API Endpoint (`src/app/api/storage/campaign-upload-url/route.js`):**
+- [x] POST endpoint: `/api/storage/campaign-upload-url`
+- [x] Accepts: `{ campaignId: string }`
+- [x] Returns: `{ uploadUrl, path, token }`
+- [x] Path format: `campaigns/{userId}/{campaignId}.png`
+- [x] Validates campaignId format (alphanumeric, hyphens, underscores)
+- [x] Enforces PNG format (required for transparency)
+- [x] Uses `upsert: true` to allow re-uploading campaign images
+- [x] Authenticated via Firebase token
+
+**Utility Functions (`src/utils/campaignStorage.js`):**
+- [x] `buildCampaignImagePath(userId, campaignId)` - Build storage path
+  - Returns: `campaigns/{userId}/{campaignId}.png`
+  
+- [x] `buildCampaignImageUrl(userId, campaignId)` - Build public URL
+  - Returns full Supabase public URL
+  
+- [x] `parseCampaignImagePath(path)` - Extract IDs from path
+  - Returns: `{ userId, campaignId }` or null
+  
+- [x] `isValidCampaignPath(path)` - Validate path format
+  - Returns: boolean
+  
+- [x] `getCampaignUploadUrl(campaignId, authToken)` - Client-side helper
+  - Calls API endpoint and returns upload URL
+  
+- [x] `deleteCampaignImage(path, authToken)` - Client-side delete helper
+  - Calls delete API and removes campaign image
+
+**Usage Example:**
+```javascript
+import { buildCampaignImagePath, getCampaignUploadUrl } from '@/utils/campaignStorage';
+
+// 1. Get upload URL
+const { uploadUrl, path } = await getCampaignUploadUrl(campaignId, authToken);
+
+// 2. Upload image
+await fetch(uploadUrl, {
+  method: 'PUT',
+  body: imageFile,
+  headers: { 'Content-Type': 'image/png' }
+});
+
+// 3. Save path to Firestore
+const imageUrl = buildCampaignImagePath(userId, campaignId);
+await createCampaign({ ...data, imageUrl });
+
+// 4. On delete, remove image
+await deleteCampaignImage(path, authToken);
+```
+
+**Benefits:**
+- ✅ Predictable file paths for deletion
+- ✅ One image per campaign (no duplicates)
+- ✅ Easy batch operations (get all campaigns by userId)
+- ✅ Matches CAMPAIGN_SYSTEM.md specification
+- ✅ Clear ownership structure
+- ✅ Fully documented with JSDoc comments
 
 ---
 
