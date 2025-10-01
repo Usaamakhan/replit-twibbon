@@ -1,0 +1,113 @@
+Perfect! I've completed my comprehensive analysis. Here's the detailed breakdown of Issue #2 (Storage Bucket Structure):
+
+📊 COMPLETE ANALYSIS - Issue #2: Storage Bucket Structure
+CURRENT IMPLEMENTATION:
+Supabase Setup:
+Single bucket name: uploads
+All file operations (upload-url, signed-url, delete, list) hardcoded to use .from('uploads') bucket
+Folder structure inside the bucket:
+uploads/
+├── uploads/{userId}/{timestamp}-{filename}
+├── profile-images/{userId}/{timestamp}-{filename}
+├── documents/{userId}/{timestamp}-{filename}
+└── temp/{userId}/{timestamp}-{filename}
+How Profile & Banner Images Currently Work:
+Profile & Banner images ARE stored in the uploads bucket
+They use folder paths like: profile-images/{userId}/{timestamp}-image.png
+HOWEVER, the profile edit page has a BUG: It's NOT actually uploading to Supabase!
+Line 414-425 in profile/edit/page.js saves images as base64 data URLs directly to Firestore
+This is inefficient and not using the proper storage system
+Comment in code says: // Handle profile image (in a real app, you'd upload to storage service)
+WHAT DOCUMENTATION EXPECTS:
+According to CAMPAIGN_SYSTEM.md:
+
+New dedicated bucket: campaigns
+Path structure: campaigns/{userId}/{campaignId}.png
+Example: campaigns/user123abc/campaign456def.png
+Benefits:
+Clear ownership
+Easy batch deletion per user
+Separation from profile/other uploads
+DETAILED PLAN - What You Need To Do:
+✅ OPTION 1: Keep Current Bucket (RECOMMENDED)
+Why this is better:
+
+Profile & banner images already use the uploads bucket
+No need to create a new bucket
+Just add a new folder structure inside existing bucket
+Manual Steps in Supabase:
+
+Do NOT delete the uploads bucket - you need it!
+Do NOT create a campaigns bucket
+✅ That's it! No manual Supabase changes needed
+Code Changes Needed:
+
+Add campaigns to the allowed folders list (4 files)
+Update path structure for campaign uploads: campaigns/{userId}/{campaignId}.png instead of uploads/{userId}/{timestamp}-{filename}
+Keep everything else the same
+New structure will be:
+
+uploads/  (bucket - already exists)
+├── uploads/{userId}/{timestamp}-file.ext          ← Generic uploads
+├── profile-images/{userId}/{timestamp}-image.ext  ← Profile/banner (existing)
+├── documents/{userId}/{timestamp}-doc.ext         ← Documents (existing)
+├── temp/{userId}/{timestamp}-temp.ext             ← Temp files (existing)
+└── campaigns/{userId}/{campaignId}.png            ← NEW: Campaign images
+❌ OPTION 2: Create Separate Campaigns Bucket (Not Recommended)
+Why this is NOT ideal:
+
+Adds complexity - you'll have TWO buckets to manage
+Profile images stay in uploads bucket anyway
+More configuration needed
+Manual Steps in Supabase:
+
+Create new bucket named campaigns
+Configure bucket permissions (public read access)
+Keep the uploads bucket for profiles
+Code Changes Needed:
+
+All 4 storage API files need logic to choose bucket based on file type
+More complex - need to handle two different buckets
+FILES THAT NEED CODE CHANGES (If Option 1):
+src/app/api/storage/upload-url/route.js (Line 32, 48)
+
+Add 'campaigns' to allowedFolders array
+Keep .from('uploads') unchanged
+src/app/api/storage/signed-url/route.js (Line 36-41, 50)
+
+Add campaigns/${decodedToken.uid}/ to allowedPrefixes
+Keep .from('uploads') unchanged
+src/app/api/storage/delete/route.js (Line 36-41, 50)
+
+Add campaigns/${decodedToken.uid}/ to allowedPrefixes
+Keep .from('uploads') unchanged
+src/app/api/storage/list/route.js (Line 35, 44)
+
+Add 'campaigns' to allowedFolders array
+Keep .from('uploads') unchanged
+NEW: Create campaign upload logic
+
+Path format: campaigns/{userId}/{campaignId}.png (no timestamp prefix)
+This is different from profile images which use timestamps
+ADDITIONAL BUG TO FIX:
+Profile Edit Page Bug (src/app/(chrome)/profile/edit/page.js):
+
+Currently saves images as base64 to Firestore (lines 414-425)
+Should use uploadFile(file, 'profile-images') from src/lib/supabase.js
+Fix this to properly use Supabase storage
+🎯 MY RECOMMENDATION:
+Use Option 1 - Keep the single uploads bucket and add campaigns as a new folder inside it.
+
+Why?
+
+✅ No manual Supabase changes needed
+✅ Simpler code changes
+✅ Profile/banner images already work this way
+✅ All files in one place
+✅ Consistent with current architecture
+Should I proceed with Option 1? I'll:
+
+Update the 4 storage API files to allow the campaigns folder
+Document the final structure
+Mark Issue #2 as FIXED
+Let me know if you prefer Option 2 instead, or if you have questions!
