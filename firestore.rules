@@ -59,10 +59,17 @@ service cloud.firestore {
     // Campaigns - public reading with secure usage tracking
     match /campaigns/{campaignId} {
       allow read: if true; // ✅ Public access for guest users
-      allow create: if request.auth != null && request.auth.uid == request.resource.data.createdBy;
+      
+      // Allow campaign creation with required fields validation
+      allow create: if request.auth != null && 
+                   request.auth.uid == request.resource.data.creatorId &&
+                   // Validate required fields exist
+                   request.resource.data.keys().hasAll(['type', 'title', 'slug', 'imageUrl', 'creatorId']) &&
+                   // Validate type is either 'frame' or 'background'
+                   request.resource.data.type in ['frame', 'background'];
       
       // Allow campaign owner full control
-      allow update, delete: if request.auth != null && request.auth.uid == resource.data.createdBy;
+      allow update, delete: if request.auth != null && request.auth.uid == resource.data.creatorId;
       
       // Allow secure usage tracking by authenticated users
       allow update: if request.auth != null &&

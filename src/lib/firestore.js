@@ -415,19 +415,48 @@ export const createCampaign = async (campaignData, userId) => {
     return { success: false, error: 'Campaign data is required' };
   }
   
+  // Validate required fields
+  const requiredFields = ['type', 'title', 'slug', 'imageUrl'];
+  const missingFields = requiredFields.filter(field => !campaignData[field]);
+  if (missingFields.length > 0) {
+    return { success: false, error: `Missing required fields: ${missingFields.join(', ')}` };
+  }
+  
+  // Validate type is either 'frame' or 'background'
+  if (!['frame', 'background'].includes(campaignData.type)) {
+    return { success: false, error: 'Type must be either "frame" or "background"' };
+  }
+  
   try {
     return await runTransaction(db, async (transaction) => {
-      // Create the campaign with proper defaults
+      // Create the campaign with explicit schema (no spread operator)
       const campaignRef = doc(collection(db, 'campaigns'));
       const campaignDoc = {
-        ...campaignData,
-        createdBy: userId,
-        createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp(),
-        usageCount: 0,
-        supporters: {},
-        supportersCount: 0,
-        isPublic: campaignData?.isPublic ?? true,
+        // Required fields from CAMPAIGN_SYSTEM.md
+        type: campaignData.type,                    // "frame" or "background"
+        title: campaignData.title,                  // Campaign title
+        slug: campaignData.slug,                    // URL-friendly slug
+        imageUrl: campaignData.imageUrl,            // Supabase storage URL
+        creatorId: userId,                          // Renamed from createdBy
+        
+        // Optional metadata fields
+        description: campaignData.description || '',
+        captionTemplate: campaignData.captionTemplate || '',
+        
+        // Counter fields
+        supportersCount: 0,                         // For documentation compliance
+        supporters: {},                             // Detailed tracking with timestamps
+        usageCount: 0,                              // Total usage count
+        reportsCount: 0,                            // Number of reports received
+        
+        // Status fields
+        moderationStatus: 'active',                 // "active" | "under-review" | "removed"
+        isPublic: campaignData.isPublic ?? true,    // Current feature (not in docs)
+        
+        // Timestamps
+        createdAt: serverTimestamp(),               // When campaign was published
+        updatedAt: serverTimestamp(),               // Last modification time
+        // firstUsedAt - added later when first supporter downloads
       };
       
       transaction.set(campaignRef, campaignDoc);
@@ -487,7 +516,7 @@ export const getUserCampaigns = async (userId) => {
   try {
     const q = query(
       collection(db, 'campaigns'),
-      where('createdBy', '==', userId),
+      where('creatorId', '==', userId),
       orderBy('createdAt', 'desc')
     );
     
@@ -612,7 +641,7 @@ export const trackCampaignUsage = async (campaignId, userId) => {
       }
       
       const campaignData = campaignDoc.data();
-      const campaignCreatorId = campaignData.createdBy;
+      const campaignCreatorId = campaignData.creatorId;
       const currentSupporters = campaignData.supporters || {};
       const isNewSupporter = campaignCreatorId !== userId && !currentSupporters[userId];
       

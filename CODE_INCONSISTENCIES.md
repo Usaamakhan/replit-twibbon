@@ -71,36 +71,53 @@ This document tracks all inconsistencies between the current codebase and CAMPAI
 ---
 
 ### 3. Campaign/Frame Data Schema Missing Fields
-**Status:** ❌ Not Fixed
+**Status:** ✅ FIXED (October 1, 2025)
 
-**Current Frame Schema (`src/lib/firestore.js` createFrame):**
+**Resolution:**
+- Updated campaign schema to match CAMPAIGN_SYSTEM.md documentation
+- Renamed `createdBy` → `creatorId` throughout codebase
+- Added all required fields with validation
+- Updated security rules to enforce schema
+
+**New Campaign Schema (`src/lib/firestore.js` createCampaign):**
 ```javascript
 {
-  ...frameData,
-  createdBy: userId,
+  // Required fields
+  type: "frame" | "background",
+  title: string,
+  slug: string,
+  imageUrl: string,
+  creatorId: userId,
+  
+  // Optional metadata
+  description: string,
+  captionTemplate: string,
+  
+  // Counters
+  supportersCount: 0,
+  supporters: {},
+  usageCount: 0,
+  reportsCount: 0,
+  
+  // Status
+  moderationStatus: "active",
+  isPublic: true,
+  
+  // Timestamps
   createdAt: timestamp,
   updatedAt: timestamp,
-  usageCount: 0,
-  supporters: {},
-  isPublic: true
+  // firstUsedAt (added on first download)
 }
 ```
 
-**Documentation Campaign Schema Requires:**
-- [ ] `type: "frame" | "background"` - NOT in current schema
-- [ ] `title: string` - NOT in current schema
-- [ ] `description: string` - NOT in current schema
-- [ ] `slug: string` - NOT in current schema
-- [ ] `imageUrl: string` - NOT in current schema
-- [ ] `captionTemplate: string` - NOT in current schema
-- [ ] `reportsCount: 0` - NOT in current schema
-- [ ] `moderationStatus: "active"` - NOT in current schema
-- [ ] `firstUsedAt: timestamp` - NOT in current schema
-- [ ] Rename `createdBy` → `creatorId` for consistency
-
-**Files to Update:**
-- [ ] `src/lib/firestore.js` - createFrame function (line 412-455)
-- [ ] Update all components that use frame data
+**Files Updated:**
+- [x] `src/lib/firestore.js` - Explicit schema with all required fields (lines 437-463)
+- [x] `src/lib/firestore.js` - Added validation for required fields (lines 421-431)
+- [x] `src/lib/firestore.js` - Renamed `createdBy` → `creatorId` in createCampaign (line 443)
+- [x] `src/lib/firestore.js` - Updated getUserCampaigns query to use `creatorId` (line 522)
+- [x] `src/lib/firestore.js` - Updated trackCampaignUsage to use `creatorId` (line 647)
+- [x] `firestore.rules` - Updated campaign creation rules with field validation (lines 67-72)
+- [x] `firestore.rules` - Updated ownership checks to use `creatorId` (line 75)
 
 ---
 
@@ -322,8 +339,8 @@ supportersCount: number  // Auto-incremented counter
 
 **Critical Path to Phase 1:**
 - [x] Resolve frames/campaigns naming (Issue #1) ✅ FIXED
-- [ ] Fix storage bucket structure (Issue #2)
-- [ ] Add missing campaign schema fields (Issue #3)
+- [x] Fix storage bucket structure (Issue #2) ✅ FIXED
+- [x] Add missing campaign schema fields (Issue #3) ✅ FIXED
 - [ ] Implement slug generation (Issue #5)
 - [ ] Implement transparency detection (Issue #6)
 - [ ] Create reports collection & functions (Issue #4)
