@@ -35,13 +35,29 @@ Built with Next.js 15.5.2 (App Router), React 19.1.0, Tailwind CSS 4, Firebase (
 - **Download Prevention:** Disabled until user uploads their photo
 - **Unified Gallery:** Single `/campaigns` page for both frames and backgrounds
 
-### Current Setup Status (2025-09-30)
+### Current Setup Status (2025-10-01)
 ✅ Fresh GitHub import configured for Replit
 ✅ All dependencies installed (540 packages, 0 vulnerabilities)
 ✅ Next.js dev server running on 0.0.0.0:5000
-✅ Deployment configured for autoscale
+✅ Deployment configured for autoscale (build: npm run build, run: npm start)
+✅ Environment ready to run (Firebase/Supabase configuration needed for full functionality)
 ✅ Profile banner aspect ratio fixed to 3:1 across all pages
 ✅ Search bar height increased in header
+
+### Environment Variables Required
+To enable full functionality, configure these environment variables in Replit Secrets:
+
+**Firebase (Authentication):**
+- `NEXT_PUBLIC_FIREBASE_API_KEY`
+- `NEXT_PUBLIC_FIREBASE_PROJECT_ID`
+- `NEXT_PUBLIC_FIREBASE_APP_ID`
+- `FIREBASE_SERVICE_ACCOUNT_KEY` (JSON string for server-side auth)
+
+**Supabase (Database & Storage):**
+- `NEXT_PUBLIC_SUPABASE_URL`
+- `SUPABASE_SERVICE_ROLE_KEY`
+
+The app will run without these but with limited functionality (Firebase disabled message shown).
 
 ### Campaign System Documentation
 📄 See **CAMPAIGN_SYSTEM.md** for complete implementation guide including:
