@@ -2,13 +2,22 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     
-    // Helper function for supporters validation
-    function isValidSupporterUpdate() {
-      let supportersDiff = request.resource.data.supporters.diff(resource.data.supporters);
-      return supportersDiff.removedKeys().size() == 0 &&
-             supportersDiff.changedKeys().size() == 0 &&
-             supportersDiff.addedKeys().hasOnly([request.auth.uid]) &&
-             supportersDiff.addedKeys().size() <= 1;
+    // Usernames collection - maintains unique username -> userId mapping for atomicity
+    match /usernames/{username} {
+      // Anyone can read usernames (for username availability checks)
+      allow read: if true;
+      
+      // Only allow creation by the user who owns this username
+      allow create: if request.auth != null && 
+                   request.resource.data.keys().hasOnly(['userId', 'createdAt']) &&
+                   request.resource.data.userId == request.auth.uid;
+      
+      // Only allow deletion by the owner (for username changes)
+      allow delete: if request.auth != null && 
+                   resource.data.userId == request.auth.uid;
+      
+      // Never allow updates - usernames are immutable (use delete+create for changes)
+      allow update: if false;
     }
     
     // Users - public profile viewing with secure field protection
@@ -31,29 +40,33 @@ service cloud.firestore {
       // Allow secure counter updates (owner only, incremental only)
       allow update: if request.auth != null &&
                    request.auth.uid == userId &&
-                   // Only allow counter fields to be updated
+                   // Only allow counter fields to be updated (optimized: removed campaignsCreated)
                    request.resource.data.diff(resource.data).affectedKeys()
-                     .hasOnly(['campaignsCreated', 'campaignsCount', 'updatedAt']) &&
+                     .hasOnly(['campaignsCount', 'supportersCount', 'updatedAt']) &&
                    // Protect system fields
                    request.resource.data.email == resource.data.email &&
                    request.resource.data.createdAt == resource.data.createdAt &&
                    // Ensure counters only increase by 1 (prevent manipulation)
-                   (!('campaignsCreated' in request.resource.data.diff(resource.data).changedKeys()) ||
-                    request.resource.data.campaignsCreated == resource.data.campaignsCreated + 1) &&
                    (!('campaignsCount' in request.resource.data.diff(resource.data).changedKeys()) ||
-                    request.resource.data.campaignsCount == resource.data.campaignsCount + 1);
+                    request.resource.data.campaignsCount == resource.data.campaignsCount + 1) &&
+                   (!('supportersCount' in request.resource.data.diff(resource.data).changedKeys()) ||
+                    request.resource.data.supportersCount == resource.data.supportersCount + 1);
+      
+      // Allow any authenticated user to increment supportersCount (when using campaign)
+      allow update: if request.auth != null &&
+                   // Only allow supportersCount to be updated
+                   request.resource.data.diff(resource.data).affectedKeys()
+                     .hasOnly(['supportersCount', 'updatedAt']) &&
+                   // Protect all other fields
+                   request.resource.data.email == resource.data.email &&
+                   request.resource.data.createdAt == resource.data.createdAt &&
+                   request.resource.data.displayName == resource.data.displayName &&
+                   request.resource.data.username == resource.data.username &&
+                   // Ensure supportersCount only increases by 1
+                   request.resource.data.supportersCount == resource.data.supportersCount + 1;
       
       allow create: if request.auth != null && request.auth.uid == userId;
-      // Don't allow delete - prevents breaking username mappings
-    }
-    
-    // Usernames - public username checks with format validation  
-    match /usernames/{username} {
-      allow read: if true; // ✅ Public access for username checking
-      allow create: if request.auth != null && 
-                   request.auth.uid == request.resource.data.userId &&
-                   username.matches('^[a-z0-9]{3,}$'); // Enforce username format
-      allow delete: if request.auth != null && request.auth.uid == resource.data.userId;
+      // Don't allow delete - profile integrity
     }
     
     // Campaigns - public reading with secure usage tracking
@@ -71,18 +84,16 @@ service cloud.firestore {
       // Allow campaign owner full control
       allow update, delete: if request.auth != null && request.auth.uid == resource.data.creatorId;
       
-      // Allow secure usage tracking by authenticated users
+      // Allow secure usage tracking by authenticated users (optimized: removed supporters object)
       allow update: if request.auth != null &&
                    // Only allow usage tracking fields
                    request.resource.data.diff(resource.data).affectedKeys()
-                     .hasOnly(['usageCount', 'supporters', 'supportersCount', 'updatedAt']) &&
+                     .hasOnly(['usageCount', 'supportersCount', 'updatedAt']) &&
                    // Ensure usageCount only increases by 1
                    request.resource.data.usageCount == resource.data.usageCount + 1 &&
-                   // Ensure supportersCount only increases by 0 or 1 (0 if existing supporter, 1 if new)
+                   // Ensure supportersCount only increases by 1 per download
                    (!('supportersCount' in request.resource.data.diff(resource.data).changedKeys()) ||
-                    request.resource.data.supportersCount == resource.data.supportersCount + 1) &&
-                   // Use helper function for supporters validation
-                   isValidSupporterUpdate();
+                    request.resource.data.supportersCount == resource.data.supportersCount + 1);
     }
     
     // Reports - allow creation by anyone, reading/updating by admins only

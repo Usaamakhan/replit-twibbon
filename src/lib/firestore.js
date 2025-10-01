@@ -55,7 +55,7 @@ export const generateUniqueUsername = async (baseUsername, maxAttempts = 100) =>
   return finalUsername;
 };
 
-// Check if username already exists
+// Check if username already exists - using usernames collection for atomicity
 export const checkUsernameExists = async (username) => {
   const normalizedUsername = username.toLowerCase().trim();
   
@@ -64,16 +64,11 @@ export const checkUsernameExists = async (username) => {
     return true; // Assume exists on error to be safe
   }
   
-  
   try {
-    
-    // Check the usernames collection directly - more efficient and consistent
+    // Check usernames collection for atomicity (maintained for data integrity)
     const usernameDocRef = doc(db, 'usernames', normalizedUsername);
-    
     const usernameDoc = await getDoc(usernameDocRef);
-    
     const exists = usernameDoc.exists();
-    
     
     return exists;
   } catch (error) {
@@ -81,7 +76,7 @@ export const checkUsernameExists = async (username) => {
   }
 };
 
-// Atomic username reservation using usernames collection to prevent race conditions
+// Atomic username reservation using usernames collection (maintained for data integrity)
 const reserveUsernameAtomically = async (baseUsername, userUid, userProfile) => {
   const maxAttempts = 100;
   let username = baseUsername.toLowerCase().replace(/[^a-z0-9]/g, '');
@@ -124,7 +119,6 @@ const reserveUsernameAtomically = async (baseUsername, userUid, userProfile) => 
     
     // Fallback: use timestamp-based unique identifier
     finalUsername = `${username}${Date.now().toString().slice(-6)}`;
-
     
     const usernameDocRef = doc(db, 'usernames', finalUsername);
     transaction.set(usernameDocRef, {
@@ -172,7 +166,6 @@ export const createUserProfile = async (user) => {
         campaignsCount: 0,
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
-        campaignsCreated: 0,
         profileCompleted: false, // Track if user has completed welcome popup
       };
       
@@ -221,7 +214,6 @@ export const getUserProfile = async (userId) => {
         ...userData,
         supportersCount: userData.supportersCount || 0,
         campaignsCount: userData.campaignsCount || 0,
-        campaignsCreated: userData.campaignsCreated || 0,
         bio: userData.bio || '',
         profileImage: userData.profileImage || '',
         bannerImage: userData.bannerImage || ''
@@ -234,7 +226,7 @@ export const getUserProfile = async (userId) => {
   }
 };
 
-// Get user profile by username (for /[username] route) - uses usernames collection for consistency
+// Get user profile by username (for /[username] route) - using usernames collection for consistency
 export const getUserProfileByUsername = async (username) => {
   if (!username || typeof username !== 'string') {
     return null;
@@ -278,7 +270,6 @@ export const getUserProfileByUsername = async (username) => {
       ...userData,
       supportersCount: userData.supportersCount || 0,
       campaignsCount: userData.campaignsCount || 0,
-      campaignsCreated: userData.campaignsCreated || 0,
       bio: userData.bio || '',
       profileImage: userData.profileImage || '',
       bannerImage: userData.bannerImage || ''
@@ -325,7 +316,7 @@ export const updateUserProfile = async (userId, updates) => {
 
       const currentData = userDoc.data();
       
-      // If username is being changed, normalize and ensure it's unique using atomic reservation
+      // If username is being changed, normalize and ensure it's unique atomically
       if (filteredUpdates.username && filteredUpdates.username !== currentData.username) {
         // Normalize username to ensure consistency
         const normalizedUsername = filteredUpdates.username.toLowerCase().replace(/[^a-z0-9]/g, '');
@@ -383,7 +374,7 @@ export const updateUserProfile = async (userId, updates) => {
 
 // Get user statistics (returns stored counters for consistency and performance)
 export const getUserStats = async (userId) => {
-  if (!userId) return { supportersCount: 0, campaignsCount: 0, campaignsCreated: 0 };
+  if (!userId) return { supportersCount: 0, campaignsCount: 0 };
   
   try {
     // Get stored counters from user profile for consistency
@@ -392,16 +383,15 @@ export const getUserStats = async (userId) => {
       return {
         supportersCount: userProfile.supportersCount || 0,
         campaignsCount: userProfile.campaignsCount || 0,
-        campaignsCreated: userProfile.campaignsCreated || 0,
       };
     } else {
-      return { supportersCount: 0, campaignsCount: 0, campaignsCreated: 0 };
+      return { supportersCount: 0, campaignsCount: 0 };
     }
   } catch (error) {
     if (process.env.NODE_ENV === 'development') {
       console.error('Error getting user stats:', error);
     }
-    return { supportersCount: 0, campaignsCount: 0, campaignsCreated: 0 };
+    return { supportersCount: 0, campaignsCount: 0 };
   }
 };
 
@@ -443,9 +433,8 @@ export const createCampaign = async (campaignData, userId) => {
         description: campaignData.description || '',
         captionTemplate: campaignData.captionTemplate || '',
         
-        // Counter fields
-        supportersCount: 0,                         // For documentation compliance
-        supporters: {},                             // Detailed tracking with timestamps
+        // Counter fields (optimized: removed supporters object to reduce document size)
+        supportersCount: 0,                         // Total downloads count
         usageCount: 0,                              // Total usage count
         reportsCount: 0,                            // Number of reports received
         
@@ -461,11 +450,10 @@ export const createCampaign = async (campaignData, userId) => {
       
       transaction.set(campaignRef, campaignDoc);
       
-      // Update user's campaign counters atomically
+      // Update user's campaign counters atomically (optimized: removed duplicate campaignsCreated field)
       const userDocRef = doc(db, 'users', userId);
       transaction.update(userDocRef, {
         campaignsCount: increment(1),
-        campaignsCreated: increment(1),
         updatedAt: serverTimestamp(),
       });
       
@@ -549,7 +537,7 @@ export const completeUserProfile = async (userId, profileData) => {
 
       const currentData = userDoc.data();
       
-      // Check if username is being changed and ensure it's unique using atomic reservation
+      // Check if username is being changed and ensure it's unique atomically
       if (profileData.username && profileData.username !== currentData.username) {
         // Normalize username to ensure consistency  
         const normalizedUsername = profileData.username.toLowerCase().replace(/[^a-z0-9]/g, '');
@@ -564,6 +552,7 @@ export const completeUserProfile = async (userId, profileData) => {
           throw new Error('Username can only contain lowercase letters and numbers');
         }
         
+        // Reserve username atomically using usernames collection
         const usernameDocRef = doc(db, 'usernames', normalizedUsername);
         const usernameDoc = await transaction.get(usernameDocRef);
         
@@ -626,7 +615,8 @@ export const completeUserProfile = async (userId, profileData) => {
   }
 };
 
-// Track campaign usage - increment usage count and update user counters with unique supporter tracking
+// Track campaign usage - increment usage count and download count (optimized: removed supporters object)
+// Note: supportersCount now tracks total downloads, not unique supporters (cost optimization)
 export const trackCampaignUsage = async (campaignId, userId) => {
   if (!campaignId || !userId) return { success: false, error: 'Missing campaignId or userId' };
   
@@ -642,28 +632,18 @@ export const trackCampaignUsage = async (campaignId, userId) => {
       
       const campaignData = campaignDoc.data();
       const campaignCreatorId = campaignData.creatorId;
-      const currentSupporters = campaignData.supporters || {};
-      const isNewSupporter = campaignCreatorId !== userId && !currentSupporters[userId];
       
-      // Update campaign with usage count and supporter tracking
+      // Update campaign with usage count and supporter count (every download counts)
       const campaignUpdates = {
         usageCount: increment(1),
+        supportersCount: increment(1),  // Simplified: every download increments
         updatedAt: serverTimestamp(),
       };
       
-      // Add user to supporters list if not already there and not the creator
-      if (campaignCreatorId !== userId) {
-        campaignUpdates[`supporters.${userId}`] = serverTimestamp();
-        // Also increment the campaign's supportersCount for new supporters
-        if (isNewSupporter) {
-          campaignUpdates.supportersCount = increment(1);
-        }
-      }
-      
       transaction.update(campaignDocRef, campaignUpdates);
       
-      // Update campaign creator's supportersCount only if this is a new unique supporter
-      if (isNewSupporter) {
+      // Update campaign creator's supportersCount for every download
+      if (campaignCreatorId !== userId) {
         const creatorDocRef = doc(db, 'users', campaignCreatorId);
         transaction.update(creatorDocRef, {
           supportersCount: increment(1),
@@ -672,8 +652,7 @@ export const trackCampaignUsage = async (campaignId, userId) => {
       }
       
       return { 
-        success: true, 
-        isNewSupporter,
+        success: true,
         campaignCreatorId: campaignCreatorId !== userId ? campaignCreatorId : null 
       };
     });
