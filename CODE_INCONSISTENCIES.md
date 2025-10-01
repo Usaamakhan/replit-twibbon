@@ -37,26 +37,36 @@ This document tracks all inconsistencies between the current codebase and CAMPAI
 
 ---
 
-### 2. Storage Bucket Structure Completely Different
-**Status:** ❌ Not Fixed
+### 2. Storage Bucket Structure & Profile Image Upload
+**Status:** ✅ FIXED (October 1, 2025)
 
-**Current Implementation:**
-- Bucket name: `uploads` (hardcoded)
-- Folder structure: `{folder}/{userId}/{timestamp}-{filename}`
-- Allowed folders: `uploads/`, `profile-images/`, `documents/`, `temp/`
-- Example: `uploads/user123/1234567890-myfile.png`
+**Resolution:**
+- Chose **Option 1**: Keep single `uploads` bucket and add `campaigns` as new folder
+- Added `'campaigns'` to allowed folders in all storage API files
+- Fixed profile/banner image upload bug (was saving base64 to Firestore)
+- Profile/banner images now properly upload to Supabase Storage
 
-**Documentation Expects:**
-- Bucket name: `campaigns` (dedicated bucket)
-- Folder structure: `campaigns/{userId}/{campaignId}.png`
-- Example: `campaigns/user123abc/campaign456def.png`
+**Implementation Details:**
+- Bucket name: `uploads` (unchanged - single bucket approach)
+- New folder structure: `campaigns/{userId}/{timestamp}-{filename}` added
+- All folders: `uploads/`, `profile-images/`, `documents/`, `temp/`, `campaigns/`
+- Profile/banner images now use `uploadFile()` from `src/lib/supabase.js`
+- Firestore stores URLs only (not base64 data URLs anymore)
 
-**Files to Update:**
-- [ ] `src/app/api/storage/upload-url/route.js` - line 48
-- [ ] `src/app/api/storage/signed-url/route.js` - line 50
-- [ ] `src/app/api/storage/delete/route.js` - line 50
-- [ ] Create `campaigns` bucket in Supabase
-- [ ] Update allowed folders/path validation logic
+**Files Updated:**
+- [x] `src/app/api/storage/upload-url/route.js` - added 'campaigns' to allowedFolders (line 35)
+- [x] `src/app/api/storage/list/route.js` - added 'campaigns' to allowedFolders (line 38)
+- [x] `src/app/api/storage/signed-url/route.js` - added campaigns prefix to allowedPrefixes (line 44)
+- [x] `src/app/api/storage/delete/route.js` - added campaigns prefix to allowedPrefixes (line 44)
+- [x] `src/app/(chrome)/profile/edit/page.js` - fixed base64 bug, now uploads to Supabase
+- [x] `src/app/onboarding/page.js` - fixed base64 bug, now uploads to Supabase
+
+**Benefits:**
+- ✅ Campaign storage ready for implementation
+- ✅ No manual Supabase bucket creation needed
+- ✅ Profile/banner images properly stored in Supabase
+- ✅ Reduced Firestore storage costs (no more base64 bloat)
+- ✅ Faster profile page loads (images served from Supabase CDN)
 
 ---
 
