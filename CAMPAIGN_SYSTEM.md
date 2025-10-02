@@ -90,10 +90,10 @@ The application supports two types of creator uploads:
 ## User Flows
 
 ### Creator Flow - Upload Campaign
-1. Click "Create" in navigation/hero
-2. Redirect to `/create` (entry page)
-3. **Choose type**: Frame or Background
-4. Redirect to `/create/frame` or `/create/background`
+1. Click "Create Campaign" in hero/sidebar
+2. **Modal popup opens** with type selection (Frame or Background)
+3. **Choose type**: Frame or Background in modal
+4. Navigate to `/create/frame` or `/create/background`
 5. **Step 1: Upload Image FIRST**
    - Frame: Upload PNG with transparency
    - Background: Upload any image format
@@ -146,9 +146,11 @@ The application supports two types of creator uploads:
 **Priority: Immediate Implementation**
 
 #### 1. Create Entry Point
-- `/create` - Choice page: "Create Frame" or "Create Background"
-- Clean design with visual cards showing difference
-- No authentication required to visit
+- **Modal popup** - Choice between "Frame" or "Background"
+- Triggered from "Create Campaign" buttons in hero and sidebar
+- Clean design with compact visual cards showing difference
+- No authentication required to open modal
+- Optional: `/create` page opens same modal (for direct URL access)
 
 #### 2. Build Upload Routes
 - `/create/frame` - Frame upload workflow

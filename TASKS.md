@@ -82,25 +82,34 @@ Refactored Firebase initialization to happen at module load time instead of insi
 ## 🚀 Phase 1 Build Order
 
 ### 2. Priority 1: Create Entry Point
-**Status:** ⏳ Pending
+**Status:** ✅ Completed
 
 **Description:**
-Build the `/create` page where users choose between creating a frame or background campaign.
+Created a modal popup where users choose between creating a frame or background campaign.
 
 **Tasks:**
-- [ ] Create `/src/app/(chrome)/create/page.js`
-- [ ] Design choice cards (Frame vs Background)
-- [ ] Add visual explanation of differences
-- [ ] Style to match existing pages (mobile-first)
-- [ ] Add navigation links in Header/Hero
+- [x] Create `CreateCampaignModal` component
+- [x] Design compact choice cards (Frame vs Background)
+- [x] Add visual explanation of differences
+- [x] Style to match existing pages with emerald theme
+- [x] Add modal triggers in Hero and MobileMenu
+- [x] Create `/create` page that opens modal (for direct URL access)
+- [x] Handle navigation properly (dismiss vs select)
 
-**Design Requirements:**
-- Clean visual cards showing frame vs background
-- Mobile-first responsive design
-- Match existing profile page styles
-- Use existing components (Header, Footer)
+**Implementation Details:**
+- Compact modal design with 2-column grid
+- Emerald-themed hover states
+- Escape key and backdrop click to close
+- Proper body scroll lock when open
+- Navigation to `/create/frame` or `/create/background`
 
-**Estimated Time:** 15-20 minutes
+**Files Created/Updated:**
+- `src/components/CreateCampaignModal.js` - Modal component
+- `src/components/Hero.js` - "Create Campaign" button triggers modal
+- `src/components/MobileMenu.js` - "Create Campaign" link triggers modal
+- `src/app/(chrome)/create/page.js` - Opens modal on direct access
+
+**Completed:** October 02, 2025
 
 ---
 

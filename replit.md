@@ -44,6 +44,7 @@ Built with Next.js 15.5.2 (App Router), React 19.1.0, Tailwind CSS 4, Firebase (
 ✅ Environment ready to run (Firebase/Supabase configuration needed for full functionality)
 ✅ Application successfully running and accessible via Replit proxy
 ✅ All configurations verified for Next.js 15.5.2 and React 19.1.0
+✅ CreateCampaignModal implemented (replaces dedicated /create page with popup)
 
 ### Database Optimization (2025-10-01)
 The Firebase/Firestore database has been optimized to reduce storage costs while maintaining data integrity:
@@ -104,7 +105,7 @@ The app will run without these but with limited functionality (Firebase disabled
 ### Route Structure
 ```
 /                          # Home with hero
-/create                    # Choose: frame or background
+/create                    # Opens modal popup (for direct URL access)
 /create/frame              # Upload frame
 /create/background         # Upload background
 /campaign/[slug]           # Campaign view & usage
@@ -114,3 +115,9 @@ The app will run without these but with limited functionality (Firebase disabled
 /profile/edit              # Edit profile
 /onboarding                # New user setup
 ```
+
+### UI Components
+- **CreateCampaignModal**: Popup for choosing Frame or Background type
+  - Triggered by "Create Campaign" buttons in Hero and MobileMenu
+  - Compact design with 2-column grid layout
+  - Navigates to `/create/frame` or `/create/background` on selection

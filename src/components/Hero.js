@@ -24,13 +24,13 @@ export default function Hero() {
               onClick={() => setIsCreateModalOpen(true)}
               className="btn-base btn-primary px-7 py-4 text-base sm:text-lg font-semibold whitespace-nowrap"
             >
-              Create Frame
+              Create Campaign
             </button>
             <a
               href="#"
               className="btn-base btn-secondary border-2 border-emerald-700 px-7 py-4 text-emerald-800 text-base sm:text-lg font-semibold whitespace-nowrap"
             >
-              Use Frame
+              Campaigns
             </a>
           </div>
         </div>
