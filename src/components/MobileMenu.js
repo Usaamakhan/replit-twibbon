@@ -3,6 +3,8 @@
 import { useOptionalAuth } from "../hooks/useAuth";
 import { useOptionalUserProfile } from "./UserProfileProvider";
 import { useRouter } from "next/navigation";
+import { useState } from "react";
+import CreateCampaignModal from "./CreateCampaignModal";
 
 export default function MobileMenu({ 
   isMenuOpen, 
@@ -10,6 +12,7 @@ export default function MobileMenu({
 }) {
   const authContext = useOptionalAuth();
   const profileContext = useOptionalUserProfile();
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   
   // Provide safe defaults if no auth context
   const { user, loading, mounted, logout } = authContext || {
@@ -26,6 +29,10 @@ export default function MobileMenu({
   };
   const router = useRouter();
 
+  const handleCreateClick = () => {
+    setIsMenuOpen(false);
+    setIsCreateModalOpen(true);
+  };
 
   return (
     <>
@@ -104,15 +111,15 @@ export default function MobileMenu({
               ) : null}
               
               <div className="py-2 px-4">
-                <a 
-                  href="#" 
-                  className="inline-flex items-center gap-3 py-2 px-3 text-base font-normal text-gray-800 hover:bg-emerald-50 hover:text-emerald-700 rounded-lg transition-colors duration-200"
+                <button 
+                  onClick={handleCreateClick}
+                  className="inline-flex items-center gap-3 py-2 px-3 text-base font-normal text-gray-800 hover:bg-emerald-50 hover:text-emerald-700 rounded-lg transition-colors duration-200 w-full text-left"
                 >
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4" />
                   </svg>
                   Create Frame
-                </a>
+                </button>
               </div>
               
               <div className="py-2 px-4">
@@ -225,6 +232,11 @@ export default function MobileMenu({
           </div>
         </div>
       </div>
+
+      <CreateCampaignModal 
+        isOpen={isCreateModalOpen} 
+        onClose={() => setIsCreateModalOpen(false)} 
+      />
     </>
   );
 }
