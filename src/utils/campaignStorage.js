@@ -89,25 +89,27 @@ export function isValidCampaignPath(path) {
  * Client-side helper for uploading campaign images
  * 
  * @param {string} campaignId - Campaign ID
+ * @param {number} fileSize - File size in bytes
+ * @param {string} fileType - MIME type of the file
  * @param {string} authToken - Firebase auth token
  * @returns {Promise<{uploadUrl: string, path: string, token: string}>}
  * 
  * @example
- * const { uploadUrl, path } = await getCampaignUploadUrl(campaignId, token);
+ * const { uploadUrl, path } = await getCampaignUploadUrl(campaignId, file.size, file.type, token);
  * await fetch(uploadUrl, {
  *   method: 'PUT',
  *   body: imageFile,
  *   headers: { 'Content-Type': 'image/png' }
  * });
  */
-export async function getCampaignUploadUrl(campaignId, authToken) {
+export async function getCampaignUploadUrl(campaignId, fileSize, fileType, authToken) {
   const response = await fetch('/api/storage/campaign-upload-url', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
       'Authorization': `Bearer ${authToken}`
     },
-    body: JSON.stringify({ campaignId })
+    body: JSON.stringify({ campaignId, fileSize, fileType })
   });
   
   if (!response.ok) {

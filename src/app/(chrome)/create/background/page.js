@@ -112,7 +112,7 @@ export default function CreateBackgroundPage() {
       const token = await user.getIdToken();
 
       // Get upload URL from API
-      const { uploadUrl, path } = await getCampaignUploadUrl(campaignId, token);
+      const { uploadUrl, path } = await getCampaignUploadUrl(campaignId, formData.campaignImage.size, formData.campaignImage.type, token);
 
       // Upload image to Supabase
       await fetch(uploadUrl, {
@@ -253,7 +253,7 @@ export default function CreateBackgroundPage() {
                       </li>
                       <li className="flex items-start gap-2">
                         <span className="text-emerald-600 mt-1">•</span>
-                        <span>Recommended size: 1920x1080px or higher</span>
+                        <span>Square images recommended but all sizes accepted (no cropping)</span>
                       </li>
                       <li className="flex items-start gap-2">
                         <span className="text-emerald-600 mt-1">•</span>
@@ -302,7 +302,7 @@ export default function CreateBackgroundPage() {
                       value={formData.title}
                       onChange={(e) => handleInputChange('title', e.target.value)}
                       placeholder="e.g., Beautiful Nature Background"
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-gray-900"
                     />
                     {errors.title && (
                       <p className="text-red-600 text-sm mt-1">{errors.title}</p>
@@ -319,7 +319,7 @@ export default function CreateBackgroundPage() {
                       onChange={(e) => handleInputChange('description', e.target.value)}
                       placeholder="Describe your campaign..."
                       rows={3}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent resize-none"
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent resize-none text-gray-900"
                     />
                   </div>
 
@@ -333,7 +333,7 @@ export default function CreateBackgroundPage() {
                       onChange={(e) => handleInputChange('captionTemplate', e.target.value)}
                       placeholder="e.g., Beautiful nature background for my photo! 🌿"
                       rows={2}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent resize-none"
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent resize-none text-gray-900"
                     />
                     <p className="text-gray-500 text-xs mt-1">This text will be pre-filled when visitors share their photos</p>
                   </div>
@@ -343,7 +343,7 @@ export default function CreateBackgroundPage() {
                     <button
                       type="button"
                       onClick={() => setStep(1)}
-                      className="btn-base btn-secondary flex-1"
+                      className="btn-base btn-secondary flex-1 py-3"
                       disabled={loading}
                     >
                       Back
@@ -351,7 +351,7 @@ export default function CreateBackgroundPage() {
                     <button
                       type="button"
                       onClick={handlePublish}
-                      className="btn-base btn-primary flex-1"
+                      className="btn-base btn-primary flex-1 py-3"
                       disabled={loading}
                     >
                       {loading ? 'Publishing...' : 'Publish Campaign'}
