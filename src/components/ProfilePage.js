@@ -84,8 +84,8 @@ export default function ProfilePage({ isOwnProfile = false, username = null }) {
               setCampaigns(userCampaigns.map(campaign => ({
                 id: campaign.id,
                 title: campaign.title || 'Untitled Campaign',
-                thumbnail: campaign.frameImageUrl || 'https://via.placeholder.com/300x200/059669/FFFFFF?text=Campaign',
-                supportersCount: campaign.usageCount || 0
+                thumbnail: campaign.imageUrl || 'https://via.placeholder.com/300x200/059669/FFFFFF?text=Campaign',
+                supportersCount: campaign.supportersCount || 0
               })));
             } else {
               setCampaigns([]);
