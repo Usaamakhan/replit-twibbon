@@ -28,6 +28,54 @@ Before users upload campaigns, add security validations to prevent abuse and err
 
 ---
 
+## 🐛 Bug Fixes (Pre-Phase 1)
+
+### 1.1. Fix ProfilePage Campaign Display Bugs
+**Status:** ⏳ Pending
+
+**Description:**
+ProfilePage.js has incorrect field mappings when displaying user campaigns.
+
+**Issues Found:**
+1. **Line 87**: Uses `campaign.frameImageUrl` but schema uses `campaign.imageUrl`
+   - Current: `thumbnail: campaign.frameImageUrl || 'https://via.placeholder.com/300x200...'`
+   - Fix: Change to `campaign.imageUrl` (field doesn't exist, causes all thumbnails to show placeholders)
+
+2. **Line 88**: Maps `usageCount` to `supportersCount` display (wrong counter)
+   - Current: `supportersCount: campaign.usageCount || 0`
+   - Fix: Change to `campaign.supportersCount || 0`
+   - Note: `usageCount` = total interactions, `supportersCount` = total downloads (different metrics)
+
+**Files to Fix:**
+- `src/components/ProfilePage.js` (lines 87-88)
+
+**Priority:** Medium (affects campaign display when campaigns exist)
+
+---
+
+### 1.2. Firebase Initialization Race Condition
+**Status:** ⏳ Pending
+
+**Description:**
+Firebase is only initialized inside `useFirebaseOptimized()` hook, but `src/lib/firestore.js` exports db and auth as module-level variables that are null until a component mounts.
+
+**Impact:**
+- Cold starts may fail with "Database not available" errors
+- Functions like `createUserProfile()`, `getUserProfile()` return early with errors
+- Race condition: If `useAuth()` runs before `useFirebaseOptimized()`, Firebase throws "No Firebase App '[DEFAULT]' has been created"
+- Server-side code (API routes, build-time utilities) can never access Firebase client SDK
+
+**Files Affected:**
+- `src/lib/firebase-optimized.js` (lines 9-12, 122) - exports null variables
+- `src/lib/firestore.js` (line 4) - imports potentially null db
+- All components using Firebase before proper initialization
+
+**Priority:** High (architectural issue affecting reliability)
+
+**Note:** This is an architectural design choice. The current pattern works for client-side only usage. Consider refactoring if server-side Firebase access is needed.
+
+---
+
 ## 🚀 Phase 1 Build Order
 
 ### 2. Priority 1: Create Entry Point
