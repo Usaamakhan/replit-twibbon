@@ -9,7 +9,7 @@ export default function CreateCampaignModal({ isOpen, onClose }) {
   // Close modal on escape key
   useEffect(() => {
     const handleEscape = (e) => {
-      if (e.key === 'Escape') onClose(false); // false = dismissed, not navigated
+      if (e.key === 'Escape') onClose(false);
     };
     if (isOpen) {
       document.addEventListener('keydown', handleEscape);
@@ -24,17 +24,17 @@ export default function CreateCampaignModal({ isOpen, onClose }) {
   if (!isOpen) return null;
 
   const handleCreateFrame = () => {
-    onClose(true); // true = navigated to a route
+    onClose(true);
     router.push('/create/frame');
   };
 
   const handleCreateBackground = () => {
-    onClose(true); // true = navigated to a route
+    onClose(true);
     router.push('/create/background');
   };
 
   const handleDismiss = () => {
-    onClose(false); // false = dismissed without navigation
+    onClose(false);
   };
 
   return (
@@ -48,30 +48,32 @@ export default function CreateCampaignModal({ isOpen, onClose }) {
       {/* Modal */}
       <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
         <div 
-          className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto"
+          className="bg-white rounded-xl max-w-2xl w-full max-h-[90vh] overflow-hidden shadow-lg"
           onClick={(e) => e.stopPropagation()}
         >
-          {/* Header */}
-          <div className="sticky top-0 bg-white border-b border-gray-100 px-6 py-4 flex items-center justify-between rounded-t-2xl">
-            <h2 className="text-xl sm:text-2xl font-bold text-gray-900">
-              Create Campaign
-            </h2>
+          {/* Header - Yellow background like onboarding/profile pages */}
+          <div className="bg-yellow-400 px-6 py-6 flex items-center justify-between rounded-t-xl">
+            <div>
+              <h2 className="text-2xl sm:text-3xl font-bold text-emerald-700">
+                Create Campaign
+              </h2>
+              <p className="text-base sm:text-lg text-gray-700 mt-1">
+                Choose the type of campaign you want to create
+              </p>
+            </div>
             <button
               onClick={handleDismiss}
-              className="btn-base p-2 hover:bg-gray-100 rounded-full transition-colors"
+              className="btn-base p-2 hover:bg-yellow-500 rounded-full transition-colors flex-shrink-0 ml-4"
             >
-              <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-5 h-5 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
               </svg>
             </button>
           </div>
 
-          {/* Content */}
-          <div className="p-6">
-            <p className="text-sm text-gray-600 mb-6">
-              Choose the type of campaign you want to create
-            </p>
-
+          {/* Content - White background with border */}
+          <div className="bg-white border-t-0 border-gray-200 px-6 py-8 rounded-b-xl overflow-y-auto max-h-[calc(90vh-120px)]">
+            
             {/* Options Grid */}
             <div className="grid sm:grid-cols-2 gap-4">
               

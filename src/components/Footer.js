@@ -154,11 +154,11 @@ export default function Footer() {
             </div>
           </div>
 
-          {/* Discover Column */}
+          {/* Discover Column - Removed "Explore" */}
           <div>
             <h4 className="font-semibold text-gray-900 mb-4">Discover</h4>
             <ul className="space-y-2">
-              <li><a href="#" className="text-gray-600 hover:text-emerald-700 transition-colors duration-200">Explore</a></li>
+              <li><a href="#" className="text-gray-600 hover:text-emerald-700 transition-colors duration-200">Campaigns</a></li>
               <li><a href="#" className="text-gray-600 hover:text-emerald-700 transition-colors duration-200">Leaderboard</a></li>
               <li><a href="#" className="text-gray-600 hover:text-emerald-700 transition-colors duration-200">Pricing</a></li>
               <li><a href="#" className="text-gray-600 hover:text-emerald-700 transition-colors duration-200">Help Center</a></li>

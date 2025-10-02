@@ -9,6 +9,10 @@ const caveat = Caveat({ subsets: ["latin"], weight: ["700"] });
 export default function Hero() {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
+  const handleModalClose = (navigated) => {
+    setIsCreateModalOpen(false);
+  };
+
   return (
     <>
       <section className="bg-yellow-400 text-black py-12 sm:py-16 md:py-24 border-0 shadow-none -mt-px">
@@ -38,7 +42,7 @@ export default function Hero() {
 
       <CreateCampaignModal 
         isOpen={isCreateModalOpen} 
-        onClose={() => setIsCreateModalOpen(false)} 
+        onClose={handleModalClose} 
       />
     </>
   );
