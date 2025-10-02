@@ -154,7 +154,7 @@ export default function CreateFramePage() {
         captionTemplate: formData.captionTemplate.trim()
       };
 
-      const result = await createCampaign(campaignData);
+      const result = await createCampaign(campaignData, user.uid);
 
       if (result.success) {
         // Navigate to campaign page
