@@ -157,10 +157,20 @@ Build frame and background upload pages with two-step workflow.
 
 **Completed:** October 02, 2025
 
+**Post-Completion Improvements (October 02, 2025):**
+- ✅ Fixed missing `userId` parameter in `createCampaign` calls
+- ✅ Fixed missing `fileSize` and `fileType` parameters in `getCampaignUploadUrl` 
+- ✅ Center-aligned error messages for better UX
+- ✅ Changed preview boxes to fixed square (320px height) with `object-contain` to show complete images without cropping
+- ✅ Updated field focus styles to match onboarding page (emerald ring, no yellow borders)
+- ✅ Added `outline-none` and `transition-all` to all input fields
+- ✅ Updated image size recommendations to accept all sizes (no cropping)
+- ✅ Increased button height with `py-3` for better proportions
+- ✅ Reviewed Firestore security rules - all correctly configured
+
 **Next Steps Suggestion:**
 - Test full flow end-to-end on Vercel with real Firebase/Supabase credentials
 - Priority 3: Build campaign view page (`/campaign/[slug]`) for visitors to use campaigns
-- Consider adding image dimension recommendations in UI (currently only in help text)
 
 ---
 
@@ -379,5 +389,17 @@ Build campaigns gallery and top creators leaderboard.
 - Add lazy loading for preview images
 - Implement service worker for offline form completion
 - Cache transparency check results (same file = same result)
+
+### Security & Database Review (October 02, 2025)
+
+**Firestore Security Rules Status:** ✅ All Correct
+- Campaign creation properly restricted (authenticated + creatorId validation)
+- Campaign editing has proper 7-day window and <10 supporters limit
+- Immutable fields (type, slug, imageUrl, creatorId) are protected
+- supportersCount can only increment by 1 (prevents manipulation)
+- Username atomicity maintained with dedicated collection
+- Public read access working as intended for guest users
+
+**No Firebase or Supabase manual changes needed** - all security rules are correctly configured for the campaign system.
 
 ---

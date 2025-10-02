@@ -212,7 +212,7 @@ export default function CreateFramePage() {
             {/* Content Card */}
             <div className="bg-white rounded-b-xl border border-t-0 border-gray-200 px-6 py-8 shadow-sm">
               {errors.general && (
-                <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg text-red-600 text-sm">
+                <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg text-red-600 text-sm text-center">
                   {errors.general}
                 </div>
               )}
@@ -228,7 +228,7 @@ export default function CreateFramePage() {
                       {/* Upload Area */}
                       <div 
                         onClick={() => imageInputRef.current?.click()}
-                        className="w-full aspect-square max-w-md mx-auto rounded-lg overflow-hidden border-2 border-dashed border-gray-300 hover:border-emerald-500 cursor-pointer transition-colors"
+                        className="w-full h-80 max-w-md mx-auto rounded-lg overflow-hidden border-2 border-dashed border-gray-300 hover:border-emerald-500 cursor-pointer transition-colors"
                       >
                         <div className="w-full h-full bg-gray-50 flex flex-col items-center justify-center p-6">
                           <svg className="w-16 h-16 text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -286,12 +286,12 @@ export default function CreateFramePage() {
                     <label className="block text-sm font-medium text-gray-800 mb-2">
                       Frame Preview
                     </label>
-                    <div className="w-full aspect-square max-w-md mx-auto rounded-lg overflow-hidden border-2 border-gray-200 bg-gray-50">
+                    <div className="w-full h-80 max-w-md mx-auto rounded-lg overflow-hidden border-2 border-gray-200 bg-gray-50 flex items-center justify-center">
                       {formData.campaignImagePreview && (
                         <img
                           src={formData.campaignImagePreview}
                           alt="Frame preview"
-                          className="w-full h-full object-contain"
+                          className="max-w-full max-h-full object-contain"
                         />
                       )}
                     </div>
@@ -316,7 +316,7 @@ export default function CreateFramePage() {
                       value={formData.title}
                       onChange={(e) => handleInputChange('title', e.target.value)}
                       placeholder="e.g., Save Earth 2025"
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-gray-900"
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none transition-all text-gray-900"
                     />
                     {errors.title && (
                       <p className="text-red-600 text-sm mt-1">{errors.title}</p>
@@ -333,7 +333,7 @@ export default function CreateFramePage() {
                       onChange={(e) => handleInputChange('description', e.target.value)}
                       placeholder="Describe your campaign..."
                       rows={3}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent resize-none text-gray-900"
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none transition-all resize-none text-gray-900"
                     />
                   </div>
 
@@ -347,7 +347,7 @@ export default function CreateFramePage() {
                       onChange={(e) => handleInputChange('captionTemplate', e.target.value)}
                       placeholder="e.g., Join me in supporting Save Earth 2025! 🌍"
                       rows={2}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent resize-none text-gray-900"
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none transition-all resize-none text-gray-900"
                     />
                     <p className="text-gray-500 text-xs mt-1">This text will be pre-filled when visitors share their photos</p>
                   </div>
