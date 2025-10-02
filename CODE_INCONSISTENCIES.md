@@ -2,7 +2,7 @@
 
 This document tracks all inconsistencies between the current codebase and CAMPAIGN_SYSTEM.md documentation. Update checkboxes as issues are resolved.
 
-**Last Updated:** September 30, 2025
+**Last Updated:** October 02, 2025
 
 ---
 
@@ -93,10 +93,8 @@ This document tracks all inconsistencies between the current codebase and CAMPAI
   description: string,
   captionTemplate: string,
   
-  // Counters
-  supportersCount: 0,
-  supporters: {},
-  usageCount: 0,
+  // Counters (optimized)
+  supportersCount: 0,  // Total downloads
   reportsCount: 0,
   
   // Status
@@ -487,10 +485,11 @@ await deleteCampaignImage(path, authToken);
 
 **Actual Implementation (Cost-Optimized):**
 ```javascript
-// Campaign schema - NO supporters object
+// Campaign schema - NO supporters object, NO usageCount tracking
 {
   supportersCount: number,  // Total downloads (increments on every download)
   // NO supporters: {} object
+  // NO usageCount field (we don't track views/analytics)
 }
 ```
 

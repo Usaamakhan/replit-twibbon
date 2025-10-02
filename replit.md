@@ -66,7 +66,7 @@ The Firebase/Firestore database has been optimized to reduce storage costs while
 **Collections Structure:**
 - `/users/{userId}` - User profiles with counters (campaignsCount, supportersCount)
 - `/usernames/{username}` - Username→userId mapping for atomicity
-- `/campaigns/{campaignId}` - Campaigns with usage counters (usageCount, supportersCount)
+- `/campaigns/{campaignId}` - Campaigns with download counter (supportersCount)
 - `/reports/{reportId}` - User reports for moderation
 
 ### Environment Variables Required

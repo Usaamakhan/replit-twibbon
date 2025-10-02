@@ -102,7 +102,6 @@ service cloud.firestore {
                    request.resource.data.creatorId == resource.data.creatorId &&
                    request.resource.data.createdAt == resource.data.createdAt &&
                    request.resource.data.supportersCount == resource.data.supportersCount &&
-                   request.resource.data.usageCount == resource.data.usageCount &&
                    request.resource.data.reportsCount == resource.data.reportsCount &&
                    request.resource.data.moderationStatus == resource.data.moderationStatus &&
                    // firstUsedAt can only be set once, never changed
@@ -120,31 +119,12 @@ service cloud.firestore {
                    request.resource.data.creatorId == resource.data.creatorId &&
                    request.resource.data.title == resource.data.title &&
                    request.resource.data.description == resource.data.description &&
-                   request.resource.data.usageCount == resource.data.usageCount &&
                    request.resource.data.reportsCount == resource.data.reportsCount &&
                    request.resource.data.moderationStatus == resource.data.moderationStatus &&
                    // Ensure supportersCount only increases by 1 per download
                    request.resource.data.supportersCount == resource.data.supportersCount + 1 &&
                    // firstUsedAt can only be set once (when first download happens)
                    (!('firstUsedAt' in resource.data) || request.resource.data.firstUsedAt == resource.data.firstUsedAt);
-      
-      // Allow secure usage tracking increment (usageCount for views/interactions)
-      allow update: if request.auth != null &&
-                   // Only allow usageCount increment
-                   request.resource.data.diff(resource.data).affectedKeys()
-                     .hasOnly(['usageCount', 'updatedAt']) &&
-                   // Protect all immutable fields
-                   request.resource.data.type == resource.data.type &&
-                   request.resource.data.slug == resource.data.slug &&
-                   request.resource.data.imageUrl == resource.data.imageUrl &&
-                   request.resource.data.creatorId == resource.data.creatorId &&
-                   request.resource.data.title == resource.data.title &&
-                   request.resource.data.description == resource.data.description &&
-                   request.resource.data.supportersCount == resource.data.supportersCount &&
-                   request.resource.data.reportsCount == resource.data.reportsCount &&
-                   request.resource.data.moderationStatus == resource.data.moderationStatus &&
-                   // Ensure usageCount only increases by 1
-                   request.resource.data.usageCount == resource.data.usageCount + 1;
     }
     
     // Reports - allow creation by anyone, reading/updating by admins only

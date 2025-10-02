@@ -435,7 +435,6 @@ export const createCampaign = async (campaignData, userId) => {
         
         // Counter fields (optimized: removed supporters object to reduce document size)
         supportersCount: 0,                         // Total downloads count
-        usageCount: 0,                              // Total usage count
         reportsCount: 0,                            // Number of reports received
         
         // Status fields
@@ -633,9 +632,8 @@ export const trackCampaignUsage = async (campaignId, userId) => {
       const campaignData = campaignDoc.data();
       const campaignCreatorId = campaignData.creatorId;
       
-      // Update campaign with usage count and supporter count (every download counts)
+      // Update campaign supporter count (every download counts)
       const campaignUpdates = {
-        usageCount: increment(1),
         supportersCount: increment(1),  // Simplified: every download increments
         updatedAt: serverTimestamp(),
       };

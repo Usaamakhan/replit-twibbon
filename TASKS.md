@@ -43,7 +43,7 @@ ProfilePage.js has incorrect field mappings when displaying user campaigns.
 
 2. **Line 91**: Changed `campaign.usageCount` to `campaign.supportersCount`
    - ✅ Fixed: Now displays correct supporter count (downloads)
-   - Note: `usageCount` = total interactions, `supportersCount` = total downloads (different metrics)
+   - Note: We don't track `usageCount` (views/analytics) - only `supportersCount` (total downloads)
 
 **Files Fixed:**
 - `src/components/ProfilePage.js` (lines 90-91)

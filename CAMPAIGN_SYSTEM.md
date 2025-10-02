@@ -30,7 +30,7 @@ The application supports two types of creator uploads:
   imageUrl: "supabase-storage-url",       // Required (IMMUTABLE after publish)
   creatorId: "firebase-user-id",          // Required (IMMUTABLE)
   captionTemplate: "Share text template", // Optional (editable with restrictions)
-  supportersCount: 0,                     // Increment on download
+  supportersCount: 0,                     // Increment on download (total downloads count)
   reportsCount: 0,                        // Number of reports received
   moderationStatus: "active",             // "active" | "under-review" | "removed"
   createdAt: timestamp,                   // Auto (publish time)
