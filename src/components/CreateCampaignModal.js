@@ -52,8 +52,8 @@ export default function CreateCampaignModal({ isOpen, onClose }) {
           onClick={(e) => e.stopPropagation()}
         >
           {/* Header - Yellow background like onboarding/profile pages */}
-          <div className="bg-yellow-400 px-6 py-6 flex items-center justify-between rounded-t-xl">
-            <div>
+          <div className="bg-yellow-400 px-6 py-6 relative rounded-t-xl">
+            <div className="text-center">
               <h2 className="text-2xl sm:text-3xl font-bold text-emerald-700">
                 Create Campaign
               </h2>
@@ -63,7 +63,7 @@ export default function CreateCampaignModal({ isOpen, onClose }) {
             </div>
             <button
               onClick={handleDismiss}
-              className="btn-base p-2 hover:bg-yellow-500 rounded-full transition-colors flex-shrink-0 ml-4"
+              className="absolute top-4 right-4 btn-base p-2 hover:bg-yellow-500 rounded-full transition-colors"
             >
               <svg className="w-5 h-5 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
