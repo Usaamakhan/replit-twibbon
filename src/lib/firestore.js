@@ -684,8 +684,9 @@ export const completeUserProfile = async (userId, profileData) => {
 
 // Track campaign usage - increment usage count and download count (optimized: removed supporters object)
 // Note: supportersCount now tracks total downloads, not unique supporters (cost optimization)
-export const trackCampaignUsage = async (campaignId, userId) => {
-  if (!campaignId || !userId) return { success: false, error: 'Missing campaignId or userId' };
+// Supports anonymous downloads: userId can be null/undefined for anonymous visitors
+export const trackCampaignUsage = async (campaignId, userId = null) => {
+  if (!campaignId) return { success: false, error: 'Missing campaignId' };
   
   try {
     return await runTransaction(db, async (transaction) => {
@@ -700,7 +701,7 @@ export const trackCampaignUsage = async (campaignId, userId) => {
       const campaignData = campaignDoc.data();
       const campaignCreatorId = campaignData.creatorId;
       
-      // Update campaign supporter count (every download counts)
+      // Update campaign supporter count (every download counts - authenticated and anonymous)
       const campaignUpdates = {
         supportersCount: increment(1),  // Simplified: every download increments
         updatedAt: serverTimestamp(),
@@ -708,8 +709,8 @@ export const trackCampaignUsage = async (campaignId, userId) => {
       
       transaction.update(campaignDocRef, campaignUpdates);
       
-      // Update campaign creator's supportersCount for every download
-      if (campaignCreatorId !== userId) {
+      // Update campaign creator's supportersCount only if downloader is authenticated and different from creator
+      if (userId && campaignCreatorId !== userId) {
         const creatorDocRef = doc(db, 'users', campaignCreatorId);
         transaction.update(creatorDocRef, {
           supportersCount: increment(1),
@@ -719,7 +720,7 @@ export const trackCampaignUsage = async (campaignId, userId) => {
       
       return { 
         success: true,
-        campaignCreatorId: campaignCreatorId !== userId ? campaignCreatorId : null 
+        campaignCreatorId: userId && campaignCreatorId !== userId ? campaignCreatorId : null 
       };
     });
   } catch (error) {

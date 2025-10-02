@@ -1,7 +1,8 @@
-// Firebase Admin SDK for server-side authentication
+// Firebase Admin SDK for server-side authentication and Firestore operations
 import 'server-only'
 import { initializeApp, getApps, cert } from 'firebase-admin/app'
 import { getAuth } from 'firebase-admin/auth'
+import { getFirestore } from 'firebase-admin/firestore'
 
 // Check if Firebase Admin is already initialized
 let adminApp = null
@@ -43,6 +44,9 @@ if (getApps().length === 0) {
 
 // Get Auth instance
 export const adminAuth = getAuth(adminApp)
+
+// Get Firestore instance
+export const adminFirestore = () => getFirestore(adminApp)
 
 // Helper function to verify ID tokens
 export const verifyIdToken = async (idToken) => {
