@@ -26,7 +26,7 @@ export async function POST(request) {
       return NextResponse.json({ error: 'Invalid token' }, { status: 401 })
     }
 
-    const { fileName, fileType, folder = 'uploads' } = await request.json()
+    const { fileName, fileType, fileSize, folder = 'uploads' } = await request.json()
     
     // Validate folder (whitelist allowed folders)
     const allowedFolders = ['uploads', 'profile-images', 'documents', 'temp', 'campaigns']
@@ -34,8 +34,40 @@ export async function POST(request) {
       return NextResponse.json({ error: 'Invalid folder' }, { status: 400 })
     }
     
+    // Validate required fields
     if (!fileName) {
       return NextResponse.json({ error: 'fileName is required' }, { status: 400 })
+    }
+
+    if (!Number.isFinite(fileSize) || fileSize <= 0) {
+      return NextResponse.json({ 
+        error: 'fileSize is required and must be a positive number' 
+      }, { status: 400 })
+    }
+
+    if (!fileType || typeof fileType !== 'string' || fileType.trim() === '') {
+      return NextResponse.json({ 
+        error: 'fileType is required and must be a non-empty string' 
+      }, { status: 400 })
+    }
+
+    // Validate file size (5MB max for campaigns, 10MB max for others)
+    const maxFileSize = folder === 'campaigns' ? 5 * 1024 * 1024 : 10 * 1024 * 1024
+    if (fileSize > maxFileSize) {
+      const maxSizeMB = folder === 'campaigns' ? 5 : 10
+      return NextResponse.json({ 
+        error: `File size exceeds ${maxSizeMB}MB limit` 
+      }, { status: 400 })
+    }
+
+    // Validate file type for campaigns
+    if (folder === 'campaigns') {
+      const allowedTypes = ['image/png', 'image/jpeg', 'image/jpg', 'image/webp']
+      if (!allowedTypes.includes(fileType.toLowerCase())) {
+        return NextResponse.json({ 
+          error: 'Invalid file type for campaigns. Only PNG, JPG, and WEBP are allowed.' 
+        }, { status: 400 })
+      }
     }
 
     // Create user-specific path

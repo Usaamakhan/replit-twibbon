@@ -39,11 +39,23 @@ export async function POST(request) {
       return NextResponse.json({ error: 'Invalid token' }, { status: 401 })
     }
 
-    const { campaignId } = await request.json()
+    const { campaignId, fileSize, fileType } = await request.json()
     
-    // Validate campaignId is provided
+    // Validate required fields
     if (!campaignId) {
       return NextResponse.json({ error: 'campaignId is required' }, { status: 400 })
+    }
+
+    if (!Number.isFinite(fileSize) || fileSize <= 0) {
+      return NextResponse.json({ 
+        error: 'fileSize is required and must be a positive number' 
+      }, { status: 400 })
+    }
+
+    if (!fileType || typeof fileType !== 'string' || fileType.trim() === '') {
+      return NextResponse.json({ 
+        error: 'fileType is required and must be a non-empty string' 
+      }, { status: 400 })
     }
 
     // Validate campaignId format (alphanumeric, hyphens, underscores only)
@@ -51,6 +63,22 @@ export async function POST(request) {
     if (!campaignIdRegex.test(campaignId)) {
       return NextResponse.json({ 
         error: 'Invalid campaignId format. Use only letters, numbers, hyphens, and underscores.' 
+      }, { status: 400 })
+    }
+
+    // Validate file size (5MB max for campaigns as per CAMPAIGN_SYSTEM.md)
+    const MAX_FILE_SIZE = 5 * 1024 * 1024 // 5MB in bytes
+    if (fileSize > MAX_FILE_SIZE) {
+      return NextResponse.json({ 
+        error: 'File size exceeds 5MB limit for campaigns' 
+      }, { status: 400 })
+    }
+
+    // Validate file type (only image formats allowed)
+    const allowedTypes = ['image/png', 'image/jpeg', 'image/jpg', 'image/webp']
+    if (!allowedTypes.includes(fileType.toLowerCase())) {
+      return NextResponse.json({ 
+        error: 'Invalid file type. Only PNG, JPG, and WEBP images are allowed for campaigns.' 
       }, { status: 400 })
     }
 

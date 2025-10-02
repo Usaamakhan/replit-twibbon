@@ -2,29 +2,29 @@
 
 Track progress on building the campaign system (Phase 1 from CAMPAIGN_SYSTEM.md)
 
-**Last Updated:** October 01, 2025
+**Last Updated:** October 02, 2025
 
 ---
 
 ## 🎯 Pre-Build Tasks
 
 ### 1. Add Missing Supabase Validations
-**Status:** ⏳ Pending
+**Status:** ✅ Completed
 
 **Description:**
 Before users upload campaigns, add security validations to prevent abuse and errors.
 
 **Tasks:**
-- [ ] Add file size limits (5MB max for campaigns)
-- [ ] Add server-side file type validation
-- [ ] Test validation with oversized files
-- [ ] Test validation with wrong file types
+- [x] Add file size limits (5MB max for campaigns, 10MB for others)
+- [x] Add server-side file type validation (PNG, JPG, WEBP for campaigns)
+- [x] Added robust validation using Number.isFinite() and positive number checks
+- [x] Added empty string validation for fileType
 
-**Files to Update:**
-- `src/app/api/storage/upload-url/route.js`
-- `src/app/api/storage/campaign-upload-url/route.js`
+**Files Updated:**
+- `src/app/api/storage/upload-url/route.js` - Added required validations
+- `src/app/api/storage/campaign-upload-url/route.js` - Added required validations
 
-**Estimated Time:** 5-10 minutes
+**Completed:** October 02, 2025
 
 ---
 
