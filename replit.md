@@ -47,6 +47,8 @@ Built with Next.js 15.5.2 (App Router), React 19.1.0, Tailwind CSS 4, Firebase (
 ✅ CreateCampaignModal implemented (replaces dedicated /create page with popup)
 ✅ Frame upload flow completed (/create/frame with transparency detection)
 ✅ Background upload flow completed (/create/background with multi-format support)
+✅ Campaign view page completed (/campaign/[slug] with visitor experience)
+✅ Secure download tracking API with Firebase ID token verification
 
 ### Database Optimization (2025-10-01)
 The Firebase/Firestore database has been optimized to reduce storage costs while maintaining data integrity:
@@ -108,11 +110,11 @@ The app will run without these but with limited functionality (Firebase disabled
 ```
 /                          # Home with hero
 /create                    # Opens modal popup (for direct URL access)
-/create/frame              # Upload frame
-/create/background         # Upload background
-/campaign/[slug]           # Campaign view & usage
-/campaigns                 # Unified gallery with filters
-/creators                  # Top creators leaderboard
+/create/frame              # Upload frame (completed)
+/create/background         # Upload background (completed)
+/campaign/[slug]           # Campaign view & usage (completed)
+/campaigns                 # Unified gallery with filters (pending)
+/creators                  # Top creators leaderboard (pending)
 /profile                   # User profile
 /profile/edit              # Edit profile
 /onboarding                # New user setup

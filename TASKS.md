@@ -290,31 +290,86 @@ function exportCanvas(canvas, format = 'png') { }
 ---
 
 ### 4. Priority 3: Campaign View Page
-**Status:** ⏳ Pending
+**Status:** ✅ Completed
 
 **Description:**
 Build individual campaign page for viewing and using campaigns.
 
 **Tasks:**
-- [ ] Create `/src/app/(chrome)/campaign/[slug]/page.js`
-- [ ] Show campaign details and creator info
-- [ ] Add visitor upload interface
-- [ ] Build image adjustment controls (zoom, move, fit)
-- [ ] Implement Canvas-based image composition
-- [ ] Add real-time preview canvas
-- [ ] Add download button (disabled until user photo uploaded)
-- [ ] Add sharing options integration
-- [ ] Track usage with `trackCampaignUsage` function
-- [ ] Increment supportersCount on download
-- [ ] Add report button (Phase 1 requirement)
+- [x] Create `/src/app/(chrome)/campaign/[slug]/page.js`
+- [x] Show campaign details and creator info
+- [x] Add visitor upload interface
+- [x] Build image adjustment controls (zoom, move, fit)
+- [x] Implement Canvas-based image composition
+- [x] Add real-time preview canvas
+- [x] Add download button (disabled until user photo uploaded)
+- [x] Add sharing options integration
+- [x] Track usage with secure server-side API
+- [x] Increment supportersCount on download
+- [x] Add report button (Phase 1 requirement)
 
 **Design Requirements:**
-- Mobile-first responsive design
-- Canvas-based composition (Frame: overlay, Background: underlay)
-- Intuitive adjustment controls
-- Match existing page styles
+- ✅ Mobile-first responsive design
+- ✅ Canvas-based composition (Frame: overlay, Background: underlay)
+- ✅ Intuitive adjustment controls
+- ✅ Match existing page styles
 
-**Estimated Time:** 60-90 minutes
+**Implementation Details:**
+
+**Page Structure:**
+- Campaign hero section with image, title, description, creator info
+- Visitor photo upload interface with file validation (10MB, PNG/JPG/WEBP)
+- Real-time Canvas preview with live composition
+- Adjustment controls: Zoom slider (0.5-3x), drag positioning, Fit button, Reset button
+- Download button (disabled until photo uploaded)
+- Share buttons: Twitter, Facebook, WhatsApp, native share API
+- Report modal with reason selection (copyright, inappropriate, spam, misleading, other)
+
+**Canvas Composition:**
+- Uses `imageComposition.js` utility for Canvas-based rendering
+- Frame type: User photo UNDER frame (frame overlays)
+- Background type: User photo ON TOP of background
+- Real-time preview updates on adjustment changes
+- Handles aspect ratios and image centering correctly
+- High-quality PNG export for downloads
+
+**Adjustment Controls:**
+- Zoom slider: 0.5x to 3x with 0.1x steps
+- Drag repositioning: Mouse drag or touch support
+- Fit button: Auto-calculates zoom/position to fit photo within campaign bounds
+- Reset button: Restores default scale (1.0) and center position (0, 0)
+
+**Security Implementation:**
+- **Server-side download tracking API:** Created `/api/campaigns/track-download` using Firebase Admin SDK
+- **Token verification:** Requires valid Firebase ID token in Authorization header for authenticated users
+- **Anonymous downloads:** Allowed without authentication (increment campaign.supportersCount only)
+- **Authenticated downloads:** Increments both campaign.supportersCount and creator.supportersCount (only for non-creator users)
+- **Spoofing prevention:** Server verifies tokens using `adminAuth.verifyIdToken()`, ignores client-provided userIds
+- **Atomic updates:** Uses Firestore transactions to ensure consistency
+- **firstUsedAt tracking:** Sets timestamp on first download
+
+**Files Created/Updated:**
+- `src/app/(chrome)/campaign/[slug]/page.js` - Campaign view page with complete visitor experience
+- `src/app/api/campaigns/track-download/route.js` - Secure server-side download tracking API
+- `src/lib/firebaseAdmin.js` - Added `adminFirestore()` export for server-side Firestore access
+
+**Security Benefits:**
+- ✅ Firebase Admin SDK bypasses client-side security rules (allows anonymous downloads)
+- ✅ Token verification prevents user identity spoofing
+- ✅ Creator supportersCount only increments for verified authenticated non-creator users
+- ✅ Campaign supportersCount increments for all downloads (anonymous + authenticated)
+- ✅ No sensitive data exposed to client
+
+**Completed:** October 02, 2025
+
+**Testing Recommendations:**
+- Test anonymous download flow (no auth, only campaign counter increments)
+- Test authenticated download flow (both campaign + creator counters increment)
+- Test download as campaign creator (only campaign counter increments)
+- Test invalid token handling (treated as anonymous)
+- Monitor logs for repeated token verification failures (abuse detection)
+- Test Canvas composition for both frame and background types
+- Test image adjustments on mobile devices (touch drag, pinch zoom)
 
 ---
 
