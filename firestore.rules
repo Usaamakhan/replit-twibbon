@@ -69,7 +69,7 @@ service cloud.firestore {
       // Don't allow delete - profile integrity
     }
     
-    // Campaigns - public reading with secure usage tracking
+    // Campaigns - public reading with secure editing and usage tracking
     match /campaigns/{campaignId} {
       allow read: if true; // ✅ Public access for guest users
       
@@ -81,19 +81,70 @@ service cloud.firestore {
                    // Validate type is either 'frame' or 'background'
                    request.resource.data.type in ['frame', 'background'];
       
-      // Allow campaign owner full control
-      allow update, delete: if request.auth != null && request.auth.uid == resource.data.creatorId;
+      // Allow deletion by campaign owner only
+      allow delete: if request.auth != null && request.auth.uid == resource.data.creatorId;
       
-      // Allow secure usage tracking by authenticated users (optimized: removed supporters object)
-      allow update: if request.auth != null &&
-                   // Only allow usage tracking fields
+      // Allow campaign owner to edit metadata fields ONLY (immutable fields protected)
+      // Edit window: within 7 days after publish AND less than 10 supporters (per CAMPAIGN_SYSTEM.md)
+      allow update: if request.auth != null && 
+                   request.auth.uid == resource.data.creatorId &&
+                   // Enforce 7-day edit window (604800000 milliseconds = 7 days)
+                   request.time.toMillis() <= resource.data.createdAt.toMillis() + 604800000 &&
+                   // Enforce less than 10 supporters limit
+                   resource.data.supportersCount < 10 &&
+                   // Only allow editable metadata fields per CAMPAIGN_SYSTEM.md (removed reportsCount, moderationStatus)
                    request.resource.data.diff(resource.data).affectedKeys()
-                     .hasOnly(['usageCount', 'supportersCount', 'updatedAt']) &&
-                   // Ensure usageCount only increases by 1
-                   request.resource.data.usageCount == resource.data.usageCount + 1 &&
+                     .hasOnly(['title', 'description', 'captionTemplate', 'updatedAt']) &&
+                   // Enforce immutable fields (type, slug, imageUrl, creatorId must never change)
+                   request.resource.data.type == resource.data.type &&
+                   request.resource.data.slug == resource.data.slug &&
+                   request.resource.data.imageUrl == resource.data.imageUrl &&
+                   request.resource.data.creatorId == resource.data.creatorId &&
+                   request.resource.data.createdAt == resource.data.createdAt &&
+                   request.resource.data.supportersCount == resource.data.supportersCount &&
+                   request.resource.data.usageCount == resource.data.usageCount &&
+                   request.resource.data.reportsCount == resource.data.reportsCount &&
+                   request.resource.data.moderationStatus == resource.data.moderationStatus &&
+                   // firstUsedAt can only be set once, never changed
+                   (!('firstUsedAt' in resource.data) || request.resource.data.firstUsedAt == resource.data.firstUsedAt);
+      
+      // Allow secure download tracking by authenticated users (supportersCount increment)
+      allow update: if request.auth != null &&
+                   // Only allow supportersCount and related fields
+                   request.resource.data.diff(resource.data).affectedKeys()
+                     .hasOnly(['supportersCount', 'updatedAt', 'firstUsedAt']) &&
+                   // Protect all immutable fields
+                   request.resource.data.type == resource.data.type &&
+                   request.resource.data.slug == resource.data.slug &&
+                   request.resource.data.imageUrl == resource.data.imageUrl &&
+                   request.resource.data.creatorId == resource.data.creatorId &&
+                   request.resource.data.title == resource.data.title &&
+                   request.resource.data.description == resource.data.description &&
+                   request.resource.data.usageCount == resource.data.usageCount &&
+                   request.resource.data.reportsCount == resource.data.reportsCount &&
+                   request.resource.data.moderationStatus == resource.data.moderationStatus &&
                    // Ensure supportersCount only increases by 1 per download
-                   (!('supportersCount' in request.resource.data.diff(resource.data).changedKeys()) ||
-                    request.resource.data.supportersCount == resource.data.supportersCount + 1);
+                   request.resource.data.supportersCount == resource.data.supportersCount + 1 &&
+                   // firstUsedAt can only be set once (when first download happens)
+                   (!('firstUsedAt' in resource.data) || request.resource.data.firstUsedAt == resource.data.firstUsedAt);
+      
+      // Allow secure usage tracking increment (usageCount for views/interactions)
+      allow update: if request.auth != null &&
+                   // Only allow usageCount increment
+                   request.resource.data.diff(resource.data).affectedKeys()
+                     .hasOnly(['usageCount', 'updatedAt']) &&
+                   // Protect all immutable fields
+                   request.resource.data.type == resource.data.type &&
+                   request.resource.data.slug == resource.data.slug &&
+                   request.resource.data.imageUrl == resource.data.imageUrl &&
+                   request.resource.data.creatorId == resource.data.creatorId &&
+                   request.resource.data.title == resource.data.title &&
+                   request.resource.data.description == resource.data.description &&
+                   request.resource.data.supportersCount == resource.data.supportersCount &&
+                   request.resource.data.reportsCount == resource.data.reportsCount &&
+                   request.resource.data.moderationStatus == resource.data.moderationStatus &&
+                   // Ensure usageCount only increases by 1
+                   request.resource.data.usageCount == resource.data.usageCount + 1;
     }
     
     // Reports - allow creation by anyone, reading/updating by admins only
