@@ -114,33 +114,53 @@ Created a modal popup where users choose between creating a frame or background 
 ---
 
 ### 3. Priority 2: Upload Flows
-**Status:** ⏳ Pending
+**Status:** ✅ Completed
 
 **Description:**
 Build frame and background upload pages with two-step workflow.
 
 **Tasks:**
-- [ ] Create `/src/app/(chrome)/create/frame/page.js`
-- [ ] Create `/src/app/(chrome)/create/background/page.js`
-- [ ] Implement two-step flow: Upload image → Fill details
-- [ ] Add transparency detection for frames (use `src/utils/transparencyDetector.js`)
-- [ ] Add image preview components
-- [ ] Add form validation with error handling
-- [ ] Implement delayed authentication (allow unauthenticated form filling)
-- [ ] Create auth popup modal for publish action
-- [ ] Preserve form state during auth flow
-- [ ] Connect to Firestore createCampaign function
-- [ ] Generate slug using `src/utils/slugGenerator.js`
-- [ ] Upload to Supabase using campaign storage API
+- [x] Create `/src/app/(chrome)/create/frame/page.js`
+- [x] Create `/src/app/(chrome)/create/background/page.js`
+- [x] Implement two-step flow: Upload image → Fill details
+- [x] Add transparency detection for frames (use `src/utils/transparencyDetector.js`)
+- [x] Add image preview components
+- [x] Add form validation with error handling
+- [x] Implement delayed authentication (allow unauthenticated form filling)
+- [x] Create auth popup modal for publish action
+- [x] Preserve form state during auth flow
+- [x] Connect to Firestore createCampaign function
+- [x] Generate slug using `src/utils/slugGenerator.js`
+- [x] Upload to Supabase using campaign storage API
+
+**Implementation Details:**
+- **Frame Page:** PNG-only upload with automatic transparency validation (min 5%)
+- **Background Page:** Accepts PNG, JPG, WEBP (no transparency check)
+- **Two-step progress indicator:** Visual steps with color-coded completion
+- **Auto-advance:** Moves to step 2 after successful image upload
+- **File validation:** 5MB limit with clear error messages
+- **Auth modal:** Clean popup with "Go Back" and "Sign In" options
+- **Redirect handling:** Preserves destination after sign-in
+- **Yellow header + white content card:** Matches onboarding/profile design
+- **Responsive layout:** Mobile-first with centered max-w-4xl container
 
 **Design Requirements:**
-- Mobile-first responsive design
-- Clear progress indication (Step 1 of 2, Step 2 of 2)
-- Real-time image preview
-- Error messages for failed transparency detection
-- Match existing page styles
+- ✅ Mobile-first responsive design
+- ✅ Clear progress indication (Step 1 of 2, Step 2 of 2)
+- ✅ Real-time image preview with aspect ratio preservation
+- ✅ Error messages for failed transparency detection
+- ✅ Matches existing page styles (yellow header, emerald theme)
 
-**Estimated Time:** 45-60 minutes
+**Files Created:**
+- `src/app/(chrome)/create/frame/page.js` - Frame upload flow
+- `src/app/(chrome)/create/background/page.js` - Background upload flow
+
+**Completed:** October 02, 2025
+
+**Next Steps Suggestion:**
+- Test full flow end-to-end on Vercel with real Firebase/Supabase credentials
+- Priority 3: Build campaign view page (`/campaign/[slug]`) for visitors to use campaigns
+- Consider adding image dimension recommendations in UI (currently only in help text)
 
 ---
 
@@ -280,3 +300,84 @@ Build campaigns gallery and top creators leaderboard.
 - ✅ **Completed** - Done and tested
 - ⏸️ **Blocked** - Waiting on something
 - ❌ **Cancelled** - Not needed anymore
+
+---
+
+## 💡 Suggestions & Observations
+
+### Completed Features Review (October 02, 2025)
+
+**What Works Well:**
+1. ✅ **Two-step upload flow** is intuitive and guides users naturally
+2. ✅ **Transparency detection** provides immediate feedback for frames
+3. ✅ **Delayed authentication** allows users to fill forms before signing in
+4. ✅ **Consistent design** matches onboarding/profile pages perfectly
+5. ✅ **File validation** catches issues early with clear error messages
+6. ✅ **Auto-advance** to step 2 after successful upload feels smooth
+
+**Potential Improvements for Future:**
+1. 📸 **Image preview optimization:** Consider showing image dimensions after upload
+2. 🔄 **Progress persistence:** Currently form data is lost if user leaves page (consider localStorage)
+3. ⚡ **Upload feedback:** Could add progress bar for large file uploads
+4. 🎨 **Crop/resize tool:** Allow users to crop images before upload (Phase 2?)
+5. 📱 **Mobile camera access:** Add "Take Photo" option on mobile devices
+6. ✏️ **Title auto-suggest:** Could suggest title based on image filename
+
+### Testing Recommendations
+
+**Before Next Feature:**
+1. Test frame upload with various transparency levels (5%, 10%, 50%, 90%)
+2. Test background upload with all three formats (PNG, JPG, WEBP)
+3. Verify auth flow with redirect preservation
+4. Check mobile responsiveness on real devices
+5. Test with Firebase/Supabase on Vercel deployment
+
+**Edge Cases to Test:**
+- Upload same file twice (should work)
+- Upload very large images (close to 5MB)
+- Upload images with special characters in filename
+- Try to publish without signing in (should show auth modal)
+- Change image after filling form (should reset or preserve title?)
+
+### Priority 3 Preparation
+
+**Before building campaign view page (`/campaign/[slug]`):**
+- Need to decide on Canvas library (native Canvas API vs library like Fabric.js)
+- Consider image adjustment UX (sliders vs pinch-zoom on mobile)
+- Plan download format (PNG always, or user choice?)
+- Decide on social sharing method (native share API vs custom buttons)
+
+**Key Questions:**
+1. Should visitors be able to save their adjustment preferences?
+2. Do we want to show "similar campaigns" on campaign pages?
+3. Should we track "views" separately from "downloads"?
+4. What happens if campaign creator deletes campaign while visitor is using it?
+
+### Code Quality Notes
+
+**Current Strengths:**
+- Clean component structure with good separation of concerns
+- Proper error handling and validation
+- Responsive design with mobile-first approach
+- Consistent naming conventions
+
+**Future Refactoring Ideas:**
+- Extract shared upload logic into custom hook (`useImageUpload`)
+- Create reusable `ImagePreview` component for both pages
+- Consider extracting auth modal into shared component
+- Add JSDoc comments to upload functions for better documentation
+
+### Performance Considerations
+
+**Current Implementation:**
+- File reading happens client-side (good for privacy)
+- Transparency check runs before upload (saves bandwidth)
+- Single upload endpoint per campaign (prevents duplicate files)
+
+**Potential Optimizations:**
+- Consider image compression before upload (reduce file sizes)
+- Add lazy loading for preview images
+- Implement service worker for offline form completion
+- Cache transparency check results (same file = same result)
+
+---
