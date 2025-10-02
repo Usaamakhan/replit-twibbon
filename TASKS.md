@@ -175,7 +175,7 @@ Build frame and background upload pages with two-step workflow.
 ---
 
 ### 3.5. Priority 2.5: Missing Prerequisites for Campaign View Page
-**Status:** ⏳ Pending
+**Status:** ✅ Completed
 
 **Description:**
 Before building the campaign view page (Task #4), we need to create missing backend functions and utilities for fetching campaigns and composing images.
@@ -183,17 +183,17 @@ Before building the campaign view page (Task #4), we need to create missing back
 **Missing Items Identified (October 02, 2025):**
 
 #### A. Firestore Function: getCampaignBySlug()
-**Status:** ❌ Not Implemented
+**Status:** ✅ Completed
 
 **Why Needed:**
 Campaign view page needs to fetch campaign data by slug from URL parameter `/campaign/[slug]`
 
 **Tasks:**
-- [ ] Add `getCampaignBySlug(slug)` function to `src/lib/firestore.js`
-- [ ] Query campaigns collection where `slug === slug`
-- [ ] Return campaign document with creator info
-- [ ] Handle 404 case (campaign not found)
-- [ ] Respect `moderationStatus` (don't show removed campaigns)
+- [x] Add `getCampaignBySlug(slug)` function to `src/lib/firestore.js`
+- [x] Query campaigns collection where `slug === slug`
+- [x] Return campaign document with creator info
+- [x] Handle 404 case (campaign not found)
+- [x] Respect `moderationStatus` (don't show removed campaigns)
 
 **Expected Function Signature:**
 ```javascript
@@ -212,19 +212,19 @@ async function getCampaignBySlug(slug) {
 ---
 
 #### B. Canvas Composition Utility: imageComposition.js
-**Status:** ❌ Not Implemented
+**Status:** ✅ Completed
 
 **Why Needed:**
 Campaign view page needs to overlay/underlay user photos with campaign images
 
 **Tasks:**
-- [ ] Create `src/utils/imageComposition.js` utility file
-- [ ] Implement `composeImages(userPhoto, campaignImage, adjustments, type)` function
-- [ ] Handle Frame type: User photo UNDER frame (frame on top)
-- [ ] Handle Background type: User photo ON TOP of background
-- [ ] Apply adjustments: scale (zoom), x position, y position
-- [ ] Export composed image as downloadable PNG/JPG
-- [ ] Add image quality/format options
+- [x] Create `src/utils/imageComposition.js` utility file
+- [x] Implement `composeImages(userPhoto, campaignImage, adjustments, type)` function
+- [x] Handle Frame type: User photo UNDER frame (frame on top)
+- [x] Handle Background type: User photo ON TOP of background
+- [x] Apply adjustments: scale (zoom), x position, y position
+- [x] Export composed image as downloadable PNG/JPG
+- [x] Add image quality/format options
 
 **Expected Functions:**
 ```javascript
@@ -274,12 +274,18 @@ function exportCanvas(canvas, format = 'png') { }
 - imageComposition.js: 30-40 minutes
 
 **Completion Criteria:**
-- [ ] getCampaignBySlug returns campaign data correctly
-- [ ] imageComposition.js composes frames correctly (photo under frame)
-- [ ] imageComposition.js composes backgrounds correctly (photo over background)
-- [ ] Adjustments (zoom, move) work smoothly
-- [ ] Export produces high-quality downloadable images
-- [ ] All functions documented with JSDoc
+- [x] getCampaignBySlug returns campaign data correctly
+- [x] imageComposition.js composes frames correctly (photo under frame)
+- [x] imageComposition.js composes backgrounds correctly (photo over background)
+- [x] Adjustments (zoom, move) work smoothly
+- [x] Export produces high-quality downloadable images
+- [x] All functions documented with JSDoc
+
+**Files Created:**
+- `src/lib/firestore.js` - Added `getCampaignBySlug()` function (lines 527-593)
+- `src/utils/imageComposition.js` - Complete Canvas composition utility with helpers
+
+**Completed:** October 02, 2025
 
 ---
 

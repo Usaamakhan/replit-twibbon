@@ -521,6 +521,74 @@ export const getUserCampaigns = async (userId) => {
   }
 };
 
+/**
+ * Get campaign by slug
+ * @param {string} slug - Campaign slug from URL
+ * @returns {Promise<{campaign: object, creator: object}|null>} Campaign with creator info or null if not found
+ */
+export const getCampaignBySlug = async (slug) => {
+  if (!slug) return null;
+  
+  // Check if database is initialized
+  if (!db) {
+    if (process.env.NODE_ENV === 'development') {
+      console.error('Database not initialized - cannot get campaign by slug');
+    }
+    return null;
+  }
+  
+  try {
+    // Query campaigns collection by slug
+    const q = query(
+      collection(db, 'campaigns'),
+      where('slug', '==', slug),
+      limit(1)
+    );
+    
+    const querySnapshot = await getDocs(q);
+    
+    if (querySnapshot.empty) {
+      return null;
+    }
+    
+    const campaignDoc = querySnapshot.docs[0];
+    const campaignData = { id: campaignDoc.id, ...campaignDoc.data() };
+    
+    // Don't show removed campaigns
+    if (campaignData.moderationStatus === 'removed') {
+      return null;
+    }
+    
+    // Fetch creator info
+    let creatorData = null;
+    if (campaignData.creatorId) {
+      try {
+        const creatorDocRef = doc(db, 'users', campaignData.creatorId);
+        const creatorDoc = await getDoc(creatorDocRef);
+        
+        if (creatorDoc.exists()) {
+          creatorData = { id: creatorDoc.id, ...creatorDoc.data() };
+        }
+      } catch (creatorError) {
+        // Continue without creator info if fetch fails
+        if (process.env.NODE_ENV === 'development') {
+          console.error('Failed to fetch creator info:', creatorError);
+        }
+      }
+    }
+    
+    return {
+      campaign: campaignData,
+      creator: creatorData
+    };
+  } catch (error) {
+    if (process.env.NODE_ENV === 'development') {
+      console.error('Error getting campaign by slug:', error);
+    }
+    return null;
+  }
+};
+
 // Complete user profile setup after welcome popup
 export const completeUserProfile = async (userId, profileData) => {
   if (!userId || !profileData) return { success: false, error: 'Missing required data' };
