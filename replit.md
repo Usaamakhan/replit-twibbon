@@ -8,6 +8,7 @@ Twibbonize is a Next.js 15 application for creating and sharing "Campaigns" (pho
 - Focus on compatibility with Replit environment
 - Maintain clean, working codebase structure
 - **When importing from GitHub: Do not make any automatic changes or modifications to the code. Only set up the environment to run the existing code as-is. Even if the app appears stuck or shows loading states, do not attempt to debug or fix issues automatically - only install dependencies and configure the runtime environment.**
+- **IMPORTANT - Testing Environment: App is tested on Vercel deployment (where environment variables are configured), NOT locally in Replit. Never take screenshots or attempt to test functionality in Replit environment. All testing happens on Vercel.**
 
 ### System Architecture
 Built with Next.js 15.5.2 (App Router), React 19.1.0, Tailwind CSS 4, Firebase (auth), and Supabase (database/storage).
