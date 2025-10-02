@@ -3,6 +3,9 @@ const nextConfig = {
   // Configure for Replit deployment
   output: 'standalone',
   
+  // Allow all hosts for Replit proxy (critical for Next.js 15)
+  allowedHosts: true,
+  
   // Disable problematic features that can cause hanging
   eslint: {
     ignoreDuringBuilds: false,
