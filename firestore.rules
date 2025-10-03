@@ -40,30 +40,15 @@ service cloud.firestore {
       // Allow secure counter updates (owner only, incremental only)
       allow update: if request.auth != null &&
                    request.auth.uid == userId &&
-                   // Only allow counter fields to be updated (optimized: removed campaignsCreated)
+                   // Only allow counter fields to be updated (campaignsCount only)
                    request.resource.data.diff(resource.data).affectedKeys()
-                     .hasOnly(['campaignsCount', 'supportersCount', 'updatedAt']) &&
+                     .hasOnly(['campaignsCount', 'updatedAt']) &&
                    // Protect system fields
                    request.resource.data.email == resource.data.email &&
                    request.resource.data.createdAt == resource.data.createdAt &&
-                   // Ensure counters only increase by 1 (prevent manipulation)
+                   // Ensure campaignsCount only increases by 1 (prevent manipulation)
                    (!('campaignsCount' in request.resource.data.diff(resource.data).changedKeys()) ||
-                    request.resource.data.campaignsCount == resource.data.campaignsCount + 1) &&
-                   (!('supportersCount' in request.resource.data.diff(resource.data).changedKeys()) ||
-                    request.resource.data.supportersCount == resource.data.supportersCount + 1);
-      
-      // Allow any authenticated user to increment supportersCount (when using campaign)
-      allow update: if request.auth != null &&
-                   // Only allow supportersCount to be updated
-                   request.resource.data.diff(resource.data).affectedKeys()
-                     .hasOnly(['supportersCount', 'updatedAt']) &&
-                   // Protect all other fields
-                   request.resource.data.email == resource.data.email &&
-                   request.resource.data.createdAt == resource.data.createdAt &&
-                   request.resource.data.displayName == resource.data.displayName &&
-                   request.resource.data.username == resource.data.username &&
-                   // Ensure supportersCount only increases by 1
-                   request.resource.data.supportersCount == resource.data.supportersCount + 1;
+                    request.resource.data.campaignsCount == resource.data.campaignsCount + 1);
       
       allow create: if request.auth != null && request.auth.uid == userId;
       // Don't allow delete - profile integrity
