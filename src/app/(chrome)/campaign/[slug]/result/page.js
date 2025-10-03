@@ -150,43 +150,44 @@ export default function CampaignResultPage() {
   return (
     <div className="min-h-screen bg-white">
       <div className="min-h-screen flex">
-        <div className="flex-1 w-full flex flex-col py-8 px-4 sm:px-6 lg:px-16 xl:px-20 pt-20">
-          <div className="mx-auto w-full max-w-4xl">
+        <div className="flex-1 w-full flex flex-col py-8 px-4 sm:px-6 lg:px-8 pt-20">
+          <div className="mx-auto w-full max-w-5xl">
             
             {/* Header */}
-            <div className="text-center mb-8 bg-yellow-400 px-6 py-8 rounded-t-xl">
+            <div className="text-center mb-8 bg-yellow-400 px-6 py-6 rounded-t-xl">
               <div className="mb-2">
                 <span className="inline-block bg-emerald-500 text-white px-4 py-1 rounded-full text-sm font-semibold">
                   ✓ Complete
                 </span>
               </div>
-              <h1 className="text-2xl sm:text-4xl font-bold text-gray-900 mb-2">
+              <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">
                 Your {campaign.type === 'frame' ? 'Frame' : 'Background'} is Ready!
               </h1>
-              <p className="text-base sm:text-lg text-gray-800 mt-2">
+              <p className="text-sm sm:text-base text-gray-800">
                 Download complete! Share your creation with the world.
               </p>
             </div>
             
             {/* Content Card */}
-            <div className="bg-white rounded-b-xl border border-t-0 border-gray-200 px-6 py-8 shadow-sm">
+            <div className="bg-white rounded-b-xl border border-t-0 border-gray-200 px-4 sm:px-6 py-6 shadow-sm">
               
               {/* Result Image */}
-              <div className="mb-8">
-                <h2 className="text-2xl font-bold text-gray-900 mb-4 text-center">Your Final Image</h2>
+              <div className="mb-6">
+                <h2 className="text-lg font-bold text-gray-900 mb-3 text-center">Your Final Image</h2>
                 {composedImageUrl && (
                   <div className="relative">
                     <img
                       src={composedImageUrl}
                       alt="Your final result"
                       className="w-full h-auto rounded-lg border-2 border-gray-300"
+                      style={{ maxHeight: '500px', objectFit: 'contain' }}
                     />
                   </div>
                 )}
               </div>
 
               {/* Download Again Button */}
-              <div className="mb-8">
+              <div className="mb-6">
                 <button
                   onClick={handleRedownload}
                   disabled={redownloading}
@@ -199,8 +200,8 @@ export default function CampaignResultPage() {
               </div>
 
               {/* Share Section */}
-              <div className="mb-8 border-t border-gray-200 pt-6">
-                <h3 className="text-xl font-bold text-gray-900 mb-4 text-center">Share Your Creation</h3>
+              <div className="mb-6 border-t border-gray-200 pt-6">
+                <h3 className="text-lg font-bold text-gray-900 mb-3 text-center">Share Your Creation</h3>
                 <div className="grid grid-cols-3 gap-3">
                   <button
                     onClick={() => handleShare('twitter')}
@@ -225,7 +226,7 @@ export default function CampaignResultPage() {
 
               {/* Campaign Info */}
               {creator && (
-                <div className="mb-8 p-4 bg-gray-50 rounded-lg border border-gray-200">
+                <div className="mb-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
                   <p className="text-sm text-gray-600 text-center mb-2">Campaign by</p>
                   <div className="flex items-center justify-center gap-3">
                     {creator.profileImage && (

@@ -37,13 +37,13 @@ export const loadImage = (source) => {
  * Compose user photo with campaign image
  * @param {File} userPhotoFile - User's uploaded photo
  * @param {string} campaignImageUrl - URL of campaign image (frame or background)
- * @param {object} adjustments - Photo adjustments {scale: 1.0, x: 0, y: 0}
+ * @param {object} adjustments - Photo adjustments {scale: 1.0, x: 0, y: 0, rotation: 0}
  * @param {string} campaignType - 'frame' or 'background'
  * @returns {Promise<{canvas: HTMLCanvasElement, blob: Blob}>} Composed canvas and blob for download
  */
 export const composeImages = async (userPhotoFile, campaignImageUrl, adjustments = {}, campaignType = 'frame') => {
   // Default adjustments
-  const { scale = 1.0, x = 0, y = 0 } = adjustments;
+  const { scale = 1.0, x = 0, y = 0, rotation = 0 } = adjustments;
   
   try {
     // Load both images
@@ -66,12 +66,12 @@ export const composeImages = async (userPhotoFile, campaignImageUrl, adjustments
     // Compose based on campaign type
     if (campaignType === 'frame') {
       // Frame: User photo UNDER frame (frame overlays on top)
-      drawUserPhotoWithAdjustments(ctx, userPhoto, canvas.width, canvas.height, scale, x, y);
+      drawUserPhotoWithAdjustments(ctx, userPhoto, canvas.width, canvas.height, scale, x, y, rotation);
       ctx.drawImage(campaignImage, 0, 0, canvas.width, canvas.height);
     } else {
       // Background: User photo ON TOP of background
       ctx.drawImage(campaignImage, 0, 0, canvas.width, canvas.height);
-      drawUserPhotoWithAdjustments(ctx, userPhoto, canvas.width, canvas.height, scale, x, y);
+      drawUserPhotoWithAdjustments(ctx, userPhoto, canvas.width, canvas.height, scale, x, y, rotation);
     }
     
     // Convert to blob for download
@@ -89,26 +89,37 @@ export const composeImages = async (userPhotoFile, campaignImageUrl, adjustments
 };
 
 /**
- * Draw user photo with scale and position adjustments
+ * Draw user photo with scale, position, and rotation adjustments
  * @param {CanvasRenderingContext2D} ctx - Canvas context
  * @param {HTMLImageElement} img - User photo image
  * @param {number} canvasWidth - Canvas width
  * @param {number} canvasHeight - Canvas height
- * @param {number} scale - Zoom level (0.5 - 3.0)
+ * @param {number} scale - Zoom level (0.1 - 10.0)
  * @param {number} x - Horizontal offset
  * @param {number} y - Vertical offset
+ * @param {number} rotation - Rotation angle in degrees (0 - 360)
  */
-const drawUserPhotoWithAdjustments = (ctx, img, canvasWidth, canvasHeight, scale, x, y) => {
+const drawUserPhotoWithAdjustments = (ctx, img, canvasWidth, canvasHeight, scale, x, y, rotation = 0) => {
+  // Save the current context state
+  ctx.save();
+  
+  // Calculate center point for rotation
+  const centerX = canvasWidth / 2;
+  const centerY = canvasHeight / 2;
+  
+  // Move to center, apply rotation, then move back
+  ctx.translate(centerX + x, centerY + y);
+  ctx.rotate((rotation * Math.PI) / 180);
+  
   // Calculate scaled dimensions
   const scaledWidth = img.width * scale;
   const scaledHeight = img.height * scale;
   
-  // Center the image by default, then apply x/y offsets
-  const drawX = (canvasWidth - scaledWidth) / 2 + x;
-  const drawY = (canvasHeight - scaledHeight) / 2 + y;
+  // Draw the image centered at the rotation point
+  ctx.drawImage(img, -scaledWidth / 2, -scaledHeight / 2, scaledWidth, scaledHeight);
   
-  // Draw the image with adjustments
-  ctx.drawImage(img, drawX, drawY, scaledWidth, scaledHeight);
+  // Restore the context state
+  ctx.restore();
 };
 
 /**
@@ -141,15 +152,15 @@ export const updatePreview = async (canvas, userPhotoFile, campaignImageUrl, adj
   canvas.width = campaignImage.width;
   canvas.height = campaignImage.height;
   
-  const { scale = 1.0, x = 0, y = 0 } = adjustments;
+  const { scale = 1.0, x = 0, y = 0, rotation = 0 } = adjustments;
   
   // Compose based on type
   if (campaignType === 'frame') {
-    drawUserPhotoWithAdjustments(ctx, userPhoto, canvas.width, canvas.height, scale, x, y);
+    drawUserPhotoWithAdjustments(ctx, userPhoto, canvas.width, canvas.height, scale, x, y, rotation);
     ctx.drawImage(campaignImage, 0, 0, canvas.width, canvas.height);
   } else {
     ctx.drawImage(campaignImage, 0, 0, canvas.width, canvas.height);
-    drawUserPhotoWithAdjustments(ctx, userPhoto, canvas.width, canvas.height, scale, x, y);
+    drawUserPhotoWithAdjustments(ctx, userPhoto, canvas.width, canvas.height, scale, x, y, rotation);
   }
   
   // Cleanup
