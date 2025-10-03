@@ -384,7 +384,7 @@ export default function CampaignViewPage() {
                   </button>
                 </p>
                 <p className="text-xs text-gray-700">
-                  {campaign.supportersCount || 0} {campaign.supportersCount === 1 ? 'person' : 'people'} used this
+                  {campaign.supportersCount || 0} {campaign.supportersCount === 1 ? 'support' : 'supports'}
                 </p>
               </div>
             </div>
