@@ -63,7 +63,7 @@ export default function CampaignAdjustPage() {
     };
     
     loadSession();
-  }, [slug, router, campaignSession]);
+  }, [slug, router]);
 
   // Initialize canvas with campaign image
   useEffect(() => {
