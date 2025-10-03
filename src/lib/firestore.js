@@ -682,53 +682,6 @@ export const completeUserProfile = async (userId, profileData) => {
   }
 };
 
-// Track campaign usage - increment usage count and download count (optimized: removed supporters object)
-// Note: supportersCount now tracks total downloads, not unique supporters (cost optimization)
-// Supports anonymous downloads: userId can be null/undefined for anonymous visitors
-export const trackCampaignUsage = async (campaignId, userId = null) => {
-  if (!campaignId) return { success: false, error: 'Missing campaignId' };
-  
-  try {
-    return await runTransaction(db, async (transaction) => {
-      // Get campaign details to find the creator
-      const campaignDocRef = doc(db, 'campaigns', campaignId);
-      const campaignDoc = await transaction.get(campaignDocRef);
-      
-      if (!campaignDoc.exists()) {
-        throw new Error('Campaign not found');
-      }
-      
-      const campaignData = campaignDoc.data();
-      const campaignCreatorId = campaignData.creatorId;
-      
-      // Update campaign supporter count (every download counts - authenticated and anonymous)
-      const campaignUpdates = {
-        supportersCount: increment(1),  // Simplified: every download increments
-        updatedAt: serverTimestamp(),
-      };
-      
-      transaction.update(campaignDocRef, campaignUpdates);
-      
-      // Update campaign creator's supportersCount only if downloader is authenticated and different from creator
-      if (userId && campaignCreatorId !== userId) {
-        const creatorDocRef = doc(db, 'users', campaignCreatorId);
-        transaction.update(creatorDocRef, {
-          supportersCount: increment(1),
-          updatedAt: serverTimestamp(),
-        });
-      }
-      
-      return { 
-        success: true,
-        campaignCreatorId: userId && campaignCreatorId !== userId ? campaignCreatorId : null 
-      };
-    });
-  } catch (error) {
-    const errorResponse = await handleFirebaseError(error, 'firestore', { returnType: 'string' });
-    return { success: false, error: errorResponse || 'Failed to complete operation. Please try again.' };
-  }
-};
-
 // Report operations for campaign moderation
 export const createReport = async (reportData) => {
   if (!reportData || typeof reportData !== 'object') {
