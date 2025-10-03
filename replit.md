@@ -50,11 +50,17 @@ Built with Next.js 15.5.2 (App Router), React 19.1.0, Tailwind CSS 4, Firebase (
 ✅ .gitignore properly configured for Next.js projects
 ✅ Replit environment setup complete - ready for development
 
-**Previous Feature Implementation Status:**
+**Feature Implementation Status:**
 ✅ CreateCampaignModal implemented (replaces dedicated /create page with popup)
 ✅ Frame upload flow completed (/create/frame with transparency detection)
 ✅ Background upload flow completed (/create/background with multi-format support)
-✅ Campaign view page completed (/campaign/[slug] with visitor experience)
+✅ **3-Page Campaign Flow** (October 3, 2025)
+  - Page 1: Upload page (/campaign/[slug]) - Choose photo and view campaign
+  - Page 2: Adjust page (/campaign/[slug]/adjust) - Edit photo with zoom/position controls
+  - Page 3: Result page (/campaign/[slug]/result) - Download complete, share options
+  - CampaignSessionContext with sessionStorage persistence (24h expiry)
+  - Route guards for proper flow enforcement
+  - Automatic redirects between pages based on state
 ✅ Simplified download tracking - every download = +1 support (no auth required)
 ✅ Campaign grids added to profile pages (/profile and /u/[username]) with responsive layout
 
@@ -119,16 +125,18 @@ The app will run without these but with limited functionality (Firebase disabled
 
 ### Route Structure
 ```
-/                          # Home with hero
-/create                    # Opens modal popup (for direct URL access)
-/create/frame              # Upload frame (completed)
-/create/background         # Upload background (completed)
-/campaign/[slug]           # Campaign view & usage (completed)
-/campaigns                 # Unified gallery with filters (pending)
-/creators                  # Top creators leaderboard (pending)
-/profile                   # User profile
-/profile/edit              # Edit profile
-/onboarding                # New user setup
+/                                # Home with hero
+/create                          # Opens modal popup (for direct URL access)
+/create/frame                    # Upload frame (completed)
+/create/background               # Upload background (completed)
+/campaign/[slug]                 # Page 1: Upload photo (3-page flow)
+/campaign/[slug]/adjust          # Page 2: Adjust photo (3-page flow)
+/campaign/[slug]/result          # Page 3: Result & share (3-page flow)
+/campaigns                       # Unified gallery with filters (pending)
+/creators                        # Top creators leaderboard (pending)
+/profile                         # User profile
+/profile/edit                    # Edit profile
+/onboarding                      # New user setup
 ```
 
 ### UI Components
