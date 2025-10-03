@@ -15,7 +15,7 @@ export default function ProfilePage({ isOwnProfile = false, username = null }) {
   const router = useRouter();
   const [profileLoading, setProfileLoading] = useState(true);
   const [userData, setUserData] = useState(null);
-  const [userStats, setUserStats] = useState({ supportersCount: 0, campaignsCount: 0 });
+  const [userStats, setUserStats] = useState({ supportsCount: 0, campaignsCount: 0 });
   const [campaigns, setCampaigns] = useState([]);
   const [error, setError] = useState(null);
 
@@ -65,34 +65,43 @@ export default function ProfilePage({ isOwnProfile = false, username = null }) {
         if (profileUser) {
           setUserData(profileUser);
           
-          // Load user statistics with safe defaults
-          try {
-            const stats = await getUserStats(profileUser.id);
-            setUserStats({
-              supportersCount: stats?.supportersCount || 0,
-              campaignsCount: stats?.campaignsCount || 0
-            });
-          } catch (statError) {
-            console.error('Error loading user stats:', statError);
-            setUserStats({ supportersCount: 0, campaignsCount: 0 });
-          }
-          
           // Load user's campaigns with safe defaults
           try {
             const userCampaigns = await getUserCampaigns(profileUser.id);
             if (Array.isArray(userCampaigns)) {
-              setCampaigns(userCampaigns.map(campaign => ({
+              const campaignsData = userCampaigns.map(campaign => ({
                 id: campaign.id,
                 title: campaign.title || 'Untitled Campaign',
                 thumbnail: campaign.imageUrl || 'https://via.placeholder.com/300x200/059669/FFFFFF?text=Campaign',
                 supportersCount: campaign.supportersCount || 0
-              })));
+              }));
+              setCampaigns(campaignsData);
+              
+              // Calculate total supports from all campaigns
+              const totalSupports = campaignsData.reduce((sum, campaign) => sum + campaign.supportersCount, 0);
+              
+              // Get campaigns count from stats or use campaigns length
+              try {
+                const stats = await getUserStats(profileUser.id);
+                setUserStats({
+                  supportsCount: totalSupports,
+                  campaignsCount: stats?.campaignsCount || campaignsData.length
+                });
+              } catch (statError) {
+                console.error('Error loading user stats:', statError);
+                setUserStats({ 
+                  supportsCount: totalSupports, 
+                  campaignsCount: campaignsData.length 
+                });
+              }
             } else {
               setCampaigns([]);
+              setUserStats({ supportsCount: 0, campaignsCount: 0 });
             }
           } catch (campaignError) {
             console.error('Error loading user campaigns:', campaignError);
             setCampaigns([]);
+            setUserStats({ supportsCount: 0, campaignsCount: 0 });
           }
         }
       } catch (error) {
@@ -222,8 +231,8 @@ export default function ProfilePage({ isOwnProfile = false, username = null }) {
               {/* Stats Cards */}
               <div className="grid grid-cols-3 gap-2 sm:gap-4 mb-8">
                 <div className="bg-white rounded-xl shadow-lg p-3 sm:p-6 text-center">
-                  <div className="text-xl sm:text-2xl lg:text-3xl font-bold text-emerald-600">{userStats.supportersCount}</div>
-                  <div className="text-xs sm:text-sm lg:text-base text-gray-600 font-medium">Supporters</div>
+                  <div className="text-xl sm:text-2xl lg:text-3xl font-bold text-emerald-600">{userStats.supportsCount}</div>
+                  <div className="text-xs sm:text-sm lg:text-base text-gray-600 font-medium">Supports</div>
                 </div>
                 
                 <div className="bg-white rounded-xl shadow-lg p-3 sm:p-6 text-center">
@@ -271,7 +280,7 @@ export default function ProfilePage({ isOwnProfile = false, username = null }) {
                           <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-200"></div>
                           <div className="absolute bottom-4 left-4 text-white opacity-0 group-hover:opacity-100 transition-opacity duration-200">
                             <h3 className="font-bold text-lg">{campaign.title}</h3>
-                            <p className="text-sm">{campaign.supportersCount} supporters</p>
+                            <p className="text-sm">{campaign.supportersCount} supports</p>
                           </div>
                         </div>
                       </div>
