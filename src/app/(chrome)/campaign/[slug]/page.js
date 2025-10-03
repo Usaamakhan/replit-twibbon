@@ -199,128 +199,141 @@ export default function CampaignUploadPage() {
     <div className="min-h-screen bg-white">
       <div className="min-h-screen flex">
         {/* Main Content */}
-        <div className="flex-1 w-full flex flex-col py-8 px-4 sm:px-6 lg:px-16 xl:px-20 pt-20">
-          <div className="mx-auto w-full max-w-4xl">
+        <div className="flex-1 w-full flex flex-col py-8 px-4 sm:px-6 lg:px-8 pt-20">
+          <div className="mx-auto w-full max-w-5xl">
             
             {/* Header */}
-            <div className="text-center mb-8 bg-yellow-400 px-6 py-8 rounded-t-xl">
-              <h1 className="text-2xl sm:text-4xl font-bold text-gray-900 mb-2">{campaign.title}</h1>
+            <div className="text-center mb-6 bg-yellow-400 px-6 py-5 rounded-t-xl">
+              <div className="mb-2">
+                <span className="inline-block bg-gray-900 text-white px-4 py-1 rounded-full text-sm font-semibold">
+                  Step 1 of 3
+                </span>
+              </div>
+              <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-1">{campaign.title}</h1>
               {campaign.description && (
-                <p className="text-base sm:text-lg text-gray-800 mt-2">{campaign.description}</p>
-              )}
-              
-              {/* Creator info */}
-              {creator && (
-                <div className="mt-4 flex items-center justify-center gap-3">
-                  {creator.profileImage && (
-                    <img
-                      src={creator.profileImage}
-                      alt={creator.displayName}
-                      className="w-10 h-10 rounded-full border-2 border-gray-900"
-                    />
-                  )}
-                  <div className="text-left">
-                    <p className="text-sm text-gray-900">
-                      Created by{' '}
-                      <button
-                        onClick={() => router.push(`/u/${creator.username}`)}
-                        className="font-semibold hover:underline"
-                      >
-                        {creator.displayName || creator.username}
-                      </button>
-                    </p>
-                    <p className="text-xs text-gray-700">
-                      {campaign.supportersCount || 0} {campaign.supportersCount === 1 ? 'support' : 'supports'}
-                    </p>
-                  </div>
-                </div>
+                <p className="text-sm text-gray-800 mt-1">{campaign.description}</p>
               )}
             </div>
             
             {/* Content Card */}
-            <div className="bg-white rounded-b-xl border border-t-0 border-gray-200 px-6 py-8 shadow-sm">
+            <div className="bg-white rounded-b-xl border border-t-0 border-gray-200 shadow-sm">
               
               {error && (
-                <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg text-red-600 text-sm text-center">
+                <div className="mx-4 mt-4 p-4 bg-red-50 border border-red-200 rounded-lg text-red-600 text-sm text-center">
                   {error}
                 </div>
               )}
 
-              {/* Campaign Preview */}
-              <div className="mb-8">
-                <div className="relative">
-                  <img
-                    src={campaign.imageUrl}
-                    alt={campaign.title}
-                    className="w-full h-auto rounded-lg border-2 border-gray-300"
-                  />
-                  <div className="absolute top-4 right-4 bg-emerald-500 text-white px-3 py-1 rounded-full text-xs font-semibold uppercase">
-                    {campaign.type === 'frame' ? 'Frame' : 'Background'}
+              <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1.1fr)_minmax(320px,0.9fr)] gap-6 p-4 sm:p-6">
+                
+                {/* Left: Campaign Preview */}
+                <div className="space-y-3">
+                  <h2 className="text-lg font-bold text-gray-900">Campaign Preview</h2>
+                  
+                  <div className="relative">
+                    <img
+                      src={campaign.imageUrl}
+                      alt={campaign.title}
+                      className="w-full h-auto rounded-lg border-2 border-gray-300"
+                      style={{ maxHeight: '500px', objectFit: 'contain' }}
+                    />
+                    <div className="absolute top-4 right-4 bg-emerald-500 text-white px-3 py-1 rounded-full text-xs font-semibold uppercase">
+                      {campaign.type === 'frame' ? 'Frame' : 'Background'}
+                    </div>
                   </div>
-                </div>
-              </div>
 
-              {/* Upload Section */}
-              <div className="mb-8">
-                <h2 className="text-2xl font-bold text-gray-900 mb-4 text-center">Add Your Photo</h2>
-                <p className="text-gray-600 text-center mb-6">
-                  Upload your photo to create your personalized {campaign.type === 'frame' ? 'frame' : 'background'}
-                </p>
-                
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept="image/png,image/jpeg,image/jpg,image/webp"
-                  onChange={handlePhotoSelect}
-                  disabled={uploading}
-                  className="hidden"
-                  id="user-photo-input"
-                />
-                
-                <label
-                  htmlFor="user-photo-input"
-                  className={`btn-base btn-primary w-full text-center py-4 cursor-pointer font-bold text-lg ${
-                    uploading ? 'opacity-70 cursor-wait' : ''
-                  }`}
-                >
-                  {uploading ? 'Loading...' : 'Choose Your Photo'}
-                </label>
-                
-                <p className="text-sm text-gray-600 mt-3 text-center">
-                  PNG, JPG, or WEBP (max 10MB)
-                </p>
-              </div>
+                  {creator && (
+                    <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg border border-gray-200">
+                      {creator.profileImage && (
+                        <img
+                          src={creator.profileImage}
+                          alt={creator.displayName}
+                          className="w-10 h-10 rounded-full border-2 border-gray-300"
+                        />
+                      )}
+                      <div className="flex-1">
+                        <p className="text-sm text-gray-600">Created by</p>
+                        <button
+                          onClick={() => router.push(`/u/${creator.username}`)}
+                          className="font-semibold text-gray-900 hover:underline text-sm"
+                        >
+                          {creator.displayName || creator.username}
+                        </button>
+                        <p className="text-xs text-gray-600">
+                          {campaign.supportersCount || 0} {campaign.supportersCount === 1 ? 'support' : 'supports'}
+                        </p>
+                      </div>
+                    </div>
+                  )}
+                </div>
 
-              {/* Share & Report */}
-              <div className="border-t border-gray-200 pt-6">
-                <h3 className="text-lg font-bold text-gray-900 mb-3 text-center">Share Campaign</h3>
-                <div className="grid grid-cols-3 gap-2 mb-4">
+                {/* Right: Upload & Actions */}
+                <div className="space-y-5">
+                  
+                  {/* Upload Section */}
+                  <div>
+                    <h2 className="text-lg font-bold text-gray-900 mb-3">Add Your Photo</h2>
+                    <p className="text-sm text-gray-600 mb-4">
+                      Upload your photo to create your personalized {campaign.type === 'frame' ? 'frame' : 'background'}
+                    </p>
+                    
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept="image/png,image/jpeg,image/jpg,image/webp"
+                      onChange={handlePhotoSelect}
+                      disabled={uploading}
+                      className="hidden"
+                      id="user-photo-input"
+                    />
+                    
+                    <label
+                      htmlFor="user-photo-input"
+                      className={`btn-base btn-primary w-full text-center py-4 cursor-pointer font-bold text-lg ${
+                        uploading ? 'opacity-70 cursor-wait' : ''
+                      }`}
+                    >
+                      {uploading ? 'Loading...' : 'Choose Your Photo'}
+                    </label>
+                    
+                    <p className="text-xs text-gray-600 mt-2 text-center">
+                      PNG, JPG, or WEBP (max 10MB)
+                    </p>
+                  </div>
+
+                  {/* Share Campaign */}
+                  <div className="pt-3 border-t border-gray-200">
+                    <h3 className="text-lg font-bold text-gray-900 mb-3">Share Campaign</h3>
+                    <div className="grid grid-cols-3 gap-3">
+                      <button
+                        onClick={() => handleShare('twitter')}
+                        className="btn-base bg-blue-400 hover:bg-blue-500 text-white py-3 text-sm font-medium"
+                      >
+                        Twitter
+                      </button>
+                      <button
+                        onClick={() => handleShare('facebook')}
+                        className="btn-base bg-blue-600 hover:bg-blue-700 text-white py-3 text-sm font-medium"
+                      >
+                        Facebook
+                      </button>
+                      <button
+                        onClick={() => handleShare('whatsapp')}
+                        className="btn-base bg-green-500 hover:bg-green-600 text-white py-3 text-sm font-medium"
+                      >
+                        WhatsApp
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Report Button */}
                   <button
-                    onClick={() => handleShare('twitter')}
-                    className="btn-base bg-blue-400 hover:bg-blue-500 text-white py-2 text-sm font-medium"
+                    onClick={() => setShowReportModal(true)}
+                    className="btn-base bg-red-100 hover:bg-red-200 text-red-700 w-full py-2 text-sm font-medium"
                   >
-                    Twitter
-                  </button>
-                  <button
-                    onClick={() => handleShare('facebook')}
-                    className="btn-base bg-blue-600 hover:bg-blue-700 text-white py-2 text-sm font-medium"
-                  >
-                    Facebook
-                  </button>
-                  <button
-                    onClick={() => handleShare('whatsapp')}
-                    className="btn-base bg-green-500 hover:bg-green-600 text-white py-2 text-sm font-medium"
-                  >
-                    WhatsApp
+                    Report Campaign
                   </button>
                 </div>
-                
-                <button
-                  onClick={() => setShowReportModal(true)}
-                  className="btn-base bg-red-100 hover:bg-red-200 text-red-700 w-full py-2 text-sm font-medium"
-                >
-                  Report Campaign
-                </button>
               </div>
             </div>
           </div>

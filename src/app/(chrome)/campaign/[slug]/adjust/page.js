@@ -412,16 +412,16 @@ export default function CampaignAdjustPage() {
                 <div className="space-y-3">
                   <h2 className="text-lg font-bold text-gray-900">Preview</h2>
                   
-                  <div className="relative">
+                  <div className="relative bg-gray-100 rounded-lg border-2 border-gray-300">
                     <canvas
                       ref={canvasRef}
-                      className="w-full h-auto bg-gray-100 rounded-lg border-2 border-gray-300 cursor-move"
+                      className="w-full h-auto cursor-move"
                       style={{
                         touchAction: 'none',
                         userSelect: 'none',
                         WebkitUserSelect: 'none',
-                        maxHeight: '500px',
-                        objectFit: 'contain'
+                        display: 'block',
+                        minHeight: '300px'
                       }}
                       onPointerDown={handlePointerDown}
                       onPointerMove={handlePointerMove}
