@@ -2,7 +2,348 @@
 
 Track progress on building the campaign system (Phase 1 from CAMPAIGN_SYSTEM.md)
 
-**Last Updated:** October 02, 2025
+**Last Updated:** October 03, 2025
+
+---
+
+## 🎯 3-PAGE CAMPAIGN FLOW IMPLEMENTATION
+
+### Status: 🔄 In Progress
+**Start Date:** October 03, 2025
+
+---
+
+## Overview: 3-Page Visitor Flow
+
+Implementing a multi-page visitor experience for campaigns to increase ad impressions and improve engagement. This matches competitor (Twibbonize) best practices.
+
+**Current State:** Single-page campaign experience
+**Target State:** 3-page funnel with state persistence
+
+---
+
+## Architecture Summary
+
+### Page Structure
+1. **Page 1** `/campaign/[slug]` - Upload page
+   - Campaign display with preview
+   - "Choose Your Photo" CTA
+   - Gallery of supporter posts
+   
+2. **Page 2** `/campaign/[slug]/adjust` - Adjustment page
+   - Photo composition canvas
+   - Adjustment controls (zoom, position)
+   - Download button
+   
+3. **Page 3** `/campaign/[slug]/result` - Result page
+   - Final image display
+   - Share buttons
+   - "Start Over" button
+
+### State Management
+- **Context**: React Context (`CampaignSessionContext`)
+- **Persistence**: sessionStorage for page reload resilience
+- **Lifecycle**: Auto-clear on "Start Over" or 24h expiry
+
+### Navigation Flow
+```
+Upload Photo → Auto-redirect to /adjust
+Download → Auto-redirect to /result
+Start Over → Clear session → Redirect to base page
+```
+
+---
+
+## Implementation Tasks
+
+### ✅ Task 1: Planning Documents
+**Status:** ✅ Completed
+**Files:** TASKS.md, CAMPAIGN_SYSTEM.md
+- [x] Document 3-page architecture
+- [x] Define state management strategy
+- [x] Plan route structure
+- [x] Design navigation logic
+
+---
+
+### 🔄 Task 2: Campaign Session Context
+**Status:** 🔄 In Progress
+**File:** `src/contexts/CampaignSessionContext.js`
+
+**Requirements:**
+- React Context Provider for campaign state
+- State persistence to sessionStorage
+- Auto-hydration on page load
+- Clear session function
+
+**State Schema:**
+```javascript
+{
+  sessionId: string,              // Unique session ID
+  campaignSlug: string,            // Current campaign
+  userPhoto: File | null,          // Uploaded photo
+  userPhotoPreview: string,        // Base64 preview
+  adjustments: {                   // Canvas adjustments
+    scale: number,
+    x: number,
+    y: number
+  },
+  campaignData: object,            // Campaign info
+  creatorData: object,             // Creator info
+  downloaded: boolean,             // Track if downloaded
+  timestamp: number                // Session created time
+}
+```
+
+**Functions:**
+- `useCampaignSession()` - Hook to access/update session
+- `clearCampaignSession()` - Clear session data
+- `isSessionExpired()` - Check 24h expiry
+
+---
+
+### ⏳ Task 3: Page 1 - Upload Page
+**Status:** ⏳ Pending
+**File:** `src/app/(chrome)/campaign/[slug]/page.js`
+
+**Features:**
+- Large campaign preview (shows frame/background)
+- Campaign info (title, description, creator, supports)
+- "Choose Your Photo" button (primary CTA)
+- Gallery of recent supporter posts (6-9 photos)
+- Share campaign buttons
+- Report campaign button
+
+**User Flow:**
+1. User lands on page → sees campaign
+2. Clicks "Choose Your Photo" → file picker
+3. Selects photo → stores in context
+4. Auto-redirects to `/campaign/[slug]/adjust`
+
+**Design:**
+- Yellow header with campaign info
+- White content card with preview
+- Grid layout for supporter gallery
+- Ad placeholder slots
+
+---
+
+### ⏳ Task 4: Page 2 - Adjust Page
+**Status:** ⏳ Pending
+**File:** `src/app/(chrome)/campaign/[slug]/adjust/page.js`
+
+**Features:**
+- Large canvas preview with composition
+- Zoom slider (0.5x - 3.0x)
+- Drag to reposition (pointer events)
+- "Fit to Frame" and "Reset" buttons
+- "Change Photo" and "Remove Photo" buttons
+- Download button (primary CTA)
+- Progress indicator (Step 2 of 3)
+
+**Route Guard:**
+- Check if photo exists in session
+- If no photo → Redirect to base page
+
+**User Flow:**
+1. User adjusts photo (zoom, position)
+2. Clicks "Download" → downloads image
+3. Tracks download in session
+4. Auto-redirects to `/campaign/[slug]/result`
+
+**Mobile Optimization:**
+- Pointer events (not mouse/touch)
+- `touch-action: none` (no scroll)
+- `user-select: none` (no selection)
+- No blue highlight overlay
+
+---
+
+### ⏳ Task 5: Page 3 - Result Page
+**Status:** ⏳ Pending
+**File:** `src/app/(chrome)/campaign/[slug]/result/page.js`
+
+**Features:**
+- Final composed image display
+- Success message/animation
+- "Post to Twibbonize" button (share to gallery)
+- Social share buttons (Twitter, Facebook, WhatsApp)
+- "Re-Download" button (secondary)
+- "Start Over" button (clear and restart)
+- Progress indicator (Step 3 of 3)
+
+**Route Guard:**
+- Check if downloaded in session
+- If not downloaded → Redirect to adjust page
+- If no photo → Redirect to base page
+
+**User Flow:**
+1. User sees final result
+2. Can share to social media
+3. Can post to public gallery (with caption)
+4. "Start Over" clears session → returns to page 1
+
+---
+
+### ⏳ Task 6: Route Guards & Navigation
+**Status:** ⏳ Pending
+**File:** `src/utils/campaignRouteGuards.js`
+
+**Functions:**
+```javascript
+// Check if photo uploaded, redirect if not
+requirePhotoUpload(session, router, slug)
+
+// Check if downloaded, redirect if not  
+requireDownloadComplete(session, router, slug)
+
+// Check session expiry (24h)
+isSessionExpired(timestamp)
+```
+
+**Logic:**
+- Run guards on page mount (useEffect)
+- Redirect to correct page if invalid state
+- Show loading during guard checks
+
+---
+
+### ⏳ Task 7: Gallery Post Feature
+**Status:** ⏳ Pending
+**Location:** Result page modal
+
+**Features:**
+- Modal with caption input
+- Preview of image
+- Submit to Firestore `campaignSupports` collection
+- Upload image to Supabase storage
+- Increment campaign support count
+
+---
+
+### ⏳ Task 8: Testing & Polish
+**Status:** ⏳ Pending
+
+**Test Cases:**
+- [ ] Full flow: upload → adjust → result
+- [ ] Direct URL access to /adjust (should redirect)
+- [ ] Direct URL access to /result (should redirect)
+- [ ] Page reload during flow (should preserve state)
+- [ ] Session expiry after 24h
+- [ ] Browser back button behavior
+- [ ] Mobile touch interactions
+- [ ] Download tracking works
+- [ ] "Start Over" clears everything
+
+---
+
+### ⏳ Task 9: Documentation Updates
+**Status:** ⏳ Pending
+
+**Files to Update:**
+- [ ] replit.md - Add 3-page flow notes
+- [ ] CAMPAIGN_SYSTEM.md - Document architecture
+- [ ] TASKS.md - Mark tasks complete
+
+---
+
+## Technical Decisions
+
+### Why React Context + sessionStorage?
+- ✅ No external dependencies
+- ✅ Survives page reloads
+- ✅ Auto-expires naturally
+- ✅ Easy to debug (visible in DevTools)
+
+### Why Automatic Redirects?
+- ✅ Guides user through flow
+- ✅ Prevents broken states
+- ✅ Matches competitor UX
+- ✅ Better for mobile users
+
+### Why Keep File Objects in Memory?
+- ✅ No server storage needed
+- ✅ Faster preview rendering
+- ✅ Auto cleanup on session end
+- ✅ Privacy-friendly
+
+---
+
+## Success Metrics
+
+**User Engagement:**
+- Time on site (expected: +30-50%)
+- Completion rate (target: >70%)
+- Drop-off analysis per step
+
+**Monetization:**
+- Ad impressions per visit (target: 3-5x increase)
+- Ad viewability rate
+- Revenue per visit
+
+**Technical:**
+- Page load time (<2s per page)
+- Session persistence rate (>95%)
+- Error rate (<1%)
+
+---
+
+## Ad Placement Strategy
+
+**Page 1 (Upload):**
+- Hero ad below campaign preview
+- Sidebar ad (desktop)
+
+**Page 2 (Adjust):**
+- Sticky sidebar ad
+
+**Page 3 (Result):**
+- Interstitial ad before page loads
+- Footer ad below share buttons
+
+---
+
+## Rollout Plan
+
+1. ✅ **Planning** - Write detailed docs
+2. 🔄 **Development** - Build all 3 pages + context
+3. ⏳ **Testing** - Comprehensive QA
+4. ⏳ **Review** - Architect review
+5. ⏳ **Launch** - Deploy to production
+6. ⏳ **Monitor** - Track metrics for 1 week
+
+---
+
+## Estimated Timeline
+
+- Context & Guards: 1 hour
+- Page 1 (Upload): 1 hour
+- Page 2 (Adjust): 1.5 hours
+- Page 3 (Result): 1 hour
+- Gallery Post: 45 min
+- Testing: 1 hour
+- Documentation: 30 min
+
+**Total: 6-7 hours**
+
+---
+
+## Future Enhancements
+
+**Post-Launch:**
+- A/B test 2-page vs 3-page flow
+- Add photo filters/effects
+- Implement premium features
+- Add video tutorials
+- Auto-save drafts
+- Email download links
+- Social login for posting
+
+---
+
+## Previous Campaign System Work
+
+*(All previous tasks moved below for reference)*
 
 ---
 
@@ -290,12 +631,12 @@ function exportCanvas(canvas, format = 'png') { }
 ---
 
 ### 4. Priority 3: Campaign View Page
-**Status:** ✅ Completed
+**Status:** ✅ Completed → 🔄 Being Refactored to 3-Page Flow
 
 **Description:**
 Build individual campaign page for viewing and using campaigns.
 
-**Tasks:**
+**Original Implementation (Single Page):**
 - [x] Create `/src/app/(chrome)/campaign/[slug]/page.js`
 - [x] Show campaign details and creator info
 - [x] Add visitor upload interface
@@ -308,69 +649,30 @@ Build individual campaign page for viewing and using campaigns.
 - [x] Increment supportersCount on download
 - [x] Add report button (Phase 1 requirement)
 
+**Refactoring to 3-Page Flow (October 03, 2025):**
+- 🔄 Split into 3 separate pages (upload, adjust, result)
+- 🔄 Add session state management (Context + sessionStorage)
+- 🔄 Implement route guards and navigation
+- 🔄 Add progress indicators
+- 🔄 Prepare ad placement slots
+
 **Design Requirements:**
 - ✅ Mobile-first responsive design
 - ✅ Canvas-based composition (Frame: overlay, Background: underlay)
 - ✅ Intuitive adjustment controls
 - ✅ Match existing page styles
-
-**Implementation Details:**
-
-**Page Structure:**
-- Campaign hero section with image, title, description, creator info
-- Visitor photo upload interface with file validation (10MB, PNG/JPG/WEBP)
-- Real-time Canvas preview with live composition
-- Adjustment controls: Zoom slider (0.5-3x), drag positioning, Fit button, Reset button
-- Download button (disabled until photo uploaded)
-- Share buttons: Twitter, Facebook, WhatsApp, native share API
-- Report modal with reason selection (copyright, inappropriate, spam, misleading, other)
-
-**Canvas Composition:**
-- Uses `imageComposition.js` utility for Canvas-based rendering
-- Frame type: User photo UNDER frame (frame overlays)
-- Background type: User photo ON TOP of background
-- Real-time preview updates on adjustment changes
-- Handles aspect ratios and image centering correctly
-- High-quality PNG export for downloads
-
-**Adjustment Controls:**
-- Zoom slider: 0.5x to 3x with 0.1x steps
-- Drag repositioning: Mouse drag or touch support
-- Fit button: Auto-calculates zoom/position to fit photo within campaign bounds
-- Reset button: Restores default scale (1.0) and center position (0, 0)
-
-**Download Tracking Implementation (Simplified October 03, 2025):**
-- **Simple supports tracking:** Every download increments campaign `supportersCount` by 1
-- **No authentication required:** Anonymous and authenticated users tracked the same way
-- **Server-side API:** `/api/campaigns/track-download` handles all downloads
-- **User profile supports:** Calculated dynamically as sum of all campaign supports
-- **Atomic updates:** Uses Firestore transactions to ensure consistency
-- **firstUsedAt tracking:** Sets timestamp on first download
+- ✅ Yellow header + white content cards
+- ✅ Global button styling
 
 **Files Created/Updated:**
-- `src/app/(chrome)/campaign/[slug]/page.js` - Campaign view page with complete visitor experience
-- `src/app/api/campaigns/track-download/route.js` - Simplified server-side download tracking API
-- `src/components/ProfilePage.js` - Calculates total supports from campaigns, uses "Supports" terminology
-- `src/lib/firebaseAdmin.js` - Added `adminFirestore()` export for server-side Firestore access
-- `firestore.rules` - Removed user profile supporter increment rules
+- `src/app/(chrome)/campaign/[slug]/page.js` - Campaign page (refactored Oct 03, 2025)
+- `src/app/api/campaigns/track-download/route.js` - Download tracking API
+- `src/components/ProfilePage.js` - Calculates total supports from campaigns
+- `src/lib/firebaseAdmin.js` - Added `adminFirestore()` export
 
-**Benefits:**
-- ✅ 50% fewer Firestore writes per download (1 write instead of 2)
-- ✅ Simpler code (no authentication/token verification needed)
-- ✅ More accurate terminology ("Supports" = downloads)
-- ✅ Dynamic calculation always shows current total
-- ✅ Firebase Admin SDK bypasses client-side security rules (allows anonymous downloads)
-
-**Completed:** October 02, 2025
-**Simplified:** October 03, 2025 - Removed authentication-based tracking, now simple supports counter
-
-**Testing Recommendations:**
-- Test anonymous download flow (campaign supports counter increments)
-- Test authenticated download flow (same as anonymous, just campaign counter)
-- Test profile page shows correct total supports (sum of all campaigns)
-- Test Canvas composition for both frame and background types
-- Test image adjustments on mobile devices (touch drag, pinch zoom)
-- Verify "Supports" terminology displays correctly everywhere
+**Completed (Original):** October 02, 2025
+**Refactored:** October 03, 2025 - Now supports consistent styling
+**In Progress:** October 03, 2025 - Converting to 3-page flow
 
 ---
 
@@ -408,72 +710,6 @@ Build campaigns gallery and top creators leaderboard.
 
 ---
 
-## 🧪 Testing Strategy
-
-### 6. Testing & Validation
-**Status:** ⏳ Pending
-
-**Testing Approach:**
-- [ ] Build on Replit (see changes instantly)
-- [ ] Test on Vercel (with real Firebase/Supabase)
-- [ ] Start with `/create` page first (simplest)
-- [ ] Test each page individually before moving to next
-- [ ] Test mobile responsiveness on all pages
-- [ ] Test authentication flows
-- [ ] Test image upload and processing
-- [ ] Test transparency detection (frames only)
-- [ ] Test campaign creation end-to-end
-- [ ] Test campaign usage and download
-
-**Test Cases:**
-- [ ] Upload frame with transparency (should succeed)
-- [ ] Upload frame without transparency (should fail)
-- [ ] Upload background (no transparency check)
-- [ ] Create campaign while logged out → auth popup
-- [ ] Download campaign image
-- [ ] Verify supportersCount increments
-- [ ] Test filters on campaigns gallery
-- [ ] Test leaderboard sorting
-
----
-
-## 📋 Design Considerations
-
-### Design Guidelines (All Pages)
-- [x] Match existing profile page styles
-- [x] Mobile-first responsive design
-- [x] Use existing components (Header, Footer, LoadingSpinner, etc.)
-- [x] Follow Tailwind CSS 4 conventions
-- [x] Use emerald color scheme (brand colors)
-- [x] Ensure accessibility (alt tags, labels, etc.)
-
----
-
-## ✅ Completion Checklist
-
-**Phase 1 Complete When:**
-- [ ] All 5 priority tasks completed
-- [ ] All pages tested on Replit
-- [ ] All pages tested on Vercel with real data
-- [ ] Mobile responsive on all pages
-- [ ] No console errors
-- [ ] Firestore data saving correctly
-- [ ] Supabase images uploading correctly
-- [ ] Authentication flows working
-- [ ] Update replit.md with completion status
-
----
-
-## 📝 Notes
-
-- Follow CAMPAIGN_SYSTEM.md for detailed requirements
-- Refer to CODE_INCONSISTENCIES.md for resolved issues
-- Use existing utilities (slugGenerator, transparencyDetector, campaignStorage)
-- Database schema already complete (no changes needed)
-- Storage API routes already complete (just add validations)
-
----
-
 ## Status Legend
 
 - ⏳ **Pending** - Not started
@@ -484,93 +720,4 @@ Build campaigns gallery and top creators leaderboard.
 
 ---
 
-## 💡 Suggestions & Observations
-
-### Completed Features Review (October 02, 2025)
-
-**What Works Well:**
-1. ✅ **Two-step upload flow** is intuitive and guides users naturally
-2. ✅ **Transparency detection** provides immediate feedback for frames
-3. ✅ **Delayed authentication** allows users to fill forms before signing in
-4. ✅ **Consistent design** matches onboarding/profile pages perfectly
-5. ✅ **File validation** catches issues early with clear error messages
-6. ✅ **Auto-advance** to step 2 after successful upload feels smooth
-
-**Potential Improvements for Future:**
-1. 📸 **Image preview optimization:** Consider showing image dimensions after upload
-2. 🔄 **Progress persistence:** Currently form data is lost if user leaves page (consider localStorage)
-3. ⚡ **Upload feedback:** Could add progress bar for large file uploads
-4. 🎨 **Crop/resize tool:** Allow users to crop images before upload (Phase 2?)
-5. 📱 **Mobile camera access:** Add "Take Photo" option on mobile devices
-6. ✏️ **Title auto-suggest:** Could suggest title based on image filename
-
-### Testing Recommendations
-
-**Before Next Feature:**
-1. Test frame upload with various transparency levels (5%, 10%, 50%, 90%)
-2. Test background upload with all three formats (PNG, JPG, WEBP)
-3. Verify auth flow with redirect preservation
-4. Check mobile responsiveness on real devices
-5. Test with Firebase/Supabase on Vercel deployment
-
-**Edge Cases to Test:**
-- Upload same file twice (should work)
-- Upload very large images (close to 5MB)
-- Upload images with special characters in filename
-- Try to publish without signing in (should show auth modal)
-- Change image after filling form (should reset or preserve title?)
-
-### Priority 3 Preparation
-
-**Before building campaign view page (`/campaign/[slug]`):**
-- Need to decide on Canvas library (native Canvas API vs library like Fabric.js)
-- Consider image adjustment UX (sliders vs pinch-zoom on mobile)
-- Plan download format (PNG always, or user choice?)
-- Decide on social sharing method (native share API vs custom buttons)
-
-**Key Questions:**
-1. Should visitors be able to save their adjustment preferences?
-2. Do we want to show "similar campaigns" on campaign pages?
-3. Should we track "views" separately from "downloads"?
-4. What happens if campaign creator deletes campaign while visitor is using it?
-
-### Code Quality Notes
-
-**Current Strengths:**
-- Clean component structure with good separation of concerns
-- Proper error handling and validation
-- Responsive design with mobile-first approach
-- Consistent naming conventions
-
-**Future Refactoring Ideas:**
-- Extract shared upload logic into custom hook (`useImageUpload`)
-- Create reusable `ImagePreview` component for both pages
-- Consider extracting auth modal into shared component
-- Add JSDoc comments to upload functions for better documentation
-
-### Performance Considerations
-
-**Current Implementation:**
-- File reading happens client-side (good for privacy)
-- Transparency check runs before upload (saves bandwidth)
-- Single upload endpoint per campaign (prevents duplicate files)
-
-**Potential Optimizations:**
-- Consider image compression before upload (reduce file sizes)
-- Add lazy loading for preview images
-- Implement service worker for offline form completion
-- Cache transparency check results (same file = same result)
-
-### Security & Database Review (October 02, 2025)
-
-**Firestore Security Rules Status:** ✅ All Correct
-- Campaign creation properly restricted (authenticated + creatorId validation)
-- Campaign editing has proper 7-day window and <10 supporters limit
-- Immutable fields (type, slug, imageUrl, creatorId) are protected
-- supportersCount can only increment by 1 (prevents manipulation)
-- Username atomicity maintained with dedicated collection
-- Public read access working as intended for guest users
-
-**No Firebase or Supabase manual changes needed** - all security rules are correctly configured for the campaign system.
-
----
+Last Updated: October 03, 2025
