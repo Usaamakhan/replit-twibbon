@@ -30,7 +30,7 @@ The application supports two types of creator uploads:
   imageUrl: "supabase-storage-url",       // Required (IMMUTABLE after publish)
   creatorId: "firebase-user-id",          // Required (IMMUTABLE)
   captionTemplate: "Share text template", // Optional (editable with restrictions)
-  supportersCount: 0,                     // Increment on download (total downloads count)
+  supportersCount: 0,                     // Total supports/downloads count (increments on every download)
   reportsCount: 0,                        // Number of reports received
   moderationStatus: "active",             // "active" | "under-review" | "removed"
   createdAt: timestamp,                   // Auto (publish time)
@@ -124,7 +124,7 @@ The application supports two types of creator uploads:
 6. **Sharing Options** - Share to social media
 7. **Download** button (disabled until photo uploaded)
 8. Download final composed image
-9. Increment campaign's `supportersCount`
+9. Increment campaign's `supportersCount` (total supports)
 
 ### Visitor Flow - Report Campaign
 1. On any `/campaign/[slug]` page, click "Report" button
@@ -191,7 +191,7 @@ The application supports two types of creator uploads:
   - Preview with real-time updates
 - **Sharing Options** - Social media share buttons
 - **Download Button** - Only enabled after user uploads photo
-- Increment `supportersCount` on download
+- Increment `supportersCount` on download (every download = +1 support)
 
 #### 8. Image Composition & Adjustment
 - Use Canvas API to composite images
@@ -219,7 +219,7 @@ The application supports two types of creator uploads:
 - **Filters:**
   - By Country
   - By Time Period: Last 24h, 7 days, 1 month, All time
-- Show: Avatar, name, campaign count, total supporters
+- Show: Avatar, name, campaign count, total supports (sum of all campaign supports)
 - Link to creator profile
 
 #### 11. Caption Template for Both

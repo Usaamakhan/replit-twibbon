@@ -48,17 +48,20 @@ Built with Next.js 15.5.2 (App Router), React 19.1.0, Tailwind CSS 4, Firebase (
 ✅ Frame upload flow completed (/create/frame with transparency detection)
 ✅ Background upload flow completed (/create/background with multi-format support)
 ✅ Campaign view page completed (/campaign/[slug] with visitor experience)
-✅ Secure download tracking API with Firebase ID token verification
+✅ Simplified download tracking - every download = +1 support (no auth required)
 
 ### Database Optimization (2025-10-01)
 The Firebase/Firestore database has been optimized to reduce storage costs while maintaining data integrity:
 
 **Optimizations Implemented:**
+- **Simplified download tracking** - Every download increments campaign `supportersCount` only (no user tracking)
+- **Dynamic supports calculation** - User profile shows total supports = sum of all campaign supports
 - **Removed supporters object from campaigns** - Viral campaigns no longer store individual supporter UIDs, only supportersCount (prevents document bloat)
 - **Removed campaignsCreated field** - Uses campaignsCount counter instead (eliminates redundant array storage)
 - **Maintained usernames collection** - Keeps atomic username uniqueness (prevents race conditions)
 
 **Cost Savings:**
+- ~50% reduction in Firestore writes per download (1 write instead of 2)
 - ~47% reduction in Firebase storage costs
 - Prevents write amplification on viral campaigns (no expanding supporters arrays)
 - Minimal overhead for username atomicity (small cost for data integrity)
@@ -70,9 +73,9 @@ The Firebase/Firestore database has been optimized to reduce storage costs while
 - No race conditions in username operations
 
 **Collections Structure:**
-- `/users/{userId}` - User profiles with counters (campaignsCount, supportersCount)
+- `/users/{userId}` - User profiles with counters (campaignsCount only, supports calculated from campaigns)
 - `/usernames/{username}` - Username→userId mapping for atomicity
-- `/campaigns/{campaignId}` - Campaigns with download counter (supportersCount)
+- `/campaigns/{campaignId}` - Campaigns with supports counter (supportersCount = total downloads)
 - `/reports/{reportId}` - User reports for moderation
 
 ### Environment Variables Required

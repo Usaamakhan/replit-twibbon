@@ -339,37 +339,38 @@ Build individual campaign page for viewing and using campaigns.
 - Fit button: Auto-calculates zoom/position to fit photo within campaign bounds
 - Reset button: Restores default scale (1.0) and center position (0, 0)
 
-**Security Implementation:**
-- **Server-side download tracking API:** Created `/api/campaigns/track-download` using Firebase Admin SDK
-- **Token verification:** Requires valid Firebase ID token in Authorization header for authenticated users
-- **Anonymous downloads:** Allowed without authentication (increment campaign.supportersCount only)
-- **Authenticated downloads:** Increments both campaign.supportersCount and creator.supportersCount (only for non-creator users)
-- **Spoofing prevention:** Server verifies tokens using `adminAuth.verifyIdToken()`, ignores client-provided userIds
+**Download Tracking Implementation (Simplified October 03, 2025):**
+- **Simple supports tracking:** Every download increments campaign `supportersCount` by 1
+- **No authentication required:** Anonymous and authenticated users tracked the same way
+- **Server-side API:** `/api/campaigns/track-download` handles all downloads
+- **User profile supports:** Calculated dynamically as sum of all campaign supports
 - **Atomic updates:** Uses Firestore transactions to ensure consistency
 - **firstUsedAt tracking:** Sets timestamp on first download
 
 **Files Created/Updated:**
 - `src/app/(chrome)/campaign/[slug]/page.js` - Campaign view page with complete visitor experience
-- `src/app/api/campaigns/track-download/route.js` - Secure server-side download tracking API
+- `src/app/api/campaigns/track-download/route.js` - Simplified server-side download tracking API
+- `src/components/ProfilePage.js` - Calculates total supports from campaigns, uses "Supports" terminology
 - `src/lib/firebaseAdmin.js` - Added `adminFirestore()` export for server-side Firestore access
+- `firestore.rules` - Removed user profile supporter increment rules
 
-**Security Benefits:**
+**Benefits:**
+- ✅ 50% fewer Firestore writes per download (1 write instead of 2)
+- ✅ Simpler code (no authentication/token verification needed)
+- ✅ More accurate terminology ("Supports" = downloads)
+- ✅ Dynamic calculation always shows current total
 - ✅ Firebase Admin SDK bypasses client-side security rules (allows anonymous downloads)
-- ✅ Token verification prevents user identity spoofing
-- ✅ Creator supportersCount only increments for verified authenticated non-creator users
-- ✅ Campaign supportersCount increments for all downloads (anonymous + authenticated)
-- ✅ No sensitive data exposed to client
 
 **Completed:** October 02, 2025
+**Simplified:** October 03, 2025 - Removed authentication-based tracking, now simple supports counter
 
 **Testing Recommendations:**
-- Test anonymous download flow (no auth, only campaign counter increments)
-- Test authenticated download flow (both campaign + creator counters increment)
-- Test download as campaign creator (only campaign counter increments)
-- Test invalid token handling (treated as anonymous)
-- Monitor logs for repeated token verification failures (abuse detection)
+- Test anonymous download flow (campaign supports counter increments)
+- Test authenticated download flow (same as anonymous, just campaign counter)
+- Test profile page shows correct total supports (sum of all campaigns)
 - Test Canvas composition for both frame and background types
 - Test image adjustments on mobile devices (touch drag, pinch zoom)
+- Verify "Supports" terminology displays correctly everywhere
 
 ---
 
