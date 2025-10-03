@@ -67,6 +67,26 @@ export default function CampaignViewPage() {
     fetchCampaign();
   }, [slug]);
 
+  // Initialize canvas with campaign image when component loads
+  useEffect(() => {
+    if (!campaign || !canvasRef.current) return;
+    
+    const initializeCanvas = async () => {
+      const img = new Image();
+      img.crossOrigin = 'anonymous';
+      img.onload = () => {
+        const canvas = canvasRef.current;
+        canvas.width = img.width;
+        canvas.height = img.height;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0);
+      };
+      img.src = campaign.imageUrl;
+    };
+    
+    initializeCanvas();
+  }, [campaign]);
+
   // Update preview when user photo or adjustments change
   useEffect(() => {
     if (!userPhoto || !campaign || !canvasRef.current) return;
@@ -141,6 +161,19 @@ export default function CampaignViewPage() {
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
+    
+    // Redraw campaign image only
+    if (campaign && canvasRef.current) {
+      const img = new Image();
+      img.crossOrigin = 'anonymous';
+      img.onload = () => {
+        const canvas = canvasRef.current;
+        const ctx = canvas.getContext('2d');
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.drawImage(img, 0, 0);
+      };
+      img.src = campaign.imageUrl;
+    }
   };
 
   // Adjustment controls
@@ -168,41 +201,30 @@ export default function CampaignViewPage() {
     setAdjustments({ scale: 1.0, x: 0, y: 0 });
   };
 
-  // Canvas dragging for repositioning
-  const handleMouseDown = (e) => {
+  // Unified pointer events for mouse and touch
+  const handlePointerDown = (e) => {
     if (!userPhoto) return;
+    e.preventDefault();
     setIsDragging(true);
-    setDragStart({ x: e.clientX - adjustments.x, y: e.clientY - adjustments.y });
+    const clientX = e.clientX || e.touches?.[0]?.clientX || 0;
+    const clientY = e.clientY || e.touches?.[0]?.clientY || 0;
+    setDragStart({ x: clientX - adjustments.x, y: clientY - adjustments.y });
   };
 
-  const handleMouseMove = (e) => {
+  const handlePointerMove = (e) => {
     if (!isDragging) return;
-    const newX = e.clientX - dragStart.x;
-    const newY = e.clientY - dragStart.y;
+    e.preventDefault();
+    const clientX = e.clientX || e.touches?.[0]?.clientX || 0;
+    const clientY = e.clientY || e.touches?.[0]?.clientY || 0;
+    const newX = clientX - dragStart.x;
+    const newY = clientY - dragStart.y;
     setAdjustments(prev => ({ ...prev, x: newX, y: newY }));
   };
 
-  const handleMouseUp = () => {
-    setIsDragging(false);
-  };
-
-  // Touch support for mobile
-  const handleTouchStart = (e) => {
-    if (!userPhoto || e.touches.length !== 1) return;
-    setIsDragging(true);
-    const touch = e.touches[0];
-    setDragStart({ x: touch.clientX - adjustments.x, y: touch.clientY - adjustments.y });
-  };
-
-  const handleTouchMove = (e) => {
-    if (!isDragging || e.touches.length !== 1) return;
-    const touch = e.touches[0];
-    const newX = touch.clientX - dragStart.x;
-    const newY = touch.clientY - dragStart.y;
-    setAdjustments(prev => ({ ...prev, x: newX, y: newY }));
-  };
-
-  const handleTouchEnd = () => {
+  const handlePointerUp = (e) => {
+    if (isDragging) {
+      e.preventDefault();
+    }
     setIsDragging(false);
   };
 
@@ -329,7 +351,7 @@ export default function CampaignViewPage() {
   // Loading state
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-yellow-50 via-white to-emerald-50 flex items-center justify-center">
+      <div className="min-h-screen bg-white flex items-center justify-center">
         <LoadingSpinner />
       </div>
     );
@@ -338,13 +360,13 @@ export default function CampaignViewPage() {
   // Not found state
   if (notFound || !campaign) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-yellow-50 via-white to-emerald-50 flex items-center justify-center px-4">
+      <div className="min-h-screen bg-white flex items-center justify-center px-4">
         <div className="text-center">
           <h1 className="text-4xl font-bold text-gray-900 mb-4">Campaign Not Found</h1>
           <p className="text-gray-600 mb-8">This campaign doesn't exist or has been removed.</p>
           <button
             onClick={() => router.push('/')}
-            className="px-6 py-3 bg-emerald-500 text-white rounded-lg hover:bg-emerald-600 transition-colors"
+            className="btn-base btn-primary px-6 py-3 font-medium"
           >
             Go Home
           </button>
@@ -354,239 +376,252 @@ export default function CampaignViewPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-yellow-50 via-white to-emerald-50">
-      {/* Header */}
-      <div className="bg-gradient-to-r from-yellow-400 to-yellow-500 py-8 px-4">
-        <div className="max-w-6xl mx-auto">
-          <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-2">{campaign.title}</h1>
-          {campaign.description && (
-            <p className="text-gray-800 text-lg">{campaign.description}</p>
-          )}
-          
-          {/* Creator info */}
-          {creator && (
-            <div className="mt-4 flex items-center gap-3">
-              {creator.photoURL && (
-                <img
-                  src={creator.photoURL}
-                  alt={creator.displayName}
-                  className="w-10 h-10 rounded-full border-2 border-white"
-                />
-              )}
-              <div>
-                <p className="text-sm text-gray-800">
-                  Created by{' '}
-                  <button
-                    onClick={() => router.push(`/u/${creator.username}`)}
-                    className="font-semibold hover:underline"
-                  >
-                    {creator.displayName || creator.username}
-                  </button>
-                </p>
-                <p className="text-xs text-gray-700">
-                  {campaign.supportersCount || 0} {campaign.supportersCount === 1 ? 'support' : 'supports'}
-                </p>
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* Main content */}
-      <div className="max-w-6xl mx-auto px-4 py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {/* Left: Preview Canvas */}
-          <div className="bg-white rounded-lg shadow-lg p-6">
-            <h2 className="text-xl font-bold text-gray-900 mb-4">Preview</h2>
+    <div className="min-h-screen bg-white">
+      <div className="min-h-screen flex">
+        {/* Main Content */}
+        <div className="flex-1 w-full flex flex-col py-8 px-4 sm:px-6 lg:px-16 xl:px-20 pt-20">
+          <div className="mx-auto w-full max-w-6xl">
             
-            {!userPhoto ? (
-              <div className="aspect-square bg-gray-100 rounded-lg flex items-center justify-center border-2 border-dashed border-gray-300">
-                <div className="text-center p-6">
-                  <svg
-                    className="mx-auto h-16 w-16 text-gray-400 mb-4"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
-                    />
-                  </svg>
-                  <p className="text-gray-600 mb-2">Upload your photo to see the preview</p>
-                  <p className="text-sm text-gray-500">Your photo will be composed with the campaign image</p>
-                </div>
-              </div>
-            ) : (
-              <div className="relative">
-                <canvas
-                  ref={canvasRef}
-                  className={`w-full h-auto bg-gray-100 rounded-lg ${userPhoto ? 'cursor-move' : ''}`}
-                  onMouseDown={handleMouseDown}
-                  onMouseMove={handleMouseMove}
-                  onMouseUp={handleMouseUp}
-                  onMouseLeave={handleMouseUp}
-                  onTouchStart={handleTouchStart}
-                  onTouchMove={handleTouchMove}
-                  onTouchEnd={handleTouchEnd}
-                />
-                {isDragging && (
-                  <div className="absolute inset-0 bg-blue-500 bg-opacity-10 rounded-lg pointer-events-none" />
-                )}
-              </div>
-            )}
-          </div>
-
-          {/* Right: Controls */}
-          <div className="space-y-6">
-            {/* Upload photo */}
-            <div className="bg-white rounded-lg shadow-lg p-6">
-              <h2 className="text-xl font-bold text-gray-900 mb-4">Your Photo</h2>
+            {/* Header */}
+            <div className="text-center mb-8 bg-yellow-400 px-6 py-8 rounded-t-xl">
+              <h1 className="text-2xl sm:text-4xl font-bold text-gray-900 mb-2">{campaign.title}</h1>
+              {campaign.description && (
+                <p className="text-base sm:text-lg text-gray-800 mt-2">{campaign.description}</p>
+              )}
               
-              {!userPhoto ? (
-                <div>
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    accept="image/png,image/jpeg,image/jpg,image/webp"
-                    onChange={(e) => e.target.files[0] && handlePhotoSelect(e.target.files[0])}
-                    className="hidden"
-                    id="user-photo-input"
-                  />
-                  <label
-                    htmlFor="user-photo-input"
-                    className="block w-full py-4 px-6 bg-emerald-500 text-white text-center rounded-lg cursor-pointer hover:bg-emerald-600 transition-colors font-semibold"
-                  >
-                    Upload Your Photo
-                  </label>
-                  <p className="text-sm text-gray-600 mt-2 text-center">
-                    PNG, JPG, or WEBP (max 10MB)
-                  </p>
-                </div>
-              ) : (
-                <div>
-                  <div className="relative aspect-square rounded-lg overflow-hidden mb-4">
+              {/* Creator info */}
+              {creator && (
+                <div className="mt-4 flex items-center justify-center gap-3">
+                  {creator.profileImage && (
                     <img
-                      src={userPhotoPreview}
-                      alt="Your photo"
-                      className="w-full h-full object-cover"
+                      src={creator.profileImage}
+                      alt={creator.displayName}
+                      className="w-10 h-10 rounded-full border-2 border-gray-900"
                     />
+                  )}
+                  <div className="text-left">
+                    <p className="text-sm text-gray-900">
+                      Created by{' '}
+                      <button
+                        onClick={() => router.push(`/u/${creator.username}`)}
+                        className="font-semibold hover:underline"
+                      >
+                        {creator.displayName || creator.username}
+                      </button>
+                    </p>
+                    <p className="text-xs text-gray-700">
+                      {campaign.supportersCount || 0} {campaign.supportersCount === 1 ? 'support' : 'supports'}
+                    </p>
                   </div>
-                  <button
-                    onClick={handleRemovePhoto}
-                    className="w-full py-2 px-4 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors"
-                  >
-                    Remove Photo
-                  </button>
                 </div>
               )}
+            </div>
+            
+            {/* Content Card */}
+            <div className="bg-white rounded-b-xl border border-t-0 border-gray-200 px-6 py-8 shadow-sm">
               
               {error && (
-                <p className="text-red-600 text-sm mt-3 text-center">{error}</p>
+                <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg text-red-600 text-sm text-center">
+                  {error}
+                </div>
               )}
-            </div>
 
-            {/* Adjustment controls */}
-            {userPhoto && (
-              <div className="bg-white rounded-lg shadow-lg p-6">
-                <h2 className="text-xl font-bold text-gray-900 mb-4">Adjust Your Photo</h2>
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                 
-                {/* Zoom slider */}
-                <div className="mb-4">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Zoom: {adjustments.scale.toFixed(2)}x
-                  </label>
-                  <input
-                    type="range"
-                    min="0.5"
-                    max="3"
-                    step="0.1"
-                    value={adjustments.scale}
-                    onChange={handleZoomChange}
-                    className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-emerald-500"
-                  />
+                {/* Left: Preview Canvas */}
+                <div>
+                  <h2 className="text-xl font-bold text-gray-900 mb-4">Preview</h2>
+                  
+                  <div className="relative">
+                    <canvas
+                      ref={canvasRef}
+                      className={`w-full h-auto bg-gray-100 rounded-lg border-2 border-gray-300 ${
+                        userPhoto ? 'cursor-move' : ''
+                      }`}
+                      style={{
+                        touchAction: 'none',
+                        userSelect: 'none',
+                        WebkitUserSelect: 'none',
+                        msUserSelect: 'none'
+                      }}
+                      onPointerDown={handlePointerDown}
+                      onPointerMove={handlePointerMove}
+                      onPointerUp={handlePointerUp}
+                      onPointerCancel={handlePointerUp}
+                      onPointerLeave={handlePointerUp}
+                    />
+                    {!userPhoto && (
+                      <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                        <div className="text-center p-6 bg-black/60 rounded-lg backdrop-blur-sm">
+                          <svg
+                            className="mx-auto h-12 w-12 text-white mb-3"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+                            />
+                          </svg>
+                          <p className="text-white font-medium text-sm">Upload your photo to see it here</p>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {userPhoto && (
+                    <p className="text-xs text-gray-600 mt-3 text-center">
+                      <strong>Tip:</strong> Drag on the preview to reposition your photo
+                    </p>
+                  )}
                 </div>
 
-                {/* Position info */}
-                <div className="mb-4 p-3 bg-blue-50 rounded-lg">
-                  <p className="text-sm text-gray-700">
-                    <strong>Drag on the preview</strong> to reposition your photo
-                  </p>
-                </div>
+                {/* Right: Controls */}
+                <div className="space-y-6">
+                  
+                  {/* Upload Section */}
+                  <div>
+                    <h2 className="text-xl font-bold text-gray-900 mb-4">
+                      {userPhoto ? 'Change Photo' : 'Choose Your Photo'}
+                    </h2>
+                    
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept="image/png,image/jpeg,image/jpg,image/webp"
+                      onChange={(e) => e.target.files[0] && handlePhotoSelect(e.target.files[0])}
+                      className="hidden"
+                      id="user-photo-input"
+                    />
+                    
+                    {!userPhoto ? (
+                      <div>
+                        <label
+                          htmlFor="user-photo-input"
+                          className="btn-base btn-primary w-full text-center py-4 cursor-pointer font-semibold text-lg"
+                        >
+                          Upload Your Photo
+                        </label>
+                        <p className="text-sm text-gray-600 mt-3 text-center">
+                          PNG, JPG, or WEBP (max 10MB)
+                        </p>
+                      </div>
+                    ) : (
+                      <div className="flex gap-3">
+                        <label
+                          htmlFor="user-photo-input"
+                          className="btn-base btn-secondary flex-1 text-center py-3 cursor-pointer font-medium"
+                        >
+                          Change Photo
+                        </label>
+                        <button
+                          onClick={handleRemovePhoto}
+                          className="btn-base bg-red-500 hover:bg-red-600 text-white flex-1 py-3 font-medium"
+                        >
+                          Remove
+                        </button>
+                      </div>
+                    )}
+                  </div>
 
-                {/* Action buttons */}
-                <div className="flex gap-3">
-                  <button
-                    onClick={handleFitPhoto}
-                    className="flex-1 py-2 px-4 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors text-sm"
-                  >
-                    Fit to Frame
-                  </button>
-                  <button
-                    onClick={handleResetAdjustments}
-                    className="flex-1 py-2 px-4 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors text-sm"
-                  >
-                    Reset
-                  </button>
+                  {/* Adjustment controls */}
+                  {userPhoto && (
+                    <div>
+                      <h2 className="text-xl font-bold text-gray-900 mb-4">Adjust Your Photo</h2>
+                      
+                      {/* Zoom slider */}
+                      <div className="mb-4">
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Zoom: {adjustments.scale.toFixed(2)}x
+                        </label>
+                        <input
+                          type="range"
+                          min="0.5"
+                          max="3"
+                          step="0.1"
+                          value={adjustments.scale}
+                          onChange={handleZoomChange}
+                          className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-emerald-500"
+                        />
+                      </div>
+
+                      {/* Action buttons */}
+                      <div className="flex gap-3">
+                        <button
+                          onClick={handleFitPhoto}
+                          className="btn-base btn-secondary flex-1 py-2 text-sm font-medium"
+                        >
+                          Fit to Frame
+                        </button>
+                        <button
+                          onClick={handleResetAdjustments}
+                          className="btn-base bg-gray-500 hover:bg-gray-600 text-white flex-1 py-2 text-sm font-medium"
+                        >
+                          Reset
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Download button */}
+                  <div>
+                    <button
+                      onClick={handleDownload}
+                      disabled={!userPhoto || downloading}
+                      className={`btn-base w-full py-4 font-bold text-lg transition-colors ${
+                        !userPhoto
+                          ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                          : downloading
+                          ? 'btn-primary opacity-70 cursor-wait'
+                          : 'btn-primary'
+                      }`}
+                    >
+                      {downloading ? 'Downloading...' : !userPhoto ? 'Upload Photo to Download' : 'Download Image'}
+                    </button>
+                    
+                    {userPhoto && (
+                      <p className="text-xs text-gray-600 mt-2 text-center">
+                        High-quality PNG • Preserves transparency
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Share & Report */}
+                  <div>
+                    <h3 className="text-lg font-bold text-gray-900 mb-3">Share Campaign</h3>
+                    <div className="grid grid-cols-3 gap-2 mb-4">
+                      <button
+                        onClick={() => handleShare('twitter')}
+                        className="btn-base bg-blue-400 hover:bg-blue-500 text-white py-2 text-sm font-medium"
+                      >
+                        Twitter
+                      </button>
+                      <button
+                        onClick={() => handleShare('facebook')}
+                        className="btn-base bg-blue-600 hover:bg-blue-700 text-white py-2 text-sm font-medium"
+                      >
+                        Facebook
+                      </button>
+                      <button
+                        onClick={() => handleShare('whatsapp')}
+                        className="btn-base bg-green-500 hover:bg-green-600 text-white py-2 text-sm font-medium"
+                      >
+                        WhatsApp
+                      </button>
+                    </div>
+                    
+                    <button
+                      onClick={() => setShowReportModal(true)}
+                      className="btn-base bg-red-100 hover:bg-red-200 text-red-700 w-full py-2 text-sm font-medium"
+                    >
+                      Report Campaign
+                    </button>
+                  </div>
                 </div>
               </div>
-            )}
-
-            {/* Download button */}
-            <div className="bg-white rounded-lg shadow-lg p-6">
-              <button
-                onClick={handleDownload}
-                disabled={!userPhoto || downloading}
-                className={`w-full py-4 px-6 rounded-lg font-bold text-lg transition-colors ${
-                  !userPhoto
-                    ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                    : downloading
-                    ? 'bg-emerald-400 text-white cursor-wait'
-                    : 'bg-emerald-500 text-white hover:bg-emerald-600'
-                }`}
-              >
-                {downloading ? 'Downloading...' : !userPhoto ? 'Upload Photo to Download' : 'Download Image'}
-              </button>
-              
-              {userPhoto && (
-                <p className="text-xs text-gray-600 mt-2 text-center">
-                  High-quality PNG • Preserves transparency
-                </p>
-              )}
-            </div>
-
-            {/* Share & Report */}
-            <div className="bg-white rounded-lg shadow-lg p-6">
-              <h3 className="text-lg font-bold text-gray-900 mb-3">Share</h3>
-              <div className="flex gap-2 mb-4">
-                <button
-                  onClick={() => handleShare('twitter')}
-                  className="flex-1 py-2 px-3 bg-blue-400 text-white rounded-lg hover:bg-blue-500 transition-colors text-sm"
-                >
-                  Twitter
-                </button>
-                <button
-                  onClick={() => handleShare('facebook')}
-                  className="flex-1 py-2 px-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm"
-                >
-                  Facebook
-                </button>
-                <button
-                  onClick={() => handleShare('whatsapp')}
-                  className="flex-1 py-2 px-3 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors text-sm"
-                >
-                  WhatsApp
-                </button>
-              </div>
-              
-              <button
-                onClick={() => setShowReportModal(true)}
-                className="w-full py-2 px-4 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-colors text-sm font-medium"
-              >
-                Report Campaign
-              </button>
             </div>
           </div>
         </div>
@@ -624,14 +659,14 @@ export default function CampaignViewPage() {
                 <textarea
                   value={reportDetails}
                   onChange={(e) => setReportDetails(e.target.value)}
-                  placeholder="Provide more information about why you're reporting this campaign..."
+                  placeholder="Provide more information..."
                   rows="3"
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all resize-none"
                 />
               </div>
               
               {error && (
-                <p className="text-red-600 text-sm mb-4">{error}</p>
+                <p className="text-red-600 text-sm mb-4 text-center">{error}</p>
               )}
               
               <div className="flex gap-3">
@@ -643,15 +678,15 @@ export default function CampaignViewPage() {
                     setReportDetails('');
                     setError('');
                   }}
-                  className="flex-1 py-2 px-4 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors"
+                  className="btn-base btn-secondary flex-1 py-2 font-medium"
                   disabled={reportSubmitting}
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 py-2 px-4 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors disabled:bg-red-300 disabled:cursor-not-allowed"
-                  disabled={reportSubmitting || !reportReason}
+                  className="btn-base bg-red-500 hover:bg-red-600 text-white flex-1 py-2 font-medium"
+                  disabled={reportSubmitting}
                 >
                   {reportSubmitting ? 'Submitting...' : 'Submit Report'}
                 </button>
