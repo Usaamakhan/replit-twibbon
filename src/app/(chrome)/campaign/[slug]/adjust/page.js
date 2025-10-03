@@ -325,7 +325,7 @@ export default function CampaignAdjustPage() {
         const angleDelta = currentAngle - lastRotationAngleRef.current;
         setAdjustments(prev => ({
           ...prev,
-          rotation: (prev.rotation + angleDelta) % 360
+          rotation: ((prev.rotation || 0) + angleDelta) % 360
         }));
       }
 
@@ -338,12 +338,20 @@ export default function CampaignAdjustPage() {
         const rotationDelta = deltaX * 0.5;
         setAdjustments(prev => ({
           ...prev,
-          rotation: (prev.rotation + rotationDelta) % 360
+          rotation: ((prev.rotation || 0) + rotationDelta) % 360
         }));
         rotationStartRef.current = e.clientX;
       } else if (isDraggingRef.current) {
-        const deltaX = e.clientX - dragStartRef.current.x;
-        const deltaY = e.clientY - dragStartRef.current.y;
+        const canvas = canvasRef.current;
+        if (!canvas) return;
+        
+        const rect = canvas.getBoundingClientRect();
+        const scaleX = canvas.width / rect.width;
+        const scaleY = canvas.height / rect.height;
+        
+        const deltaX = (e.clientX - dragStartRef.current.x) * scaleX;
+        const deltaY = (e.clientY - dragStartRef.current.y) * scaleY;
+        
         setAdjustments(prev => ({ ...prev, x: prev.x + deltaX, y: prev.y + deltaY }));
         dragStartRef.current = { x: e.clientX, y: e.clientY };
       }
@@ -592,9 +600,6 @@ export default function CampaignAdjustPage() {
                       {downloading ? 'Downloading...' : 'Download Image'}
                     </button>
                     
-                    <p className="text-xs text-gray-600 mt-2 text-center">
-                      High-quality PNG • Preserves transparency
-                    </p>
                   </div>
                 </div>
               </div>
