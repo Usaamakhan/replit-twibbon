@@ -3,34 +3,25 @@
 import { useState, useRef, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { getCampaignBySlug, createReport } from '../../../../lib/firestore';
-import { composeImages, updatePreview, calculateFitAdjustments, downloadCanvas } from '../../../../utils/imageComposition';
+import { useCampaignSession } from '../../../../contexts/CampaignSessionContext';
 import { useAuth } from '../../../../hooks/useAuth';
 import LoadingSpinner from '../../../../components/LoadingSpinner';
 
-export default function CampaignViewPage() {
+export default function CampaignUploadPage() {
   const params = useParams();
   const router = useRouter();
   const { user } = useAuth();
   const slug = params.slug;
+  const campaignSession = useCampaignSession();
 
   // State
   const [campaign, setCampaign] = useState(null);
   const [creator, setCreator] = useState(null);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
+  const [uploading, setUploading] = useState(false);
   
-  // User photo state
-  const [userPhoto, setUserPhoto] = useState(null);
-  const [userPhotoPreview, setUserPhotoPreview] = useState('');
-  
-  // Canvas state
-  const canvasRef = useRef(null);
-  const [adjustments, setAdjustments] = useState({ scale: 1.0, x: 0, y: 0 });
-  const [isDragging, setIsDragging] = useState(false);
-  const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
-  
-  // UI state
-  const [downloading, setDownloading] = useState(false);
+  // Report modal state
   const [showReportModal, setShowReportModal] = useState(false);
   const [reportReason, setReportReason] = useState('');
   const [reportDetails, setReportDetails] = useState('');
@@ -56,6 +47,11 @@ export default function CampaignViewPage() {
         
         setCampaign(result.campaign);
         setCreator(result.creator);
+        
+        // Store campaign and creator data in session
+        campaignSession.setCampaignData(slug, result.campaign);
+        campaignSession.setCreatorData(slug, result.creator);
+        
         setLoading(false);
       } catch (error) {
         console.error('Error fetching campaign:', error);
@@ -65,59 +61,21 @@ export default function CampaignViewPage() {
     };
     
     fetchCampaign();
-  }, [slug]);
+  }, [slug, campaignSession]);
 
-  // Initialize canvas with campaign image when component loads
-  useEffect(() => {
-    if (!campaign || !canvasRef.current) return;
-    
-    const initializeCanvas = async () => {
-      const img = new Image();
-      img.crossOrigin = 'anonymous';
-      img.onload = () => {
-        const canvas = canvasRef.current;
-        canvas.width = img.width;
-        canvas.height = img.height;
-        const ctx = canvas.getContext('2d');
-        ctx.drawImage(img, 0, 0);
-      };
-      img.src = campaign.imageUrl;
-    };
-    
-    initializeCanvas();
-  }, [campaign]);
-
-  // Update preview when user photo or adjustments change
-  useEffect(() => {
-    if (!userPhoto || !campaign || !canvasRef.current) return;
-    
-    const updateCanvasPreview = async () => {
-      try {
-        await updatePreview(
-          canvasRef.current,
-          userPhoto,
-          campaign.imageUrl,
-          adjustments,
-          campaign.type
-        );
-      } catch (error) {
-        console.error('Error updating preview:', error);
-      }
-    };
-    
-    updateCanvasPreview();
-  }, [userPhoto, adjustments, campaign]);
-
-  // Handle photo upload
-  const handlePhotoSelect = async (file) => {
+  // Handle photo selection
+  const handlePhotoSelect = async (e) => {
+    const file = e.target.files[0];
     if (!file) return;
     
     setError('');
+    setUploading(true);
     
-    // File size validation (10MB limit for user photos)
+    // File size validation (10MB limit)
     const maxSize = 10 * 1024 * 1024;
     if (file.size > maxSize) {
       setError(`Photo must be smaller than 10MB. Current size: ${(file.size / (1024 * 1024)).toFixed(1)}MB`);
+      setUploading(false);
       return;
     }
     
@@ -125,158 +83,29 @@ export default function CampaignViewPage() {
     const validTypes = ['image/png', 'image/jpeg', 'image/jpg', 'image/webp'];
     if (!validTypes.includes(file.type)) {
       setError('Please upload a PNG, JPG, or WEBP image');
+      setUploading(false);
       return;
     }
     
     // Create preview
     const reader = new FileReader();
-    reader.onload = async (e) => {
-      setUserPhoto(file);
-      setUserPhotoPreview(e.target.result);
+    reader.onload = async (event) => {
+      // Store in session
+      campaignSession.setUserPhoto(slug, file, event.target.result);
       
-      // Auto-fit the photo
-      if (campaign) {
-        try {
-          const canvas = canvasRef.current;
-          if (canvas) {
-            const fitAdjustments = await calculateFitAdjustments(
-              file,
-              canvas.width || 1500,
-              canvas.height || 1500
-            );
-            setAdjustments(fitAdjustments);
-          }
-        } catch (error) {
-          console.error('Error calculating fit:', error);
-        }
-      }
+      // Initialize adjustments
+      campaignSession.setAdjustments(slug, { scale: 1.0, x: 0, y: 0 });
+      
+      // Redirect to adjust page
+      router.push(`/campaign/${slug}/adjust`);
     };
+    
+    reader.onerror = () => {
+      setError('Failed to read image file');
+      setUploading(false);
+    };
+    
     reader.readAsDataURL(file);
-  };
-
-  const handleRemovePhoto = () => {
-    setUserPhoto(null);
-    setUserPhotoPreview('');
-    setAdjustments({ scale: 1.0, x: 0, y: 0 });
-    if (fileInputRef.current) {
-      fileInputRef.current.value = '';
-    }
-    
-    // Redraw campaign image only
-    if (campaign && canvasRef.current) {
-      const img = new Image();
-      img.crossOrigin = 'anonymous';
-      img.onload = () => {
-        const canvas = canvasRef.current;
-        const ctx = canvas.getContext('2d');
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        ctx.drawImage(img, 0, 0);
-      };
-      img.src = campaign.imageUrl;
-    }
-  };
-
-  // Adjustment controls
-  const handleZoomChange = (e) => {
-    const scale = parseFloat(e.target.value);
-    setAdjustments(prev => ({ ...prev, scale }));
-  };
-
-  const handleFitPhoto = async () => {
-    if (!userPhoto || !canvasRef.current) return;
-    
-    try {
-      const fitAdjustments = await calculateFitAdjustments(
-        userPhoto,
-        canvasRef.current.width,
-        canvasRef.current.height
-      );
-      setAdjustments(fitAdjustments);
-    } catch (error) {
-      console.error('Error fitting photo:', error);
-    }
-  };
-
-  const handleResetAdjustments = () => {
-    setAdjustments({ scale: 1.0, x: 0, y: 0 });
-  };
-
-  // Unified pointer events for mouse and touch
-  const handlePointerDown = (e) => {
-    if (!userPhoto) return;
-    e.preventDefault();
-    setIsDragging(true);
-    const clientX = e.clientX || e.touches?.[0]?.clientX || 0;
-    const clientY = e.clientY || e.touches?.[0]?.clientY || 0;
-    setDragStart({ x: clientX - adjustments.x, y: clientY - adjustments.y });
-  };
-
-  const handlePointerMove = (e) => {
-    if (!isDragging) return;
-    e.preventDefault();
-    const clientX = e.clientX || e.touches?.[0]?.clientX || 0;
-    const clientY = e.clientY || e.touches?.[0]?.clientY || 0;
-    const newX = clientX - dragStart.x;
-    const newY = clientY - dragStart.y;
-    setAdjustments(prev => ({ ...prev, x: newX, y: newY }));
-  };
-
-  const handlePointerUp = (e) => {
-    if (isDragging) {
-      e.preventDefault();
-    }
-    setIsDragging(false);
-  };
-
-  // Download composed image
-  const handleDownload = async () => {
-    if (!userPhoto || !campaign) return;
-    
-    setDownloading(true);
-    setError('');
-    
-    try {
-      // Compose final image
-      const { blob } = await composeImages(
-        userPhoto,
-        campaign.imageUrl,
-        adjustments,
-        campaign.type
-      );
-      
-      // Create download
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = `${campaign.slug}-${Date.now()}.png`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      URL.revokeObjectURL(url);
-      
-      // Track download/support via server-side API
-      try {
-        const trackResponse = await fetch('/api/campaigns/track-download', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({ campaignId: campaign.id })
-        });
-        
-        if (!trackResponse.ok) {
-          console.warn('Failed to track download, but download succeeded');
-        }
-      } catch (trackError) {
-        console.warn('Error tracking download:', trackError);
-      }
-      
-      setDownloading(false);
-    } catch (error) {
-      console.error('Error downloading image:', error);
-      setError('Failed to download image. Please try again.');
-      setDownloading(false);
-    }
   };
 
   // Report campaign
@@ -334,15 +163,6 @@ export default function CampaignViewPage() {
       case 'whatsapp':
         window.open(`https://wa.me/?text=${encodeURIComponent(text + ' ' + url)}`, '_blank');
         break;
-      case 'native':
-        if (navigator.share) {
-          try {
-            await navigator.share({ title: campaign.title, text, url });
-          } catch (error) {
-            console.error('Error sharing:', error);
-          }
-        }
-        break;
       default:
         break;
     }
@@ -380,7 +200,7 @@ export default function CampaignViewPage() {
       <div className="min-h-screen flex">
         {/* Main Content */}
         <div className="flex-1 w-full flex flex-col py-8 px-4 sm:px-6 lg:px-16 xl:px-20 pt-20">
-          <div className="mx-auto w-full max-w-6xl">
+          <div className="mx-auto w-full max-w-4xl">
             
             {/* Header */}
             <div className="text-center mb-8 bg-yellow-400 px-6 py-8 rounded-t-xl">
@@ -426,201 +246,81 @@ export default function CampaignViewPage() {
                 </div>
               )}
 
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              {/* Campaign Preview */}
+              <div className="mb-8">
+                <div className="relative">
+                  <img
+                    src={campaign.imageUrl}
+                    alt={campaign.title}
+                    className="w-full h-auto rounded-lg border-2 border-gray-300"
+                  />
+                  <div className="absolute top-4 right-4 bg-emerald-500 text-white px-3 py-1 rounded-full text-xs font-semibold uppercase">
+                    {campaign.type === 'frame' ? 'Frame' : 'Background'}
+                  </div>
+                </div>
+              </div>
+
+              {/* Upload Section */}
+              <div className="mb-8">
+                <h2 className="text-2xl font-bold text-gray-900 mb-4 text-center">Add Your Photo</h2>
+                <p className="text-gray-600 text-center mb-6">
+                  Upload your photo to create your personalized {campaign.type === 'frame' ? 'frame' : 'background'}
+                </p>
                 
-                {/* Left: Preview Canvas */}
-                <div>
-                  <h2 className="text-xl font-bold text-gray-900 mb-4">Preview</h2>
-                  
-                  <div className="relative">
-                    <canvas
-                      ref={canvasRef}
-                      className={`w-full h-auto bg-gray-100 rounded-lg border-2 border-gray-300 ${
-                        userPhoto ? 'cursor-move' : ''
-                      }`}
-                      style={{
-                        touchAction: 'none',
-                        userSelect: 'none',
-                        WebkitUserSelect: 'none',
-                        msUserSelect: 'none'
-                      }}
-                      onPointerDown={handlePointerDown}
-                      onPointerMove={handlePointerMove}
-                      onPointerUp={handlePointerUp}
-                      onPointerCancel={handlePointerUp}
-                      onPointerLeave={handlePointerUp}
-                    />
-                    {!userPhoto && (
-                      <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                        <div className="text-center p-6 bg-black/60 rounded-lg backdrop-blur-sm">
-                          <svg
-                            className="mx-auto h-12 w-12 text-white mb-3"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke="currentColor"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
-                            />
-                          </svg>
-                          <p className="text-white font-medium text-sm">Upload your photo to see it here</p>
-                        </div>
-                      </div>
-                    )}
-                  </div>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/png,image/jpeg,image/jpg,image/webp"
+                  onChange={handlePhotoSelect}
+                  disabled={uploading}
+                  className="hidden"
+                  id="user-photo-input"
+                />
+                
+                <label
+                  htmlFor="user-photo-input"
+                  className={`btn-base btn-primary w-full text-center py-4 cursor-pointer font-bold text-lg ${
+                    uploading ? 'opacity-70 cursor-wait' : ''
+                  }`}
+                >
+                  {uploading ? 'Loading...' : 'Choose Your Photo'}
+                </label>
+                
+                <p className="text-sm text-gray-600 mt-3 text-center">
+                  PNG, JPG, or WEBP (max 10MB)
+                </p>
+              </div>
 
-                  {userPhoto && (
-                    <p className="text-xs text-gray-600 mt-3 text-center">
-                      <strong>Tip:</strong> Drag on the preview to reposition your photo
-                    </p>
-                  )}
+              {/* Share & Report */}
+              <div className="border-t border-gray-200 pt-6">
+                <h3 className="text-lg font-bold text-gray-900 mb-3 text-center">Share Campaign</h3>
+                <div className="grid grid-cols-3 gap-2 mb-4">
+                  <button
+                    onClick={() => handleShare('twitter')}
+                    className="btn-base bg-blue-400 hover:bg-blue-500 text-white py-2 text-sm font-medium"
+                  >
+                    Twitter
+                  </button>
+                  <button
+                    onClick={() => handleShare('facebook')}
+                    className="btn-base bg-blue-600 hover:bg-blue-700 text-white py-2 text-sm font-medium"
+                  >
+                    Facebook
+                  </button>
+                  <button
+                    onClick={() => handleShare('whatsapp')}
+                    className="btn-base bg-green-500 hover:bg-green-600 text-white py-2 text-sm font-medium"
+                  >
+                    WhatsApp
+                  </button>
                 </div>
-
-                {/* Right: Controls */}
-                <div className="space-y-6">
-                  
-                  {/* Upload Section */}
-                  <div>
-                    <h2 className="text-xl font-bold text-gray-900 mb-4">
-                      {userPhoto ? 'Change Photo' : 'Choose Your Photo'}
-                    </h2>
-                    
-                    <input
-                      ref={fileInputRef}
-                      type="file"
-                      accept="image/png,image/jpeg,image/jpg,image/webp"
-                      onChange={(e) => e.target.files[0] && handlePhotoSelect(e.target.files[0])}
-                      className="hidden"
-                      id="user-photo-input"
-                    />
-                    
-                    {!userPhoto ? (
-                      <div>
-                        <label
-                          htmlFor="user-photo-input"
-                          className="btn-base btn-primary w-full text-center py-4 cursor-pointer font-semibold text-lg"
-                        >
-                          Upload Your Photo
-                        </label>
-                        <p className="text-sm text-gray-600 mt-3 text-center">
-                          PNG, JPG, or WEBP (max 10MB)
-                        </p>
-                      </div>
-                    ) : (
-                      <div className="flex gap-3">
-                        <label
-                          htmlFor="user-photo-input"
-                          className="btn-base btn-secondary flex-1 text-center py-3 cursor-pointer font-medium"
-                        >
-                          Change Photo
-                        </label>
-                        <button
-                          onClick={handleRemovePhoto}
-                          className="btn-base bg-red-500 hover:bg-red-600 text-white flex-1 py-3 font-medium"
-                        >
-                          Remove
-                        </button>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Adjustment controls */}
-                  {userPhoto && (
-                    <div>
-                      <h2 className="text-xl font-bold text-gray-900 mb-4">Adjust Your Photo</h2>
-                      
-                      {/* Zoom slider */}
-                      <div className="mb-4">
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                          Zoom: {adjustments.scale.toFixed(2)}x
-                        </label>
-                        <input
-                          type="range"
-                          min="0.5"
-                          max="3"
-                          step="0.1"
-                          value={adjustments.scale}
-                          onChange={handleZoomChange}
-                          className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-emerald-500"
-                        />
-                      </div>
-
-                      {/* Action buttons */}
-                      <div className="flex gap-3">
-                        <button
-                          onClick={handleFitPhoto}
-                          className="btn-base btn-secondary flex-1 py-2 text-sm font-medium"
-                        >
-                          Fit to Frame
-                        </button>
-                        <button
-                          onClick={handleResetAdjustments}
-                          className="btn-base bg-gray-500 hover:bg-gray-600 text-white flex-1 py-2 text-sm font-medium"
-                        >
-                          Reset
-                        </button>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Download button */}
-                  <div>
-                    <button
-                      onClick={handleDownload}
-                      disabled={!userPhoto || downloading}
-                      className={`btn-base w-full py-4 font-bold text-lg transition-colors ${
-                        !userPhoto
-                          ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                          : downloading
-                          ? 'btn-primary opacity-70 cursor-wait'
-                          : 'btn-primary'
-                      }`}
-                    >
-                      {downloading ? 'Downloading...' : !userPhoto ? 'Upload Photo to Download' : 'Download Image'}
-                    </button>
-                    
-                    {userPhoto && (
-                      <p className="text-xs text-gray-600 mt-2 text-center">
-                        High-quality PNG • Preserves transparency
-                      </p>
-                    )}
-                  </div>
-
-                  {/* Share & Report */}
-                  <div>
-                    <h3 className="text-lg font-bold text-gray-900 mb-3">Share Campaign</h3>
-                    <div className="grid grid-cols-3 gap-2 mb-4">
-                      <button
-                        onClick={() => handleShare('twitter')}
-                        className="btn-base bg-blue-400 hover:bg-blue-500 text-white py-2 text-sm font-medium"
-                      >
-                        Twitter
-                      </button>
-                      <button
-                        onClick={() => handleShare('facebook')}
-                        className="btn-base bg-blue-600 hover:bg-blue-700 text-white py-2 text-sm font-medium"
-                      >
-                        Facebook
-                      </button>
-                      <button
-                        onClick={() => handleShare('whatsapp')}
-                        className="btn-base bg-green-500 hover:bg-green-600 text-white py-2 text-sm font-medium"
-                      >
-                        WhatsApp
-                      </button>
-                    </div>
-                    
-                    <button
-                      onClick={() => setShowReportModal(true)}
-                      className="btn-base bg-red-100 hover:bg-red-200 text-red-700 w-full py-2 text-sm font-medium"
-                    >
-                      Report Campaign
-                    </button>
-                  </div>
-                </div>
+                
+                <button
+                  onClick={() => setShowReportModal(true)}
+                  className="btn-base bg-red-100 hover:bg-red-200 text-red-700 w-full py-2 text-sm font-medium"
+                >
+                  Report Campaign
+                </button>
               </div>
             </div>
           </div>
@@ -641,33 +341,29 @@ export default function CampaignViewPage() {
                 <select
                   value={reportReason}
                   onChange={(e) => setReportReason(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all"
                   required
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all"
                 >
                   <option value="">Select a reason</option>
-                  <option value="inappropriate">Inappropriate content</option>
+                  <option value="inappropriate">Inappropriate Content</option>
                   <option value="spam">Spam</option>
-                  <option value="copyright">Copyright violation</option>
+                  <option value="copyright">Copyright Violation</option>
                   <option value="other">Other</option>
                 </select>
               </div>
               
-              <div className="mb-4">
+              <div className="mb-6">
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Additional details (optional)
+                  Additional Details (Optional)
                 </label>
                 <textarea
                   value={reportDetails}
                   onChange={(e) => setReportDetails(e.target.value)}
-                  placeholder="Provide more information..."
-                  rows="3"
+                  rows={3}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all resize-none"
+                  placeholder="Provide more context about your report..."
                 />
               </div>
-              
-              {error && (
-                <p className="text-red-600 text-sm mb-4 text-center">{error}</p>
-              )}
               
               <div className="flex gap-3">
                 <button
@@ -686,7 +382,7 @@ export default function CampaignViewPage() {
                 <button
                   type="submit"
                   className="btn-base bg-red-500 hover:bg-red-600 text-white flex-1 py-2 font-medium"
-                  disabled={reportSubmitting}
+                  disabled={reportSubmitting || !reportReason}
                 >
                   {reportSubmitting ? 'Submitting...' : 'Submit Report'}
                 </button>
