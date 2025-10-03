@@ -14,6 +14,7 @@ import {
   where, 
   orderBy, 
   limit,
+  startAfter,
   serverTimestamp,
   updateDoc,
   increment,
@@ -489,7 +490,7 @@ export const getPublicCampaigns = async (limitCount = 10) => {
   }
 };
 
-export const getUserCampaigns = async (userId) => {
+export const getUserCampaigns = async (userId, options = {}) => {
   if (!userId) return [];
   
   // Check if database is initialized
@@ -500,23 +501,50 @@ export const getUserCampaigns = async (userId) => {
     return [];
   }
   
+  const {
+    orderByField = 'createdAt',
+    orderDirection = 'desc',
+    pageSize = 12,
+    startAfterDoc = null
+  } = options;
+  
   try {
-    const q = query(
+    let q = query(
       collection(db, 'campaigns'),
       where('creatorId', '==', userId),
-      orderBy('createdAt', 'desc')
+      orderBy(orderByField, orderDirection),
+      limit(pageSize)
     );
+    
+    // Add pagination cursor if provided
+    if (startAfterDoc) {
+      q = query(q, startAfter(startAfterDoc));
+    }
     
     const querySnapshot = await getDocs(q);
     const campaigns = [];
     
     querySnapshot.forEach((doc) => {
-      campaigns.push({ id: doc.id, ...doc.data() });
+      const data = doc.data();
+      campaigns.push({ 
+        id: doc.id,
+        slug: data.slug,
+        title: data.title,
+        type: data.type,
+        imageUrl: data.imageUrl,
+        supportersCount: data.supportersCount || 0,
+        createdAt: data.createdAt,
+        description: data.description || '',
+        moderationStatus: data.moderationStatus || 'active'
+      });
     });
     
     return campaigns;
   } catch (error) {
     // Return empty array on permissions error or any other error
+    if (process.env.NODE_ENV === 'development') {
+      console.error('Error fetching user campaigns:', error);
+    }
     return [];
   }
 };
