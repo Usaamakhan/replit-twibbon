@@ -232,30 +232,13 @@ export default function CampaignViewPage() {
       document.body.removeChild(link);
       URL.revokeObjectURL(url);
       
-      // Track usage via server-side API (bypasses Firestore security rules for anonymous users)
+      // Track download/support via server-side API
       try {
-        // Get ID token for authenticated users
-        let idToken = null;
-        if (user) {
-          try {
-            idToken = await user.getIdToken();
-          } catch (tokenError) {
-            console.warn('Failed to get ID token:', tokenError);
-          }
-        }
-        
-        // Send request with Authorization header if authenticated
-        const headers = {
-          'Content-Type': 'application/json'
-        };
-        
-        if (idToken) {
-          headers['Authorization'] = `Bearer ${idToken}`;
-        }
-        
         const trackResponse = await fetch('/api/campaigns/track-download', {
           method: 'POST',
-          headers,
+          headers: {
+            'Content-Type': 'application/json'
+          },
           body: JSON.stringify({ campaignId: campaign.id })
         });
         
