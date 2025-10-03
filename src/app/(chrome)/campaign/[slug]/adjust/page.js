@@ -21,6 +21,7 @@ export default function CampaignAdjustPage() {
   const [downloading, setDownloading] = useState(false);
   const [error, setError] = useState('');
   const [imagesReady, setImagesReady] = useState(false);
+  const [isInteracting, setIsInteracting] = useState(false);
 
   useEffect(() => {
     console.log('[DEBUG] imagesReady state changed:', imagesReady);
@@ -163,7 +164,8 @@ export default function CampaignAdjustPage() {
       userPhoto: !!userPhotoImgRef.current,
       campaign: !!campaignImgRef.current,
       imagesReady,
-      adjustments
+      adjustments,
+      isInteracting
     });
     
     if (!offscreenCanvasRef.current || !canvasRef.current || !userPhotoImgRef.current || !campaignImgRef.current) {
@@ -183,7 +185,8 @@ export default function CampaignAdjustPage() {
     console.log('[DEBUG] Starting canvas render:', {
       offscreenSize: `${offscreen.width}x${offscreen.height}`,
       displaySize: `${display.width}x${display.height}`,
-      campaignType: campaign?.type
+      campaignType: campaign?.type,
+      isInteracting
     });
 
     ctx.clearRect(0, 0, offscreen.width, offscreen.height);
@@ -191,6 +194,7 @@ export default function CampaignAdjustPage() {
     const { scale, x, y, rotation } = adjustments;
     const userImg = userPhotoImgRef.current;
     const campaignImg = campaignImgRef.current;
+    const campaignOpacity = isInteracting ? 0.5 : 1.0;
 
     ctx.save();
     const centerX = offscreen.width / 2;
@@ -205,10 +209,14 @@ export default function CampaignAdjustPage() {
     if (campaign.type === 'frame') {
       ctx.drawImage(userImg, -scaledWidth / 2, -scaledHeight / 2, scaledWidth, scaledHeight);
       ctx.restore();
+      ctx.globalAlpha = campaignOpacity;
       ctx.drawImage(campaignImg, 0, 0, offscreen.width, offscreen.height);
+      ctx.globalAlpha = 1.0;
     } else {
       ctx.restore();
+      ctx.globalAlpha = campaignOpacity;
       ctx.drawImage(campaignImg, 0, 0, offscreen.width, offscreen.height);
+      ctx.globalAlpha = 1.0;
       ctx.save();
       ctx.translate(centerX + x, centerY + y);
       ctx.rotate((rotation * Math.PI) / 180);
@@ -224,7 +232,7 @@ export default function CampaignAdjustPage() {
     } else {
       console.log('[DEBUG] No display context available');
     }
-  }, [adjustments, campaign, imagesReady]);
+  }, [adjustments, campaign, imagesReady, isInteracting]);
 
   useEffect(() => {
     console.log('[DEBUG] RAF effect triggered');
@@ -274,6 +282,8 @@ export default function CampaignAdjustPage() {
   const handlePointerDown = (e) => {
     if (!userPhoto) return;
     e.preventDefault();
+    
+    setIsInteracting(true);
     
     pointersRef.current.set(e.pointerId, {
       clientX: e.clientX,
@@ -369,6 +379,7 @@ export default function CampaignAdjustPage() {
     if (pointersRef.current.size === 0) {
       isDraggingRef.current = false;
       isRotatingRef.current = false;
+      setIsInteracting(false);
     }
   };
 
@@ -456,10 +467,7 @@ export default function CampaignAdjustPage() {
                   Step 2 of 3
                 </span>
               </div>
-              <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-1">Adjust Your Photo</h1>
-              <p className="text-sm text-gray-800">
-                Drag to move • Scroll to zoom • Two fingers to rotate
-              </p>
+              <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Adjust Your Photo</h1>
             </div>
             
             <div className="bg-white rounded-b-xl border border-t-0 border-gray-200 shadow-sm">
