@@ -68,9 +68,9 @@ export default function CampaignGallery({ campaigns, loading = false, isOwnProfi
         <Link
           key={campaign.id}
           href={`/campaign/${campaign.slug}`}
-          className="group relative aspect-square bg-white rounded-lg shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden"
+          className="group bg-white rounded-lg shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden flex flex-col"
         >
-          <div className="relative w-full h-full">
+          <div className="relative aspect-square bg-gray-100 overflow-hidden">
             {campaign.imageUrl ? (
               <>
                 <Image
@@ -83,6 +83,7 @@ export default function CampaignGallery({ campaigns, loading = false, isOwnProfi
                   onLoadingComplete={() => setImageLoading(prev => ({ ...prev, [campaign.id]: false }))}
                   onError={() => setImageLoading(prev => ({ ...prev, [campaign.id]: false }))}
                   sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, (max-width: 1280px) 33vw, 25vw"
+                  unoptimized
                 />
                 {imageLoading[campaign.id] !== false && (
                   <div className="absolute inset-0 bg-gray-200 animate-pulse" />
@@ -105,15 +106,23 @@ export default function CampaignGallery({ campaigns, loading = false, isOwnProfi
                 </svg>
               </div>
             )}
+            
+            {campaign.type && (
+              <div className="absolute top-2 right-2">
+                <span className="inline-block px-2 py-1 text-xs font-semibold bg-white/90 text-gray-800 rounded-md shadow-sm">
+                  {campaign.type === 'frame' ? 'Frame' : 'Background'}
+                </span>
+              </div>
+            )}
           </div>
 
-          <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 via-black/50 to-transparent p-4 pt-12">
-            <h3 className="text-white font-semibold text-lg truncate mb-1">
+          <div className="p-4 flex-grow">
+            <h3 className="text-gray-900 font-semibold text-base truncate mb-2">
               {campaign.title}
             </h3>
-            <div className="flex items-center gap-2 text-white/90 text-sm">
+            <div className="flex items-center gap-2 text-gray-600 text-sm">
               <svg
-                className="h-4 w-4"
+                className="h-4 w-4 text-emerald-600"
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"
@@ -128,14 +137,6 @@ export default function CampaignGallery({ campaigns, loading = false, isOwnProfi
               <span>{campaign.supportersCount || 0} {campaign.supportersCount === 1 ? 'support' : 'supports'}</span>
             </div>
           </div>
-
-          {campaign.type && (
-            <div className="absolute top-2 right-2">
-              <span className="inline-block px-2 py-1 text-xs font-semibold bg-white/90 text-gray-800 rounded-md shadow-sm">
-                {campaign.type === 'frame' ? 'Frame' : 'Background'}
-              </span>
-            </div>
-          )}
         </Link>
       ))}
     </div>
