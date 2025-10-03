@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { adminAuth, adminFirestore } from '../../../../lib/firebaseAdmin';
+import { adminFirestore } from '../../../../lib/firebaseAdmin';
 import { FieldValue } from 'firebase-admin/firestore';
 
 export async function POST(request) {
@@ -15,25 +15,10 @@ export async function POST(request) {
       );
     }
     
-    // Verify authentication via Firebase ID token (if provided)
-    let verifiedUserId = null;
-    const authHeader = request.headers.get('authorization');
-    
-    if (authHeader && authHeader.startsWith('Bearer ')) {
-      const idToken = authHeader.substring(7);
-      try {
-        const decodedToken = await adminAuth.verifyIdToken(idToken);
-        verifiedUserId = decodedToken.uid;
-      } catch (verifyError) {
-        // Invalid token - treat as anonymous
-        console.warn('Invalid ID token, treating as anonymous:', verifyError.message);
-      }
-    }
-    
     // Get Firestore instance
     const db = adminFirestore();
     
-    // Run transaction to update counts
+    // Run transaction to update campaign supports count
     const result = await db.runTransaction(async (transaction) => {
       // Get campaign document
       const campaignRef = db.collection('campaigns').doc(campaignId);
@@ -44,9 +29,8 @@ export async function POST(request) {
       }
       
       const campaignData = campaignDoc.data();
-      const campaignCreatorId = campaignData.creatorId;
       
-      // Update campaign supportersCount (always increments for both authenticated and anonymous)
+      // Update campaign supportersCount (tracks total downloads/supports)
       transaction.update(campaignRef, {
         supportersCount: FieldValue.increment(1),
         updatedAt: FieldValue.serverTimestamp(),
@@ -54,19 +38,8 @@ export async function POST(request) {
         ...(campaignData.supportersCount === 0 ? { firstUsedAt: FieldValue.serverTimestamp() } : {})
       });
       
-      // Update creator's supportersCount only if downloader is VERIFIED authenticated and different from creator
-      if (verifiedUserId && campaignCreatorId && verifiedUserId !== campaignCreatorId) {
-        const creatorRef = db.collection('users').doc(campaignCreatorId);
-        transaction.update(creatorRef, {
-          supportersCount: FieldValue.increment(1),
-          updatedAt: FieldValue.serverTimestamp()
-        });
-      }
-      
       return {
-        success: true,
-        verified: !!verifiedUserId,
-        campaignCreatorId: verifiedUserId && campaignCreatorId && verifiedUserId !== campaignCreatorId ? campaignCreatorId : null
+        success: true
       };
     });
     
