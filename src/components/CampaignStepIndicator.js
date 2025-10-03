@@ -9,7 +9,9 @@ export default function CampaignStepIndicator({ currentStep }) {
             {/* Step Circle */}
             <div
               className={`flex items-center justify-center w-12 h-12 rounded-full font-bold text-xl transition-colors ${
-                step <= currentStep
+                step < currentStep
+                  ? 'bg-emerald-500 text-white'
+                  : step === currentStep
                   ? 'bg-yellow-500 text-white'
                   : 'bg-gray-400 text-white'
               }`}
@@ -21,7 +23,11 @@ export default function CampaignStepIndicator({ currentStep }) {
             {index < steps.length - 1 && (
               <div
                 className={`w-20 sm:w-32 h-1 mx-1 transition-colors ${
-                  step < currentStep ? 'bg-yellow-500' : 'bg-gray-400'
+                  step < currentStep
+                    ? 'bg-emerald-500'
+                    : step === currentStep
+                    ? 'bg-yellow-500'
+                    : 'bg-gray-400'
                 }`}
               />
             )}
