@@ -110,7 +110,7 @@ export default function CampaignAdjustPage() {
   useEffect(() => {
     if (!slug || !session) return;
     campaignSession.setAdjustments(slug, adjustments);
-  }, [adjustments, slug, session, campaignSession]);
+  }, [adjustments, slug, session]);
 
   // Zoom control
   const handleZoomChange = (e) => {
