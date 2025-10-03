@@ -292,7 +292,7 @@ export default function CampaignAdjustPage() {
         rotationStartRef.current = e.clientX;
       } else {
         isDraggingRef.current = true;
-        dragStartRef.current = { x: e.clientX - adjustments.x, y: e.clientY - adjustments.y };
+        dragStartRef.current = { x: e.clientX, y: e.clientY };
       }
     }
   };
@@ -342,9 +342,10 @@ export default function CampaignAdjustPage() {
         }));
         rotationStartRef.current = e.clientX;
       } else if (isDraggingRef.current) {
-        const newX = e.clientX - dragStartRef.current.x;
-        const newY = e.clientY - dragStartRef.current.y;
-        setAdjustments(prev => ({ ...prev, x: newX, y: newY }));
+        const deltaX = e.clientX - dragStartRef.current.x;
+        const deltaY = e.clientY - dragStartRef.current.y;
+        setAdjustments(prev => ({ ...prev, x: prev.x + deltaX, y: prev.y + deltaY }));
+        dragStartRef.current = { x: e.clientX, y: e.clientY };
       }
     }
   };
@@ -371,22 +372,6 @@ export default function CampaignAdjustPage() {
   const handleRotationChange = (e) => {
     const rotation = parseInt(e.target.value);
     setAdjustments(prev => ({ ...prev, rotation }));
-  };
-
-  const handleFitPhoto = async () => {
-    if (!userPhotoImgRef.current || !canvasRef.current) return;
-    
-    const img = userPhotoImgRef.current;
-    const canvas = canvasRef.current;
-    const scaleX = canvas.width / img.width;
-    const scaleY = canvas.height / img.height;
-    const scale = Math.min(scaleX, scaleY);
-    
-    setAdjustments({ scale, x: 0, y: 0, rotation: adjustments.rotation });
-  };
-
-  const handleResetAdjustments = () => {
-    setAdjustments({ scale: 1.0, x: 0, y: 0, rotation: 0 });
   };
 
   const handleChangePhoto = () => {
@@ -509,10 +494,6 @@ export default function CampaignAdjustPage() {
                     />
                   </div>
 
-                  <p className="text-xs text-gray-600 text-center">
-                    <strong>Desktop:</strong> Drag to move • Scroll to zoom • Right-click drag to rotate<br />
-                    <strong>Touch:</strong> Drag to move • Pinch to zoom • Two fingers to rotate
-                  </p>
                 </div>
 
                 <div className="space-y-5">
@@ -528,15 +509,31 @@ export default function CampaignAdjustPage() {
                           </label>
                           <span className="text-sm text-gray-600">{adjustments.scale.toFixed(1)}x</span>
                         </div>
-                        <input
-                          type="range"
-                          min="0.1"
-                          max="10"
-                          step="0.1"
-                          value={adjustments.scale}
-                          onChange={handleZoomChange}
-                          className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-emerald-500"
-                        />
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => setAdjustments(prev => ({ ...prev, scale: Math.max(0.1, prev.scale - 0.1) }))}
+                            className="flex-shrink-0 w-8 h-8 bg-gray-200 hover:bg-gray-300 rounded-lg flex items-center justify-center text-gray-700 font-bold transition-colors"
+                            aria-label="Zoom out"
+                          >
+                            −
+                          </button>
+                          <input
+                            type="range"
+                            min="0.1"
+                            max="10"
+                            step="0.1"
+                            value={adjustments.scale}
+                            onChange={handleZoomChange}
+                            className="flex-1 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-emerald-500"
+                          />
+                          <button
+                            onClick={() => setAdjustments(prev => ({ ...prev, scale: Math.min(10, prev.scale + 0.1) }))}
+                            className="flex-shrink-0 w-8 h-8 bg-gray-200 hover:bg-gray-300 rounded-lg flex items-center justify-center text-gray-700 font-bold transition-colors"
+                            aria-label="Zoom in"
+                          >
+                            +
+                          </button>
+                        </div>
                       </div>
 
                       <div>
@@ -544,36 +541,34 @@ export default function CampaignAdjustPage() {
                           <label className="text-sm font-medium text-gray-700">
                             Rotation
                           </label>
-                          <span className="text-sm text-gray-600">{adjustments.rotation}°</span>
+                          <span className="text-sm text-gray-600">{adjustments.rotation.toFixed(1)}°</span>
                         </div>
-                        <input
-                          type="range"
-                          min="-180"
-                          max="180"
-                          step="1"
-                          value={adjustments.rotation}
-                          onChange={handleRotationChange}
-                          className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-emerald-500"
-                        />
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => setAdjustments(prev => ({ ...prev, rotation: Math.max(-180, prev.rotation - 0.1) }))}
+                            className="flex-shrink-0 w-8 h-8 bg-gray-200 hover:bg-gray-300 rounded-lg flex items-center justify-center text-gray-700 font-bold transition-colors"
+                            aria-label="Rotate counter-clockwise"
+                          >
+                            −
+                          </button>
+                          <input
+                            type="range"
+                            min="-180"
+                            max="180"
+                            step="0.1"
+                            value={adjustments.rotation}
+                            onChange={handleRotationChange}
+                            className="flex-1 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-emerald-500"
+                          />
+                          <button
+                            onClick={() => setAdjustments(prev => ({ ...prev, rotation: Math.min(180, prev.rotation + 0.1) }))}
+                            className="flex-shrink-0 w-8 h-8 bg-gray-200 hover:bg-gray-300 rounded-lg flex items-center justify-center text-gray-700 font-bold transition-colors"
+                            aria-label="Rotate clockwise"
+                          >
+                            +
+                          </button>
+                        </div>
                       </div>
-                    </div>
-                  </div>
-
-                  <div>
-                    <h2 className="text-lg font-bold text-gray-900 mb-3">Quick Actions</h2>
-                    <div className="grid grid-cols-2 gap-3">
-                      <button
-                        onClick={handleFitPhoto}
-                        className="btn-base btn-secondary py-2 text-sm font-medium"
-                      >
-                        Fit to Frame
-                      </button>
-                      <button
-                        onClick={handleResetAdjustments}
-                        className="btn-base bg-gray-500 hover:bg-gray-600 text-white py-2 text-sm font-medium"
-                      >
-                        Reset All
-                      </button>
                     </div>
                   </div>
 
