@@ -6,6 +6,7 @@ import { getCampaignBySlug, createReport } from '../../../../lib/firestore';
 import { useCampaignSession } from '../../../../contexts/CampaignSessionContext';
 import { useAuth } from '../../../../hooks/useAuth';
 import LoadingSpinner from '../../../../components/LoadingSpinner';
+import CampaignStepIndicator from '../../../../components/CampaignStepIndicator';
 
 export default function CampaignUploadPage() {
   const params = useParams();
@@ -204,11 +205,7 @@ export default function CampaignUploadPage() {
             
             {/* Header */}
             <div className="text-center mb-6 bg-yellow-400 px-6 py-5 rounded-t-xl">
-              <div className="mb-2">
-                <span className="inline-block bg-gray-900 text-white px-4 py-1 rounded-full text-sm font-semibold">
-                  Step 1 of 3
-                </span>
-              </div>
+              <CampaignStepIndicator currentStep={1} />
               <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-1">{campaign.title}</h1>
               {campaign.description && (
                 <p className="text-sm text-gray-800 mt-1">{campaign.description}</p>

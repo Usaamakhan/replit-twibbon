@@ -6,6 +6,7 @@ import { useCampaignSession } from '../../../../../contexts/CampaignSessionConte
 import { requirePhotoUpload } from '../../../../../utils/campaignRouteGuards';
 import { loadImage, composeImages } from '../../../../../utils/imageComposition';
 import LoadingSpinner from '../../../../../components/LoadingSpinner';
+import CampaignStepIndicator from '../../../../../components/CampaignStepIndicator';
 
 export default function CampaignAdjustPage() {
   const params = useParams();
@@ -462,11 +463,7 @@ export default function CampaignAdjustPage() {
           <div className="mx-auto w-full max-w-5xl">
             
             <div className="text-center mb-6 bg-yellow-400 px-6 py-5 rounded-t-xl">
-              <div className="mb-2">
-                <span className="inline-block bg-gray-900 text-white px-4 py-1 rounded-full text-sm font-semibold">
-                  Step 2 of 3
-                </span>
-              </div>
+              <CampaignStepIndicator currentStep={2} />
               <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Adjust Your Photo</h1>
             </div>
             

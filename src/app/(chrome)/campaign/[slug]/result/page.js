@@ -6,6 +6,7 @@ import { useCampaignSession } from '../../../../../contexts/CampaignSessionConte
 import { requireDownloadComplete } from '../../../../../utils/campaignRouteGuards';
 import { composeImages } from '../../../../../utils/imageComposition';
 import LoadingSpinner from '../../../../../components/LoadingSpinner';
+import CampaignStepIndicator from '../../../../../components/CampaignStepIndicator';
 
 export default function CampaignResultPage() {
   const params = useParams();
@@ -154,11 +155,7 @@ export default function CampaignResultPage() {
           <div className="mx-auto w-full max-w-5xl">
             
             <div className="text-center mb-6 bg-yellow-400 px-6 py-5 rounded-t-xl">
-              <div className="mb-2">
-                <span className="inline-block bg-emerald-500 text-white px-4 py-1 rounded-full text-sm font-semibold">
-                  ✓ Complete
-                </span>
-              </div>
+              <CampaignStepIndicator currentStep={3} />
               <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-1">
                 Your {campaign.type === 'frame' ? 'Frame' : 'Background'} is Ready!
               </h1>
