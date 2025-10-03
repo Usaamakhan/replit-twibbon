@@ -491,13 +491,16 @@ export const getPublicCampaigns = async (limitCount = 10) => {
 };
 
 export const getUserCampaigns = async (userId, options = {}) => {
-  if (!userId) return [];
+  console.log('🔍 [getUserCampaigns] Starting - userId:', userId);
+  
+  if (!userId) {
+    console.warn('🔍 [getUserCampaigns] No userId provided');
+    return [];
+  }
   
   // Check if database is initialized
   if (!db) {
-    if (process.env.NODE_ENV === 'development') {
-      console.error('Database not initialized - cannot get user campaigns');
-    }
+    console.error('🔍 [getUserCampaigns] Database not initialized (Firebase disabled)');
     return [];
   }
   
@@ -507,6 +510,15 @@ export const getUserCampaigns = async (userId, options = {}) => {
     pageSize = 12,
     startAfterDoc = null
   } = options;
+  
+  console.log('🔍 [getUserCampaigns] Query params:', {
+    orderByField,
+    orderDirection,
+    pageSize,
+    collection: 'campaigns',
+    field: 'creatorId',
+    value: userId
+  });
   
   try {
     let q = query(
@@ -524,8 +536,17 @@ export const getUserCampaigns = async (userId, options = {}) => {
     const querySnapshot = await getDocs(q);
     const campaigns = [];
     
+    console.log('🔍 [getUserCampaigns] Query result - docs count:', querySnapshot.size);
+    
     querySnapshot.forEach((doc) => {
       const data = doc.data();
+      console.log('🔍 [getUserCampaigns] Document:', {
+        id: doc.id,
+        creatorId: data.creatorId,
+        title: data.title,
+        slug: data.slug
+      });
+      
       campaigns.push({ 
         id: doc.id,
         slug: data.slug,
@@ -539,12 +560,15 @@ export const getUserCampaigns = async (userId, options = {}) => {
       });
     });
     
+    console.log('🔍 [getUserCampaigns] Returning campaigns:', campaigns.length);
     return campaigns;
   } catch (error) {
-    // Return empty array on permissions error or any other error
-    if (process.env.NODE_ENV === 'development') {
-      console.error('Error fetching user campaigns:', error);
-    }
+    console.error('🔍 [getUserCampaigns] Error:', {
+      message: error.message,
+      code: error.code,
+      name: error.name,
+      stack: error.stack
+    });
     return [];
   }
 };

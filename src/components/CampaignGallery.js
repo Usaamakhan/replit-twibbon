@@ -7,6 +7,13 @@ import Image from 'next/image';
 export default function CampaignGallery({ campaigns, loading = false, isOwnProfile = false }) {
   const [imageLoading, setImageLoading] = useState({});
 
+  console.log('🔍 [CampaignGallery] Render:', {
+    campaignsCount: campaigns?.length || 0,
+    loading,
+    isOwnProfile,
+    campaigns
+  });
+
   if (loading) {
     return (
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">

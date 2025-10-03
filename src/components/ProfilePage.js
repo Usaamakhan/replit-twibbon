@@ -68,7 +68,20 @@ export default function ProfilePage({ isOwnProfile = false, username = null }) {
           
           // Load user's campaigns with safe defaults
           try {
+            console.log('🔍 [ProfilePage] Loading campaigns for user:', {
+              userId: profileUser.id,
+              username: profileUser.username,
+              isOwnProfile
+            });
+            
             const userCampaigns = await getUserCampaigns(profileUser.id);
+            
+            console.log('🔍 [ProfilePage] Campaigns loaded:', {
+              count: userCampaigns?.length || 0,
+              isArray: Array.isArray(userCampaigns),
+              campaigns: userCampaigns
+            });
+            
             if (Array.isArray(userCampaigns)) {
               setCampaigns(userCampaigns);
               
@@ -78,9 +91,13 @@ export default function ProfilePage({ isOwnProfile = false, username = null }) {
                 return sum + count;
               }, 0);
               
+              console.log('🔍 [ProfilePage] Total supports calculated:', totalSupports);
+              
               // Get campaigns count from stats or use campaigns length
               try {
                 const stats = await getUserStats(profileUser.id);
+                console.log('🔍 [ProfilePage] User stats:', stats);
+                
                 setUserStats({
                   supportsCount: totalSupports,
                   campaignsCount: stats?.campaignsCount || userCampaigns.length
@@ -93,11 +110,12 @@ export default function ProfilePage({ isOwnProfile = false, username = null }) {
                 });
               }
             } else {
+              console.warn('🔍 [ProfilePage] userCampaigns is not an array:', typeof userCampaigns);
               setCampaigns([]);
               setUserStats({ supportsCount: 0, campaignsCount: 0 });
             }
           } catch (campaignError) {
-            console.error('Error loading user campaigns:', campaignError);
+            console.error('🔍 [ProfilePage] Error loading user campaigns:', campaignError);
             setCampaigns([]);
             setUserStats({ supportsCount: 0, campaignsCount: 0 });
           }
