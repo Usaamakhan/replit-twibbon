@@ -4,7 +4,7 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useCampaignSession } from '../../../../../contexts/CampaignSessionContext';
 import { requirePhotoUpload } from '../../../../../utils/campaignRouteGuards';
-import { updatePreview, calculateFitAdjustments, composeImages } from '../../../../../utils/imageComposition';
+import { loadImage, composeImages } from '../../../../../utils/imageComposition';
 import LoadingSpinner from '../../../../../components/LoadingSpinner';
 
 export default function CampaignAdjustPage() {
@@ -13,39 +13,43 @@ export default function CampaignAdjustPage() {
   const slug = params.slug;
   const campaignSession = useCampaignSession();
 
-  // State
   const [session, setSession] = useState(null);
   const [campaign, setCampaign] = useState(null);
   const [userPhoto, setUserPhoto] = useState(null);
   const [loading, setLoading] = useState(true);
   const [adjustments, setAdjustments] = useState({ scale: 1.0, x: 0, y: 0, rotation: 0 });
-  const [isDragging, setIsDragging] = useState(false);
-  const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
   const [downloading, setDownloading] = useState(false);
   const [error, setError] = useState('');
 
   const canvasRef = useRef(null);
-  const updateTimeoutRef = useRef(null);
+  const offscreenCanvasRef = useRef(null);
+  const userPhotoImgRef = useRef(null);
+  const campaignImgRef = useRef(null);
+  const rafRef = useRef(null);
+  
+  const pointersRef = useRef(new Map());
+  const isDraggingRef = useRef(false);
+  const dragStartRef = useRef({ x: 0, y: 0 });
+  const lastPinchDistanceRef = useRef(null);
+  const lastRotationAngleRef = useRef(null);
+  const isRotatingRef = useRef(false);
+  const rotationStartRef = useRef(0);
 
-  // Load session and check route guard
   useEffect(() => {
     const loadSession = async () => {
       const currentSession = campaignSession.getSession(slug);
       
-      // Route guard: check if photo uploaded
       if (!requirePhotoUpload(currentSession, router, slug)) {
-        return; // Will redirect
+        return;
       }
       
       setSession(currentSession);
       setCampaign(currentSession.campaignData);
       
-      // Load adjustments from session or use defaults
       if (currentSession.adjustments) {
         setAdjustments(currentSession.adjustments);
       }
       
-      // Recreate File object from stored data
       if (currentSession.userPhotoPreview) {
         try {
           const response = await fetch(currentSession.userPhotoPreview);
@@ -66,70 +70,114 @@ export default function CampaignAdjustPage() {
     loadSession();
   }, [slug, router]);
 
-  // Initialize canvas with campaign image
   useEffect(() => {
     if (!campaign || !canvasRef.current) return;
     
-    const initializeCanvas = async () => {
-      const img = new Image();
-      img.crossOrigin = 'anonymous';
-      img.onload = () => {
+    const initCanvas = async () => {
+      try {
+        const img = await loadImage(campaign.imageUrl);
+        campaignImgRef.current = img;
+        
         const canvas = canvasRef.current;
         canvas.width = img.width;
         canvas.height = img.height;
-        const ctx = canvas.getContext('2d');
-        ctx.drawImage(img, 0, 0);
-      };
-      img.src = campaign.imageUrl;
+        
+        const offscreen = document.createElement('canvas');
+        offscreen.width = img.width;
+        offscreen.height = img.height;
+        offscreenCanvasRef.current = offscreen;
+      } catch (error) {
+        console.error('Error initializing canvas:', error);
+      }
     };
     
-    initializeCanvas();
+    initCanvas();
   }, [campaign]);
 
-  // Debounced canvas update to prevent flickering
-  const updateCanvas = useCallback(() => {
-    if (!userPhoto || !campaign || !canvasRef.current) return;
-    
-    // Clear any pending updates
-    if (updateTimeoutRef.current) {
-      cancelAnimationFrame(updateTimeoutRef.current);
-    }
-    
-    // Use requestAnimationFrame for smooth updates
-    updateTimeoutRef.current = requestAnimationFrame(async () => {
-      try {
-        await updatePreview(
-          canvasRef.current,
-          userPhoto,
-          campaign.imageUrl,
-          adjustments,
-          campaign.type
-        );
-      } catch (error) {
-        console.error('Error updating preview:', error);
-      }
-    });
-  }, [userPhoto, campaign, adjustments]);
-
-  // Update preview when adjustments change
   useEffect(() => {
-    updateCanvas();
+    if (!userPhoto) return;
     
-    // Cleanup
-    return () => {
-      if (updateTimeoutRef.current) {
-        cancelAnimationFrame(updateTimeoutRef.current);
+    const loadUserImage = async () => {
+      try {
+        const img = await loadImage(userPhoto);
+        userPhotoImgRef.current = img;
+      } catch (error) {
+        console.error('Error loading user photo:', error);
       }
     };
-  }, [updateCanvas]);
+    
+    loadUserImage();
+  }, [userPhoto]);
 
-  // Save adjustments to session whenever they change
+  const renderPreview = useCallback(() => {
+    if (!offscreenCanvasRef.current || !canvasRef.current || !userPhotoImgRef.current || !campaignImgRef.current) {
+      return;
+    }
+
+    const offscreen = offscreenCanvasRef.current;
+    const display = canvasRef.current;
+    const ctx = offscreen.getContext('2d', { alpha: true });
+    
+    if (!ctx) return;
+
+    ctx.clearRect(0, 0, offscreen.width, offscreen.height);
+
+    const { scale, x, y, rotation } = adjustments;
+    const userImg = userPhotoImgRef.current;
+    const campaignImg = campaignImgRef.current;
+
+    ctx.save();
+    const centerX = offscreen.width / 2;
+    const centerY = offscreen.height / 2;
+    
+    ctx.translate(centerX + x, centerY + y);
+    ctx.rotate((rotation * Math.PI) / 180);
+    
+    const scaledWidth = userImg.width * scale;
+    const scaledHeight = userImg.height * scale;
+    
+    if (campaign.type === 'frame') {
+      ctx.drawImage(userImg, -scaledWidth / 2, -scaledHeight / 2, scaledWidth, scaledHeight);
+      ctx.restore();
+      ctx.drawImage(campaignImg, 0, 0, offscreen.width, offscreen.height);
+    } else {
+      ctx.restore();
+      ctx.drawImage(campaignImg, 0, 0, offscreen.width, offscreen.height);
+      ctx.save();
+      ctx.translate(centerX + x, centerY + y);
+      ctx.rotate((rotation * Math.PI) / 180);
+      ctx.drawImage(userImg, -scaledWidth / 2, -scaledHeight / 2, scaledWidth, scaledHeight);
+      ctx.restore();
+    }
+
+    const displayCtx = display.getContext('2d', { alpha: true });
+    if (displayCtx) {
+      displayCtx.clearRect(0, 0, display.width, display.height);
+      displayCtx.drawImage(offscreen, 0, 0);
+    }
+  }, [adjustments, campaign]);
+
+  useEffect(() => {
+    if (rafRef.current) {
+      cancelAnimationFrame(rafRef.current);
+    }
+
+    rafRef.current = requestAnimationFrame(() => {
+      renderPreview();
+    });
+
+    return () => {
+      if (rafRef.current) {
+        cancelAnimationFrame(rafRef.current);
+      }
+    };
+  }, [renderPreview]);
+
   useEffect(() => {
     if (!slug || !session) return;
     campaignSession.setAdjustments(slug, adjustments);
   }, [adjustments, slug, session]);
 
-  // Mouse wheel zoom
   const handleWheel = useCallback((e) => {
     if (!userPhoto) return;
     e.preventDefault();
@@ -141,102 +189,140 @@ export default function CampaignAdjustPage() {
     }));
   }, [userPhoto]);
 
-  // Zoom controls
-  const handleZoomIn = () => {
-    setAdjustments(prev => ({
-      ...prev,
-      scale: Math.min(10, prev.scale + 0.2)
-    }));
+  const getPointerDistance = (p1, p2) => {
+    const dx = p2.clientX - p1.clientX;
+    const dy = p2.clientY - p1.clientY;
+    return Math.sqrt(dx * dx + dy * dy);
   };
 
-  const handleZoomOut = () => {
-    setAdjustments(prev => ({
-      ...prev,
-      scale: Math.max(0.1, prev.scale - 0.2)
-    }));
+  const getPointerAngle = (p1, p2) => {
+    const dx = p2.clientX - p1.clientX;
+    const dy = p2.clientY - p1.clientY;
+    return Math.atan2(dy, dx) * (180 / Math.PI);
   };
 
-  // Rotation controls
-  const handleRotateLeft = () => {
-    setAdjustments(prev => ({
-      ...prev,
-      rotation: (prev.rotation - 15) % 360
-    }));
+  const handlePointerDown = (e) => {
+    if (!userPhoto) return;
+    e.preventDefault();
+    
+    pointersRef.current.set(e.pointerId, {
+      clientX: e.clientX,
+      clientY: e.clientY,
+      button: e.button
+    });
+
+    if (pointersRef.current.size === 2) {
+      const pointers = Array.from(pointersRef.current.values());
+      lastPinchDistanceRef.current = getPointerDistance(pointers[0], pointers[1]);
+      lastRotationAngleRef.current = getPointerAngle(pointers[0], pointers[1]);
+      isDraggingRef.current = false;
+    } else if (pointersRef.current.size === 1) {
+      if (e.button === 2 || e.shiftKey) {
+        isRotatingRef.current = true;
+        rotationStartRef.current = e.clientX;
+      } else {
+        isDraggingRef.current = true;
+        dragStartRef.current = { x: e.clientX - adjustments.x, y: e.clientY - adjustments.y };
+      }
+    }
   };
 
-  const handleRotateRight = () => {
-    setAdjustments(prev => ({
-      ...prev,
-      rotation: (prev.rotation + 15) % 360
-    }));
+  const handlePointerMove = (e) => {
+    e.preventDefault();
+    
+    if (!pointersRef.current.has(e.pointerId)) return;
+    
+    pointersRef.current.set(e.pointerId, {
+      clientX: e.clientX,
+      clientY: e.clientY,
+      button: e.button
+    });
+
+    if (pointersRef.current.size === 2) {
+      const pointers = Array.from(pointersRef.current.values());
+      const currentDistance = getPointerDistance(pointers[0], pointers[1]);
+      const currentAngle = getPointerAngle(pointers[0], pointers[1]);
+
+      if (lastPinchDistanceRef.current !== null) {
+        const scaleDelta = (currentDistance - lastPinchDistanceRef.current) * 0.01;
+        setAdjustments(prev => ({
+          ...prev,
+          scale: Math.max(0.1, Math.min(10, prev.scale + scaleDelta))
+        }));
+      }
+
+      if (lastRotationAngleRef.current !== null) {
+        const angleDelta = currentAngle - lastRotationAngleRef.current;
+        setAdjustments(prev => ({
+          ...prev,
+          rotation: (prev.rotation + angleDelta) % 360
+        }));
+      }
+
+      lastPinchDistanceRef.current = currentDistance;
+      lastRotationAngleRef.current = currentAngle;
+      
+    } else if (pointersRef.current.size === 1) {
+      if (isRotatingRef.current) {
+        const deltaX = e.clientX - rotationStartRef.current;
+        const rotationDelta = deltaX * 0.5;
+        setAdjustments(prev => ({
+          ...prev,
+          rotation: (prev.rotation + rotationDelta) % 360
+        }));
+        rotationStartRef.current = e.clientX;
+      } else if (isDraggingRef.current) {
+        const newX = e.clientX - dragStartRef.current.x;
+        const newY = e.clientY - dragStartRef.current.y;
+        setAdjustments(prev => ({ ...prev, x: newX, y: newY }));
+      }
+    }
   };
 
-  // Zoom control via slider
+  const handlePointerUp = (e) => {
+    pointersRef.current.delete(e.pointerId);
+    
+    if (pointersRef.current.size < 2) {
+      lastPinchDistanceRef.current = null;
+      lastRotationAngleRef.current = null;
+    }
+    
+    if (pointersRef.current.size === 0) {
+      isDraggingRef.current = false;
+      isRotatingRef.current = false;
+    }
+  };
+
   const handleZoomChange = (e) => {
     const scale = parseFloat(e.target.value);
     setAdjustments(prev => ({ ...prev, scale }));
   };
 
-  // Rotation control via slider
   const handleRotationChange = (e) => {
     const rotation = parseInt(e.target.value);
     setAdjustments(prev => ({ ...prev, rotation }));
   };
 
-  // Fit photo button
   const handleFitPhoto = async () => {
-    if (!userPhoto || !canvasRef.current) return;
+    if (!userPhotoImgRef.current || !canvasRef.current) return;
     
-    try {
-      const fitAdjustments = await calculateFitAdjustments(
-        userPhoto,
-        canvasRef.current.width,
-        canvasRef.current.height
-      );
-      setAdjustments({ ...fitAdjustments, rotation: adjustments.rotation });
-    } catch (error) {
-      console.error('Error fitting photo:', error);
-    }
+    const img = userPhotoImgRef.current;
+    const canvas = canvasRef.current;
+    const scaleX = canvas.width / img.width;
+    const scaleY = canvas.height / img.height;
+    const scale = Math.min(scaleX, scaleY);
+    
+    setAdjustments({ scale, x: 0, y: 0, rotation: adjustments.rotation });
   };
 
-  // Reset adjustments
   const handleResetAdjustments = () => {
     setAdjustments({ scale: 1.0, x: 0, y: 0, rotation: 0 });
   };
 
-  // Drag handlers (unified pointer events)
-  const handlePointerDown = (e) => {
-    if (!userPhoto) return;
-    e.preventDefault();
-    setIsDragging(true);
-    const clientX = e.clientX || 0;
-    const clientY = e.clientY || 0;
-    setDragStart({ x: clientX - adjustments.x, y: clientY - adjustments.y });
-  };
-
-  const handlePointerMove = (e) => {
-    if (!isDragging) return;
-    e.preventDefault();
-    const clientX = e.clientX || 0;
-    const clientY = e.clientY || 0;
-    const newX = clientX - dragStart.x;
-    const newY = clientY - dragStart.y;
-    setAdjustments(prev => ({ ...prev, x: newX, y: newY }));
-  };
-
-  const handlePointerUp = (e) => {
-    if (isDragging) {
-      e.preventDefault();
-    }
-    setIsDragging(false);
-  };
-
-  // Change photo - go back to upload page
   const handleChangePhoto = () => {
     router.push(`/campaign/${slug}`);
   };
 
-  // Download and proceed to result page
   const handleDownload = async () => {
     if (!userPhoto || !campaign) return;
     
@@ -244,7 +330,6 @@ export default function CampaignAdjustPage() {
     setError('');
     
     try {
-      // Compose final image
       const { blob } = await composeImages(
         userPhoto,
         campaign.imageUrl,
@@ -252,7 +337,6 @@ export default function CampaignAdjustPage() {
         campaign.type
       );
       
-      // Create download
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
@@ -262,7 +346,6 @@ export default function CampaignAdjustPage() {
       document.body.removeChild(link);
       URL.revokeObjectURL(url);
       
-      // Track download via API
       try {
         await fetch('/api/campaigns/track-download', {
           method: 'POST',
@@ -273,10 +356,7 @@ export default function CampaignAdjustPage() {
         console.warn('Failed to track download:', trackError);
       }
       
-      // Mark as downloaded in session
       campaignSession.markDownloaded(slug);
-      
-      // Redirect to result page
       router.push(`/campaign/${slug}/result`);
     } catch (error) {
       console.error('Error downloading image:', error);
@@ -307,33 +387,30 @@ export default function CampaignAdjustPage() {
         <div className="flex-1 w-full flex flex-col py-8 px-4 sm:px-6 lg:px-8 pt-20">
           <div className="mx-auto w-full max-w-5xl">
             
-            {/* Header */}
-            <div className="text-center mb-8 bg-yellow-400 px-6 py-6 rounded-t-xl">
+            <div className="text-center mb-6 bg-yellow-400 px-6 py-5 rounded-t-xl">
               <div className="mb-2">
                 <span className="inline-block bg-gray-900 text-white px-4 py-1 rounded-full text-sm font-semibold">
                   Step 2 of 3
                 </span>
               </div>
-              <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">Adjust Your Photo</h1>
-              <p className="text-sm sm:text-base text-gray-800">
-                Drag, zoom, and rotate to fit perfectly
+              <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-1">Adjust Your Photo</h1>
+              <p className="text-sm text-gray-800">
+                Drag to move • Scroll to zoom • Two fingers to rotate
               </p>
             </div>
             
-            {/* Content Card */}
-            <div className="bg-white rounded-b-xl border border-t-0 border-gray-200 px-4 sm:px-6 py-6 shadow-sm">
+            <div className="bg-white rounded-b-xl border border-t-0 border-gray-200 shadow-sm">
               
               {error && (
-                <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg text-red-600 text-sm text-center">
+                <div className="mx-4 mt-4 p-4 bg-red-50 border border-red-200 rounded-lg text-red-600 text-sm text-center">
                   {error}
                 </div>
               )}
 
-              <div className="space-y-6">
+              <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1.1fr)_minmax(320px,0.9fr)] gap-6 p-4 sm:p-6">
                 
-                {/* Canvas Preview with Controls */}
-                <div>
-                  <h2 className="text-lg font-bold text-gray-900 mb-3">Preview</h2>
+                <div className="space-y-3">
+                  <h2 className="text-lg font-bold text-gray-900">Preview</h2>
                   
                   <div className="relative">
                     <canvas
@@ -343,7 +420,6 @@ export default function CampaignAdjustPage() {
                         touchAction: 'none',
                         userSelect: 'none',
                         WebkitUserSelect: 'none',
-                        msUserSelect: 'none',
                         maxHeight: '500px',
                         objectFit: 'contain'
                       }}
@@ -353,133 +429,102 @@ export default function CampaignAdjustPage() {
                       onPointerCancel={handlePointerUp}
                       onPointerLeave={handlePointerUp}
                       onWheel={handleWheel}
+                      onContextMenu={(e) => e.preventDefault()}
                     />
+                  </div>
+
+                  <p className="text-xs text-gray-600 text-center">
+                    <strong>Desktop:</strong> Drag to move • Scroll to zoom • Right-click drag to rotate<br />
+                    <strong>Touch:</strong> Drag to move • Pinch to zoom • Two fingers to rotate
+                  </p>
+                </div>
+
+                <div className="space-y-5">
+                  
+                  <div>
+                    <h2 className="text-lg font-bold text-gray-900 mb-3">Transform</h2>
                     
-                    {/* Overlay Controls */}
-                    <div className="absolute top-3 right-3 flex flex-col gap-2">
-                      {/* Zoom Controls */}
+                    <div className="space-y-4">
+                      <div>
+                        <div className="flex items-center justify-between mb-2">
+                          <label className="text-sm font-medium text-gray-700">
+                            Zoom
+                          </label>
+                          <span className="text-sm text-gray-600">{adjustments.scale.toFixed(1)}x</span>
+                        </div>
+                        <input
+                          type="range"
+                          min="0.1"
+                          max="10"
+                          step="0.1"
+                          value={adjustments.scale}
+                          onChange={handleZoomChange}
+                          className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-emerald-500"
+                        />
+                      </div>
+
+                      <div>
+                        <div className="flex items-center justify-between mb-2">
+                          <label className="text-sm font-medium text-gray-700">
+                            Rotation
+                          </label>
+                          <span className="text-sm text-gray-600">{adjustments.rotation}°</span>
+                        </div>
+                        <input
+                          type="range"
+                          min="-180"
+                          max="180"
+                          step="1"
+                          value={adjustments.rotation}
+                          onChange={handleRotationChange}
+                          className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-emerald-500"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div>
+                    <h2 className="text-lg font-bold text-gray-900 mb-3">Quick Actions</h2>
+                    <div className="grid grid-cols-2 gap-3">
                       <button
-                        onClick={handleZoomIn}
-                        className="w-10 h-10 bg-white border-2 border-gray-300 rounded-lg flex items-center justify-center hover:bg-gray-50 transition-colors shadow-md"
-                        title="Zoom In"
+                        onClick={handleFitPhoto}
+                        className="btn-base btn-secondary py-2 text-sm font-medium"
                       >
-                        <svg className="w-5 h-5 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                        </svg>
+                        Fit to Frame
                       </button>
                       <button
-                        onClick={handleZoomOut}
-                        className="w-10 h-10 bg-white border-2 border-gray-300 rounded-lg flex items-center justify-center hover:bg-gray-50 transition-colors shadow-md"
-                        title="Zoom Out"
+                        onClick={handleResetAdjustments}
+                        className="btn-base bg-gray-500 hover:bg-gray-600 text-white py-2 text-sm font-medium"
                       >
-                        <svg className="w-5 h-5 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 12H4" />
-                        </svg>
-                      </button>
-                      
-                      {/* Rotation Controls */}
-                      <button
-                        onClick={handleRotateLeft}
-                        className="w-10 h-10 bg-white border-2 border-gray-300 rounded-lg flex items-center justify-center hover:bg-gray-50 transition-colors shadow-md"
-                        title="Rotate Left"
-                      >
-                        <svg className="w-5 h-5 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
-                        </svg>
-                      </button>
-                      <button
-                        onClick={handleRotateRight}
-                        className="w-10 h-10 bg-white border-2 border-gray-300 rounded-lg flex items-center justify-center hover:bg-gray-50 transition-colors shadow-md"
-                        title="Rotate Right"
-                      >
-                        <svg className="w-5 h-5 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 10H11a8 8 0 00-8 8v2m18-10l-6 6m6-6l-6-6" />
-                        </svg>
+                        Reset All
                       </button>
                     </div>
                   </div>
 
-                  <p className="text-xs text-gray-600 mt-3 text-center">
-                    <strong>Tip:</strong> Drag to move • Scroll to zoom • Use buttons to rotate
-                  </p>
-                </div>
+                  <button
+                    onClick={handleChangePhoto}
+                    className="btn-base bg-gray-200 hover:bg-gray-300 text-gray-700 w-full py-2 text-sm font-medium"
+                  >
+                    Change Photo
+                  </button>
 
-                {/* Adjustment Sliders */}
-                <div className="space-y-4">
-                  
-                  {/* Zoom Slider */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Zoom: {adjustments.scale.toFixed(1)}x
-                    </label>
-                    <input
-                      type="range"
-                      min="0.1"
-                      max="10"
-                      step="0.1"
-                      value={adjustments.scale}
-                      onChange={handleZoomChange}
-                      className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-emerald-500"
-                    />
+                  <div className="pt-3 border-t border-gray-200">
+                    <button
+                      onClick={handleDownload}
+                      disabled={downloading}
+                      className={`btn-base w-full py-4 font-bold text-lg transition-colors ${
+                        downloading
+                          ? 'btn-primary opacity-70 cursor-wait'
+                          : 'btn-primary'
+                      }`}
+                    >
+                      {downloading ? 'Downloading...' : 'Download Image'}
+                    </button>
+                    
+                    <p className="text-xs text-gray-600 mt-2 text-center">
+                      High-quality PNG • Preserves transparency
+                    </p>
                   </div>
-
-                  {/* Rotation Slider */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Rotation: {adjustments.rotation}°
-                    </label>
-                    <input
-                      type="range"
-                      min="-180"
-                      max="180"
-                      step="1"
-                      value={adjustments.rotation}
-                      onChange={handleRotationChange}
-                      className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-emerald-500"
-                    />
-                  </div>
-                </div>
-
-                {/* Action Buttons */}
-                <div className="grid grid-cols-2 gap-3">
-                  <button
-                    onClick={handleFitPhoto}
-                    className="btn-base btn-secondary py-2 text-sm font-medium"
-                  >
-                    Fit to Frame
-                  </button>
-                  <button
-                    onClick={handleResetAdjustments}
-                    className="btn-base bg-gray-500 hover:bg-gray-600 text-white py-2 text-sm font-medium"
-                  >
-                    Reset All
-                  </button>
-                </div>
-
-                <button
-                  onClick={handleChangePhoto}
-                  className="btn-base bg-gray-200 hover:bg-gray-300 text-gray-700 w-full py-2 text-sm font-medium"
-                >
-                  Change Photo
-                </button>
-
-                {/* Download Button */}
-                <div className="pt-4 border-t border-gray-200">
-                  <button
-                    onClick={handleDownload}
-                    disabled={downloading}
-                    className={`btn-base w-full py-4 font-bold text-lg transition-colors ${
-                      downloading
-                        ? 'btn-primary opacity-70 cursor-wait'
-                        : 'btn-primary'
-                    }`}
-                  >
-                    {downloading ? 'Downloading...' : 'Download Image'}
-                  </button>
-                  
-                  <p className="text-xs text-gray-600 mt-2 text-center">
-                    High-quality PNG • Preserves transparency
-                  </p>
                 </div>
               </div>
             </div>

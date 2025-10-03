@@ -153,115 +153,115 @@ export default function CampaignResultPage() {
         <div className="flex-1 w-full flex flex-col py-8 px-4 sm:px-6 lg:px-8 pt-20">
           <div className="mx-auto w-full max-w-5xl">
             
-            {/* Header */}
-            <div className="text-center mb-8 bg-yellow-400 px-6 py-6 rounded-t-xl">
+            <div className="text-center mb-6 bg-yellow-400 px-6 py-5 rounded-t-xl">
               <div className="mb-2">
                 <span className="inline-block bg-emerald-500 text-white px-4 py-1 rounded-full text-sm font-semibold">
                   ✓ Complete
                 </span>
               </div>
-              <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">
+              <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-1">
                 Your {campaign.type === 'frame' ? 'Frame' : 'Background'} is Ready!
               </h1>
-              <p className="text-sm sm:text-base text-gray-800">
+              <p className="text-sm text-gray-800">
                 Download complete! Share your creation with the world.
               </p>
             </div>
             
-            {/* Content Card */}
-            <div className="bg-white rounded-b-xl border border-t-0 border-gray-200 px-4 sm:px-6 py-6 shadow-sm">
+            <div className="bg-white rounded-b-xl border border-t-0 border-gray-200 shadow-sm">
               
-              {/* Result Image */}
-              <div className="mb-6">
-                <h2 className="text-lg font-bold text-gray-900 mb-3 text-center">Your Final Image</h2>
-                {composedImageUrl && (
-                  <div className="relative">
-                    <img
-                      src={composedImageUrl}
-                      alt="Your final result"
-                      className="w-full h-auto rounded-lg border-2 border-gray-300"
-                      style={{ maxHeight: '500px', objectFit: 'contain' }}
-                    />
-                  </div>
-                )}
-              </div>
-
-              {/* Download Again Button */}
-              <div className="mb-6">
-                <button
-                  onClick={handleRedownload}
-                  disabled={redownloading}
-                  className={`btn-base btn-secondary w-full py-3 font-medium ${
-                    redownloading ? 'opacity-70 cursor-wait' : ''
-                  }`}
-                >
-                  {redownloading ? 'Downloading...' : 'Download Again'}
-                </button>
-              </div>
-
-              {/* Share Section */}
-              <div className="mb-6 border-t border-gray-200 pt-6">
-                <h3 className="text-lg font-bold text-gray-900 mb-3 text-center">Share Your Creation</h3>
-                <div className="grid grid-cols-3 gap-3">
-                  <button
-                    onClick={() => handleShare('twitter')}
-                    className="btn-base bg-blue-400 hover:bg-blue-500 text-white py-3 text-sm font-medium"
-                  >
-                    Twitter
-                  </button>
-                  <button
-                    onClick={() => handleShare('facebook')}
-                    className="btn-base bg-blue-600 hover:bg-blue-700 text-white py-3 text-sm font-medium"
-                  >
-                    Facebook
-                  </button>
-                  <button
-                    onClick={() => handleShare('whatsapp')}
-                    className="btn-base bg-green-500 hover:bg-green-600 text-white py-3 text-sm font-medium"
-                  >
-                    WhatsApp
-                  </button>
-                </div>
-              </div>
-
-              {/* Campaign Info */}
-              {creator && (
-                <div className="mb-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
-                  <p className="text-sm text-gray-600 text-center mb-2">Campaign by</p>
-                  <div className="flex items-center justify-center gap-3">
-                    {creator.profileImage && (
+              <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1.1fr)_minmax(320px,0.9fr)] gap-6 p-4 sm:p-6">
+                
+                <div className="space-y-3">
+                  <h2 className="text-lg font-bold text-gray-900">Your Final Image</h2>
+                  {composedImageUrl && (
+                    <div className="relative">
                       <img
-                        src={creator.profileImage}
-                        alt={creator.displayName}
-                        className="w-10 h-10 rounded-full border-2 border-gray-300"
+                        src={composedImageUrl}
+                        alt="Your final result"
+                        className="w-full h-auto rounded-lg border-2 border-gray-300"
+                        style={{ maxHeight: '500px', objectFit: 'contain' }}
                       />
-                    )}
-                    <div className="text-left">
+                    </div>
+                  )}
+                </div>
+
+                <div className="space-y-5">
+                  
+                  <div>
+                    <h2 className="text-lg font-bold text-gray-900 mb-3">Actions</h2>
+                    <button
+                      onClick={handleRedownload}
+                      disabled={redownloading}
+                      className={`btn-base btn-secondary w-full py-3 font-medium ${
+                        redownloading ? 'opacity-70 cursor-wait' : ''
+                      }`}
+                    >
+                      {redownloading ? 'Downloading...' : 'Download Again'}
+                    </button>
+                  </div>
+
+                  <div>
+                    <h3 className="text-lg font-bold text-gray-900 mb-3">Share Your Creation</h3>
+                    <div className="grid grid-cols-3 gap-3">
                       <button
-                        onClick={() => router.push(`/u/${creator.username}`)}
-                        className="font-semibold text-gray-900 hover:underline text-sm"
+                        onClick={() => handleShare('twitter')}
+                        className="btn-base bg-blue-400 hover:bg-blue-500 text-white py-3 text-sm font-medium"
                       >
-                        {creator.displayName || creator.username}
+                        Twitter
                       </button>
-                      <p className="text-xs text-gray-600">
-                        {campaign.supportersCount || 0} {campaign.supportersCount === 1 ? 'support' : 'supports'}
-                      </p>
+                      <button
+                        onClick={() => handleShare('facebook')}
+                        className="btn-base bg-blue-600 hover:bg-blue-700 text-white py-3 text-sm font-medium"
+                      >
+                        Facebook
+                      </button>
+                      <button
+                        onClick={() => handleShare('whatsapp')}
+                        className="btn-base bg-green-500 hover:bg-green-600 text-white py-3 text-sm font-medium"
+                      >
+                        WhatsApp
+                      </button>
                     </div>
                   </div>
-                </div>
-              )}
 
-              {/* Start Over Button */}
-              <div className="border-t border-gray-200 pt-6">
-                <button
-                  onClick={handleStartOver}
-                  className="btn-base bg-gray-600 hover:bg-gray-700 text-white w-full py-3 font-medium"
-                >
-                  Create Another One
-                </button>
-                <p className="text-xs text-gray-500 mt-2 text-center">
-                  Start over with a new photo
-                </p>
+                  {creator && (
+                    <div className="p-4 bg-gray-50 rounded-lg border border-gray-200">
+                      <p className="text-sm text-gray-600 text-center mb-2">Campaign by</p>
+                      <div className="flex items-center justify-center gap-3">
+                        {creator.profileImage && (
+                          <img
+                            src={creator.profileImage}
+                            alt={creator.displayName}
+                            className="w-10 h-10 rounded-full border-2 border-gray-300"
+                          />
+                        )}
+                        <div className="text-left">
+                          <button
+                            onClick={() => router.push(`/u/${creator.username}`)}
+                            className="font-semibold text-gray-900 hover:underline text-sm"
+                          >
+                            {creator.displayName || creator.username}
+                          </button>
+                          <p className="text-xs text-gray-600">
+                            {campaign.supportersCount || 0} {campaign.supportersCount === 1 ? 'support' : 'supports'}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="pt-3 border-t border-gray-200">
+                    <button
+                      onClick={handleStartOver}
+                      className="btn-base bg-gray-600 hover:bg-gray-700 text-white w-full py-3 font-medium"
+                    >
+                      Create Another One
+                    </button>
+                    <p className="text-xs text-gray-500 mt-2 text-center">
+                      Start over with a new photo
+                    </p>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
