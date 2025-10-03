@@ -5,6 +5,7 @@ import ErrorBoundary from "../components/ErrorBoundary";
 import TimeoutWrapper from "../components/TimeoutWrapper";
 import AuthenticatedLayout from "../components/AuthenticatedLayout";
 import AuthGate from "../components/AuthGate";
+import { CampaignSessionProvider } from "../contexts/CampaignSessionContext";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -31,11 +32,13 @@ export default function RootLayout({ children }) {
         <ErrorBoundary>
           <TimeoutWrapper timeout={15000}>
             <ClientAuthProvider>
-              <AuthenticatedLayout>
-                <AuthGate>
-                  {children}
-                </AuthGate>
-              </AuthenticatedLayout>
+              <CampaignSessionProvider>
+                <AuthenticatedLayout>
+                  <AuthGate>
+                    {children}
+                  </AuthGate>
+                </AuthenticatedLayout>
+              </CampaignSessionProvider>
             </ClientAuthProvider>
           </TimeoutWrapper>
         </ErrorBoundary>
