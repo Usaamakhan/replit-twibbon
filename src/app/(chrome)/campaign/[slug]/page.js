@@ -61,7 +61,7 @@ export default function CampaignUploadPage() {
     };
     
     fetchCampaign();
-  }, [slug, campaignSession]);
+  }, [slug]);
 
   // Handle photo selection
   const handlePhotoSelect = async (e) => {
