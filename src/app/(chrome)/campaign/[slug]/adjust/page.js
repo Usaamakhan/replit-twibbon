@@ -31,6 +31,7 @@ export default function CampaignAdjustPage() {
   const userPhotoImgRef = useRef(null);
   const campaignImgRef = useRef(null);
   const rafRef = useRef(null);
+  const canvasInitializedRef = useRef(false);
   
   const pointersRef = useRef(new Map());
   const isDraggingRef = useRef(false);
@@ -75,47 +76,53 @@ export default function CampaignAdjustPage() {
     loadSession();
   }, [slug, router]);
 
-  useEffect(() => {
-    if (!campaign || !canvasRef.current) {
-      console.log('[DEBUG] Campaign canvas init skipped:', { campaign: !!campaign, canvasRef: !!canvasRef.current });
+  const initializeCanvas = useCallback(async () => {
+    if (!campaign || !canvasRef.current || canvasInitializedRef.current) {
+      console.log('[DEBUG] Canvas init check:', { 
+        campaign: !!campaign, 
+        canvasRef: !!canvasRef.current,
+        alreadyInitialized: canvasInitializedRef.current
+      });
       return;
     }
     
     console.log('[DEBUG] Starting campaign image load:', campaign.imageUrl);
     
-    const initCanvas = async () => {
-      try {
-        const img = await loadImage(campaign.imageUrl);
-        campaignImgRef.current = img;
-        
-        console.log('[DEBUG] Campaign image loaded:', { width: img.width, height: img.height });
-        
-        const canvas = canvasRef.current;
-        canvas.width = img.width;
-        canvas.height = img.height;
-        
-        const offscreen = document.createElement('canvas');
-        offscreen.width = img.width;
-        offscreen.height = img.height;
-        offscreenCanvasRef.current = offscreen;
-        
-        console.log('[DEBUG] Canvas initialized:', { 
-          canvasWidth: canvas.width, 
-          canvasHeight: canvas.height,
-          hasUserPhoto: !!userPhotoImgRef.current 
-        });
-        
-        if (userPhotoImgRef.current) {
-          console.log('[DEBUG] Both images ready, setting imagesReady=true (from campaign loader)');
-          setImagesReady(true);
-        }
-      } catch (error) {
-        console.error('[DEBUG] Error initializing canvas:', error);
+    try {
+      const img = await loadImage(campaign.imageUrl);
+      campaignImgRef.current = img;
+      
+      console.log('[DEBUG] Campaign image loaded:', { width: img.width, height: img.height });
+      
+      const canvas = canvasRef.current;
+      canvas.width = img.width;
+      canvas.height = img.height;
+      
+      const offscreen = document.createElement('canvas');
+      offscreen.width = img.width;
+      offscreen.height = img.height;
+      offscreenCanvasRef.current = offscreen;
+      
+      canvasInitializedRef.current = true;
+      
+      console.log('[DEBUG] Canvas initialized:', { 
+        canvasWidth: canvas.width, 
+        canvasHeight: canvas.height,
+        hasUserPhoto: !!userPhotoImgRef.current 
+      });
+      
+      if (userPhotoImgRef.current) {
+        console.log('[DEBUG] Both images ready, setting imagesReady=true (from campaign loader)');
+        setImagesReady(true);
       }
-    };
-    
-    initCanvas();
+    } catch (error) {
+      console.error('[DEBUG] Error initializing canvas:', error);
+    }
   }, [campaign]);
+
+  useEffect(() => {
+    initializeCanvas();
+  }, [initializeCanvas]);
 
   useEffect(() => {
     if (!userPhoto) {
@@ -477,7 +484,13 @@ export default function CampaignAdjustPage() {
                   
                   <div className="relative bg-gray-100 rounded-lg border-2 border-gray-300">
                     <canvas
-                      ref={canvasRef}
+                      ref={(el) => {
+                        canvasRef.current = el;
+                        if (el && campaign) {
+                          console.log('[DEBUG] Canvas ref attached, triggering init');
+                          initializeCanvas();
+                        }
+                      }}
                       className="w-full h-auto cursor-move"
                       style={{
                         touchAction: 'none',
