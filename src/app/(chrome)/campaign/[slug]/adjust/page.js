@@ -20,6 +20,7 @@ export default function CampaignAdjustPage() {
   const [adjustments, setAdjustments] = useState({ scale: 1.0, x: 0, y: 0, rotation: 0 });
   const [downloading, setDownloading] = useState(false);
   const [error, setError] = useState('');
+  const [imagesReady, setImagesReady] = useState(false);
 
   const canvasRef = useRef(null);
   const offscreenCanvasRef = useRef(null);
@@ -86,6 +87,10 @@ export default function CampaignAdjustPage() {
         offscreen.width = img.width;
         offscreen.height = img.height;
         offscreenCanvasRef.current = offscreen;
+        
+        if (userPhotoImgRef.current) {
+          setImagesReady(true);
+        }
       } catch (error) {
         console.error('Error initializing canvas:', error);
       }
@@ -101,6 +106,10 @@ export default function CampaignAdjustPage() {
       try {
         const img = await loadImage(userPhoto);
         userPhotoImgRef.current = img;
+        
+        if (campaignImgRef.current && offscreenCanvasRef.current) {
+          setImagesReady(true);
+        }
       } catch (error) {
         console.error('Error loading user photo:', error);
       }
@@ -155,7 +164,7 @@ export default function CampaignAdjustPage() {
       displayCtx.clearRect(0, 0, display.width, display.height);
       displayCtx.drawImage(offscreen, 0, 0);
     }
-  }, [adjustments, campaign]);
+  }, [adjustments, campaign, imagesReady]);
 
   useEffect(() => {
     if (rafRef.current) {
