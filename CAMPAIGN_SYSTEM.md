@@ -803,6 +803,522 @@ export async function middleware(request) {
 
 ---
 
+## 3-Page Visitor Flow Architecture (October 2025)
+
+### Overview
+The campaign visitor experience has been redesigned as a 3-page funnel to increase ad impressions and improve user engagement. This matches industry best practices (Twibbonize, Twibbon) and provides better monetization opportunities.
+
+### Page Structure
+
+#### Page 1: Upload Page (`/campaign/[slug]`)
+**Purpose:** Campaign discovery and photo upload entry point
+
+**Features:**
+- Large campaign preview (frame or background)
+- Campaign information (title, description, creator)
+- Support count and gallery preview (6-9 recent supporter posts)
+- **Primary CTA:** "Choose Your Photo" button
+- Share campaign buttons (Twitter, Facebook, WhatsApp)
+- Report campaign button
+
+**User Flow:**
+1. Visitor lands on page → sees campaign preview
+2. Clicks "Choose Your Photo" → file picker opens
+3. Selects photo → stored in session
+4. **Auto-redirects to** `/campaign/[slug]/adjust`
+
+**Ad Placements:**
+- Hero ad slot (below campaign preview)
+- Sidebar ad (desktop only)
+
+**Styling:**
+- Yellow header (`bg-yellow-400`) with campaign title/description
+- White content cards with shadows
+- Global button classes (`btn-base btn-primary`)
+- Mobile-responsive grid layout
+
+---
+
+#### Page 2: Adjust Page (`/campaign/[slug]/adjust`)
+**Purpose:** Photo adjustment and composition
+
+**Features:**
+- Large canvas preview with composed image
+- Real-time photo + campaign composition
+- Adjustment controls:
+  - Zoom slider (0.5x - 3.0x)
+  - Drag to reposition (pointer events)
+  - "Fit to Frame" button
+  - "Reset" button
+- Photo management:
+  - "Change Photo" button
+  - "Remove Photo" button
+- **Primary CTA:** "Download" button
+- Progress indicator (Step 2 of 3)
+
+**Route Guard:**
+- Checks if photo exists in session
+- If no photo → Redirects to `/campaign/[slug]`
+
+**User Flow:**
+1. Page loads with photo from session
+2. User adjusts photo (zoom, position)
+3. Clicks "Download" → downloads composed image
+4. Download tracked in session + Firestore
+5. **Auto-redirects to** `/campaign/[slug]/result`
+
+**Canvas Optimization (Mobile):**
+- Pointer events (unified mouse/touch handling)
+- `touch-action: none` (prevents scroll during drag)
+- `user-select: none` (prevents text selection)
+- No blue highlight overlay on touch
+
+**Ad Placements:**
+- Sticky sidebar ad (visible during adjustments)
+
+**Styling:**
+- Consistent yellow header
+- White content cards
+- Canvas with proper touch handling
+
+---
+
+#### Page 3: Result Page (`/campaign/[slug]/result`)
+**Purpose:** Share and engagement
+
+**Features:**
+- Final composed image display (medium size)
+- Success message/animation
+- **Primary CTAs:**
+  - "Post to Twibbonize" button (share to public gallery)
+  - Social share buttons (Twitter, Facebook, WhatsApp)
+- **Secondary CTAs:**
+  - "Re-Download" button
+  - "Start Over" button (clear session + return to page 1)
+- Progress indicator (Step 3 of 3)
+
+**Route Guards:**
+- Checks if download completed in session
+- If not downloaded → Redirects to `/campaign/[slug]/adjust`
+- If no photo → Redirects to `/campaign/[slug]`
+
+**User Flow:**
+1. Page loads with final result
+2. User can share to social media
+3. User can post to public gallery (with caption)
+4. "Start Over" clears session → returns to page 1
+
+**Gallery Post Feature:**
+- Modal with caption input (optional)
+- Preview of image to be posted
+- Submit to Firestore `campaignSupports` collection
+- Upload image to Supabase storage
+- Increment campaign support count
+
+**Ad Placements:**
+- Interstitial ad (before page loads)
+- Footer ad (below share buttons)
+
+**Styling:**
+- Yellow header with success message
+- White content cards
+- Social share button grid
+
+---
+
+### State Management
+
+#### Campaign Session Context
+**File:** `src/contexts/CampaignSessionContext.js`
+
+**Purpose:** Share campaign state across all 3 pages
+
+**State Schema:**
+```javascript
+{
+  sessionId: string,              // Unique session identifier
+  campaignSlug: string,            // Current campaign slug
+  userPhoto: File | null,          // Uploaded photo object
+  userPhotoPreview: string,        // Base64 preview URL
+  adjustments: {                   // Canvas adjustments
+    scale: number,                 // Zoom level (0.5 - 3.0)
+    x: number,                     // X position offset
+    y: number                      // Y position offset
+  },
+  campaignData: {                  // Campaign information
+    id: string,
+    title: string,
+    imageUrl: string,
+    type: string,
+    // ... other campaign fields
+  },
+  creatorData: {                   // Creator information
+    username: string,
+    displayName: string,
+    profileImage: string,
+    // ... other creator fields
+  },
+  downloaded: boolean,             // Track download completion
+  timestamp: number                // Session creation time
+}
+```
+
+**Context Provider:**
+```javascript
+<CampaignSessionProvider>
+  <CampaignPages />
+</CampaignSessionProvider>
+```
+
+**Hooks:**
+- `useCampaignSession()` - Access/update session state
+- `clearCampaignSession()` - Clear all session data
+
+**Persistence:**
+- State saved to `sessionStorage` on every update
+- Auto-hydrates from sessionStorage on page reload
+- Expires after 24 hours (timestamp check)
+- Cleared on "Start Over" action
+
+---
+
+### Navigation & Route Guards
+
+#### Route Guard Utility
+**File:** `src/utils/campaignRouteGuards.js`
+
+**Functions:**
+
+```javascript
+// Check if photo uploaded, redirect if not
+export function requirePhotoUpload(session, router, slug) {
+  if (!session || !session.userPhoto) {
+    router.push(`/campaign/${slug}`);
+    return false;
+  }
+  return true;
+}
+
+// Check if downloaded, redirect if not
+export function requireDownloadComplete(session, router, slug) {
+  if (!session || !session.downloaded) {
+    if (session && session.userPhoto) {
+      router.push(`/campaign/${slug}/adjust`);
+    } else {
+      router.push(`/campaign/${slug}`);
+    }
+    return false;
+  }
+  return true;
+}
+
+// Check session expiry (24 hours)
+export function isSessionExpired(timestamp) {
+  const TWENTY_FOUR_HOURS = 24 * 60 * 60 * 1000;
+  return Date.now() - timestamp > TWENTY_FOUR_HOURS;
+}
+```
+
+**Usage in Pages:**
+```javascript
+// In /adjust page
+useEffect(() => {
+  const session = useCampaignSession();
+  if (!requirePhotoUpload(session, router, slug)) {
+    return; // Will redirect
+  }
+}, []);
+
+// In /result page
+useEffect(() => {
+  const session = useCampaignSession();
+  if (!requireDownloadComplete(session, router, slug)) {
+    return; // Will redirect
+  }
+}, []);
+```
+
+---
+
+### Navigation Flow Diagram
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                    Visitor Journey                           │
+└─────────────────────────────────────────────────────────────┘
+
+    Landing
+       │
+       ▼
+┌──────────────────┐
+│   Page 1: Upload │  ← Direct URL access
+│  /campaign/[slug]│
+└──────────────────┘
+       │
+       │ User uploads photo
+       │ Store in session
+       ▼
+┌──────────────────┐
+│  Page 2: Adjust  │  ← Redirect here after upload
+│    /adjust       │     Route guard: requires photo
+└──────────────────┘
+       │
+       │ User downloads image
+       │ Track in session
+       ▼
+┌──────────────────┐
+│  Page 3: Result  │  ← Redirect here after download
+│    /result       │     Route guard: requires download
+└──────────────────┘
+       │
+       ├─ Share to social ──┐
+       ├─ Post to gallery ──┤
+       └─ Start Over ────────┴──┐
+                                 │
+                                 ▼
+                         Clear session
+                         Return to Page 1
+```
+
+---
+
+### Ad Placement Strategy
+
+#### Page 1 (Upload)
+- **Hero Ad:** 728x90 banner below campaign preview
+- **Sidebar Ad:** 300x250 rectangle (desktop only)
+- **Total Impressions:** 1-2 per page view
+
+#### Page 2 (Adjust)
+- **Sticky Sidebar Ad:** 300x600 skyscraper (remains visible during scroll)
+- **Total Impressions:** 1 per page view
+
+#### Page 3 (Result)
+- **Interstitial Ad:** Full-page ad before result loads (3-5 second delay)
+- **Footer Ad:** 728x90 banner below share buttons
+- **Total Impressions:** 2 per page view
+
+**Expected Revenue Impact:**
+- Single-page flow: 1-2 ad impressions per campaign usage
+- 3-page flow: 4-6 ad impressions per campaign usage
+- **Increase: 3-4x more ad impressions** 💰
+
+---
+
+### Analytics Tracking
+
+#### Events to Track
+**File:** `src/utils/campaignAnalytics.js`
+
+```javascript
+// Page 1 events
+trackEvent('campaign_viewed', { campaignId, slug })
+
+// Page 1 → Page 2 transition
+trackEvent('photo_uploaded', { campaignId, photoSize })
+
+// Page 2 events
+trackEvent('photo_adjusted', { campaignId, adjustments })
+trackEvent('image_downloaded', { campaignId })
+
+// Page 2 → Page 3 transition
+trackEvent('result_viewed', { campaignId })
+
+// Page 3 events
+trackEvent('shared_to_social', { campaignId, platform })
+trackEvent('posted_to_gallery', { campaignId })
+trackEvent('started_over', { campaignId })
+```
+
+**Drop-off Analysis:**
+- Measure completion rate at each step
+- Identify friction points
+- A/B test improvements
+
+---
+
+### Session Management
+
+#### Storage Strategy
+**Browser:** sessionStorage (not localStorage)
+**Key:** `campaign_session_${campaignSlug}`
+**Lifecycle:** 
+- Created on photo upload (Page 1)
+- Updated on adjustments (Page 2)
+- Updated on download (Page 2)
+- Cleared on "Start Over" (Page 3)
+- Auto-expires after 24 hours
+
+**Why sessionStorage?**
+- ✅ Persists across page reloads
+- ✅ Cleared when tab/browser closes
+- ✅ Doesn't pollute localStorage
+- ✅ Suitable for temporary workflow state
+
+#### Data Persistence
+```javascript
+// Save to sessionStorage
+const saveSession = (session) => {
+  const key = `campaign_session_${session.campaignSlug}`;
+  sessionStorage.setItem(key, JSON.stringify(session));
+};
+
+// Load from sessionStorage
+const loadSession = (slug) => {
+  const key = `campaign_session_${slug}`;
+  const data = sessionStorage.getItem(key);
+  return data ? JSON.parse(data) : null;
+};
+
+// Clear session
+const clearSession = (slug) => {
+  const key = `campaign_session_${slug}`;
+  sessionStorage.removeItem(key);
+};
+```
+
+---
+
+### Mobile Optimization
+
+#### Touch Interaction Fixes (Page 2)
+**Problem:** Blue overlay appears when touching canvas on mobile
+
+**Solution:**
+```css
+/* Canvas element styles */
+.canvas-container {
+  touch-action: none;        /* Prevent default touch actions */
+  user-select: none;         /* Prevent text selection */
+  -webkit-user-select: none; /* Safari */
+  -ms-user-select: none;     /* IE/Edge */
+}
+```
+
+**JavaScript:**
+```javascript
+// Use pointer events (not mouse/touch)
+canvas.addEventListener('pointerdown', handleDragStart);
+canvas.addEventListener('pointermove', handleDragMove);
+canvas.addEventListener('pointerup', handleDragEnd);
+```
+
+**Benefits:**
+- ✅ No blue highlight on touch
+- ✅ Unified mouse/touch handling
+- ✅ Prevents accidental scrolling
+- ✅ Smooth drag experience
+
+---
+
+### Security Considerations
+
+#### Session Hijacking Prevention
+- Session ID is random UUID
+- No sensitive data in session (only file references)
+- Session expires after 24 hours
+- No cross-campaign session reuse
+
+#### File Upload Security
+- Same validations as single-page flow
+- 10MB file size limit
+- Type validation (PNG, JPG, WEBP)
+- Client-side validation before session storage
+
+#### Route Guard Bypass Prevention
+- Guards check session state on every page load
+- Automatic redirects for invalid states
+- No server-side session (stateless)
+
+---
+
+### Performance Considerations
+
+#### Page Load Times
+- **Target:** <2 seconds per page
+- **Optimization:** 
+  - Lazy load ad scripts
+  - Prefetch next page on current page
+  - Compress images before storage
+
+#### Canvas Rendering
+- Use native Canvas API (no libraries)
+- Debounce adjustment updates (100ms)
+- Optimize image dimensions (max 2000x2000)
+
+#### State Persistence
+- Throttle sessionStorage writes (500ms)
+- Store base64 preview (not full File object)
+- Clean up old sessions periodically
+
+---
+
+### Testing Strategy
+
+#### Manual Testing
+- [ ] Complete flow: Page 1 → 2 → 3
+- [ ] Direct URL access to /adjust (should redirect)
+- [ ] Direct URL access to /result (should redirect)
+- [ ] Page reload on each page (should preserve state)
+- [ ] Session expiry after 24h (should clear)
+- [ ] Browser back button (should work correctly)
+- [ ] Mobile touch interactions (no blue highlight)
+- [ ] Download tracking (increments supportersCount)
+- [ ] "Start Over" clears session
+
+#### Automated Testing (Future)
+- E2E tests with Playwright/Cypress
+- Unit tests for route guards
+- Integration tests for session management
+
+---
+
+### Migration Notes
+
+**From Single-Page to 3-Page Flow:**
+1. ✅ Single-page version kept as fallback
+2. ✅ Styling already updated (yellow header, white cards)
+3. 🔄 Split page into 3 separate route files
+4. 🔄 Extract shared logic to context
+5. 🔄 Add route guards and navigation
+6. 🔄 Add progress indicators
+7. 🔄 Prepare ad placeholder components
+
+**Backward Compatibility:**
+- Old `/campaign/[slug]` URLs still work (now Page 1)
+- No breaking changes to API routes
+- Campaign data schema unchanged
+
+---
+
+### Success Metrics & KPIs
+
+#### User Engagement
+- **Completion Rate:** % who reach Page 3
+- **Drop-off Rate:** % who leave at each step
+- **Time on Site:** Average session duration
+- **Return Rate:** % who "Start Over"
+
+#### Monetization
+- **Ad Impressions:** Total per campaign usage
+- **Ad Viewability:** % of ads actually seen
+- **Revenue Per Visit:** Average earnings
+- **Fill Rate:** % of ad slots filled
+
+#### Technical Performance
+- **Page Load Time:** <2s per page
+- **Session Persistence:** >95% success rate
+- **Error Rate:** <1% of sessions
+- **Canvas Performance:** 60fps rendering
+
+**Target Goals (Week 1):**
+- Completion rate: >70%
+- Ad impressions: 4+ per usage
+- Page load time: <2s
+- Error rate: <1%
+
+---
+
 ## Success Metrics
 - Campaign upload success rate
 - Transparency detection accuracy
@@ -811,3 +1327,6 @@ export async function middleware(request) {
 - Creator retention and activity
 - Gallery browsing patterns
 - Share button usage
+- **NEW:** 3-page flow completion rate
+- **NEW:** Ad impression count per campaign usage
+- **NEW:** Average time per page in visitor flow
