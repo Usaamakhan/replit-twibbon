@@ -22,6 +22,10 @@ export default function CampaignAdjustPage() {
   const [error, setError] = useState('');
   const [imagesReady, setImagesReady] = useState(false);
 
+  useEffect(() => {
+    console.log('[DEBUG] imagesReady state changed:', imagesReady);
+  }, [imagesReady]);
+
   const canvasRef = useRef(null);
   const offscreenCanvasRef = useRef(null);
   const userPhotoImgRef = useRef(null);
@@ -72,12 +76,19 @@ export default function CampaignAdjustPage() {
   }, [slug, router]);
 
   useEffect(() => {
-    if (!campaign || !canvasRef.current) return;
+    if (!campaign || !canvasRef.current) {
+      console.log('[DEBUG] Campaign canvas init skipped:', { campaign: !!campaign, canvasRef: !!canvasRef.current });
+      return;
+    }
+    
+    console.log('[DEBUG] Starting campaign image load:', campaign.imageUrl);
     
     const initCanvas = async () => {
       try {
         const img = await loadImage(campaign.imageUrl);
         campaignImgRef.current = img;
+        
+        console.log('[DEBUG] Campaign image loaded:', { width: img.width, height: img.height });
         
         const canvas = canvasRef.current;
         canvas.width = img.width;
@@ -88,11 +99,18 @@ export default function CampaignAdjustPage() {
         offscreen.height = img.height;
         offscreenCanvasRef.current = offscreen;
         
+        console.log('[DEBUG] Canvas initialized:', { 
+          canvasWidth: canvas.width, 
+          canvasHeight: canvas.height,
+          hasUserPhoto: !!userPhotoImgRef.current 
+        });
+        
         if (userPhotoImgRef.current) {
+          console.log('[DEBUG] Both images ready, setting imagesReady=true (from campaign loader)');
           setImagesReady(true);
         }
       } catch (error) {
-        console.error('Error initializing canvas:', error);
+        console.error('[DEBUG] Error initializing canvas:', error);
       }
     };
     
@@ -100,18 +118,31 @@ export default function CampaignAdjustPage() {
   }, [campaign]);
 
   useEffect(() => {
-    if (!userPhoto) return;
+    if (!userPhoto) {
+      console.log('[DEBUG] User photo load skipped - no photo');
+      return;
+    }
+    
+    console.log('[DEBUG] Starting user photo load:', userPhoto?.name || 'unknown');
     
     const loadUserImage = async () => {
       try {
         const img = await loadImage(userPhoto);
         userPhotoImgRef.current = img;
         
+        console.log('[DEBUG] User photo loaded:', { width: img.width, height: img.height });
+        
         if (campaignImgRef.current && offscreenCanvasRef.current) {
+          console.log('[DEBUG] Both images ready, setting imagesReady=true (from user photo loader)');
           setImagesReady(true);
+        } else {
+          console.log('[DEBUG] Waiting for campaign image:', {
+            hasCampaign: !!campaignImgRef.current,
+            hasOffscreen: !!offscreenCanvasRef.current
+          });
         }
       } catch (error) {
-        console.error('Error loading user photo:', error);
+        console.error('[DEBUG] Error loading user photo:', error);
       }
     };
     
@@ -119,7 +150,17 @@ export default function CampaignAdjustPage() {
   }, [userPhoto]);
 
   const renderPreview = useCallback(() => {
+    console.log('[DEBUG] renderPreview called:', {
+      offscreen: !!offscreenCanvasRef.current,
+      canvas: !!canvasRef.current,
+      userPhoto: !!userPhotoImgRef.current,
+      campaign: !!campaignImgRef.current,
+      imagesReady,
+      adjustments
+    });
+    
     if (!offscreenCanvasRef.current || !canvasRef.current || !userPhotoImgRef.current || !campaignImgRef.current) {
+      console.log('[DEBUG] renderPreview - missing refs, returning early');
       return;
     }
 
@@ -127,7 +168,16 @@ export default function CampaignAdjustPage() {
     const display = canvasRef.current;
     const ctx = offscreen.getContext('2d', { alpha: true });
     
-    if (!ctx) return;
+    if (!ctx) {
+      console.log('[DEBUG] renderPreview - no offscreen context');
+      return;
+    }
+
+    console.log('[DEBUG] Starting canvas render:', {
+      offscreenSize: `${offscreen.width}x${offscreen.height}`,
+      displaySize: `${display.width}x${display.height}`,
+      campaignType: campaign?.type
+    });
 
     ctx.clearRect(0, 0, offscreen.width, offscreen.height);
 
@@ -163,10 +213,14 @@ export default function CampaignAdjustPage() {
     if (displayCtx) {
       displayCtx.clearRect(0, 0, display.width, display.height);
       displayCtx.drawImage(offscreen, 0, 0);
+      console.log('[DEBUG] Canvas rendered successfully to display');
+    } else {
+      console.log('[DEBUG] No display context available');
     }
   }, [adjustments, campaign, imagesReady]);
 
   useEffect(() => {
+    console.log('[DEBUG] RAF effect triggered');
     if (rafRef.current) {
       cancelAnimationFrame(rafRef.current);
     }
