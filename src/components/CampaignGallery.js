@@ -19,10 +19,10 @@ export default function CampaignGallery({ campaigns, loading = false, isOwnProfi
 
   if (!campaigns || campaigns.length === 0) {
     return (
-      <div className="text-center py-16 px-4">
+      <div className="text-center py-12 px-4">
         <div className="max-w-md mx-auto">
           <svg
-            className="mx-auto h-24 w-24 text-gray-400 mb-6"
+            className="mx-auto h-16 w-16 text-gray-400 mb-4"
             fill="none"
             viewBox="0 0 24 24"
             stroke="currentColor"
@@ -34,10 +34,10 @@ export default function CampaignGallery({ campaigns, loading = false, isOwnProfi
               d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
             />
           </svg>
-          <h3 className="text-xl font-semibold text-gray-900 mb-2">
+          <h3 className="text-base font-semibold text-gray-900 mb-1.5">
             {isOwnProfile ? "You haven't created any campaigns yet" : "No campaigns yet"}
           </h3>
-          <p className="text-gray-600 mb-6">
+          <p className="text-sm text-gray-600 mb-4">
             {isOwnProfile 
               ? "Start creating your first frame or background campaign to share with the world!"
               : "This user hasn't published any campaigns yet."}
@@ -45,7 +45,7 @@ export default function CampaignGallery({ campaigns, loading = false, isOwnProfi
           {isOwnProfile && (
             <Link
               href="/create"
-              className="inline-block bg-gradient-to-r from-yellow-400 to-yellow-500 text-gray-900 px-6 py-3 rounded-lg font-semibold hover:from-yellow-500 hover:to-yellow-600 transition-all shadow-lg hover:shadow-xl"
+              className="btn-base btn-primary inline-block px-4 py-2 text-sm font-medium"
             >
               Create Campaign
             </Link>
