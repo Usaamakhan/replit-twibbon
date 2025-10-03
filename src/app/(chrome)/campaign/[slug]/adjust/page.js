@@ -541,11 +541,11 @@ export default function CampaignAdjustPage() {
                           <label className="text-sm font-medium text-gray-700">
                             Rotation
                           </label>
-                          <span className="text-sm text-gray-600">{adjustments.rotation.toFixed(1)}°</span>
+                          <span className="text-sm text-gray-600">{(adjustments.rotation || 0).toFixed(1)}°</span>
                         </div>
                         <div className="flex items-center gap-2">
                           <button
-                            onClick={() => setAdjustments(prev => ({ ...prev, rotation: Math.max(-180, prev.rotation - 0.1) }))}
+                            onClick={() => setAdjustments(prev => ({ ...prev, rotation: Math.max(-180, (prev.rotation || 0) - 0.1) }))}
                             className="flex-shrink-0 w-8 h-8 bg-gray-200 hover:bg-gray-300 rounded-lg flex items-center justify-center text-gray-700 font-bold transition-colors"
                             aria-label="Rotate counter-clockwise"
                           >
@@ -556,12 +556,12 @@ export default function CampaignAdjustPage() {
                             min="-180"
                             max="180"
                             step="0.1"
-                            value={adjustments.rotation}
+                            value={adjustments.rotation || 0}
                             onChange={handleRotationChange}
                             className="flex-1 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-emerald-500"
                           />
                           <button
-                            onClick={() => setAdjustments(prev => ({ ...prev, rotation: Math.min(180, prev.rotation + 0.1) }))}
+                            onClick={() => setAdjustments(prev => ({ ...prev, rotation: Math.min(180, (prev.rotation || 0) + 0.1) }))}
                             className="flex-shrink-0 w-8 h-8 bg-gray-200 hover:bg-gray-300 rounded-lg flex items-center justify-center text-gray-700 font-bold transition-colors"
                             aria-label="Rotate clockwise"
                           >
