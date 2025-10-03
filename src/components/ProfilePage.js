@@ -9,6 +9,7 @@ import {
   getUserStats,
   getUserCampaigns 
 } from '../lib/firestore';
+import CampaignGallery from './CampaignGallery';
 
 export default function ProfilePage({ isOwnProfile = false, username = null }) {
   const { user, loading } = useAuth();
@@ -69,29 +70,26 @@ export default function ProfilePage({ isOwnProfile = false, username = null }) {
           try {
             const userCampaigns = await getUserCampaigns(profileUser.id);
             if (Array.isArray(userCampaigns)) {
-              const campaignsData = userCampaigns.map(campaign => ({
-                id: campaign.id,
-                title: campaign.title || 'Untitled Campaign',
-                thumbnail: campaign.imageUrl || 'https://via.placeholder.com/300x200/059669/FFFFFF?text=Campaign',
-                supportersCount: campaign.supportersCount || 0
-              }));
-              setCampaigns(campaignsData);
+              setCampaigns(userCampaigns);
               
-              // Calculate total supports from all campaigns
-              const totalSupports = campaignsData.reduce((sum, campaign) => sum + campaign.supportersCount, 0);
+              // Calculate total supports from all campaigns (guard against undefined/missing values)
+              const totalSupports = userCampaigns.reduce((sum, campaign) => {
+                const count = Number(campaign.supportersCount) || 0;
+                return sum + count;
+              }, 0);
               
               // Get campaigns count from stats or use campaigns length
               try {
                 const stats = await getUserStats(profileUser.id);
                 setUserStats({
                   supportsCount: totalSupports,
-                  campaignsCount: stats?.campaignsCount || campaignsData.length
+                  campaignsCount: stats?.campaignsCount || userCampaigns.length
                 });
               } catch (statError) {
                 console.error('Error loading user stats:', statError);
                 setUserStats({ 
                   supportsCount: totalSupports, 
-                  campaignsCount: campaignsData.length 
+                  campaignsCount: userCampaigns.length 
                 });
               }
             } else {
@@ -260,48 +258,20 @@ export default function ProfilePage({ isOwnProfile = false, username = null }) {
                 <div className="flex items-center justify-between mb-6">
                   <h2 className="text-xl font-bold text-gray-900">Campaigns</h2>
                   {isOwnProfile && (
-                    <button className="btn-base btn-primary px-3 py-1.5 text-sm font-medium">
+                    <button 
+                      onClick={() => router.push('/create')}
+                      className="btn-base btn-primary px-3 py-1.5 text-sm font-medium"
+                    >
                       Create Campaign
                     </button>
                   )}
                 </div>
 
-                {/* Campaigns Grid or Empty State */}
-                {campaigns.length > 0 ? (
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {campaigns.map((campaign) => (
-                      <div key={campaign.id} className="group cursor-pointer">
-                        <div className="relative overflow-hidden rounded-xl bg-gray-100">
-                          <img
-                            src={campaign.thumbnail}
-                            alt={campaign.title}
-                            className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-200"
-                          />
-                          <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-200"></div>
-                          <div className="absolute bottom-4 left-4 text-white opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-                            <h3 className="font-bold text-lg">{campaign.title}</h3>
-                            <p className="text-sm">{campaign.supportersCount} supports</p>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="text-center py-16">
-                    <div className="mx-auto w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mb-6">
-                      <svg className="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4" />
-                      </svg>
-                    </div>
-                    <h3 className="text-2xl font-bold text-gray-900 mb-2">No Campaigns Yet</h3>
-                    <p className="text-gray-600 mb-6">Create Campaigns, and share to Frame</p>
-                    {isOwnProfile && (
-                      <button className="btn-base btn-primary px-4 py-2 text-sm font-medium">
-                        Create Your First Campaign
-                      </button>
-                    )}
-                  </div>
-                )}
+                <CampaignGallery 
+                  campaigns={campaigns} 
+                  loading={profileLoading}
+                  isOwnProfile={isOwnProfile}
+                />
               </div>
             </div>
           </div>
