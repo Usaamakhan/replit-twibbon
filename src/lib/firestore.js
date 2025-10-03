@@ -521,10 +521,11 @@ export const getUserCampaigns = async (userId, options = {}) => {
   });
   
   try {
+    // Query without orderBy to avoid index requirement
+    // We'll sort in JavaScript instead
     let q = query(
       collection(db, 'campaigns'),
       where('creatorId', '==', userId),
-      orderBy(orderByField, orderDirection),
       limit(pageSize)
     );
     
@@ -558,6 +559,18 @@ export const getUserCampaigns = async (userId, options = {}) => {
         description: data.description || '',
         moderationStatus: data.moderationStatus || 'active'
       });
+    });
+    
+    // Sort campaigns in JavaScript to avoid Firebase index requirement
+    campaigns.sort((a, b) => {
+      const aValue = a[orderByField];
+      const bValue = b[orderByField];
+      
+      if (orderDirection === 'desc') {
+        return bValue > aValue ? 1 : bValue < aValue ? -1 : 0;
+      } else {
+        return aValue > bValue ? 1 : aValue < bValue ? -1 : 0;
+      }
     });
     
     console.log('🔍 [getUserCampaigns] Returning campaigns:', campaigns.length);
