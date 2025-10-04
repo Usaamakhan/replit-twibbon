@@ -43,7 +43,7 @@ export default function CreatorsPage() {
             Top Creators
           </h1>
           <p className="text-emerald-50 text-lg">
-            Discover the most popular campaign creators in the community
+            Discover creators with the most supported campaigns
           </p>
         </div>
       </div>
