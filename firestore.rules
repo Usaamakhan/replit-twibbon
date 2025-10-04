@@ -116,8 +116,8 @@ service cloud.firestore {
         // Allow anyone to create download records (public access for tracking)
         allow create: if request.resource.data.keys().hasOnly(['downloadedAt', 'createdAt']);
         
-        // Read access for analytics (authenticated users only)
-        allow read: if request.auth != null;
+        // Public read access for analytics (everyone can view download counts)
+        allow read: if true;
         
         // No updates or deletes allowed
         allow update, delete: if false;
