@@ -119,7 +119,7 @@ export default function CreatorsPage() {
               {creators.map((creator, index) => (
                 <Link
                   key={creator.id}
-                  href={`/user/${creator.username}`}
+                  href={`/u/${creator.username}`}
                   className="block px-6 py-4 hover:bg-gray-50 transition-colors duration-150"
                 >
                   <div className="grid grid-cols-12 gap-4 items-center">
