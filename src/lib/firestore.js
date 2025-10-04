@@ -917,3 +917,242 @@ export const updateReportStatus = async (reportId, statusData) => {
     return { success: false, error: errorResponse || 'Failed to update report. Please try again.' };
   }
 };
+
+/**
+ * Get all campaigns with optional filters
+ * @param {object} filters - Filter options
+ * @param {string} filters.type - Campaign type ('frame', 'background', or 'all')
+ * @param {string} filters.country - Filter by creator's country
+ * @param {string} filters.timePeriod - Time period ('24h', '7d', '30d', or 'all')
+ * @param {string} filters.sortBy - Sort field ('supportersCount' or 'createdAt')
+ * @param {number} filters.limit - Number of campaigns to return
+ * @returns {Promise<Array>} Array of campaigns with creator info
+ */
+export const getAllCampaigns = async (filters = {}) => {
+  const {
+    type = 'all',
+    country = null,
+    timePeriod = 'all',
+    sortBy = 'createdAt',
+    limit: limitCount = 24
+  } = filters;
+  
+  // Check if database is initialized
+  if (!db) {
+    console.error('Database not initialized - cannot get campaigns');
+    return [];
+  }
+  
+  try {
+    // Calculate time cutoff for filtering
+    let timeCutoff = null;
+    if (timePeriod !== 'all') {
+      const now = new Date();
+      switch (timePeriod) {
+        case '24h':
+          timeCutoff = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+          break;
+        case '7d':
+          timeCutoff = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+          break;
+        case '30d':
+          timeCutoff = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+          break;
+      }
+    }
+    
+    // Build query
+    let constraints = [
+      where('moderationStatus', '!=', 'removed')
+    ];
+    
+    // Add type filter
+    if (type !== 'all') {
+      constraints.push(where('type', '==', type));
+    }
+    
+    // Add time filter
+    if (timeCutoff) {
+      constraints.push(where('createdAt', '>=', timeCutoff));
+    }
+    
+    // Add sorting
+    constraints.push(orderBy(sortBy, 'desc'));
+    constraints.push(limit(limitCount));
+    
+    const q = query(collection(db, 'campaigns'), ...constraints);
+    const querySnapshot = await getDocs(q);
+    
+    const campaigns = [];
+    
+    // Collect all creator IDs to fetch in batch
+    const creatorIds = new Set();
+    querySnapshot.forEach((doc) => {
+      const data = doc.data();
+      if (data.creatorId) {
+        creatorIds.add(data.creatorId);
+      }
+      campaigns.push({
+        id: doc.id,
+        ...data
+      });
+    });
+    
+    // Fetch all creators in one batch
+    const creatorsMap = new Map();
+    if (creatorIds.size > 0) {
+      const creatorPromises = Array.from(creatorIds).map(async (creatorId) => {
+        try {
+          const creatorDocRef = doc(db, 'users', creatorId);
+          const creatorDoc = await getDoc(creatorDocRef);
+          if (creatorDoc.exists()) {
+            return { id: creatorDoc.id, ...creatorDoc.data() };
+          }
+        } catch (error) {
+          console.error('Error fetching creator:', error);
+        }
+        return null;
+      });
+      
+      const creators = await Promise.all(creatorPromises);
+      creators.forEach((creator) => {
+        if (creator) {
+          creatorsMap.set(creator.id, creator);
+        }
+      });
+    }
+    
+    // Filter by country if specified (using creator's country)
+    let filteredCampaigns = campaigns;
+    if (country) {
+      filteredCampaigns = campaigns.filter((campaign) => {
+        const creator = creatorsMap.get(campaign.creatorId);
+        return creator && creator.country === country;
+      });
+    }
+    
+    // Attach creator data to campaigns
+    const campaignsWithCreators = filteredCampaigns.map((campaign) => ({
+      ...campaign,
+      creator: creatorsMap.get(campaign.creatorId) || null
+    }));
+    
+    return campaignsWithCreators;
+  } catch (error) {
+    console.error('Error getting campaigns:', error);
+    return [];
+  }
+};
+
+/**
+ * Get top creators with aggregated stats
+ * @param {object} filters - Filter options
+ * @param {string} filters.country - Filter by country
+ * @param {string} filters.timePeriod - Time period ('24h', '7d', '30d', or 'all')
+ * @param {number} filters.limit - Number of creators to return
+ * @returns {Promise<Array>} Array of creators with stats
+ */
+export const getTopCreators = async (filters = {}) => {
+  const {
+    country = null,
+    timePeriod = 'all',
+    limit: limitCount = 20
+  } = filters;
+  
+  // Check if database is initialized
+  if (!db) {
+    console.error('Database not initialized - cannot get top creators');
+    return [];
+  }
+  
+  try {
+    // Calculate time cutoff for filtering
+    let timeCutoff = null;
+    if (timePeriod !== 'all') {
+      const now = new Date();
+      switch (timePeriod) {
+        case '24h':
+          timeCutoff = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+          break;
+        case '7d':
+          timeCutoff = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+          break;
+        case '30d':
+          timeCutoff = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+          break;
+      }
+    }
+    
+    // Build query for campaigns
+    let constraints = [
+      where('moderationStatus', '!=', 'removed')
+    ];
+    
+    // Add time filter
+    if (timeCutoff) {
+      constraints.push(where('createdAt', '>=', timeCutoff));
+    }
+    
+    const q = query(collection(db, 'campaigns'), ...constraints);
+    const querySnapshot = await getDocs(q);
+    
+    // Aggregate stats by creator
+    const creatorStatsMap = new Map();
+    
+    querySnapshot.forEach((doc) => {
+      const data = doc.data();
+      const creatorId = data.creatorId;
+      
+      if (!creatorStatsMap.has(creatorId)) {
+        creatorStatsMap.set(creatorId, {
+          campaignsCount: 0,
+          totalSupports: 0
+        });
+      }
+      
+      const stats = creatorStatsMap.get(creatorId);
+      stats.campaignsCount++;
+      stats.totalSupports += data.supportersCount || 0;
+    });
+    
+    // Fetch creator profiles
+    const creatorIds = Array.from(creatorStatsMap.keys());
+    const creatorPromises = creatorIds.map(async (creatorId) => {
+      try {
+        const creatorDocRef = doc(db, 'users', creatorId);
+        const creatorDoc = await getDoc(creatorDocRef);
+        
+        if (creatorDoc.exists()) {
+          const creatorData = { id: creatorDoc.id, ...creatorDoc.data() };
+          const stats = creatorStatsMap.get(creatorId);
+          
+          return {
+            ...creatorData,
+            campaignsCount: stats.campaignsCount,
+            totalSupports: stats.totalSupports
+          };
+        }
+      } catch (error) {
+        console.error('Error fetching creator profile:', error);
+      }
+      return null;
+    });
+    
+    let creators = await Promise.all(creatorPromises);
+    creators = creators.filter(creator => creator !== null);
+    
+    // Filter by country if specified
+    if (country) {
+      creators = creators.filter(creator => creator.country === country);
+    }
+    
+    // Sort by total supports (descending)
+    creators.sort((a, b) => b.totalSupports - a.totalSupports);
+    
+    // Limit results
+    return creators.slice(0, limitCount);
+  } catch (error) {
+    console.error('Error getting top creators:', error);
+    return [];
+  }
+};

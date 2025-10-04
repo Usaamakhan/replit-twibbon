@@ -31,10 +31,10 @@ export default function Hero() {
               Create Campaign
             </button>
             <a
-              href="#"
+              href="/campaigns"
               className="btn-base btn-secondary border-2 border-emerald-700 px-7 py-4 text-emerald-800 text-base sm:text-lg font-semibold whitespace-nowrap"
             >
-              Campaigns
+              Browse Campaigns
             </a>
           </div>
         </div>
