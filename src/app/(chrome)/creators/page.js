@@ -108,9 +108,8 @@ export default function CreatorsPage() {
             <div className="bg-gradient-to-r from-emerald-500 to-emerald-600 px-6 py-4">
               <div className="grid grid-cols-12 gap-4 text-emerald-50 font-semibold text-sm">
                 <div className="col-span-1">Rank</div>
-                <div className="col-span-5 sm:col-span-6">Creator</div>
-                <div className="col-span-3 sm:col-span-2 text-center">Campaigns</div>
-                <div className="col-span-3 sm:col-span-3 text-center">Total Supports</div>
+                <div className="col-span-8">Creator</div>
+                <div className="col-span-3 text-center">Total Supports</div>
               </div>
             </div>
 
@@ -136,7 +135,7 @@ export default function CreatorsPage() {
                     </div>
 
                     {/* Creator Info */}
-                    <div className="col-span-5 sm:col-span-6 flex items-center gap-3 min-w-0">
+                    <div className="col-span-8 flex items-center gap-3 min-w-0">
                       {/* Profile Image */}
                       <div className="w-12 h-12 rounded-full bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center flex-shrink-0">
                         {creator.profileImage ? (
@@ -163,18 +162,8 @@ export default function CreatorsPage() {
                       </div>
                     </div>
 
-                    {/* Campaigns Count */}
-                    <div className="col-span-3 sm:col-span-2 text-center">
-                      <div className="font-semibold text-gray-900">
-                        {creator.campaignsCount || 0}
-                      </div>
-                      <div className="text-xs text-gray-500">
-                        campaigns
-                      </div>
-                    </div>
-
                     {/* Total Supports */}
-                    <div className="col-span-3 sm:col-span-3 text-center">
+                    <div className="col-span-3 text-center">
                       <div className="font-bold text-emerald-600 text-lg">
                         {creator.totalSupports || 0}
                       </div>
