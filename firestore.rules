@@ -110,6 +110,18 @@ service cloud.firestore {
                    request.resource.data.supportersCount == resource.data.supportersCount + 1 &&
                    // firstUsedAt can only be set once (when first download happens)
                    (!('firstUsedAt' in resource.data) || request.resource.data.firstUsedAt == resource.data.firstUsedAt);
+      
+      // Downloads subcollection - track individual downloads with timestamps
+      match /downloads/{downloadId} {
+        // Allow anyone to create download records (public access for tracking)
+        allow create: if request.resource.data.keys().hasOnly(['downloadedAt', 'createdAt']);
+        
+        // Read access for analytics (authenticated users only)
+        allow read: if request.auth != null;
+        
+        // No updates or deletes allowed
+        allow update, delete: if false;
+      }
     }
     
     // Reports - allow creation by anyone, reading/updating by admins only

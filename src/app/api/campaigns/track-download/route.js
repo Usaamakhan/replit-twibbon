@@ -30,6 +30,13 @@ export async function POST(request) {
       
       const campaignData = campaignDoc.data();
       
+      // Create a download record in subcollection with timestamp
+      const downloadRef = db.collection('campaigns').doc(campaignId).collection('downloads').doc();
+      transaction.set(downloadRef, {
+        downloadedAt: FieldValue.serverTimestamp(),
+        createdAt: FieldValue.serverTimestamp()
+      });
+      
       // Update campaign supportersCount (tracks total downloads/supports)
       transaction.update(campaignRef, {
         supportersCount: FieldValue.increment(1),

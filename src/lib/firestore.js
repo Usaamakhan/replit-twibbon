@@ -1083,26 +1083,22 @@ export const getTopCreators = async (filters = {}) => {
       }
     }
     
-    // Build query for campaigns
-    let constraints = [
+    // Build query for campaigns (active campaigns only)
+    const campaignsQuery = query(
+      collection(db, 'campaigns'),
       where('moderationStatus', '!=', 'removed')
-    ];
-    
-    // Add time filter
-    if (timeCutoff) {
-      constraints.push(where('createdAt', '>=', timeCutoff));
-    }
-    
-    const q = query(collection(db, 'campaigns'), ...constraints);
-    const querySnapshot = await getDocs(q);
+    );
+    const campaignsSnapshot = await getDocs(campaignsQuery);
     
     // Aggregate stats by creator
     const creatorStatsMap = new Map();
     
-    querySnapshot.forEach((doc) => {
-      const data = doc.data();
-      const creatorId = data.creatorId;
+    // Process each campaign
+    for (const campaignDoc of campaignsSnapshot.docs) {
+      const campaignData = campaignDoc.data();
+      const creatorId = campaignData.creatorId;
       
+      // Initialize creator stats if not exists
       if (!creatorStatsMap.has(creatorId)) {
         creatorStatsMap.set(creatorId, {
           campaignsCount: 0,
@@ -1111,9 +1107,26 @@ export const getTopCreators = async (filters = {}) => {
       }
       
       const stats = creatorStatsMap.get(creatorId);
-      stats.campaignsCount++;
-      stats.totalSupports += data.supportersCount || 0;
-    });
+      
+      // Count campaigns created in time period (if time filter applied)
+      if (!timeCutoff || (campaignData.createdAt && campaignData.createdAt.toDate() >= timeCutoff)) {
+        stats.campaignsCount++;
+      }
+      
+      // Count supports received in time period
+      if (timeCutoff) {
+        // Query downloads subcollection for this campaign within time period
+        const downloadsQuery = query(
+          collection(db, 'campaigns', campaignDoc.id, 'downloads'),
+          where('downloadedAt', '>=', timeCutoff)
+        );
+        const downloadsSnapshot = await getDocs(downloadsQuery);
+        stats.totalSupports += downloadsSnapshot.size;
+      } else {
+        // For 'all time', use the main supportersCount
+        stats.totalSupports += campaignData.supportersCount || 0;
+      }
+    }
     
     // Fetch creator profiles
     const creatorIds = Array.from(creatorStatsMap.keys());
