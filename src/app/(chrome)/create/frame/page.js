@@ -7,6 +7,7 @@ import { checkTransparency } from '../../../../utils/transparencyDetector';
 import { generateSlug } from '../../../../utils/slugGenerator';
 import { getCampaignUploadUrl } from '../../../../utils/campaignStorage';
 import { createCampaign } from '../../../../lib/firestore';
+import CampaignStepIndicator from '../../../../components/CampaignStepIndicator';
 
 export default function CreateFramePage() {
   const router = useRouter();
@@ -194,19 +195,11 @@ export default function CreateFramePage() {
 
             {/* Progress Indicator */}
             <div className="bg-yellow-400 px-6 pb-4">
-              <div className="flex items-center justify-center gap-2">
-                <div className={`flex items-center justify-center w-8 h-8 rounded-full ${step >= 1 ? 'bg-emerald-600 text-white' : 'bg-gray-300 text-gray-600'} font-semibold text-sm`}>
-                  1
-                </div>
-                <div className={`h-1 w-12 ${step >= 2 ? 'bg-emerald-600' : 'bg-gray-300'}`}></div>
-                <div className={`flex items-center justify-center w-8 h-8 rounded-full ${step >= 2 ? 'bg-emerald-600 text-white' : 'bg-gray-300 text-gray-600'} font-semibold text-sm`}>
-                  2
-                </div>
-              </div>
-              <div className="flex justify-between mt-2 text-xs sm:text-sm text-gray-700">
-                <span className="flex-1 text-center">Upload Image</span>
-                <span className="flex-1 text-center">Campaign Details</span>
-              </div>
+              <CampaignStepIndicator
+                currentStep={step}
+                totalSteps={2}
+                labels={['Upload Image', 'Campaign Details']}
+              />
             </div>
 
             {/* Content Card */}
