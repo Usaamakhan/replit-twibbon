@@ -112,19 +112,36 @@ The application supports two types of creator uploads:
 12. After auth → Submit → Save to Firestore + Supabase Storage
 13. Redirect to campaign view page `/campaign/[slug]`
 
-### Visitor Flow - Use Campaign
-1. Browse `/campaigns` gallery → Select campaign
-2. Navigate to `/campaign/[slug]`
-3. **Upload personal photo** (required before download)
-4. **Image Adjustment Tools**:
-   - Resize photo (zoom in/out)
-   - Move/reposition photo
-   - Fit to frame/background area
-5. Preview result with adjustments
-6. **Sharing Options** - Share to social media
-7. **Download** button (disabled until photo uploaded)
-8. Download final composed image
-9. Increment campaign's `supportersCount` (total supports)
+### Visitor Flow - Use Campaign (3-Page Flow) ✅ IMPLEMENTED
+**Status:** Completed October 04, 2025
+
+**Page 1: Upload** (`/campaign/[slug]`)
+1. View campaign preview and details
+2. See supporter gallery and creator info
+3. Click "Choose Your Photo" → upload photo
+4. Auto-redirect to adjust page
+
+**Page 2: Adjust** (`/campaign/[slug]/adjust`)
+1. Preview composed image on canvas
+2. Adjust photo: zoom (0.5x-3x), drag to reposition, rotate (-45° to +45°)
+3. Use "Fit to Frame" or "Reset" controls
+4. Click "Download" → save image
+5. Auto-redirect to result page
+
+**Page 3: Result** (`/campaign/[slug]/result`)
+1. View final composed image
+2. Share to social media (Twitter, Facebook, WhatsApp)
+3. Re-download image or "Start Over"
+4. Optional: Post to public gallery (Phase 2)
+
+**Session Management:**
+- State persists in sessionStorage (24h expiry)
+- Route guards prevent out-of-order access
+- "Start Over" clears session and returns to Page 1
+
+**Download Tracking:**
+- Each download increments campaign's `supportersCount`
+- First download sets `firstUsedAt` timestamp
 
 ### Visitor Flow - Report Campaign
 1. On any `/campaign/[slug]` page, click "Report" button
@@ -182,27 +199,37 @@ The application supports two types of creator uploads:
 - Store all metadata including type
 - Link to creator's user ID
 
-#### 7. Create Campaign View Page
-- `/campaign/[slug]` - Individual campaign page
-- Show creator info, title, description
-- **Visitor Upload Interface:**
-  - Upload user photo
-  - Image adjustment tools (resize, move, fit)
-  - Preview with real-time updates
-- **Sharing Options** - Social media share buttons
-- **Download Button** - Only enabled after user uploads photo
-- Increment `supportersCount` on download (every download = +1 support)
+#### 7. Create Campaign View Page ✅ COMPLETED (3-Page Flow)
+**Status:** Completed October 04, 2025
 
-#### 8. Image Composition & Adjustment
-- Use Canvas API to composite images
-- **Frame:** User photo placed in transparent area
-- **Background:** User photo on top of background
-- **Adjustment Controls:**
-  - Zoom slider (resize photo)
-  - Drag to reposition
-  - Center/fit button
-- Export as downloadable PNG/JPG
-- Prevent download without user photo
+**Implementation:**
+- ✅ **Page 1 (Upload):** `/campaign/[slug]` - Campaign preview and photo upload
+- ✅ **Page 2 (Adjust):** `/campaign/[slug]/adjust` - Canvas-based adjustment with zoom/drag/rotate
+- ✅ **Page 3 (Result):** `/campaign/[slug]/result` - Final image with sharing options
+
+**Features:**
+- ✅ Session state management with sessionStorage persistence
+- ✅ Route guards enforce proper flow (Upload → Adjust → Result)
+- ✅ Mobile-optimized touch interactions
+- ✅ Real-time canvas preview with adjustments
+- ✅ Download tracking increments `supportersCount`
+- ✅ Social media sharing buttons
+- ⏸️ Gallery posting ("Post to Twibbonize") - Deferred to Phase 2
+
+#### 8. Image Composition & Adjustment ✅ COMPLETED
+**Status:** Completed October 04, 2025
+
+**Implementation:**
+- ✅ Canvas-based image composition (`src/utils/imageComposition.js`)
+- ✅ **Frame:** User photo UNDER frame (frame overlays on top)
+- ✅ **Background:** User photo ON TOP of background
+- ✅ **Adjustment Controls:**
+  - Zoom slider (0.5x - 3.0x scale)
+  - Drag to reposition (pointer events for mobile)
+  - Rotate (-45° to +45°)
+  - "Fit to Frame" and "Reset" buttons
+- ✅ Export as downloadable PNG
+- ✅ Download disabled until photo uploaded
 
 #### 9. Unified Campaigns Gallery
 - `/campaigns` - Browse all campaigns (frames + backgrounds)
@@ -243,6 +270,26 @@ The application supports two types of creator uploads:
 - Modal with "Sign In" and "Go Back" options
 - Preserve all form data during auth
 - Complete publish after successful sign-in
+
+---
+
+## 🎯 Suggested Improvements for 3-Page Flow
+
+**High Priority:**
+1. **Gallery Posting Feature** - Implement "Post to Twibbonize" on result page (currently deferred)
+2. **Error Handling** - Add retry logic for image loading failures
+3. **Ad Integration** - Replace placeholder slots with real ad units
+4. **Loading States** - Improve loading indicators during image composition
+
+**Medium Priority:**
+5. **Image Optimization** - Add compression before download to reduce file size
+6. **Analytics Events** - Track user actions (upload, adjust, download, share)
+7. **Keyboard Shortcuts** - Add hotkeys for common actions (Esc, Enter, Space)
+8. **Undo/Redo** - Add adjustment history for better UX
+
+**Low Priority:**
+9. **Photo Filters** - Add basic filters (brightness, contrast, saturation)
+10. **Multi-language** - Support internationalization for wider reach
 
 ---
 
