@@ -127,10 +127,10 @@ export default function CreatorsPage() {
                         href={`/u/${creator.username}`}
                         className="block px-6 py-4 hover:bg-gray-50 transition-colors duration-150"
                       >
-                        <div className="grid grid-cols-12 gap-4 items-center">
+                        <div className="grid grid-cols-12 gap-2 sm:gap-4 items-center">
                           {/* Rank */}
                           <div className="col-span-1">
-                            <div className={`flex items-center justify-center w-7 h-7 rounded-full font-bold text-xs ${
+                            <div className={`flex items-center justify-center w-6 h-6 sm:w-7 sm:h-7 rounded-full font-bold text-xs ${
                               index === 0 ? 'bg-yellow-100 text-yellow-700' :
                               index === 1 ? 'bg-gray-100 text-gray-700' :
                               index === 2 ? 'bg-orange-100 text-orange-700' :
@@ -143,7 +143,7 @@ export default function CreatorsPage() {
                           {/* Creator Info */}
                           <div className="col-span-8 flex items-center gap-2 min-w-0">
                             {/* Profile Image */}
-                            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center flex-shrink-0">
+                            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center flex-shrink-0">
                               {creator.profileImage ? (
                                 <img
                                   src={creator.profileImage}
@@ -151,7 +151,7 @@ export default function CreatorsPage() {
                                   className="w-full h-full rounded-full object-cover"
                                 />
                               ) : (
-                                <span className="text-white text-base font-bold">
+                                <span className="text-white text-sm sm:text-base font-bold">
                                   {creator.displayName?.charAt(0)?.toUpperCase() || 'U'}
                                 </span>
                               )}
