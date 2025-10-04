@@ -115,7 +115,7 @@ export default function CreatorsPage() {
                     <div className="grid grid-cols-12 gap-4 text-emerald-50 font-semibold text-sm">
                       <div className="col-span-1">Rank</div>
                       <div className="col-span-8">Creator</div>
-                      <div className="col-span-3 text-center">Total Supports</div>
+                      <div className="col-span-3 text-center">Supports</div>
                     </div>
                   </div>
 
@@ -130,7 +130,7 @@ export default function CreatorsPage() {
                         <div className="grid grid-cols-12 gap-4 items-center">
                           {/* Rank */}
                           <div className="col-span-1">
-                            <div className={`flex items-center justify-center w-8 h-8 rounded-full font-bold text-sm ${
+                            <div className={`flex items-center justify-center w-7 h-7 rounded-full font-bold text-xs ${
                               index === 0 ? 'bg-yellow-100 text-yellow-700' :
                               index === 1 ? 'bg-gray-100 text-gray-700' :
                               index === 2 ? 'bg-orange-100 text-orange-700' :
@@ -141,9 +141,9 @@ export default function CreatorsPage() {
                           </div>
 
                           {/* Creator Info */}
-                          <div className="col-span-8 flex items-center gap-3 min-w-0">
+                          <div className="col-span-8 flex items-center gap-2 min-w-0">
                             {/* Profile Image */}
-                            <div className="w-12 h-12 rounded-full bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center flex-shrink-0">
+                            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center flex-shrink-0">
                               {creator.profileImage ? (
                                 <img
                                   src={creator.profileImage}
@@ -151,7 +151,7 @@ export default function CreatorsPage() {
                                   className="w-full h-full rounded-full object-cover"
                                 />
                               ) : (
-                                <span className="text-white text-lg font-bold">
+                                <span className="text-white text-base font-bold">
                                   {creator.displayName?.charAt(0)?.toUpperCase() || 'U'}
                                 </span>
                               )}
@@ -172,9 +172,6 @@ export default function CreatorsPage() {
                           <div className="col-span-3 text-center">
                             <div className="font-bold text-emerald-600 text-lg">
                               {creator.totalSupports || 0}
-                            </div>
-                            <div className="text-xs text-gray-500">
-                              supports
                             </div>
                           </div>
                         </div>
