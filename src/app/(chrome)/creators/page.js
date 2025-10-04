@@ -111,11 +111,11 @@ export default function CreatorsPage() {
               ) : (
                 <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
                   {/* Table Header */}
-                  <div className="bg-gradient-to-r from-emerald-500 to-emerald-600 px-6 py-4">
-                    <div className="grid grid-cols-12 gap-4 text-emerald-50 font-semibold text-sm">
-                      <div className="col-span-1">Rank</div>
-                      <div className="col-span-8">Creator</div>
-                      <div className="col-span-3 text-center">Supports</div>
+                  <div className="bg-gradient-to-r from-emerald-500 to-emerald-600 px-4 sm:px-6 py-4">
+                    <div className="grid grid-cols-12 gap-3 sm:gap-4 text-emerald-50 font-semibold text-sm">
+                      <div className="col-span-2 sm:col-span-1">Rank</div>
+                      <div className="col-span-6 sm:col-span-8">Creator</div>
+                      <div className="col-span-4 sm:col-span-3 text-center">Supports</div>
                     </div>
                   </div>
 
@@ -125,12 +125,12 @@ export default function CreatorsPage() {
                       <Link
                         key={creator.id}
                         href={`/u/${creator.username}`}
-                        className="block px-6 py-4 hover:bg-gray-50 transition-colors duration-150"
+                        className="block px-4 sm:px-6 py-4 hover:bg-gray-50 transition-colors duration-150"
                       >
                         <div className="grid grid-cols-12 gap-3 sm:gap-4 items-center">
                           {/* Rank */}
-                          <div className="col-span-1 flex justify-center">
-                            <div className={`flex items-center justify-center w-6 h-6 sm:w-7 sm:h-7 rounded-full font-bold text-xs ${
+                          <div className="col-span-2 sm:col-span-1">
+                            <div className={`flex items-center justify-center w-7 h-7 rounded-full font-bold text-xs ${
                               index === 0 ? 'bg-yellow-100 text-yellow-700' :
                               index === 1 ? 'bg-gray-100 text-gray-700' :
                               index === 2 ? 'bg-orange-100 text-orange-700' :
@@ -141,9 +141,9 @@ export default function CreatorsPage() {
                           </div>
 
                           {/* Creator Info */}
-                          <div className="col-span-8 flex items-center gap-2 min-w-0">
+                          <div className="col-span-6 sm:col-span-8 flex items-center gap-2 min-w-0">
                             {/* Profile Image */}
-                            <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center flex-shrink-0">
+                            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center flex-shrink-0">
                               {creator.profileImage ? (
                                 <img
                                   src={creator.profileImage}
@@ -151,7 +151,7 @@ export default function CreatorsPage() {
                                   className="w-full h-full rounded-full object-cover"
                                 />
                               ) : (
-                                <span className="text-white text-sm sm:text-base font-bold">
+                                <span className="text-white text-base font-bold">
                                   {creator.displayName?.charAt(0)?.toUpperCase() || 'U'}
                                 </span>
                               )}
@@ -169,7 +169,7 @@ export default function CreatorsPage() {
                           </div>
 
                           {/* Total Supports */}
-                          <div className="col-span-3 text-center">
+                          <div className="col-span-4 sm:col-span-3 text-center">
                             <div className="font-bold text-emerald-600 text-lg">
                               {creator.totalSupports || 0}
                             </div>
