@@ -1,15 +1,31 @@
 # Twibbonize App
 
+## 🚫 STRICT POLICY - READ THIS FIRST 🚫
+
+**MANDATORY RULES - APPLIES TO ALL SCENARIOS (INCLUDING FRESH GITHUB IMPORTS):**
+
+1. **NEVER** install dependencies (`npm install`, `npm ci`, etc.) - User handles this manually
+2. **NEVER** run or restart servers/workflows - User manages server execution
+3. **NEVER** test functionality or take screenshots - All testing is done on Vercel deployment
+4. **NEVER** setup or configure environment variables - All env vars are configured on Vercel, NOT in Replit
+5. **NEVER** check logs or verify if server is running - User tests everything on Vercel
+6. **ONLY** make code changes when explicitly requested by the user
+7. **DO NOT** perform any setup tasks, even for fresh imports - User handles all environment setup
+
+**Testing & Deployment:**
+- Application is ONLY tested on Vercel deployment (NOT in Replit environment)
+- Environment variables are configured on Vercel (NOT in Replit Secrets)
+- User handles all dependency installation and server management
+- Replit is ONLY used for code editing, NOT for running/testing the application
+
 ### Overview
 Twibbonize is a Next.js 15 application for creating and sharing "Campaigns" (photo frames and backgrounds). Visitors can discover, customize, and download photos with frames or backgrounds. Creators can upload and manage campaigns with public analytics.
 
 ### User Preferences
 - Prefer stability over experimental features
-- Focus on compatibility with Replit environment
-- Maintain clean, working codebase structure
-- **When importing from GitHub: Do not make any automatic changes or modifications to the code. Only set up the environment to run the existing code as-is. Even if the app appears stuck or shows loading states, do not attempt to debug or fix issues automatically - only install dependencies and configure the runtime environment.**
-- **IMPORTANT - Testing Environment: App is tested on Vercel deployment (where environment variables are configured), NOT locally in Replit. Never take screenshots or attempt to test functionality in Replit environment. All testing happens on Vercel.**
-- **IMPORTANT - No Dependency Installation, Server Running, or Testing: Do NOT install dependencies, run servers, or test anything. The user handles all dependency installation, server management, and testing themselves.**
+- Focus on clean, maintainable code structure
+- Make code changes ONLY when explicitly requested
+- Never perform automatic setup, testing, or debugging
 
 ### System Architecture
 Built with Next.js 15.5.2 (App Router), React 19.1.0, Tailwind CSS 4, Firebase (auth), and Supabase (database/storage).
@@ -37,19 +53,11 @@ Built with Next.js 15.5.2 (App Router), React 19.1.0, Tailwind CSS 4, Firebase (
 - **Download Prevention:** Disabled until user uploads their photo
 - **Unified Gallery:** Single `/campaigns` page for both frames and backgrounds
 
-### Current Setup Status (2025-10-04)
-✅ **Fresh GitHub Import - Successfully Configured for Replit (October 4, 2025)**
-✅ All dependencies installed (540 packages, 0 vulnerabilities)
-✅ Next.js 15.5.2 dev server running on 0.0.0.0:5000
-✅ Deployment configured for autoscale (build: npm run build, run: npm start)
-✅ Environment ready to run (Firebase/Supabase configuration needed for full functionality)
-✅ Application successfully running and accessible via Replit proxy
-✅ All configurations verified for Next.js 15.5.2 and React 19.1.0
-✅ Middleware configured with CORS handling for Replit proxy environment
-✅ Next.js config includes allowedDevOrigins for Replit domains
-✅ Workflow configured: "Next.js Dev Server" (npm run dev on port 5000)
-✅ .gitignore properly configured for Next.js projects
-✅ Replit environment setup complete - ready for development
+### Replit Environment Notes
+- Replit is used ONLY for code editing (not for running/testing)
+- All testing and deployment happens on Vercel
+- User manages dependencies, server, and environment variables manually
+- Workflow may be configured but user controls when/how to run it
 
 **Feature Implementation Status:**
 ✅ CreateCampaignModal implemented (replaces dedicated /create page with popup)
@@ -93,8 +101,8 @@ The Firebase/Firestore database has been optimized to reduce storage costs while
 - `/campaigns/{campaignId}` - Campaigns with supports counter (supportersCount = total downloads)
 - `/reports/{reportId}` - User reports for moderation
 
-### Environment Variables Required
-To enable full functionality, configure these environment variables in Replit Secrets:
+### Environment Variables (Configured on Vercel)
+Environment variables are configured on Vercel deployment (NOT in Replit):
 
 **Firebase (Authentication):**
 - `NEXT_PUBLIC_FIREBASE_API_KEY`
@@ -105,8 +113,6 @@ To enable full functionality, configure these environment variables in Replit Se
 **Supabase (Database & Storage):**
 - `NEXT_PUBLIC_SUPABASE_URL`
 - `SUPABASE_SERVICE_ROLE_KEY`
-
-The app will run without these but with limited functionality (Firebase disabled message shown).
 
 ### Campaign System Documentation
 📄 See **CAMPAIGN_SYSTEM.md** for complete implementation guide including:
