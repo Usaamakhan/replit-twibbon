@@ -41,6 +41,7 @@ export const uploadFile = async (file, folder = 'uploads') => {
       body: JSON.stringify({
         fileName: file.name,
         fileType: file.type,
+        fileSize: file.size,
         folder
       })
     })
@@ -134,6 +135,7 @@ export const uploadFileWithProgress = async (file, folder = 'uploads', onProgres
       body: JSON.stringify({
         fileName: file.name,
         fileType: file.type,
+        fileSize: file.size,
         folder
       })
     })

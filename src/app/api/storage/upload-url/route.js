@@ -51,10 +51,10 @@ export async function POST(request) {
       }, { status: 400 })
     }
 
-    // Validate file size (5MB max for campaigns, 10MB max for others)
-    const maxFileSize = folder === 'campaigns' ? 5 * 1024 * 1024 : 10 * 1024 * 1024
+    // Validate file size (5MB max for campaigns and profile-images, 10MB max for others)
+    const maxFileSize = (folder === 'campaigns' || folder === 'profile-images') ? 5 * 1024 * 1024 : 10 * 1024 * 1024
     if (fileSize > maxFileSize) {
-      const maxSizeMB = folder === 'campaigns' ? 5 : 10
+      const maxSizeMB = (folder === 'campaigns' || folder === 'profile-images') ? 5 : 10
       return NextResponse.json({ 
         error: `File size exceeds ${maxSizeMB}MB limit` 
       }, { status: 400 })
