@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
+import { getCampaignThumbnail } from '../utils/imageTransform';
 
 export default function CampaignGallery({ campaigns, loading = false, isOwnProfile = false }) {
   const [imageLoading, setImageLoading] = useState({});
@@ -74,7 +75,7 @@ export default function CampaignGallery({ campaigns, loading = false, isOwnProfi
             {campaign.imageUrl ? (
               <>
                 <Image
-                  src={campaign.imageUrl}
+                  src={getCampaignThumbnail(campaign.imageUrl)}
                   alt={campaign.title}
                   fill
                   className={`object-cover transition-all duration-300 ${

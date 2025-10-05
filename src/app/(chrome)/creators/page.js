@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { getTopCreators } from '../../../lib/firestore';
+import { getProfileAvatar } from '../../../utils/imageTransform';
 import LoadingSpinner from '../../../components/LoadingSpinner';
 import FilterModal from '../../../components/FilterModal';
 
@@ -146,7 +147,7 @@ export default function CreatorsPage() {
                             <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center flex-shrink-0">
                               {creator.profileImage ? (
                                 <img
-                                  src={creator.profileImage}
+                                  src={getProfileAvatar(creator.profileImage)}
                                   alt={creator.displayName}
                                   className="w-full h-full rounded-full object-cover"
                                 />

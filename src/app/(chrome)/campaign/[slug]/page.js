@@ -5,6 +5,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { getCampaignBySlug, createReport } from '../../../../lib/firestore';
 import { useCampaignSession } from '../../../../contexts/CampaignSessionContext';
 import { useAuth } from '../../../../hooks/useAuth';
+import { getCampaignPreview, getProfileAvatar } from '../../../../utils/imageTransform';
 import LoadingSpinner from '../../../../components/LoadingSpinner';
 import CampaignStepIndicator from '../../../../components/CampaignStepIndicator';
 
@@ -229,7 +230,7 @@ export default function CampaignUploadPage() {
                   
                   <div className="relative">
                     <img
-                      src={campaign.imageUrl}
+                      src={getCampaignPreview(campaign.imageUrl)}
                       alt={campaign.title}
                       className="w-full h-auto rounded-lg border-2 border-gray-300"
                       style={{ maxHeight: '500px', objectFit: 'contain' }}
@@ -243,7 +244,7 @@ export default function CampaignUploadPage() {
                     <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg border border-gray-200">
                       {creator.profileImage && (
                         <img
-                          src={creator.profileImage}
+                          src={getProfileAvatar(creator.profileImage)}
                           alt={creator.displayName}
                           className="w-10 h-10 rounded-full border-2 border-gray-300"
                         />

@@ -9,6 +9,7 @@ import {
   getUserStats,
   getUserCampaigns 
 } from '../lib/firestore';
+import { getProfileAvatar } from '../utils/imageTransform';
 import CampaignGallery from './CampaignGallery';
 
 export default function ProfilePage({ isOwnProfile = false, username = null }) {
@@ -196,7 +197,7 @@ export default function ProfilePage({ isOwnProfile = false, username = null }) {
                   <div className="relative">
                     {userData.profileImage && userData.profileImage.trim() ? (
                       <img
-                        src={userData.profileImage}
+                        src={getProfileAvatar(userData.profileImage)}
                         alt={userData.displayName}
                         className="w-32 h-32 rounded-full border-4 border-white shadow-xl object-cover"
                       />

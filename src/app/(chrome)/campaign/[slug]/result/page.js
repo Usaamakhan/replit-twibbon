@@ -5,6 +5,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { useCampaignSession } from '../../../../../contexts/CampaignSessionContext';
 import { requireDownloadComplete } from '../../../../../utils/campaignRouteGuards';
 import { composeImages } from '../../../../../utils/imageComposition';
+import { getProfileAvatar } from '../../../../../utils/imageTransform';
 import LoadingSpinner from '../../../../../components/LoadingSpinner';
 import CampaignStepIndicator from '../../../../../components/CampaignStepIndicator';
 
@@ -227,7 +228,7 @@ export default function CampaignResultPage() {
                       <div className="flex items-center justify-center gap-3">
                         {creator.profileImage && (
                           <img
-                            src={creator.profileImage}
+                            src={getProfileAvatar(creator.profileImage)}
                             alt={creator.displayName}
                             className="w-10 h-10 rounded-full border-2 border-gray-300"
                           />
