@@ -88,18 +88,26 @@ All image optimization tasks have been successfully implemented using Supabase's
 
 **Implementation Highlights:**
 - Created `imageTransform.js` utility with preset functions for different image types
-- Updated all pages to use optimized images (thumbnails, previews, avatars)
+- Updated all pages to use optimized images (thumbnails, previews, avatars, banners)
 - Preserved full-size images only where needed (canvas operations)
 - Leverages Supabase's Smart CDN for automatic edge caching
+- Handles various image sizes/aspect ratios automatically
+
+**Optimization Settings:**
+- Campaign thumbnails: 300px width, WebP, 75% quality (aspect ratio preserved)
+- Campaign previews: 800px width, WebP, 85% quality (aspect ratio preserved)
+- Profile avatars: 150x150px, WebP, 80% quality (square crop)
+- Profile banners: 1200x400px, WebP, 85% quality (3:1 aspect ratio)
+- Canvas/downloads: Full original size, no optimization
 
 **Files Modified:**
 - `src/utils/imageTransform.js` (new utility file)
-- `src/app/(chrome)/campaign/[slug]/page.js` (preview + avatar)
+- `src/app/(chrome)/campaign/[slug]/page.js` (preview + creator avatar)
 - `src/app/(chrome)/campaign/[slug]/adjust/page.js` (full-size for canvas)
-- `src/app/(chrome)/campaign/[slug]/result/page.js` (avatar)
-- `src/app/(chrome)/campaigns/page.js` (thumbnails)
-- `src/app/(chrome)/creators/page.js` (avatars)
-- `src/components/ProfilePage.js` (avatar)
+- `src/app/(chrome)/campaign/[slug]/result/page.js` (creator avatar)
+- `src/app/(chrome)/campaigns/page.js` (thumbnails + creator avatars)
+- `src/app/(chrome)/creators/page.js` (creator avatars)
+- `src/components/ProfilePage.js` (avatar + banner)
 - `src/components/CampaignGallery.js` (thumbnails)
 
 ---
@@ -222,6 +230,10 @@ function getCampaignCanvas(imagePath) {
 function getProfileAvatar(imagePath) {
   return getTransformedImageUrl(imagePath, { width: 150, height: 150, format: 'webp', quality: 80 });
 }
+
+function getProfileBanner(imagePath) {
+  return getTransformedImageUrl(imagePath, { width: 1200, height: 400, format: 'webp', quality: 85 });
+}
 ```
 
 **Estimated Time:** 30 minutes
@@ -285,16 +297,19 @@ const campaignImageUrl = getCampaignCanvas(campaign.imageUrl);
 - `src/components/CampaignGallery.js`
 
 **Requirements:**
-- Profile avatar: 150x150 WebP
-- Banner image: 1200x300 WebP
-- Campaign thumbnails in grid: 300x300 WebP
+- Profile avatar: 150x150 WebP (square)
+- Banner image: 1200x400 WebP (3:1 aspect ratio)
+- Campaign thumbnails in grid: 300px width WebP (aspect ratio preserved)
 
 **Changes:**
 ```javascript
-import { getProfileAvatar, getCampaignThumbnail } from '@/utils/imageTransform';
+import { getProfileAvatar, getProfileBanner, getCampaignThumbnail } from '@/utils/imageTransform';
 
 // Avatar
 <img src={getProfileAvatar(user.photoURL)} />
+
+// Banner
+<img src={getProfileBanner(user.bannerImage)} />
 
 // Campaign grid
 campaigns.map(campaign => (
@@ -311,16 +326,21 @@ campaigns.map(campaign => (
 **File:** `src/app/(chrome)/campaigns/page.js`
 
 **Requirements:**
-- Grid thumbnails: 300x300 WebP (quality 75)
+- Grid thumbnails: 300px width WebP (quality 75)
+- Creator avatars: 150x150 WebP (quality 80)
 - Lazy loading with Next.js Image component
 
 **Changes:**
 ```javascript
-import { getCampaignThumbnail } from '@/utils/imageTransform';
+import { getCampaignThumbnail, getProfileAvatar } from '@/utils/imageTransform';
 
+// Campaign thumbnails
 campaigns.map(campaign => (
   <img src={getCampaignThumbnail(campaign.imageUrl)} loading="lazy" />
 ))
+
+// Creator avatars
+<img src={getProfileAvatar(campaign.creator.profileImage)} />
 ```
 
 **Alternative (recommended):**

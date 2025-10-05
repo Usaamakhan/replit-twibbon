@@ -277,21 +277,30 @@ Automatically serves optimized WebP images with appropriate sizes for different 
 **Transformation Presets:**
 
 ```javascript
-// Thumbnails (300x300 WebP, quality 75) - ~200 KB
+// Thumbnails (300px width WebP, quality 75) - ~200 KB
+// Aspect ratio preserved - works with any image size
 getCampaignThumbnail(imagePath)  // Gallery grids
 
-// Previews (800px WebP, quality 85) - ~400 KB
+// Previews (800px width WebP, quality 85) - ~400 KB
+// Aspect ratio preserved - works with any image size
 getCampaignPreview(imagePath)    // Campaign view pages
 
 // Full-size (original PNG) - ~800 KB - 2.5 MB
 getCampaignCanvas(imagePath)     // Canvas operations only
 
 // Avatars (150x150 WebP, quality 80) - ~100 KB
+// Square crop from center
 getProfileAvatar(imagePath)      // User profile pictures
+
+// Banners (1200x400 WebP, quality 85) - ~300 KB
+// 3:1 aspect ratio crop
+getProfileBanner(imagePath)      // Profile page headers
 ```
 
 **Implementation:**
 - Automatic WebP conversion with quality optimization
+- Campaign images preserve aspect ratio (width-based scaling)
+- Profile avatars and banners use fixed dimensions (center crop)
 - Maintains original images for canvas operations (transparency required)
 - Leverages Supabase Smart CDN for edge caching
 - Compatible with Firebase photo URLs (pass-through)
