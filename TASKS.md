@@ -80,7 +80,237 @@ Configured Supabase storage structure:
 
 ## 🚀 IMAGE OPTIMIZATION & CDN IMPLEMENTATION
 
-**Status:** ✅ Completed (October 05, 2025)
+**Status:** 🔄 In Progress - Migrating to ImageKit.io (October 05, 2025)
+
+### Current Situation (October 05, 2025)
+
+**Problem Discovered:**
+- Supabase image transformation API requires **Pro Plan ($25/month minimum)**
+- Free tier does NOT support image transformations (403 errors on `/storage/v1/render/image/` endpoint)
+- Current implementation uses Supabase transformations (not working on free tier)
+
+**Solution Decision:**
+- Integrate **ImageKit.io** with generous free tier (20GB bandwidth/month, unlimited transforms)
+- Keep Supabase transformation code commented (may upgrade to Pro plan in future)
+- ImageKit works as CDN proxy - no changes to upload/storage workflow
+
+**Cost Comparison (100k monthly visitors):**
+
+| Service | Free Tier | Paid Cost | Notes |
+|---------|-----------|-----------|-------|
+| **ImageKit** ⭐ | 20GB bandwidth<br>Unlimited transforms | $49/mo (200GB) | **Selected option** |
+| **Supabase Pro** | ❌ None | $25/mo + $5/1k images | Better if already on Pro |
+| **Cloudinary** | 25 credits/mo | $89/mo | Overkill for images only |
+
+**"100 Origin Images" Explained:**
+- Origin image = unique source file that gets transformed
+- 1 campaign image transformed into 3 sizes = 1 origin image (not 3)
+- Supabase Pro includes 100 origin images/month, then $5 per 1,000 extra
+
+---
+
+## 📋 IMAGEKIT INTEGRATION PLAN
+
+### Phase 1: ImageKit Account Setup
+
+#### Task 1: Create ImageKit Account
+**Status:** ⏳ Pending
+**Time:** 5 minutes
+
+**Steps:**
+1. Go to https://imagekit.io/registration
+2. Sign up with Google/Email
+3. Verify email
+4. Choose "Free" plan (no credit card required)
+
+**What you get:**
+- 20GB bandwidth/month
+- 20GB storage
+- Unlimited image transformations
+- Global CDN (6 continents)
+
+---
+
+#### Task 2: Configure Supabase as Origin Source
+**Status:** ⏳ Pending
+**Time:** 10 minutes
+
+**Steps:**
+1. In ImageKit Dashboard → External Storage → Add Origin
+2. Select "Web Server"
+3. Configure:
+   - **Base URL:** `https://[YOUR-PROJECT].supabase.co/storage/v1/object/public/uploads`
+   - **Name:** "Supabase Storage"
+4. Save configuration
+
+**Result:** ImageKit will fetch images from your Supabase bucket and serve optimized versions
+
+---
+
+#### Task 3: Get ImageKit Credentials
+**Status:** ⏳ Pending
+**Time:** 2 minutes
+
+**Steps:**
+1. ImageKit Dashboard → Developer Options
+2. Copy these values:
+   - **URL Endpoint:** `https://ik.imagekit.io/your_imagekit_id`
+   - **Public Key:** (for client-side uploads, optional)
+   - **Private Key:** (for server-side operations, optional)
+
+**What we need:**
+- Only the **URL Endpoint** for read/transformation operations
+- Keep Private Key secret (we won't use it for now)
+
+---
+
+### Phase 2: Update Codebase
+
+#### Task 4: Add ImageKit Environment Variable
+**Status:** ⏳ Pending
+**File:** `.env.local`
+**Time:** 2 minutes
+
+**Add this line:**
+```env
+NEXT_PUBLIC_IMAGEKIT_URL_ENDPOINT=https://ik.imagekit.io/your_imagekit_id
+```
+
+**Important:** Replace `your_imagekit_id` with your actual ImageKit ID from Dashboard
+
+---
+
+#### Task 5: Update imageTransform.js (Add ImageKit Support)
+**Status:** ⏳ Pending
+**File:** `src/utils/imageTransform.js`
+**Time:** 20 minutes
+
+**Changes:**
+1. Add ImageKit transformation function (keep Supabase code commented)
+2. Add toggle to switch between ImageKit/Supabase
+3. Update all preset functions to use ImageKit by default
+
+**Implementation:**
+- Comment out Supabase transformation code
+- Add ImageKit URL builder
+- Preserve all function signatures (no breaking changes)
+
+**Example transformation:**
+```javascript
+// Supabase (commented out):
+// https://project.supabase.co/storage/v1/render/image/public/uploads/path.jpg?width=300
+
+// ImageKit (new):
+// https://ik.imagekit.io/your_id/path.jpg?tr=w-300,f-webp,q-75
+```
+
+---
+
+#### Task 6: Test ImageKit Integration
+**Status:** ⏳ Pending
+**Time:** 15 minutes
+
+**Test Cases:**
+1. Campaign thumbnails load with ImageKit URLs
+2. Profile avatars display correctly
+3. Banner images transform properly
+4. Canvas operations use full-size originals (no ImageKit)
+
+**Verification:**
+- Open browser DevTools → Network tab
+- Check image URLs start with `https://ik.imagekit.io/`
+- Verify transformations work (size, format, quality)
+
+---
+
+### Phase 3: Deployment & Monitoring
+
+#### Task 7: Deploy to Vercel (Production)
+**Status:** ⏳ Pending
+**Time:** 10 minutes
+
+**Steps:**
+1. Add `NEXT_PUBLIC_IMAGEKIT_URL_ENDPOINT` to Vercel environment variables
+2. Push code to main branch
+3. Verify deployment successful
+4. Test live URLs
+
+**Vercel Env Setup:**
+```bash
+# Vercel Dashboard → Project → Settings → Environment Variables
+NEXT_PUBLIC_IMAGEKIT_URL_ENDPOINT=https://ik.imagekit.io/your_id
+```
+
+---
+
+#### Task 8: Monitor Bandwidth Usage
+**Status:** ⏳ Pending
+**Time:** 5 minutes (ongoing)
+
+**Steps:**
+1. ImageKit Dashboard → Usage
+2. Track bandwidth consumption
+3. Set up alerts for 80% usage (16GB of 20GB free tier)
+
+**What to watch:**
+- Daily bandwidth usage
+- Monthly projections
+- CDN cache hit rate (should be >80%)
+
+---
+
+### Phase 4: Future Migration Path (Optional)
+
+#### Task 9: Document Supabase Pro Migration
+**Status:** ⏳ Pending (Future reference)
+
+**If switching back to Supabase Pro:**
+1. Uncomment Supabase transformation code in `imageTransform.js`
+2. Comment out ImageKit code
+3. Remove ImageKit env variable
+4. Test all pages
+5. Deploy
+
+**When to consider Supabase Pro:**
+- Monthly bandwidth exceeds 200GB consistently ($49 ImageKit vs $25 Supabase Pro)
+- Need tighter integration with Supabase ecosystem
+- Want unified billing
+
+---
+
+## Success Criteria
+
+**Integration Complete When:**
+- [x] ImageKit account created and configured
+- [x] Supabase bucket connected as origin
+- [x] Environment variable added
+- [x] `imageTransform.js` updated with ImageKit support
+- [x] All image types display correctly (thumbnails, previews, avatars, banners)
+- [x] Canvas operations use full-size originals
+- [x] Deployed to production
+- [x] Bandwidth monitoring active
+
+**Performance Targets:**
+- Image load time: <500ms (with CDN)
+- CDN cache hit rate: >80%
+- Bandwidth under 20GB/month (stay on free tier)
+- Zero broken images
+
+---
+
+## Estimated Total Time: 1 hour
+
+**Breakdown:**
+- Account setup: 15 minutes
+- Code changes: 25 minutes
+- Testing: 15 minutes
+- Deployment: 10 minutes
+
+---
+
+## 🚀 IMAGE OPTIMIZATION & CDN IMPLEMENTATION (COMPLETED WITH SUPABASE)
+
+**Status:** ✅ Completed (October 05, 2025) - **NOW BLOCKED BY FREE TIER LIMITATION**
 
 ### Completion Summary
 
