@@ -158,6 +158,16 @@ export function getProfileAvatar(imageUrlOrPath) {
     return imageUrlOrPath;
   }
   
+  const imagePath = extractStoragePath(imageUrlOrPath);
+  
+  if (imagePath.startsWith('profile-images/')) {
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    if (!supabaseUrl) {
+      return imageUrlOrPath;
+    }
+    return `${supabaseUrl}/storage/v1/object/public/uploads/${imagePath}`;
+  }
+  
   return getTransformedImageUrl(imageUrlOrPath, { 
     width: 150, 
     height: 150, 
@@ -174,6 +184,20 @@ export function getProfileAvatar(imageUrlOrPath) {
  * @returns {string} Banner URL (~300 KB)
  */
 export function getProfileBanner(imagePath) {
+  if (!imagePath) {
+    return '';
+  }
+  
+  const storagePath = extractStoragePath(imagePath);
+  
+  if (storagePath.startsWith('profile-images/')) {
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    if (!supabaseUrl) {
+      return imagePath;
+    }
+    return `${supabaseUrl}/storage/v1/object/public/uploads/${storagePath}`;
+  }
+  
   return getTransformedImageUrl(imagePath, { 
     width: 1200, 
     height: 400, 
