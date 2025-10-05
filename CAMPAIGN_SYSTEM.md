@@ -1,1859 +1,673 @@
-# Campaign Upload System - Implementation Guide
+# Campaign System - Implementation Guide
 
-## Terminology
-We use the term **"Campaign"** to refer to both frames and backgrounds collectively. Each campaign can be either a frame (with transparency) or a background (solid image).
+**Last Updated:** October 05, 2025  
+**Status:** Phase 1 Complete | Phase 2 Pending
 
-## Feature Overview
-The application supports two types of creator uploads:
-1. **Frames** - Images with transparent areas where visitor photos are placed
-2. **Backgrounds** - Solid images placed behind visitor photos
+---
 
-## Key Differences
-| Feature | Frame | Background |
-|---------|-------|------------|
-| Transparency Required | ✅ Yes (must detect) | ❌ No |
-| Upload Route | `/create/frame` | `/create/background` |
-| Use Case | Photo overlays on top | Photo sits on top of background |
+## Overview
+
+Twibbonize supports two campaign types:
+- **Frames** - Images with transparency where visitor photos go underneath
+- **Backgrounds** - Solid images where visitor photos go on top
+
+**Key Features:**
+- Two-step campaign creation (upload → metadata)
+- 3-page visitor flow (upload → adjust → result)
+- Canvas-based image composition with adjustments
+- Download tracking and public analytics
+- Delayed authentication (publish-time only)
 
 ---
 
 ## Data Schema
 
 ### Campaign Collection (Firestore: `campaigns`)
+✅ **Status: Implemented**
+
 ```javascript
 {
+  // Core fields (IMMUTABLE after publish)
   id: "auto-generated-id",
-  type: "frame" | "background",           // Required (IMMUTABLE after publish)
-  title: "Campaign Title",                // Required (editable with restrictions)
-  description: "Optional description",    // Optional (editable with restrictions)
-  slug: "unique-url-slug",                // Auto-generated from title + random suffix (IMMUTABLE)
-  imageUrl: "supabase-storage-url",       // Required (IMMUTABLE after publish)
-  creatorId: "firebase-user-id",          // Required (IMMUTABLE)
-  captionTemplate: "Share text template", // Optional (editable with restrictions)
-  supportersCount: 0,                     // Total supports/downloads count (increments on every download)
-  reportsCount: 0,                        // Number of reports received
-  moderationStatus: "active",             // "active" | "under-review" | "removed"
-  createdAt: timestamp,                   // Auto (publish time)
-  updatedAt: timestamp,                   // Last edit time (optional)
-  firstUsedAt: timestamp,                 // When first supporter used it (optional)
+  type: "frame" | "background",
+  slug: "unique-url-slug",              // Generated from title + random suffix
+  imageUrl: "campaigns/{userId}/{campaignId}.png",
+  creatorId: "firebase-user-id",
+  
+  // Metadata (editable for 7 days OR until 10 supporters)
+  title: "Campaign Title",
+  description: "Optional description",
+  captionTemplate: "Share text template",
+  
+  // Counters
+  supportersCount: 0,                    // Total downloads (increments on each download)
+  reportsCount: 0,
+  
+  // Status
+  moderationStatus: "active" | "under-review" | "removed",
+  
+  // Timestamps
+  createdAt: timestamp,                  // Publish time
+  updatedAt: timestamp,                  // Last edit
+  firstUsedAt: timestamp                 // First download (optional)
 }
 ```
 
-**Country for Campaigns:**
-- Campaigns do NOT store a country field directly
-- Country is derived from creator's user profile (`userProfile.country`)
-- For filtering "Top Campaigns by Country", use the creator's current country
-- Benefits: Single source of truth, no data duplication
-
-**Editing Policy - Limited Editing with Hybrid Restrictions:**
-- **Editable Fields:** title, description, captionTemplate (metadata only)
-- **Immutable Fields:** type, imageUrl, slug, creatorId (locked forever after publish)
-- **Edit Window:** Allowed for **7 days after publish** OR **until 10 supporters**, whichever comes first
-- **After Lock:** Campaign becomes permanently read-only
-- **Rationale:** Protects supporter trust while allowing creators to fix mistakes
+**Editing Policy:**
+- Editable fields: title, description, captionTemplate
+- Edit window: 7 days from publish AND less than 10 supporters
+- After limit: Campaign permanently locked
 
 **Deletion Policy:**
-- **Who Can Delete:** Only the campaign creator (owner)
-- **When:** Anytime after publish (no time restrictions)
-- **Confirmation Required:** Yes - popup warning "This action cannot be undone"
-- **What Gets Deleted:** 
-  - Campaign document from Firestore
-  - Campaign image from Supabase Storage (path: `campaigns/{userId}/{campaignId}.png`)
-  - All associated data (irreversible)
-- **Impact:** Supporters who already downloaded keep their files, but campaign page becomes 404
+- Only creator can delete
+- Requires confirmation popup
+- Deletes both Firestore document and Supabase image
+- No recovery possible
+
+---
 
 ### Reports Collection (Firestore: `reports`)
+✅ **Status: Implemented**
+
 ```javascript
 {
-  id: "auto-generated-id",
-  campaignId: "campaign-id",              // Required
-  campaignSlug: "campaign-slug",          // For easy navigation
-  reportedBy: "user-id" | "anonymous",    // Optional (can report without auth)
-  reason: "inappropriate" | "spam" | "copyright" | "other",  // Required
-  details: "Optional explanation text",   // Optional
-  status: "pending" | "reviewed" | "resolved" | "dismissed",  // Default: pending
+  campaignId: "campaign-id",
+  campaignSlug: "campaign-slug",
+  reportedBy: "user-id" | "anonymous",   // Anonymous allowed
+  reason: "inappropriate" | "spam" | "copyright" | "other",
+  details: "Optional explanation",
+  status: "pending" | "reviewed" | "resolved" | "dismissed",
   createdAt: timestamp,
-  reviewedAt: timestamp,                  // When admin reviewed (optional)
-  reviewedBy: "admin-user-id",            // Admin who reviewed (optional)
-  action: "removed" | "warned" | "no-action"  // What action was taken (optional)
+  reviewedAt: timestamp,                 // Optional
+  reviewedBy: "admin-user-id",           // Optional
+  action: "removed" | "warned" | "no-action"  // Optional
 }
 ```
-
-**Report Policy:**
-- Any visitor can report a campaign (no auth required)
-- Predefined reasons: Inappropriate, Spam, Copyright violation, Other
-- Reports are reviewed by admins (manual process in Phase 1)
-- Auto-moderation triggers (Phase 2): 3+ reports = flag, 10+ reports = auto-hide
 
 ---
 
 ## User Flows
 
-### Creator Flow - Upload Campaign
-1. Click "Create Campaign" in hero/sidebar
-2. **Modal popup opens** with type selection (Frame or Background)
-3. **Choose type**: Frame or Background in modal
-4. Navigate to `/create/frame` or `/create/background`
-5. **Step 1: Upload Image FIRST**
-   - Frame: Upload PNG with transparency
-   - Background: Upload any image format
-6. **Transparency Detection (Frames Only)** - Auto-validate transparent areas
-7. If frame validation fails → Show error: "Frame must have transparent area for photos"
-8. **Step 2: Fill Other Fields**
+### Creator Flow - Campaign Creation
+✅ **Status: Implemented**
+
+**Route:** `/create` (opens modal) → `/create/frame` or `/create/background`
+
+**Steps:**
+1. Click "Create Campaign" → Modal opens with type selection
+2. Select Frame or Background
+3. **Step 1:** Upload image
+   - Frame: PNG with ≥5% transparency (validated automatically)
+   - Background: PNG/JPG/WEBP (any format)
+   - Max 5MB file size
+4. **Step 2:** Fill metadata
    - Title (required)
    - Description (optional)
-   - Caption Template (optional, for both frames and backgrounds)
-9. Preview campaign
-10. Click "Publish" button
-11. **Authentication Check** - If not logged in, show popup:
-    - "Sign in to publish your campaign"
-    - Options: Sign In / Go Back
-    - **Preserve all filled data** during auth flow
-12. After auth → Submit → Save to Firestore + Supabase Storage
-13. Redirect to campaign view page `/campaign/[slug]`
+   - Caption template (optional)
+5. Click "Publish"
+   - If not logged in → Auth modal appears
+   - Form data preserved during auth
+6. Save to Firestore + Upload to Supabase
+7. Redirect to `/campaign/[slug]`
 
-### Visitor Flow - Use Campaign (3-Page Flow) ✅ IMPLEMENTED
-**Status:** Completed October 04, 2025
-
-**Page 1: Upload** (`/campaign/[slug]`)
-1. View campaign preview and details
-2. See supporter gallery and creator info
-3. Click "Choose Your Photo" → upload photo
-4. Auto-redirect to adjust page
-
-**Page 2: Adjust** (`/campaign/[slug]/adjust`)
-1. Preview composed image on canvas
-2. Adjust photo: zoom (0.5x-3x), drag to reposition, rotate (-45° to +45°)
-3. Use "Fit to Frame" or "Reset" controls
-4. Click "Download" → save image
-5. Auto-redirect to result page
-
-**Page 3: Result** (`/campaign/[slug]/result`)
-1. View final composed image
-2. Share to social media (Twitter, Facebook, WhatsApp)
-3. Re-download image or "Start Over"
-4. Optional: Post to public gallery (Phase 2)
-
-**Session Management:**
-- State persists in sessionStorage (24h expiry)
-- Route guards prevent out-of-order access
-- "Start Over" clears session and returns to Page 1
-
-**Download Tracking:**
-- Each download increments campaign's `supportersCount`
-- First download sets `firstUsedAt` timestamp
-
-### Visitor Flow - Report Campaign
-1. On any `/campaign/[slug]` page, click "Report" button
-2. **Report Modal Opens:**
-   - Select reason: Inappropriate, Spam, Copyright, Other
-   - Optional: Add explanation text
-   - No authentication required
-3. Submit report → Saved to `reports` collection
-4. Show confirmation: "Thank you, we'll review this"
-5. Prevent duplicate reports (same user/IP + same campaign)
-6. Campaign's `reportsCount` increments
-7. If threshold reached (3+ reports), set `moderationStatus: "under-review"`
+**Files:**
+- `CreateCampaignModal.js` - Type selection modal
+- `/create/frame/page.js` - Frame upload workflow
+- `/create/background/page.js` - Background upload workflow
 
 ---
 
-## Implementation Phases
+### Visitor Flow - 3-Page Campaign Usage
+✅ **Status: Implemented (October 4, 2025)**
 
-### Phase 1: Core Campaign System (IMPLEMENT NOW)
-**Priority: Immediate Implementation**
+**Architecture:** Upload → Adjust → Result with session persistence
 
-#### 1. Create Entry Point
-- **Modal popup** - Choice between "Frame" or "Background"
-- Triggered from "Create Campaign" buttons in hero and sidebar
-- Clean design with compact visual cards showing difference
-- No authentication required to open modal
-- Optional: `/create` page opens same modal (for direct URL access)
-
-#### 2. Build Upload Routes
-- `/create/frame` - Frame upload workflow
-- `/create/background` - Background upload workflow
-- Allow unauthenticated access - only check auth on publish
-- Preserve form data during authentication flow
-
-#### 3. Two-Step Upload Process
-- **Step 1:** Image upload first (primary action)
-- **Step 2:** Fill metadata (title, description, caption)
-- Clear progress indication
-
-#### 4. Implement Transparency Detection (Frames Only)
-- Use Canvas API to analyze uploaded image
-- Check for alpha channel (PNG format)
-- Count transparent pixels
-- Minimum threshold: At least 5-10% transparency required
-- Clear error messages if validation fails
-
-#### 5. File Upload to Supabase Storage
-- Create storage bucket: `campaigns`
-- Upload images with unique filenames
-- Get public URLs for storage
-- Handle upload errors gracefully
-
-#### 6. Save to Firestore
-- Create `campaigns` collection (single collection for both types)
-- Generate slug from title (URL-safe)
-- Store all metadata including type
-- Link to creator's user ID
-
-#### 7. Create Campaign View Page ✅ COMPLETED (3-Page Flow)
-**Status:** Completed October 04, 2025
-
-**Implementation:**
-- ✅ **Page 1 (Upload):** `/campaign/[slug]` - Campaign preview and photo upload
-- ✅ **Page 2 (Adjust):** `/campaign/[slug]/adjust` - Canvas-based adjustment with zoom/drag/rotate
-- ✅ **Page 3 (Result):** `/campaign/[slug]/result` - Final image with sharing options
+#### Page 1: Upload (`/campaign/[slug]`)
+- View campaign preview and details
+- See creator info and supporter count
+- Upload photo (10MB max, image files only)
+- Auto-redirect to `/adjust` after upload
 
 **Features:**
-- ✅ Session state management with sessionStorage persistence
-- ✅ Route guards enforce proper flow (Upload → Adjust → Result)
-- ✅ Mobile-optimized touch interactions
-- ✅ Real-time canvas preview with adjustments
-- ✅ Download tracking increments `supportersCount`
-- ✅ Social media sharing buttons
-- ⏸️ Gallery posting ("Post to Twibbonize") - Deferred to Phase 2
-
-#### 8. Image Composition & Adjustment ✅ COMPLETED
-**Status:** Completed October 04, 2025
-
-**Implementation:**
-- ✅ Canvas-based image composition (`src/utils/imageComposition.js`)
-- ✅ **Frame:** User photo UNDER frame (frame overlays on top)
-- ✅ **Background:** User photo ON TOP of background
-- ✅ **Adjustment Controls:**
-  - Zoom slider (0.5x - 3.0x scale)
-  - Drag to reposition (pointer events for mobile)
-  - Rotate (-45° to +45°)
-  - "Fit to Frame" and "Reset" buttons
-- ✅ Export as downloadable PNG
-- ✅ Download disabled until photo uploaded
-
-#### 9. Unified Campaigns Gallery
-- `/campaigns` - Browse all campaigns (frames + backgrounds)
-- **Filters:**
-  - By Country (user's location)
-  - By Time Period: Last 24h, 7 days, 1 month, All time
-  - By Type: All, Frames only, Backgrounds only
-- Grid layout with thumbnails
-- Show campaign type badge
-- Sort by: Top performing, Most recent, Trending
-
-#### 10. Top Creators Page
-- `/creators` - Leaderboard of top creators
-- **Filters:**
-  - By Country
-  - By Time Period: Last 24h, 7 days, 1 month, All time
-- Show: Avatar, name, campaign count, total supports (sum of all campaign supports)
-- Link to creator profile
-
-#### 11. Caption Template for Both
-- Add caption template field to both frames and backgrounds
-- Used for social sharing
-- Pre-fills share text
-
-#### 12. Campaign Reporting System
-- Add "Report" button to `/campaign/[slug]` pages
-- Create report modal component with predefined reasons
-- Allow anonymous reporting (no auth required)
-- Store reports in `reports` collection
-- Track `reportsCount` on campaign documents
-- Update `moderationStatus` based on report threshold
-- Prevent duplicate reports from same user/IP
-- Show confirmation message after submission
-
-#### 13. Authentication Flow
-- Allow unauthenticated users to fill entire form
-- Show auth popup only when clicking "Publish"
-- Modal with "Sign In" and "Go Back" options
-- Preserve all form data during auth
-- Complete publish after successful sign-in
-
----
-
-## 🎯 Suggested Improvements for 3-Page Flow
-
-**High Priority:**
-1. **Gallery Posting Feature** - Implement "Post to Twibbonize" on result page (currently deferred)
-2. **Error Handling** - Add retry logic for image loading failures
-3. **Ad Integration** - Replace placeholder slots with real ad units
-4. **Loading States** - Improve loading indicators during image composition
-
-**Medium Priority:**
-5. **Image Optimization** - Add compression before download to reduce file size
-6. **Analytics Events** - Track user actions (upload, adjust, download, share)
-7. **Keyboard Shortcuts** - Add hotkeys for common actions (Esc, Enter, Space)
-8. **Undo/Redo** - Add adjustment history for better UX
-
-**Low Priority:**
-9. **Photo Filters** - Add basic filters (brightness, contrast, saturation)
-10. **Multi-language** - Support internationalization for wider reach
-
----
-
-### Phase 2: Enhanced Features (IMPLEMENT LATER)
-**Priority: Future Implementation**
-
-#### 1. Privacy Status 🔮
-- Add `privacyStatus: "public" | "private"` field
-- Private campaigns only visible to creator
-- Toggle in campaign settings
-
-#### 2. User-Submitted Support Images 🔮
-- Users who use a campaign can upload their result image
-- Show on main page as "Supporters"
-- **Creator Controls:**
-  - Public (anyone can submit)
-  - Approval required (creator must accept)
-  - Allowed users only (whitelist)
-- Gallery of user submissions on campaign page
-
-#### 3. Background Removal for Visitors 🔮
-- Add "Remove Background" button on campaign usage pages
-- Integrate BG removal API (e.g., remove.bg)
-- **Consideration:** May be a paid feature
-- Helps visitors get clean results on backgrounds
-
-#### 4. Campaign Link (External URL) 🔮
-- Add `campaignLink` field to schema
-- Display as "Learn More" button on campaign pages
-- Links to creator's external website/cause
-- **Consideration:** May be a paid feature for creators
-
-#### 5. In-App Frame Creator 🔮
-- New route: `/create/editor`
-- Canvas-based frame creation tool
-- Upload image + draw transparent areas
-- Add text, shapes, effects
-- Advanced feature for premium users
-
-#### 6. Advanced Analytics Dashboard 🔮
-- Detailed creator analytics page
-- Track: views, downloads, shares, geographic data
-- Time-based charts and trends
-- Export data as CSV
-
-#### 7. Admin Dashboard (Content Moderation) 🔮
-**Priority: Phase 2 - Essential for scaling**
-
-**Admin Routes:**
-- `/admin` - Admin dashboard home
-- `/admin/reports` - View and manage all reports
-- `/admin/campaigns` - Browse and moderate all campaigns
-- `/admin/users` - User management (view, ban, warn)
-- `/admin/analytics` - Platform-wide statistics
-
-**Core Features:**
-
-**Report Management:**
-- View all reports with filters (pending, reviewed, resolved, dismissed)
-- Sort by: date, campaign, report count, status
-- Batch actions: approve multiple, dismiss multiple
-- Quick actions per report:
-  - View campaign details
-  - View reporter info (if authenticated)
-  - Remove campaign (with reason)
-  - Warn creator (send notification)
-  - Dismiss report (mark as false/spam)
-- Add internal admin notes to reports
-- Track admin who took action and timestamp
-
-**Campaign Moderation:**
-- View all campaigns with moderation status badges
-- Filter by: moderation status, type, country, date
-- Quick actions:
-  - Preview campaign
-  - View creator profile
-  - See all reports for this campaign
-  - Temporarily hide campaign
-  - Permanently remove campaign
-  - Restore removed campaign (undo within 30 days)
-- Bulk moderation actions
-
-**User Management:**
-- View all users with activity stats
-- Filter users by: role, country, join date, activity
-- User actions:
-  - View user's campaigns
-  - View user's reports (as reporter)
-  - Ban user (hide all campaigns, prevent new uploads)
-  - Warn user (send notification)
-  - View user activity log
-- Track banned users and ban reasons
-
-**Admin Analytics:**
-- Total campaigns, users, reports
-- Reports by reason breakdown
-- Moderation actions timeline
-- Top reported campaigns
-- Active moderators leaderboard
-- Platform health metrics
-
-**Access Control:**
-- Admin role stored in user profile: `role: "admin" | "user"`
-- Middleware protection on all `/admin/*` routes
-- Admin-only API endpoints with token verification
-- Audit log of all admin actions
-
----
-
-## Technical Requirements
-
-### File Upload Specifications
-- **Supported Formats:** PNG (frames), PNG/JPG/WEBP (backgrounds)
-- **Max File Size:** 5MB
-- **Recommended Dimensions:** 
-  - Frames: 1500x1500px (square) or 1500x500px (banner style)
-  - Backgrounds: 1920x1080px or higher
-- **Storage:** Supabase Storage with public access
-- **Storage Structure:** `campaigns/{userId}/{campaignId}.png`
-  - Organized by creator for easier management
-  - Example path: `campaigns/user123abc/campaign456def.png`
-  - Benefits: Easy batch deletion, clear ownership, simpler debugging
-
-### Transparency Detection Algorithm
-```javascript
-// Client-side transparency detection
-function hasTransparency(imageFile) {
-  return new Promise((resolve, reject) => {
-    const canvas = document.createElement('canvas');
-    const ctx = canvas.getContext('2d');
-    const img = new Image();
-    
-    img.onload = () => {
-      canvas.width = img.width;
-      canvas.height = img.height;
-      ctx.drawImage(img, 0, 0);
-      
-      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-      const pixels = imageData.data;
-      let transparentPixels = 0;
-      
-      for (let i = 3; i < pixels.length; i += 4) {
-        if (pixels[i] < 255) transparentPixels++;
-      }
-      
-      const transparencyPercent = (transparentPixels / (pixels.length / 4)) * 100;
-      resolve(transparencyPercent >= 5); // At least 5% transparency
-    };
-    
-    img.onerror = reject;
-    img.src = URL.createObjectURL(imageFile);
-  });
-}
-```
-
-### Slug Generation
-- Convert title to lowercase
-- Replace spaces with hyphens
-- Remove special characters
-- Append random 4-character suffix (alphanumeric, base36)
-- No uniqueness check needed (collision probability extremely low)
-- Example: "Save Earth 2025" → "save-earth-2025-k8m3"
-
-```javascript
-function generateSlug(title) {
-  const baseSlug = title
-    .toLowerCase()
-    .trim()
-    .replace(/[^a-z0-9\s-]/g, '')  // Remove special chars
-    .replace(/\s+/g, '-')           // Spaces to hyphens
-    .replace(/-+/g, '-')            // Multiple hyphens to single
-    .substring(0, 50);              // Max 50 chars
-  
-  // Generate 4-char random suffix (0-9, a-z)
-  const suffix = Math.random().toString(36).substring(2, 6);
-  
-  return `${baseSlug}-${suffix}`;
-}
-```
-
-### Image Adjustment System
-```javascript
-// User photo adjustment state
-{
-  scale: 1.0,        // Zoom level (0.5 - 3.0)
-  x: 0,              // Horizontal position
-  y: 0,              // Vertical position
-  rotation: 0        // Optional rotation (future)
-}
-```
-
-### Edit Permission Logic (Hybrid Restrictions)
-```javascript
-// Check if campaign can be edited
-function canEditCampaign(campaign) {
-  const now = new Date();
-  const publishDate = campaign.createdAt.toDate();
-  const daysSincePublish = (now - publishDate) / (1000 * 60 * 60 * 24);
-  
-  // Check 1: Within 7 days of publish?
-  const within7Days = daysSincePublish <= 7;
-  
-  // Check 2: Less than 10 supporters?
-  const lessThan10Supporters = campaign.supportersCount < 10;
-  
-  // Can edit if BOTH conditions are true
-  return within7Days && lessThan10Supporters;
-}
-
-// Display edit status to creator
-function getEditStatus(campaign) {
-  const now = new Date();
-  const publishDate = campaign.createdAt.toDate();
-  const daysRemaining = 7 - Math.floor((now - publishDate) / (1000 * 60 * 60 * 24));
-  const supportersRemaining = 10 - campaign.supportersCount;
-  
-  if (canEditCampaign(campaign)) {
-    return {
-      canEdit: true,
-      message: `Editable for ${daysRemaining} more days or ${supportersRemaining} more supporters`
-    };
-  } else {
-    return {
-      canEdit: false,
-      message: "Campaign locked (7 days passed or 10+ supporters)"
-    };
-  }
-}
-
-// On first download, track firstUsedAt
-function onCampaignDownload(campaignId) {
-  const campaignRef = db.collection('campaigns').doc(campaignId);
-  
-  // Use transaction to safely increment and set firstUsedAt
-  db.runTransaction(async (transaction) => {
-    const campaign = await transaction.get(campaignRef);
-    const currentCount = campaign.data().supportersCount;
-    
-    const updates = {
-      supportersCount: currentCount + 1
-    };
-    
-    // Set firstUsedAt on first download only
-    if (currentCount === 0) {
-      updates.firstUsedAt = new Date();
-    }
-    
-    transaction.update(campaignRef, updates);
-  });
-}
-
-// Delete campaign (creator only)
-async function deleteCampaign(campaignId, userId) {
-  const campaignRef = db.collection('campaigns').doc(campaignId);
-  const campaign = await campaignRef.get();
-  
-  // Verify ownership
-  if (campaign.data().creatorId !== userId) {
-    throw new Error('Unauthorized: Only campaign creator can delete');
-  }
-  
-  // Delete image from Supabase Storage
-  const imageUrl = campaign.data().imageUrl;
-  const imagePath = extractPathFromUrl(imageUrl);
-  await deleteFile(imagePath); // Use Supabase storage delete function
-  
-  // Delete campaign document from Firestore
-  await campaignRef.delete();
-  
-  return { success: true, message: 'Campaign deleted successfully' };
-}
-
-// Confirmation modal component (pseudocode)
-function DeleteConfirmationModal({ campaignTitle, onConfirm, onCancel }) {
-  return (
-    <Modal>
-      <h2>Delete Campaign?</h2>
-      <p>Are you sure you want to delete "{campaignTitle}"?</p>
-      <p className="warning">This action cannot be undone.</p>
-      <button onClick={onCancel}>Cancel</button>
-      <button onClick={onConfirm} className="danger">Delete Permanently</button>
-    </Modal>
-  );
-}
-```
-
----
-
-## Development Steps (Phase 1)
-
-### 1. Setup Data Structure
-- [ ] Create Firestore collection: `campaigns`
-- [ ] Create Firestore collection: `reports`
-- [ ] Set up Supabase storage bucket: `campaigns` (organized by user: `campaigns/{userId}/{campaignId}.png`)
-- [ ] Define data model interfaces
-
-### 2. Build Entry Point
-- [ ] Create `/create/page.js` - Choice between frame/background
-- [ ] Design visual cards for frame vs background selection
-- [ ] Add navigation links in header/hero
-
-### 3. Build Upload Pages
-- [ ] Create `/create/frame/page.js`
-- [ ] Create `/create/background/page.js`
-- [ ] Two-step flow: Upload image → Fill details
-- [ ] Form validation with error handling
-- [ ] Image preview components
-
-### 4. Implement Image Processing
-- [ ] Add transparency detection utility for frames
-- [ ] File size and format validation
-- [ ] Image preview before upload
-
-### 5. Authentication Integration
-- [ ] Allow unauthenticated form filling
-- [ ] Create auth popup modal component
-- [ ] Preserve form state during auth flow
-- [ ] Handle auth success/failure
-
-### 6. Storage Integration
-- [ ] Create Supabase upload API routes
-- [ ] Handle file uploads with progress (path: `campaigns/{userId}/{campaignId}.png`)
-- [ ] Store metadata in Firestore
-- [ ] Generate unique slugs with random suffix (no duplicate check needed)
-
-### 7. Build Campaign View Page
-- [ ] Create `/campaign/[slug]/page.js`
-- [ ] Show campaign details and creator info
-- [ ] Visitor upload interface
-- [ ] Image adjustment controls (zoom, move, fit)
-- [ ] Real-time preview canvas
-- [ ] Download button (disabled until user photo uploaded)
-- [ ] Sharing options integration
-
-### 8. Implement Campaign Editing & Deletion
-**Editing (Hybrid Restrictions):**
-- [ ] Add "Edit Campaign" button on creator's own campaigns
-- [ ] Implement `canEditCampaign()` permission check
-- [ ] Show edit status: days/supporters remaining
-- [ ] Create edit form (title, description, captionTemplate only)
-- [ ] Update `updatedAt` timestamp on save
-- [ ] Track `firstUsedAt` on first download
-- [ ] Display lock message when 7 days or 10 supporters reached
-- [ ] Prevent editing of immutable fields (image, type, slug)
-
-**Deletion:**
-- [ ] Add "Delete Campaign" button on creator's own campaigns
-- [ ] Create `DeleteConfirmationModal` component
-- [ ] Show warning: "This action cannot be undone"
-- [ ] Verify creator ownership before deletion
-- [ ] Delete image from Supabase Storage
-- [ ] Delete campaign document from Firestore
-- [ ] Redirect to profile/campaigns page after deletion
-- [ ] Handle 404 for deleted campaign pages
-
-### 9. Image Composition System
-- [ ] Canvas-based image composition utility
-- [ ] Handle frame overlays
-- [ ] Handle background underlays
-- [ ] Apply user adjustments (scale, position)
-- [ ] Export to downloadable file
-
-### 10. Create Campaigns Gallery
-- [ ] Build `/campaigns/page.js`
-- [ ] Fetch campaigns from Firestore
-- [ ] Filter by country (use creator's profile country), time period, type
-- [ ] Grid layout with campaign cards
-- [ ] Sorting options
-
-### 11. Create Top Creators Page
-- [ ] Build `/creators/page.js`
-- [ ] Aggregate creator stats (use creator's profile country for filtering)
-- [ ] Filter by country and time period
-- [ ] Leaderboard layout
-
-### 12. Add Navigation
-- [ ] Update header with "Create" link
-- [ ] Update sidebar/mobile menu
-- [ ] Update hero section CTA
-- [ ] Add campaigns and creators to nav
-
-### 13. Prevent Unauthorized Downloads
-- [ ] Disable download button initially
-- [ ] Enable only after user photo uploaded
-- [ ] Show helpful message when disabled
-
-### 14. Campaign Reporting System
-- [ ] Create Firestore collection: `reports`
-- [ ] Add "Report" button to campaign view page
-- [ ] Create `ReportModal` component with reason selection
-- [ ] Allow anonymous reporting (no auth required)
-- [ ] Add API route to handle report submissions
-- [ ] Increment `reportsCount` on campaign when reported
-- [ ] Update `moderationStatus` if threshold reached (3+ reports)
-- [ ] Prevent duplicate reports (check user ID or IP)
-- [ ] Show confirmation message after report submitted
-- [ ] Add report count badge for admin view (Phase 2)
-
----
-
-## File Structure
-
-**Note:** All campaign pages are placed under `(chrome)` folder to automatically include header/footer layout.
-
-```
-src/
-├── app/
-│   └── (chrome)/                    # Pages with header/footer (existing folder)
-│       ├── create/                  # NEW: Create campaign pages
-│       │   ├── page.js              # Entry: Choose frame or background
-│       │   ├── frame/
-│       │   │   └── page.js          # Frame upload workflow
-│       │   └── background/
-│       │       └── page.js          # Background upload workflow
-│       ├── campaign/                # NEW: Campaign view pages
-│       │   └── [slug]/
-│       │       └── page.js          # Campaign view & usage page
-│       ├── campaigns/               # NEW: Gallery page
-│       │   └── page.js              # Unified gallery (frames + backgrounds)
-│       └── creators/                # NEW: Creators page
-│           └── page.js              # Top creators leaderboard
-│
-├── components/                      # Existing folder - add new components here
-│   ├── CampaignChoice.js            # NEW: Frame vs background selection
-│   ├── CampaignUploadForm.js        # NEW: Reusable upload form
-│   ├── TransparencyDetector.js      # NEW: Transparency validation
-│   ├── ImageAdjustmentTools.js      # NEW: Zoom, move, fit controls
-│   ├── ImageComposer.js             # NEW: Canvas-based composition
-│   ├── CampaignCard.js              # NEW: Gallery card component
-│   ├── AuthPopup.js                 # NEW: Sign-in prompt modal
-│   ├── DeleteConfirmationModal.js   # NEW: Campaign deletion confirmation
-│   ├── ReportModal.js               # NEW: Campaign report modal
-│   └── ShareButtons.js              # NEW: Social sharing component
-│
-└── utils/                           # Existing folder - add new utilities here
-    ├── imageValidation.js           # NEW: Validation utilities
-    ├── slugGenerator.js             # NEW: Slug generation logic
-    ├── imageComposition.js          # NEW: Canvas manipulation
-    └── campaignFilters.js           # NEW: Filter logic for gallery
-```
-
-**What to do with folders/files:**
-- **Pages (under `(chrome)/`)**: Create NEW folders/files as needed during implementation
-- **Components folder**: Already exists - add NEW campaign components here
-- **Utils folder**: Already exists - add NEW utility functions here
-- **Existing files**: Keep all existing files - don't modify unless necessary
-
----
-
-## Admin Dashboard File Structure (Phase 2)
-
-**Note:** Admin pages require authentication and admin role verification.
-
-```
-src/
-├── app/
-│   ├── (chrome)/                        # Existing folder
-│   │   └── admin/                       # NEW (Phase 2): Admin dashboard pages
-│   │       ├── layout.js                # Admin layout with sidebar navigation
-│   │       ├── page.js                  # Admin dashboard home
-│   │       ├── reports/
-│   │       │   └── page.js              # Reports management page
-│   │       ├── campaigns/
-│   │       │   └── page.js              # All campaigns moderation
-│   │       ├── users/
-│   │       │   └── page.js              # User management page
-│   │       └── analytics/
-│   │           └── page.js              # Platform analytics
-│   │
-│   └── api/                             # Existing folder
-│       └── admin/                       # NEW (Phase 2): Admin API routes
-│           ├── reports/
-│           │   ├── list/
-│           │   │   └── route.js         # GET all reports with filters
-│           │   ├── update/
-│           │   │   └── route.js         # PUT update report status
-│           │   └── bulk-action/
-│           │       └── route.js         # POST batch actions on reports
-│           ├── campaigns/
-│           │   ├── moderate/
-│           │   │   └── route.js         # POST remove/hide campaign
-│           │   └── restore/
-│           │       └── route.js         # POST restore removed campaign
-│           ├── users/
-│           │   ├── ban/
-│           │   │   └── route.js         # POST ban user
-│           │   └── warn/
-│           │       └── route.js         # POST send warning to user
-│           └── analytics/
-│               └── route.js             # GET platform statistics
-│
-├── components/
-│   └── admin/                           # NEW (Phase 2): Admin-specific components
-│       ├── AdminSidebar.js              # Admin navigation sidebar
-│       ├── ReportCard.js                # Report display card
-│       ├── ReportFilters.js             # Filter controls for reports
-│       ├── CampaignModerationCard.js    # Campaign card with admin actions
-│       ├── UserManagementTable.js       # User list/table component
-│       ├── BanUserModal.js              # Ban user confirmation modal
-│       ├── RemoveCampaignModal.js       # Remove campaign modal with reason
-│       ├── AdminStatsCard.js            # Dashboard statistics card
-│       └── AdminActionLog.js            # Action history/audit log
-│
-├── middleware.js                        # UPDATE: Add admin route protection
-│
-└── utils/
-    └── admin/                           # NEW (Phase 2): Admin utilities
-        ├── adminAuth.js                 # Check if user is admin
-        ├── moderationActions.js         # Moderation action helpers
-        └── adminAnalytics.js            # Analytics aggregation functions
-```
-
-**Admin Access Control:**
-```javascript
-// middleware.js - Add admin route protection
-export async function middleware(request) {
-  const { pathname } = request.nextUrl;
-  
-  // Protect admin routes
-  if (pathname.startsWith('/admin')) {
-    const user = await getCurrentUser(request);
-    
-    if (!user) {
-      return NextResponse.redirect(new URL('/signin', request.url));
-    }
-    
-    // Check admin role from user profile
-    const userProfile = await getUserProfile(user.uid);
-    if (userProfile?.role !== 'admin') {
-      return NextResponse.redirect(new URL('/', request.url));
-    }
-  }
-  
-  return NextResponse.next();
-}
-
-// Admin role in user profile schema
-{
-  uid: "user-id",
-  email: "user@example.com",
-  displayName: "User Name",
-  role: "admin" | "user",  // NEW field for admin access
-  ...other fields
-}
-```
-
-**Admin Dashboard Layout:**
-- Sidebar navigation with sections:
-  - Dashboard (overview)
-  - Reports (pending count badge)
-  - Campaigns (moderation queue count)
-  - Users (total active users)
-  - Analytics (platform stats)
-- Top bar with admin name and logout
-- Main content area for each section
-- Action confirmation modals
-- Real-time notifications for new reports (optional)
-
----
-
-## 3-Page Visitor Flow Architecture (October 2025)
-
-### Overview
-The campaign visitor experience has been redesigned as a 3-page funnel to increase ad impressions and improve user engagement. This matches industry best practices (Twibbonize, Twibbon) and provides better monetization opportunities.
-
-### Page Structure
-
-#### Page 1: Upload Page (`/campaign/[slug]`)
-**Purpose:** Campaign discovery and photo upload entry point
-
-**Features:**
-- Large campaign preview (frame or background)
-- Campaign information (title, description, creator)
-- Support count and gallery preview (6-9 recent supporter posts)
-- **Primary CTA:** "Choose Your Photo" button
-- Share campaign buttons (Twitter, Facebook, WhatsApp)
+- Campaign details (title, description, creator)
+- "Choose Your Photo" button
 - Report campaign button
+- Ad placeholder slots
 
-**User Flow:**
-1. Visitor lands on page → sees campaign preview
-2. Clicks "Choose Your Photo" → file picker opens
-3. Selects photo → stored in session
-4. **Auto-redirects to** `/campaign/[slug]/adjust`
-
-**Ad Placements:**
-- Hero ad slot (below campaign preview)
-- Sidebar ad (desktop only)
-
-**Styling:**
-- Yellow header (`bg-yellow-400`) with campaign title/description
-- White content cards with shadows
-- Global button classes (`btn-base btn-primary`)
-- Mobile-responsive grid layout
-
----
-
-#### Page 2: Adjust Page (`/campaign/[slug]/adjust`)
-**Purpose:** Photo adjustment and composition
-
-**Features:**
-- Large canvas preview with composed image
-- Real-time photo + campaign composition
+#### Page 2: Adjust (`/campaign/[slug]/adjust`)
+- Canvas preview of composed image
 - Adjustment controls:
   - Zoom slider (0.5x - 3.0x)
-  - Drag to reposition (pointer events)
-  - "Fit to Frame" button
-  - "Reset" button
-- Photo management:
-  - "Change Photo" button
-  - "Remove Photo" button
-- **Primary CTA:** "Download" button
-- Progress indicator (Step 2 of 3)
+  - Drag to reposition
+  - Rotate (-45° to +45°)
+  - "Fit to Frame" and "Reset" buttons
+- Change/remove photo options
+- Download button
+- Auto-redirect to `/result` after download
 
-**Route Guard:**
-- Checks if photo exists in session
-- If no photo → Redirects to `/campaign/[slug]`
+**Route Guard:** Requires photo uploaded (redirects to Page 1 if missing)
 
-**User Flow:**
-1. Page loads with photo from session
-2. User adjusts photo (zoom, position)
-3. Clicks "Download" → downloads composed image
-4. Download tracked in session + Firestore
-5. **Auto-redirects to** `/campaign/[slug]/result`
+#### Page 3: Result (`/campaign/[slug]/result`)
+- Display final composed image
+- Social sharing buttons (Twitter, Facebook, WhatsApp)
+- "Re-Download" option
+- "Start Over" clears session and returns to Page 1
+- ⏸️ "Post to Gallery" (Phase 2 - deferred)
 
-**Canvas Optimization (Mobile):**
-- Pointer events (unified mouse/touch handling)
-- `touch-action: none` (prevents scroll during drag)
-- `user-select: none` (prevents text selection)
-- No blue highlight overlay on touch
+**Route Guard:** Requires download complete (redirects appropriately if not)
 
-**Ad Placements:**
-- Sticky sidebar ad (visible during adjustments)
+**Session Management:**
+- Context: `CampaignSessionContext`
+- Storage: sessionStorage (24h expiry)
+- Data: photo preview (base64), adjustments, campaign/creator data
+- Cleanup: Auto-expires or manual "Start Over"
 
-**Styling:**
-- Consistent yellow header
-- White content cards
-- Canvas with proper touch handling
+**Files:**
+- `CampaignSessionContext.js` - Session state management
+- `campaignRouteGuards.js` - Navigation guards
+- `/campaign/[slug]/page.js` - Page 1
+- `/campaign/[slug]/adjust/page.js` - Page 2
+- `/campaign/[slug]/result/page.js` - Page 3
+- `/api/campaigns/track-download/route.js` - Download tracking
 
 ---
 
-#### Page 3: Result Page (`/campaign/[slug]/result`)
-**Purpose:** Share and engagement
+### Campaign Gallery & Discovery
+✅ **Status: Implemented**
+
+#### Unified Gallery (`/campaigns`)
+Browse all campaigns with filters:
+- Type: All / Frames / Backgrounds
+- Time: 24h / 7d / 30d / All time
+- Sort: Most recent / Most popular
+- Grid layout with thumbnails
+
+#### Top Creators (`/creators`)
+Leaderboard ranked by total supports:
+- Filter by country and time period
+- Shows: Avatar, name, campaign count, total supports
+- Links to creator profiles
+
+**Files:**
+- `/campaigns/page.js` - Gallery page
+- `/creators/page.js` - Leaderboard page
+- `FilterModal.js` - Shared filter component
+
+---
+
+## Technical Implementation
+
+### Slug Generation
+✅ **Status: Implemented (`slugGenerator.js`)**
+
+**Algorithm:**
+1. Lowercase and sanitize title
+2. Replace spaces with hyphens
+3. Remove special characters
+4. Limit to 50 characters
+5. Append 4-character random suffix (base36)
+
+```javascript
+generateSlug("Save Earth 2025") → "save-earth-2025-k8m3"
+```
+
+**No uniqueness check needed** - Collision probability: ~1 in 1.7M
+
+---
+
+### Transparency Detection
+✅ **Status: Implemented (`transparencyDetector.js`)**
+
+**Algorithm:**
+1. Validate PNG format (only format with alpha channel)
+2. Load image into Canvas
+3. Analyze RGBA pixel data
+4. Count pixels with alpha < 255
+5. Calculate transparency percentage
+6. Validate ≥5% threshold
+
+```javascript
+const result = await checkTransparency(file);
+if (result.hasTransparency) {
+  // Valid frame - proceed
+} else {
+  // Show error: result.error
+}
+```
+
+---
+
+### Image Composition
+✅ **Status: Implemented (`imageComposition.js`)**
+
+**Canvas API-based composition with real-time adjustments:**
+
+```javascript
+// Frame: User photo UNDER frame
+drawUserPhoto(ctx, userPhoto, adjustments);
+ctx.drawImage(frameImage, 0, 0);
+
+// Background: User photo ON TOP
+ctx.drawImage(backgroundImage, 0, 0);
+drawUserPhoto(ctx, userPhoto, adjustments);
+```
 
 **Features:**
-- Final composed image display (medium size)
-- Success message/animation
-- **Primary CTAs:**
-  - "Post to Twibbonize" button (share to public gallery)
-  - Social share buttons (Twitter, Facebook, WhatsApp)
-- **Secondary CTAs:**
-  - "Re-Download" button
-  - "Start Over" button (clear session + return to page 1)
-- Progress indicator (Step 3 of 3)
-
-**Route Guards:**
-- Checks if download completed in session
-- If not downloaded → Redirects to `/campaign/[slug]/adjust`
-- If no photo → Redirects to `/campaign/[slug]`
-
-**User Flow:**
-1. Page loads with final result
-2. User can share to social media
-3. User can post to public gallery (with caption)
-4. "Start Over" clears session → returns to page 1
-
-**Gallery Post Feature:**
-- Modal with caption input (optional)
-- Preview of image to be posted
-- Submit to Firestore `campaignSupports` collection
-- Upload image to Supabase storage
-- Increment campaign support count
-
-**Ad Placements:**
-- Interstitial ad (before page loads)
-- Footer ad (below share buttons)
-
-**Styling:**
-- Yellow header with success message
-- White content cards
-- Social share button grid
-
----
-
-### State Management
-
-#### Campaign Session Context
-**File:** `src/contexts/CampaignSessionContext.js`
-
-**Purpose:** Share campaign state across all 3 pages
-
-**State Schema:**
-```javascript
-{
-  sessionId: string,              // Unique session identifier
-  campaignSlug: string,            // Current campaign slug
-  userPhoto: File | null,          // Uploaded photo object
-  userPhotoPreview: string,        // Base64 preview URL
-  adjustments: {                   // Canvas adjustments
-    scale: number,                 // Zoom level (0.5 - 3.0)
-    x: number,                     // X position offset
-    y: number                      // Y position offset
-  },
-  campaignData: {                  // Campaign information
-    id: string,
-    title: string,
-    imageUrl: string,
-    type: string,
-    // ... other campaign fields
-  },
-  creatorData: {                   // Creator information
-    username: string,
-    displayName: string,
-    profileImage: string,
-    // ... other creator fields
-  },
-  downloaded: boolean,             // Track download completion
-  timestamp: number                // Session creation time
-}
-```
-
-**Context Provider:**
-```javascript
-<CampaignSessionProvider>
-  <CampaignPages />
-</CampaignSessionProvider>
-```
-
-**Hooks:**
-- `useCampaignSession()` - Access/update session state
-- `clearCampaignSession()` - Clear all session data
-
-**Persistence:**
-- State saved to `sessionStorage` on every update
-- Auto-hydrates from sessionStorage on page reload
-- Expires after 24 hours (timestamp check)
-- Cleared on "Start Over" action
-
----
-
-### Navigation & Route Guards
-
-#### Route Guard Utility
-**File:** `src/utils/campaignRouteGuards.js`
+- Load images from File or URL
+- Apply scale, position, rotation
+- Real-time preview updates
+- Export to PNG/JPEG blob
+- Mobile touch support (pointer events)
 
 **Functions:**
+- `composeImages()` - Create final composition
+- `updatePreview()` - Real-time canvas updates
+- `calculateFitAdjustments()` - Auto-fit photo
+- `downloadCanvas()` - Export as file
 
+---
+
+### Storage Structure
+✅ **Status: Implemented**
+
+**Supabase Storage:**
+- Bucket: `uploads`
+- Path: `campaigns/{userId}/{campaignId}.png`
+
+**Benefits:**
+- Predictable paths for deletion
+- One image per campaign
+- Easy batch operations by user
+- Clear ownership structure
+
+**API Endpoints:**
+- `/api/storage/campaign-upload-url` - Get signed upload URL
+- `/api/storage/delete` - Delete campaign image
+- `/api/storage/signed-url` - Get temporary download URL
+
+**Files:**
+- `campaignStorage.js` - Path utilities
+- `campaign-upload-url/route.js` - Upload endpoint
+
+---
+
+### Download Tracking
+✅ **Status: Implemented**
+
+**Server-side tracking (Firestore transaction):**
+1. Increment campaign `supportersCount`
+2. Set `firstUsedAt` on first download
+3. Create download record in subcollection (with timestamp)
+4. Update `updatedAt` timestamp
+
+**Cost-optimized approach:**
+- No user tracking in campaign document
+- Simple counter increment (prevents document bloat)
+- Scales to unlimited downloads
+
+---
+
+## Route Guards & Navigation
+
+✅ **Status: Implemented (`campaignRouteGuards.js`)**
+
+**Guards:**
 ```javascript
-// Check if photo uploaded, redirect if not
-export function requirePhotoUpload(session, router, slug) {
-  if (!session || !session.userPhoto) {
-    router.push(`/campaign/${slug}`);
-    return false;
-  }
-  return true;
+// Adjust page: Requires photo uploaded
+requirePhotoUpload(session, router, slug)
+
+// Result page: Requires download complete
+requireDownloadComplete(session, router, slug)
+
+// Check session expiry (24h)
+isSessionExpired(timestamp)
+```
+
+**Flow Enforcement:**
+- Direct URL access to `/adjust` → Redirects to `/upload`
+- Direct URL access to `/result` → Redirects to appropriate page
+- Expired session → Clears data and redirects to `/upload`
+
+---
+
+## Firestore Functions
+
+### Campaign Functions
+✅ **Status: Implemented (`firestore.js`)**
+
+- `createCampaign(campaignData, userId)` - Publish new campaign
+- `getCampaignBySlug(slug)` - Fetch campaign with creator info
+- `getUserCampaigns(userId, limit)` - Get user's campaigns
+- `getAllCampaigns(filters)` - Gallery with filters
+- `updateCampaign(campaignId, updates, userId)` - Edit metadata
+- `deleteCampaign(campaignId, userId)` - Delete campaign + image
+- `trackCampaignUsage(campaignId)` - Increment supporters (deprecated, use API)
+
+### Report Functions
+✅ **Status: Implemented (`firestore.js`)**
+
+- `createReport(reportData)` - Submit report (anonymous allowed)
+- `getReports(filterOptions)` - Admin: fetch all reports
+- `getCampaignReports(campaignId)` - Get reports for campaign
+- `updateReportStatus(reportId, statusData)` - Admin: review report
+
+### Creator Functions
+✅ **Status: Implemented (`firestore.js`)**
+
+- `getTopCreators(filters)` - Leaderboard by supports
+
+---
+
+## Security Rules
+
+### Campaign Creation
+```javascript
+// Firestore Rules
+match /campaigns/{campaignId} {
+  allow create: if request.auth != null
+    && request.resource.data.creatorId == request.auth.uid
+    && request.resource.data.type in ['frame', 'background']
+    && request.resource.data.slug is string
+    && request.resource.data.title is string;
+    
+  allow update: if request.auth.uid == resource.data.creatorId
+    && onlyUpdatingFields(['title', 'description', 'captionTemplate', 'updatedAt']);
+    
+  allow delete: if request.auth.uid == resource.data.creatorId;
 }
+```
 
-// Check if downloaded, redirect if not
-export function requireDownloadComplete(session, router, slug) {
-  if (!session || !session.downloaded) {
-    if (session && session.userPhoto) {
-      router.push(`/campaign/${slug}/adjust`);
-    } else {
-      router.push(`/campaign/${slug}`);
-    }
-    return false;
-  }
-  return true;
-}
-
-// Check session expiry (24 hours)
-export function isSessionExpired(timestamp) {
-  const TWENTY_FOUR_HOURS = 24 * 60 * 60 * 1000;
-  return Date.now() - timestamp > TWENTY_FOUR_HOURS;
+### Report Submission
+```javascript
+match /reports/{reportId} {
+  allow create: if request.resource.data.reason in ['inappropriate', 'spam', 'copyright', 'other']
+    && request.resource.data.campaignId is string;
 }
 ```
 
-**Usage in Pages:**
-```javascript
-// In /adjust page
-useEffect(() => {
-  const session = useCampaignSession();
-  if (!requirePhotoUpload(session, router, slug)) {
-    return; // Will redirect
-  }
-}, []);
-
-// In /result page
-useEffect(() => {
-  const session = useCampaignSession();
-  if (!requireDownloadComplete(session, router, slug)) {
-    return; // Will redirect
-  }
-}, []);
-```
-
 ---
 
-### Navigation Flow Diagram
+## Mobile Optimization
 
-```
-┌─────────────────────────────────────────────────────────────┐
-│                    Visitor Journey                           │
-└─────────────────────────────────────────────────────────────┘
+### Touch Interactions (Adjust Page)
+✅ **Status: Implemented**
 
-    Landing
-       │
-       ▼
-┌──────────────────┐
-│   Page 1: Upload │  ← Direct URL access
-│  /campaign/[slug]│
-└──────────────────┘
-       │
-       │ User uploads photo
-       │ Store in session
-       ▼
-┌──────────────────┐
-│  Page 2: Adjust  │  ← Redirect here after upload
-│    /adjust       │     Route guard: requires photo
-└──────────────────┘
-       │
-       │ User downloads image
-       │ Track in session
-       ▼
-┌──────────────────┐
-│  Page 3: Result  │  ← Redirect here after download
-│    /result       │     Route guard: requires download
-└──────────────────┘
-       │
-       ├─ Share to social ──┐
-       ├─ Post to gallery ──┤
-       └─ Start Over ────────┴──┐
-                                 │
-                                 ▼
-                         Clear session
-                         Return to Page 1
-```
-
----
-
-### Ad Placement Strategy
-
-#### Page 1 (Upload)
-- **Hero Ad:** 728x90 banner below campaign preview
-- **Sidebar Ad:** 300x250 rectangle (desktop only)
-- **Total Impressions:** 1-2 per page view
-
-#### Page 2 (Adjust)
-- **Sticky Sidebar Ad:** 300x600 skyscraper (remains visible during scroll)
-- **Total Impressions:** 1 per page view
-
-#### Page 3 (Result)
-- **Interstitial Ad:** Full-page ad before result loads (3-5 second delay)
-- **Footer Ad:** 728x90 banner below share buttons
-- **Total Impressions:** 2 per page view
-
-**Expected Revenue Impact:**
-- Single-page flow: 1-2 ad impressions per campaign usage
-- 3-page flow: 4-6 ad impressions per campaign usage
-- **Increase: 3-4x more ad impressions** 💰
-
----
-
-### Analytics Tracking
-
-#### Events to Track
-**File:** `src/utils/campaignAnalytics.js`
-
-```javascript
-// Page 1 events
-trackEvent('campaign_viewed', { campaignId, slug })
-
-// Page 1 → Page 2 transition
-trackEvent('photo_uploaded', { campaignId, photoSize })
-
-// Page 2 events
-trackEvent('photo_adjusted', { campaignId, adjustments })
-trackEvent('image_downloaded', { campaignId })
-
-// Page 2 → Page 3 transition
-trackEvent('result_viewed', { campaignId })
-
-// Page 3 events
-trackEvent('shared_to_social', { campaignId, platform })
-trackEvent('posted_to_gallery', { campaignId })
-trackEvent('started_over', { campaignId })
-```
-
-**Drop-off Analysis:**
-- Measure completion rate at each step
-- Identify friction points
-- A/B test improvements
-
----
-
-### Session Management
-
-#### Storage Strategy
-**Browser:** sessionStorage (not localStorage)
-**Key:** `campaign_session_${campaignSlug}`
-**Lifecycle:** 
-- Created on photo upload (Page 1)
-- Updated on adjustments (Page 2)
-- Updated on download (Page 2)
-- Cleared on "Start Over" (Page 3)
-- Auto-expires after 24 hours
-
-**Why sessionStorage?**
-- ✅ Persists across page reloads
-- ✅ Cleared when tab/browser closes
-- ✅ Doesn't pollute localStorage
-- ✅ Suitable for temporary workflow state
-
-#### Data Persistence
-```javascript
-// Save to sessionStorage
-const saveSession = (session) => {
-  const key = `campaign_session_${session.campaignSlug}`;
-  sessionStorage.setItem(key, JSON.stringify(session));
-};
-
-// Load from sessionStorage
-const loadSession = (slug) => {
-  const key = `campaign_session_${slug}`;
-  const data = sessionStorage.getItem(key);
-  return data ? JSON.parse(data) : null;
-};
-
-// Clear session
-const clearSession = (slug) => {
-  const key = `campaign_session_${slug}`;
-  sessionStorage.removeItem(key);
-};
-```
-
----
-
-### Mobile Optimization
-
-#### Touch Interaction Fixes (Page 2)
-**Problem:** Blue overlay appears when touching canvas on mobile
+**Problem:** Blue highlight overlay on mobile touch
 
 **Solution:**
 ```css
-/* Canvas element styles */
 .canvas-container {
-  touch-action: none;        /* Prevent default touch actions */
-  user-select: none;         /* Prevent text selection */
-  -webkit-user-select: none; /* Safari */
-  -ms-user-select: none;     /* IE/Edge */
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
 }
 ```
 
-**JavaScript:**
 ```javascript
-// Use pointer events (not mouse/touch)
+// Use pointer events (unified mouse/touch)
 canvas.addEventListener('pointerdown', handleDragStart);
 canvas.addEventListener('pointermove', handleDragMove);
 canvas.addEventListener('pointerup', handleDragEnd);
 ```
 
-**Benefits:**
-- ✅ No blue highlight on touch
-- ✅ Unified mouse/touch handling
-- ✅ Prevents accidental scrolling
-- ✅ Smooth drag experience
+---
+
+## Implementation Status
+
+### ✅ Phase 1: Complete (October 4, 2025)
+
+**Core Campaign System:**
+- [x] CreateCampaignModal (type selection)
+- [x] Frame upload with transparency detection
+- [x] Background upload (multi-format)
+- [x] Slug generation
+- [x] Campaign storage (Supabase)
+- [x] Campaign metadata (Firestore)
+
+**3-Page Visitor Flow:**
+- [x] Page 1: Upload page
+- [x] Page 2: Adjust page (canvas + controls)
+- [x] Page 3: Result page (share + download)
+- [x] Session management (Context + sessionStorage)
+- [x] Route guards
+- [x] Download tracking API
+
+**Discovery:**
+- [x] Campaigns gallery with filters
+- [x] Top creators leaderboard
+- [x] Report system (backend ready)
+
+**Utilities:**
+- [x] Image composition (Canvas API)
+- [x] Transparency detector
+- [x] Slug generator
+- [x] Campaign storage helpers
 
 ---
 
-### Security Considerations
+### ⏳ Phase 2: Pending (Future)
 
-#### Session Hijacking Prevention
-- Session ID is random UUID
-- No sensitive data in session (only file references)
-- Session expires after 24 hours
-- No cross-campaign session reuse
+**Enhanced Features:**
+- [ ] User-submitted gallery posts ("Post to Twibbonize")
+- [ ] Campaign edit UI (7-day / 10-supporter window)
+- [ ] Campaign deletion UI with confirmation
+- [ ] Privacy status toggle (public/private)
+- [ ] Background removal for visitors
+- [ ] Campaign external link field
+- [ ] In-app frame creator/editor
 
-#### File Upload Security
-- Same validations as single-page flow
-- 10MB file size limit
-- Type validation (PNG, JPG, WEBP)
-- Client-side validation before session storage
+**Admin Dashboard:**
+- [ ] Admin role field in user profiles
+- [ ] Report management UI
+- [ ] Campaign moderation UI
+- [ ] User management UI
+- [ ] Platform analytics dashboard
+- [ ] Admin middleware protection
 
-#### Route Guard Bypass Prevention
-- Guards check session state on every page load
-- Automatic redirects for invalid states
-- No server-side session (stateless)
-
----
-
-### Performance Considerations
-
-#### Page Load Times
-- **Target:** <2 seconds per page
-- **Optimization:** 
-  - Lazy load ad scripts
-  - Prefetch next page on current page
-  - Compress images before storage
-
-#### Canvas Rendering
-- Use native Canvas API (no libraries)
-- Debounce adjustment updates (100ms)
-- Optimize image dimensions (max 2000x2000)
-
-#### State Persistence
-- Throttle sessionStorage writes (500ms)
-- Store base64 preview (not full File object)
-- Clean up old sessions periodically
+**Analytics & Ads:**
+- [ ] Event tracking (upload, download, share)
+- [ ] Drop-off analysis
+- [ ] AdSense integration
+- [ ] A/B testing framework
 
 ---
 
-### Testing Strategy
+## Best Practices & Recommendations
 
-#### Manual Testing
-- [ ] Complete flow: Page 1 → 2 → 3
-- [ ] Direct URL access to /adjust (should redirect)
-- [ ] Direct URL access to /result (should redirect)
-- [ ] Page reload on each page (should preserve state)
-- [ ] Session expiry after 24h (should clear)
-- [ ] Browser back button (should work correctly)
-- [ ] Mobile touch interactions (no blue highlight)
-- [ ] Download tracking (increments supportersCount)
-- [ ] "Start Over" clears session
+### Performance Optimization
+⚠️ **Recommended for Production**
 
-#### Automated Testing (Future)
-- E2E tests with Playwright/Cypress
-- Unit tests for route guards
-- Integration tests for session management
+1. **Image Optimization** (see TASKS.md for details)
+   - Implement Supabase image transformations
+   - Serve WebP format with CDN caching
+   - Use thumbnails for gallery (300x300)
+   - Full resolution only for canvas operations
+   - **Impact:** 89% bandwidth cost reduction
 
----
+2. **Lazy Loading**
+   - Load images on scroll in gallery
+   - Defer ad scripts until page ready
+   - Code-split routes for faster initial load
 
-### Migration Notes
+3. **Caching Strategy**
+   - Cache campaign metadata in browser (5min)
+   - CDN cache images (365 days with version param)
+   - Service worker for offline support
 
-**From Single-Page to 3-Page Flow:**
-1. ✅ Single-page version kept as fallback
-2. ✅ Styling already updated (yellow header, white cards)
-3. 🔄 Split page into 3 separate route files
-4. 🔄 Extract shared logic to context
-5. 🔄 Add route guards and navigation
-6. 🔄 Add progress indicators
-7. 🔄 Prepare ad placeholder components
+### Security Hardening
+⚠️ **Recommended for Production**
 
-**Backward Compatibility:**
-- Old `/campaign/[slug]` URLs still work (now Page 1)
-- No breaking changes to API routes
-- Campaign data schema unchanged
+1. **Rate Limiting**
+   - Campaign creation: 5 per hour per user
+   - Report submission: 10 per hour per IP
+   - Download tracking: 100 per hour per campaign
 
----
+2. **Content Validation**
+   - Server-side file type re-validation
+   - Image dimension limits (max 4000x4000)
+   - Malware scanning for uploads
+   - NSFW content detection
 
-### Success Metrics & KPIs
+3. **Auth Improvements**
+   - Email verification required for publishing
+   - reCAPTCHA on report submission
+   - Admin role verification middleware
 
-#### User Engagement
-- **Completion Rate:** % who reach Page 3
-- **Drop-off Rate:** % who leave at each step
-- **Time on Site:** Average session duration
-- **Return Rate:** % who "Start Over"
+### Data Integrity
+⚠️ **Recommended for Production**
 
-#### Monetization
-- **Ad Impressions:** Total per campaign usage
-- **Ad Viewability:** % of ads actually seen
-- **Revenue Per Visit:** Average earnings
-- **Fill Rate:** % of ad slots filled
+1. **Backup Strategy**
+   - Daily Firestore exports
+   - Weekly Supabase backup
+   - Deleted campaign archive (30-day retention)
 
-#### Technical Performance
-- **Page Load Time:** <2s per page
-- **Session Persistence:** >95% success rate
-- **Error Rate:** <1% of sessions
-- **Canvas Performance:** 60fps rendering
+2. **Error Handling**
+   - Retry logic for Firestore writes
+   - Fallback for image load failures
+   - User-friendly error messages
+   - Error tracking (Sentry/LogRocket)
 
-**Target Goals (Week 1):**
-- Completion rate: >70%
-- Ad impressions: 4+ per usage
-- Page load time: <2s
-- Error rate: <1%
+3. **Data Validation**
+   - Schema validation on all writes
+   - Sanitize user input (title, description)
+   - XSS protection on rendered content
 
----
+### Monitoring & Analytics
+⚠️ **Recommended for Production**
 
-## Success Metrics
-- Campaign upload success rate
-- Transparency detection accuracy
-- Visitor engagement (uploads per campaign)
-- Download completion rate
-- Creator retention and activity
-- Gallery browsing patterns
-- Share button usage
-- **NEW:** 3-page flow completion rate
-- **NEW:** Ad impression count per campaign usage
-- **NEW:** Average time per page in visitor flow
+1. **Core Metrics**
+   - Campaign creation rate
+   - Visitor completion rate (3-page flow)
+   - Average time per page
+   - Drop-off points
+   - Download success rate
 
----
+2. **Performance Metrics**
+   - Page load time (target: <2s)
+   - Canvas rendering time (target: <1s)
+   - API response time (target: <500ms)
+   - Error rate (target: <1%)
 
-## 🚀 IMAGE OPTIMIZATION & CDN STRATEGY
+3. **Business Metrics**
+   - Active campaigns
+   - Daily active users
+   - Top performing campaigns
+   - Creator retention
+   - Revenue per visit (with ads)
 
-**Added:** January 06, 2025
-**Priority:** HIGH - Critical for scalability and monetization
-**Impact:** $34,368 annual benefit at 100k monthly visitors
+### Scalability Considerations
+⚠️ **Prepare for Growth**
 
----
+1. **Database Optimization**
+   - Add composite indexes for filtered queries
+   - Consider pagination for large galleries (>1000 campaigns)
+   - Archive inactive campaigns (>6 months, 0 downloads)
 
-### Overview
+2. **Storage Optimization**
+   - Image compression before upload (client-side)
+   - Delete old campaign images after deletion
+   - Monitor Supabase storage quota
 
-Implement Supabase's built-in image transformation and Smart CDN to optimize image delivery throughout the application, with primary focus on the 3-page campaign flow where most bandwidth is consumed.
-
----
-
-### Current Performance Analysis
-
-#### Bandwidth Usage Per Visitor (3-Page Flow):
-
-**Page 1 - Upload (`/campaign/[slug]`):**
-- Campaign preview image: 2.5MB (full PNG)
-- Creator profile image: 200KB
-- **Subtotal: 2.7MB**
-
-**Page 2 - Adjust (`/campaign/[slug]/adjust`):**
-- Campaign image (canvas rendering): 2.5MB
-- User uploaded photo: 0MB (user's bandwidth)
-- **Subtotal: 2.5MB**
-
-**Page 3 - Result (`/campaign/[slug]/result`):**
-- Composed image: 0MB (client-side blob from existing images)
-- **Subtotal: 0MB**
-
-**TOTAL BANDWIDTH: 5.2MB per visitor**
-
-#### Projected Monthly Costs (No Optimization):
-
-| Monthly Visitors | Total Bandwidth | Vercel Cost | Supabase Cost | Total Cost |
-|------------------|-----------------|-------------|---------------|------------|
-| 10,000 | 52GB | $42 | $10 | $52 |
-| 50,000 | 260GB | $208 | $52 | $260 |
-| 100,000 | 520GB | $416 | $104 | $520 |
-| 500,000 | 2.6TB | $2,080 | $520 | $2,600 |
+3. **Infrastructure**
+   - Implement CDN for static assets
+   - Database read replicas for heavy queries
+   - Horizontal scaling for API routes
 
 ---
 
-### Optimized Performance Targets
+## Testing Checklist
 
-#### Bandwidth Usage Per Visitor (WITH Optimization):
+### Creator Flow
+- [ ] Upload frame with transparency → Success
+- [ ] Upload frame without transparency → Error shown
+- [ ] Upload background (PNG/JPG/WEBP) → Success
+- [ ] File size >5MB → Error shown
+- [ ] Unauthenticated publish → Auth modal appears
+- [ ] Auth modal "Go Back" → Returns to form
+- [ ] Auth modal "Sign In" → Preserves form data
+- [ ] Publish success → Redirects to campaign page
 
-**Page 1:**
-- Campaign preview (600px WebP): 150KB ✅ 94% reduction
-- Creator profile (150px WebP): 15KB ✅ 92% reduction
-- **Subtotal: 165KB**
+### Visitor Flow
+- [ ] Complete flow: Upload → Adjust → Result
+- [ ] Direct URL to `/adjust` without photo → Redirects to upload
+- [ ] Direct URL to `/result` without download → Redirects appropriately
+- [ ] Page reload on each page → Session persists
+- [ ] Session >24h old → Clears and redirects
+- [ ] "Start Over" → Clears session and returns to upload
+- [ ] Download button → Increments supportersCount
+- [ ] Canvas adjustments (zoom, drag, rotate) → Works smoothly
+- [ ] Mobile touch → No blue highlight, smooth interaction
 
-**Page 2:**
-- Campaign image (1200px WebP for canvas): 400KB ✅ 84% reduction
-- **Subtotal: 400KB**
+### Discovery
+- [ ] Gallery filters (type, time, sort) → Works correctly
+- [ ] Creators filter (country, time) → Works correctly
+- [ ] Campaign cards link to correct campaign
+- [ ] Empty state shows when no results
 
-**Page 3:**
-- No additional bandwidth
-- **Subtotal: 0KB**
-
-**OPTIMIZED TOTAL: 565KB per visitor**  
-**BANDWIDTH SAVINGS: 89% (4.6MB saved per visitor)**
-
-#### Projected Monthly Costs (WITH Optimization):
-
-| Monthly Visitors | Total Bandwidth | Vercel Cost | Supabase Cost | Transformation Cost | Total Cost | Savings |
-|------------------|-----------------|-------------|---------------|---------------------|------------|---------|
-| 10,000 | 5.7GB | $5 | $1 | $5 | $11 | $41/mo |
-| 50,000 | 28GB | $22 | $6 | $10 | $38 | $222/mo |
-| 100,000 | 56.5GB | $45 | $11 | $15 | $71 | $449/mo |
-| 500,000 | 282GB | $226 | $56 | $50 | $332 | $2,268/mo |
+### Reports
+- [ ] Submit report without auth → Success
+- [ ] Submit report with auth → Success
+- [ ] Duplicate report prevention → Works
+- [ ] Report increments reportsCount → Verified
+- [ ] 3+ reports sets moderationStatus → Verified
 
 ---
 
-### Technical Implementation
+## File Structure
 
-#### 1. Supabase Image Transformation
-
-**Built-in Features (Pro Plan):**
-- On-the-fly image resizing (1-2,500px)
-- Automatic WebP/AVIF conversion
-- Quality adjustment (20-100)
-- Resize modes: contain, cover, fill
-- Max image size: 25MB
-- Max resolution: 50MP
-
-**URL Structure:**
 ```
-# Original
-https://{project}.supabase.co/storage/v1/object/public/uploads/campaigns/user123/camp456.png
-
-# Transformed
-https://{project}.supabase.co/storage/v1/render/image/public/uploads/campaigns/user123/camp456.png?width=600&quality=85
-```
-
-**API Usage:**
-```javascript
-// Client-side (public bucket)
-const { data } = supabase.storage
-  .from('uploads')
-  .getPublicUrl('campaigns/user123/camp456.png', {
-    transform: {
-      width: 600,
-      height: 600,
-      quality: 85,
-      resize: 'contain'
-    }
-  });
-
-// Returns optimized WebP automatically for supported browsers
-```
-
----
-
-#### 2. Smart CDN Architecture
-
-**Global Distribution:**
-- 285+ edge locations worldwide
-- Automatic regional caching
-- Reduced latency for international users
-
-**Cache Behavior:**
-- Public buckets: High cache hit rate (no per-user checks)
-- Cache duration: 365 days (max-age=31536000)
-- Auto-invalidation on file update (60s propagation)
-
-**Cache Headers:**
-```
-cache-control: max-age=31536000
-x-cache: HIT (after first request)
+src/
+├── app/
+│   ├── (chrome)/
+│   │   ├── campaign/
+│   │   │   └── [slug]/
+│   │   │       ├── page.js              # Page 1: Upload
+│   │   │       ├── adjust/
+│   │   │       │   └── page.js          # Page 2: Adjust
+│   │   │       └── result/
+│   │   │           └── page.js          # Page 3: Result
+│   │   ├── campaigns/
+│   │   │   └── page.js                  # Gallery
+│   │   ├── create/
+│   │   │   ├── page.js                  # Opens modal
+│   │   │   ├── frame/
+│   │   │   │   └── page.js              # Frame upload
+│   │   │   └── background/
+│   │   │       └── page.js              # Background upload
+│   │   └── creators/
+│   │       └── page.js                  # Top creators
+│   └── api/
+│       ├── campaigns/
+│       │   └── track-download/
+│       │       └── route.js             # Download tracking
+│       └── storage/
+│           ├── campaign-upload-url/
+│           │   └── route.js             # Campaign upload URL
+│           ├── delete/
+│           │   └── route.js             # Delete image
+│           └── signed-url/
+│               └── route.js             # Temporary download URL
+├── components/
+│   ├── CampaignStepIndicator.js         # Progress indicator
+│   ├── CreateCampaignModal.js           # Type selection
+│   └── FilterModal.js                   # Shared filter UI
+├── contexts/
+│   └── CampaignSessionContext.js        # Session state management
+├── lib/
+│   ├── firestore.js                     # All Firestore functions
+│   ├── firebase-optimized.js            # Firebase client init
+│   ├── firebaseAdmin.js                 # Firebase admin (server)
+│   └── supabase.js                      # Supabase client
+└── utils/
+    ├── campaignRouteGuards.js           # Navigation guards
+    ├── campaignStorage.js               # Storage path helpers
+    ├── imageComposition.js              # Canvas composition
+    ├── slugGenerator.js                 # Slug generation
+    └── transparencyDetector.js          # Transparency check
 ```
 
 ---
 
-#### 3. Image Size Strategy
-
-**Campaign Images:**
-| Context | Width | Quality | Format | Size | Use Case |
-|---------|-------|---------|--------|------|----------|
-| Thumbnail | 300px | 80% | WebP | 40KB | Gallery grids |
-| Preview | 600px | 85% | WebP | 150KB | Campaign page |
-| Canvas | 1200px | 90% | WebP | 400KB | Adjustment page |
-| Original | Full | 100% | PNG | 2.5MB | Download only |
-
-**Profile Images:**
-| Context | Size | Quality | Format | Size | Use Case |
-|---------|------|---------|--------|------|----------|
-| Avatar (small) | 50px | 75% | WebP | 5KB | Comments, lists |
-| Avatar (medium) | 150px | 80% | WebP | 15KB | Campaign creator |
-| Profile header | 300px | 85% | WebP | 50KB | Profile page |
-| Banner | 1200px | 85% | WebP | 200KB | Profile banner |
-
----
-
-#### 4. Next.js Integration
-
-**Custom Loader (`src/utils/supabaseImageLoader.js`):**
-```javascript
-const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
-
-export function supabaseLoader({ src, width, quality }) {
-  const path = src.replace(/^\//, ''); // Remove leading slash
-  return `${SUPABASE_URL}/storage/v1/render/image/public/${path}?width=${width}&quality=${quality || 80}`;
-}
-
-export function getSupabaseImageUrl(path, options = {}) {
-  const { width, height, quality = 80, resize = 'contain' } = options;
-  
-  const params = new URLSearchParams();
-  if (width) params.append('width', width);
-  if (height) params.append('height', height);
-  params.append('quality', quality);
-  params.append('resize', resize);
-  
-  return `${SUPABASE_URL}/storage/v1/render/image/public/uploads/${path}?${params.toString()}`;
-}
-```
-
-**Next.js Config:**
-```javascript
-// next.config.js
-module.exports = {
-  images: {
-    loader: 'custom',
-    loaderFile: './src/utils/supabaseImageLoader.js',
-    remotePatterns: [
-      {
-        protocol: 'https',
-        hostname: '*.supabase.co',
-      },
-    ],
-  },
-}
-```
-
-**Component Usage:**
-```jsx
-import Image from 'next/image';
-import { getSupabaseImageUrl } from '@/utils/supabaseImageLoader';
-
-// Option 1: Using Next.js Image component
-<Image
-  src="campaigns/user123/camp456.png"
-  width={600}
-  height={600}
-  alt="Campaign"
-  quality={85}
-/>
-
-// Option 2: Using utility function with standard img tag
-<img
-  src={getSupabaseImageUrl(campaign.imageUrl, { width: 600, quality: 85 })}
-  alt={campaign.title}
-/>
-```
-
----
-
-### Storage Path Refactoring
-
-**Current State:**
-Campaign images are stored with full URLs:
-```javascript
-campaign.imageUrl = "https://project.supabase.co/storage/v1/object/public/uploads/campaigns/user123/camp456.png"
-```
-
-**Optimized State:**
-Store relative paths only for flexibility:
-```javascript
-campaign.imageUrl = "campaigns/user123/camp456.png"
-```
-
-**Benefits:**
-1. ✅ Easy to switch CDN providers
-2. ✅ Simplified transformation URL generation
-3. ✅ Smaller Firestore documents
-4. ✅ Backward compatible (detect and migrate)
-
-**Migration Strategy:**
-```javascript
-// Helper function to extract path from URL or return path
-function normalizeImagePath(urlOrPath) {
-  if (urlOrPath.startsWith('http')) {
-    // Extract path from URL
-    const url = new URL(urlOrPath);
-    return url.pathname.replace('/storage/v1/object/public/uploads/', '');
-  }
-  return urlOrPath; // Already a path
-}
-```
-
----
-
-### AdSense Monetization Strategy
-
-**3-Page Flow = 3 Ad Opportunities**
-
-#### Ad Placement Plan:
-
-**Page 1 - Upload (`/campaign/[slug]`):**
-- **Location:** Below campaign preview, above gallery
-- **Format:** Responsive display ad (300x250 / 336x280)
-- **Expected viewability:** 85%+ (above fold)
-
-**Page 2 - Adjust (`/campaign/[slug]/adjust`):**
-- **Location:** Right sidebar (desktop) or below canvas (mobile)
-- **Format:** Skyscraper (160x600) or medium rectangle (300x250)
-- **Expected viewability:** 70%+ (user focused on adjustment)
-
-**Page 3 - Result (`/campaign/[slug]/result`):**
-- **Location:** Above share buttons, below final image
-- **Format:** Leaderboard (728x90) or large rectangle (336x280)
-- **Expected viewability:** 95%+ (high engagement on success page)
-
-#### Revenue Projections:
-
-**Industry Standard RPM (Revenue Per Mille):**
-- Low estimate: $5 RPM (emerging markets, low engagement)
-- Medium estimate: $10 RPM (mixed markets, good engagement)
-- High estimate: $15 RPM (premium markets, high engagement)
-
-**Conservative Forecast ($8 RPM average):**
-
-| Monthly Visitors | Page Views (3x) | Impressions | Monthly Revenue | Annual Revenue |
-|------------------|-----------------|-------------|-----------------|----------------|
-| 10,000 | 30,000 | 30,000 | $240 | $2,880 |
-| 50,000 | 150,000 | 150,000 | $1,200 | $14,400 |
-| 100,000 | 300,000 | 300,000 | $2,400 | $28,800 |
-| 500,000 | 1,500,000 | 1,500,000 | $12,000 | $144,000 |
-
-**Optimization Factors:**
-- ✅ Fast page loads (optimized images) = better ad viewability
-- ✅ Engaged users (interactive flow) = higher CTR
-- ✅ Multiple pages = more impressions per session
-- ✅ CDN delivery = global performance = global ad reach
-
----
-
-### Combined Financial Impact
-
-**At 100,000 Monthly Visitors:**
-
-| Item | Monthly | Annual |
-|------|---------|--------|
-| **Costs Saved:** | | |
-| Bandwidth reduction | +$449 | +$5,388 |
-| **Revenue Generated:** | | |
-| AdSense (conservative) | +$2,400 | +$28,800 |
-| **NET BENEFIT** | **$2,849** | **$34,188** |
-
-**ROI on Implementation:**
-- Development time: 6-7 hours
-- Cost (at $50/hour): $300-350
-- Monthly payback: **Immediate** (positive from day 1)
-- Annual ROI: **9,700%+**
-
----
-
-### Implementation Checklist
-
-**Phase 1: Image Transformation (Priority 1)**
-- [ ] Create `src/utils/supabaseImageLoader.js`
-- [ ] Update `next.config.js` with custom loader
-- [ ] Refactor campaign page image loading (Page 1)
-- [ ] Refactor adjust page canvas loading (Page 2)
-- [ ] Update profile image rendering
-- [ ] Update gallery thumbnail loading
-- [ ] Test WebP delivery and fallbacks
-- [ ] Measure bandwidth reduction
-
-**Phase 2: Storage Optimization (Priority 2)**
-- [ ] Update campaign creation to store paths (not URLs)
-- [ ] Add backward compatibility for existing URLs
-- [ ] Migrate existing campaign URLs to paths (optional)
-- [ ] Update `buildCampaignImageUrl()` utility
-- [ ] Test image loading after migration
-
-**Phase 3: CDN Verification (Priority 3)**
-- [ ] Verify Smart CDN enabled on Supabase project
-- [ ] Test cache hit rates (curl -I)
-- [ ] Verify global edge delivery
-- [ ] Test cache invalidation on image update
-- [ ] Monitor CDN performance
-
-**Phase 4: AdSense Integration (Priority 4)**
-- [ ] Create Google AdSense account
-- [ ] Add site to AdSense
-- [ ] Create ad units for 3 pages
-- [ ] Implement ad code in React components
-- [ ] Test ad display and responsiveness
-- [ ] Monitor ad performance (CTR, viewability)
-- [ ] Optimize ad placements based on data
-
-**Phase 5: Monitoring & Optimization (Ongoing)**
-- [ ] Set up bandwidth monitoring dashboard
-- [ ] Track transformation API usage
-- [ ] Monitor CDN cache hit rates
-- [ ] Track AdSense revenue
-- [ ] A/B test ad placements
-- [ ] Optimize image sizes based on analytics
-
----
-
-### Performance Targets
-
-**Page Load Times:**
-- Page 1 (Upload): <1.5s (target: 1.2s)
-- Page 2 (Adjust): <2s (target: 1.8s)
-- Page 3 (Result): <1s (target: 0.8s)
-
-**Bandwidth Efficiency:**
-- Per-visitor bandwidth: <600KB (target: 565KB)
-- CDN cache hit rate: >80% (target: 90%)
-- WebP adoption: >90% of requests
-
-**User Experience:**
-- Time to first contentful paint: <1s
-- Largest contentful paint: <2.5s
-- Cumulative layout shift: <0.1
-
-**Financial Metrics:**
-- Bandwidth cost: <$100/month at 100k visitors
-- Ad revenue: >$2,000/month at 100k visitors
-- Net profit margin: >95%
-
----
-
-### Risk Mitigation
-
-**Potential Risks:**
-
-1. **Image Quality Degradation**
-   - Mitigation: Use quality=85 minimum for main images
-   - Test visual quality across devices
-   - Provide "View Original" option for creators
-
-2. **CDN Cache Invalidation Delays**
-   - Mitigation: Use version parameters for critical updates
-   - Accept 60s propagation delay for non-critical changes
-   - Cache-busting for immediate updates
-
-3. **Transformation API Costs**
-   - Mitigation: Monitor usage monthly
-   - Same image with multiple sizes = 1 origin image charge
-   - Expected cost: $15-20/month at 100k visitors (vs $449 savings)
-
-4. **AdSense Policy Violations**
-   - Mitigation: Follow AdSense policies strictly
-   - No accidental clicks
-   - Proper ad spacing
-   - Regular policy review
-
-5. **Browser Compatibility (WebP)**
-   - Mitigation: Supabase auto-fallback to PNG for old browsers
-   - Test on IE11, old Safari versions
-   - Graceful degradation
-
----
-
-### Success Criteria
-
-**Must Have:**
-- ✅ 80%+ bandwidth reduction achieved
-- ✅ No visible image quality degradation
-- ✅ Page load times <2s average
-- ✅ AdSense account approved
-- ✅ Ads displaying on all 3 pages
-
-**Should Have:**
-- ✅ 90%+ CDN cache hit rate
-- ✅ WebP delivery to 95%+ of users
-- ✅ Ad viewability >70%
-- ✅ Monthly net profit >$2,000 at 100k visitors
-
-**Nice to Have:**
-- ✅ 95%+ bandwidth reduction
-- ✅ Page loads <1.5s average
-- ✅ Ad RPM >$10
-- ✅ Automatic image optimization on upload
-
----
-
-### Future Enhancements
-
-**Phase 2 Opportunities:**
-
-1. **AVIF Format Support**
-   - Even smaller file sizes than WebP (30% reduction)
-   - Wait for broader browser support (currently 70%)
-
-2. **Responsive Images with srcset**
-   - Serve perfect size for exact device
-   - Use Next.js Image srcset generation
-
-3. **Lazy Loading Below Fold**
-   - Load only visible images initially
-   - Reduce initial page load
-
-4. **Progressive Image Loading**
-   - Show low-quality placeholder first
-   - Progressive enhancement to full quality
-
-5. **AI-Powered Image Optimization**
-   - Auto-detect optimal quality per image
-   - Smart cropping for thumbnails
-
-6. **Video Campaign Support**
-   - Extend transformation to video thumbnails
-   - Short video backgrounds with WebM/MP4
-
----
-
-**Last Updated:** January 06, 2025
-**Status:** Ready for implementation
-**Estimated ROI:** 9,700%+ annually
+**Last Updated:** October 05, 2025  
+**Contributors:** Campaign system fully implemented in Phase 1  
+**Next Steps:** See TASKS.md for Phase 2 roadmap and image optimization plan
