@@ -1,11 +1,11 @@
 /**
  * Image Transformation Utilities
  * 
- * Generate Supabase image transformation URLs for optimized delivery.
- * Supports resize, format conversion (WebP), and quality adjustment.
+ * Uses ImageKit.io CDN for optimized image delivery with transformations.
+ * Supabase code is kept commented for potential future migration.
  * 
- * Supabase Image Transformation API:
- * https://supabase.com/docs/guides/storage/serving/image-transformations
+ * ImageKit Documentation:
+ * https://docs.imagekit.io/features/image-transformations
  */
 
 /**
@@ -32,7 +32,7 @@ function extractStoragePath(imageUrlOrPath) {
 }
 
 /**
- * Generate Supabase image transformation URL
+ * Generate ImageKit transformation URL
  * 
  * @param {string} imageUrlOrPath - Original image URL or path
  * @param {Object} options - Transformation options
@@ -64,6 +64,26 @@ export function getTransformedImageUrl(imageUrlOrPath, options = {}) {
     return imageUrlOrPath;
   }
   
+  const imagekitUrl = process.env.NEXT_PUBLIC_IMAGEKIT_URL_ENDPOINT;
+  
+  if (!imagekitUrl) {
+    console.error('NEXT_PUBLIC_IMAGEKIT_URL_ENDPOINT is not configured');
+    return '';
+  }
+  
+  // Build ImageKit transformation parameters
+  const transformParams = [];
+  
+  if (width) transformParams.push(`w-${width}`);
+  if (height) transformParams.push(`h-${height}`);
+  if (format) transformParams.push(`f-${format}`);
+  if (quality) transformParams.push(`q-${quality}`);
+  
+  const queryString = transformParams.length > 0 ? `?tr=${transformParams.join(',')}` : '';
+  
+  return `${imagekitUrl}/${imagePath}${queryString}`;
+  
+  /* SUPABASE TRANSFORMATION (Commented - Requires Pro Plan)
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   
   if (!supabaseUrl) {
@@ -81,10 +101,11 @@ export function getTransformedImageUrl(imageUrlOrPath, options = {}) {
   const queryString = transformParams.length > 0 ? `?${transformParams.join('&')}` : '';
   
   return `${supabaseUrl}/storage/v1/render/image/public/uploads/${imagePath}${queryString}`;
+  */
 }
 
 /**
- * Get campaign thumbnail (300x300 WebP, quality 75)
+ * Get campaign thumbnail (300px width WebP, quality 75)
  * Used in: Gallery grid, profile campaign lists
  * 
  * @param {string} imageUrlOrPath - Campaign image URL or path
@@ -138,6 +159,7 @@ export function getCampaignCanvas(imageUrlOrPath) {
     return '';
   }
   
+  // Canvas operations need full-size original from Supabase (no CDN transformation)
   return `${supabaseUrl}/storage/v1/object/public/uploads/${imagePath}`;
 }
 
@@ -153,6 +175,7 @@ export function getProfileAvatar(imageUrlOrPath) {
     return '';
   }
   
+  // Firebase/Google photos - use as-is (already optimized)
   if (imageUrlOrPath.includes('firebasestorage') || 
       imageUrlOrPath.includes('googleusercontent')) {
     return imageUrlOrPath;
