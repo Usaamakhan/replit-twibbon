@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { getAllCampaigns } from '../../../lib/firestore';
-import { getCampaignThumbnail } from '../../../utils/imageTransform';
+import { getCampaignThumbnail, getProfileAvatar } from '../../../utils/imageTransform';
 import LoadingSpinner from '../../../components/LoadingSpinner';
 import FilterModal from '../../../components/FilterModal';
 
@@ -195,7 +195,7 @@ export default function CampaignsPage() {
                             <div className="w-6 h-6 rounded-full bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center flex-shrink-0">
                               {campaign.creator.profileImage ? (
                                 <img
-                                  src={campaign.creator.profileImage}
+                                  src={getProfileAvatar(campaign.creator.profileImage)}
                                   alt={campaign.creator.displayName}
                                   className="w-full h-full rounded-full object-cover"
                                 />

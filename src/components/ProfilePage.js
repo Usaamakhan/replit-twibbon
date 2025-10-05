@@ -9,7 +9,7 @@ import {
   getUserStats,
   getUserCampaigns 
 } from '../lib/firestore';
-import { getProfileAvatar } from '../utils/imageTransform';
+import { getProfileAvatar, getProfileBanner } from '../utils/imageTransform';
 import CampaignGallery from './CampaignGallery';
 
 export default function ProfilePage({ isOwnProfile = false, username = null }) {
@@ -174,7 +174,7 @@ export default function ProfilePage({ isOwnProfile = false, username = null }) {
       <div className="relative w-full aspect-[3/1] bg-gradient-to-r from-emerald-500 to-emerald-600 overflow-hidden">
         {userData.bannerImage && userData.bannerImage.trim() ? (
           <img
-            src={userData.bannerImage}
+            src={getProfileBanner(userData.bannerImage)}
             alt="Profile Banner"
             className="w-full h-full object-cover"
           />
