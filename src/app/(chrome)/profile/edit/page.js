@@ -8,6 +8,7 @@ import { getUserProfile, checkUsernameExists, updateUserProfile } from '../../..
 import { useOptionalUserProfile } from '../../../../components/UserProfileProvider';
 import ConfirmationModal from '../../../../components/ConfirmationModal';
 import { uploadFile } from '../../../../lib/supabase';
+import { getProfileAvatar, getProfileBanner } from '../../../../utils/imageTransform';
 
 export default function ProfileEditPage() {
   const router = useRouter();
@@ -141,9 +142,9 @@ export default function ProfileEditPage() {
             displayName: userProfile.displayName || '',
             country: userProfile.country || '',
             profilePic: null,
-            profilePicPreview: userProfile.profileImage || '',
+            profilePicPreview: userProfile.profileImage ? getProfileAvatar(userProfile.profileImage) : '',
             profileBanner: null,
-            profileBannerPreview: userProfile.bannerImage || '',
+            profileBannerPreview: userProfile.bannerImage ? getProfileBanner(userProfile.bannerImage) : '',
             bio: userProfile.bio || ''
           };
           setFormData(initialData);

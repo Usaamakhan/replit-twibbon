@@ -8,6 +8,7 @@ import { getUserProfile, checkUsernameExists, completeUserProfile } from '../../
 import { useOptionalUserProfile } from '../../components/UserProfileProvider';
 import ConfirmationModal from '../../components/ConfirmationModal';
 import { uploadFile } from '../../lib/supabase';
+import { getProfileAvatar, getProfileBanner } from '../../utils/imageTransform';
 
 export default function OnboardingPage() {
   const router = useRouter();
@@ -142,9 +143,9 @@ export default function OnboardingPage() {
             displayName: userProfile.displayName || user?.displayName || '',
             country: userProfile.country || '',
             profilePic: null,
-            profilePicPreview: userProfile.profileImage || user?.photoURL || '',
+            profilePicPreview: userProfile.profileImage ? getProfileAvatar(userProfile.profileImage) : (user?.photoURL || ''),
             profileBanner: null,
-            profileBannerPreview: userProfile.bannerImage || '',
+            profileBannerPreview: userProfile.bannerImage ? getProfileBanner(userProfile.bannerImage) : '',
             bio: userProfile.bio || ''
           };
           setFormData(initialData);
