@@ -1377,3 +1377,483 @@ canvas.addEventListener('pointerup', handleDragEnd);
 - **NEW:** 3-page flow completion rate
 - **NEW:** Ad impression count per campaign usage
 - **NEW:** Average time per page in visitor flow
+
+---
+
+## 🚀 IMAGE OPTIMIZATION & CDN STRATEGY
+
+**Added:** January 06, 2025
+**Priority:** HIGH - Critical for scalability and monetization
+**Impact:** $34,368 annual benefit at 100k monthly visitors
+
+---
+
+### Overview
+
+Implement Supabase's built-in image transformation and Smart CDN to optimize image delivery throughout the application, with primary focus on the 3-page campaign flow where most bandwidth is consumed.
+
+---
+
+### Current Performance Analysis
+
+#### Bandwidth Usage Per Visitor (3-Page Flow):
+
+**Page 1 - Upload (`/campaign/[slug]`):**
+- Campaign preview image: 2.5MB (full PNG)
+- Creator profile image: 200KB
+- **Subtotal: 2.7MB**
+
+**Page 2 - Adjust (`/campaign/[slug]/adjust`):**
+- Campaign image (canvas rendering): 2.5MB
+- User uploaded photo: 0MB (user's bandwidth)
+- **Subtotal: 2.5MB**
+
+**Page 3 - Result (`/campaign/[slug]/result`):**
+- Composed image: 0MB (client-side blob from existing images)
+- **Subtotal: 0MB**
+
+**TOTAL BANDWIDTH: 5.2MB per visitor**
+
+#### Projected Monthly Costs (No Optimization):
+
+| Monthly Visitors | Total Bandwidth | Vercel Cost | Supabase Cost | Total Cost |
+|------------------|-----------------|-------------|---------------|------------|
+| 10,000 | 52GB | $42 | $10 | $52 |
+| 50,000 | 260GB | $208 | $52 | $260 |
+| 100,000 | 520GB | $416 | $104 | $520 |
+| 500,000 | 2.6TB | $2,080 | $520 | $2,600 |
+
+---
+
+### Optimized Performance Targets
+
+#### Bandwidth Usage Per Visitor (WITH Optimization):
+
+**Page 1:**
+- Campaign preview (600px WebP): 150KB ✅ 94% reduction
+- Creator profile (150px WebP): 15KB ✅ 92% reduction
+- **Subtotal: 165KB**
+
+**Page 2:**
+- Campaign image (1200px WebP for canvas): 400KB ✅ 84% reduction
+- **Subtotal: 400KB**
+
+**Page 3:**
+- No additional bandwidth
+- **Subtotal: 0KB**
+
+**OPTIMIZED TOTAL: 565KB per visitor**  
+**BANDWIDTH SAVINGS: 89% (4.6MB saved per visitor)**
+
+#### Projected Monthly Costs (WITH Optimization):
+
+| Monthly Visitors | Total Bandwidth | Vercel Cost | Supabase Cost | Transformation Cost | Total Cost | Savings |
+|------------------|-----------------|-------------|---------------|---------------------|------------|---------|
+| 10,000 | 5.7GB | $5 | $1 | $5 | $11 | $41/mo |
+| 50,000 | 28GB | $22 | $6 | $10 | $38 | $222/mo |
+| 100,000 | 56.5GB | $45 | $11 | $15 | $71 | $449/mo |
+| 500,000 | 282GB | $226 | $56 | $50 | $332 | $2,268/mo |
+
+---
+
+### Technical Implementation
+
+#### 1. Supabase Image Transformation
+
+**Built-in Features (Pro Plan):**
+- On-the-fly image resizing (1-2,500px)
+- Automatic WebP/AVIF conversion
+- Quality adjustment (20-100)
+- Resize modes: contain, cover, fill
+- Max image size: 25MB
+- Max resolution: 50MP
+
+**URL Structure:**
+```
+# Original
+https://{project}.supabase.co/storage/v1/object/public/uploads/campaigns/user123/camp456.png
+
+# Transformed
+https://{project}.supabase.co/storage/v1/render/image/public/uploads/campaigns/user123/camp456.png?width=600&quality=85
+```
+
+**API Usage:**
+```javascript
+// Client-side (public bucket)
+const { data } = supabase.storage
+  .from('uploads')
+  .getPublicUrl('campaigns/user123/camp456.png', {
+    transform: {
+      width: 600,
+      height: 600,
+      quality: 85,
+      resize: 'contain'
+    }
+  });
+
+// Returns optimized WebP automatically for supported browsers
+```
+
+---
+
+#### 2. Smart CDN Architecture
+
+**Global Distribution:**
+- 285+ edge locations worldwide
+- Automatic regional caching
+- Reduced latency for international users
+
+**Cache Behavior:**
+- Public buckets: High cache hit rate (no per-user checks)
+- Cache duration: 365 days (max-age=31536000)
+- Auto-invalidation on file update (60s propagation)
+
+**Cache Headers:**
+```
+cache-control: max-age=31536000
+x-cache: HIT (after first request)
+```
+
+---
+
+#### 3. Image Size Strategy
+
+**Campaign Images:**
+| Context | Width | Quality | Format | Size | Use Case |
+|---------|-------|---------|--------|------|----------|
+| Thumbnail | 300px | 80% | WebP | 40KB | Gallery grids |
+| Preview | 600px | 85% | WebP | 150KB | Campaign page |
+| Canvas | 1200px | 90% | WebP | 400KB | Adjustment page |
+| Original | Full | 100% | PNG | 2.5MB | Download only |
+
+**Profile Images:**
+| Context | Size | Quality | Format | Size | Use Case |
+|---------|------|---------|--------|------|----------|
+| Avatar (small) | 50px | 75% | WebP | 5KB | Comments, lists |
+| Avatar (medium) | 150px | 80% | WebP | 15KB | Campaign creator |
+| Profile header | 300px | 85% | WebP | 50KB | Profile page |
+| Banner | 1200px | 85% | WebP | 200KB | Profile banner |
+
+---
+
+#### 4. Next.js Integration
+
+**Custom Loader (`src/utils/supabaseImageLoader.js`):**
+```javascript
+const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
+
+export function supabaseLoader({ src, width, quality }) {
+  const path = src.replace(/^\//, ''); // Remove leading slash
+  return `${SUPABASE_URL}/storage/v1/render/image/public/${path}?width=${width}&quality=${quality || 80}`;
+}
+
+export function getSupabaseImageUrl(path, options = {}) {
+  const { width, height, quality = 80, resize = 'contain' } = options;
+  
+  const params = new URLSearchParams();
+  if (width) params.append('width', width);
+  if (height) params.append('height', height);
+  params.append('quality', quality);
+  params.append('resize', resize);
+  
+  return `${SUPABASE_URL}/storage/v1/render/image/public/uploads/${path}?${params.toString()}`;
+}
+```
+
+**Next.js Config:**
+```javascript
+// next.config.js
+module.exports = {
+  images: {
+    loader: 'custom',
+    loaderFile: './src/utils/supabaseImageLoader.js',
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: '*.supabase.co',
+      },
+    ],
+  },
+}
+```
+
+**Component Usage:**
+```jsx
+import Image from 'next/image';
+import { getSupabaseImageUrl } from '@/utils/supabaseImageLoader';
+
+// Option 1: Using Next.js Image component
+<Image
+  src="campaigns/user123/camp456.png"
+  width={600}
+  height={600}
+  alt="Campaign"
+  quality={85}
+/>
+
+// Option 2: Using utility function with standard img tag
+<img
+  src={getSupabaseImageUrl(campaign.imageUrl, { width: 600, quality: 85 })}
+  alt={campaign.title}
+/>
+```
+
+---
+
+### Storage Path Refactoring
+
+**Current State:**
+Campaign images are stored with full URLs:
+```javascript
+campaign.imageUrl = "https://project.supabase.co/storage/v1/object/public/uploads/campaigns/user123/camp456.png"
+```
+
+**Optimized State:**
+Store relative paths only for flexibility:
+```javascript
+campaign.imageUrl = "campaigns/user123/camp456.png"
+```
+
+**Benefits:**
+1. ✅ Easy to switch CDN providers
+2. ✅ Simplified transformation URL generation
+3. ✅ Smaller Firestore documents
+4. ✅ Backward compatible (detect and migrate)
+
+**Migration Strategy:**
+```javascript
+// Helper function to extract path from URL or return path
+function normalizeImagePath(urlOrPath) {
+  if (urlOrPath.startsWith('http')) {
+    // Extract path from URL
+    const url = new URL(urlOrPath);
+    return url.pathname.replace('/storage/v1/object/public/uploads/', '');
+  }
+  return urlOrPath; // Already a path
+}
+```
+
+---
+
+### AdSense Monetization Strategy
+
+**3-Page Flow = 3 Ad Opportunities**
+
+#### Ad Placement Plan:
+
+**Page 1 - Upload (`/campaign/[slug]`):**
+- **Location:** Below campaign preview, above gallery
+- **Format:** Responsive display ad (300x250 / 336x280)
+- **Expected viewability:** 85%+ (above fold)
+
+**Page 2 - Adjust (`/campaign/[slug]/adjust`):**
+- **Location:** Right sidebar (desktop) or below canvas (mobile)
+- **Format:** Skyscraper (160x600) or medium rectangle (300x250)
+- **Expected viewability:** 70%+ (user focused on adjustment)
+
+**Page 3 - Result (`/campaign/[slug]/result`):**
+- **Location:** Above share buttons, below final image
+- **Format:** Leaderboard (728x90) or large rectangle (336x280)
+- **Expected viewability:** 95%+ (high engagement on success page)
+
+#### Revenue Projections:
+
+**Industry Standard RPM (Revenue Per Mille):**
+- Low estimate: $5 RPM (emerging markets, low engagement)
+- Medium estimate: $10 RPM (mixed markets, good engagement)
+- High estimate: $15 RPM (premium markets, high engagement)
+
+**Conservative Forecast ($8 RPM average):**
+
+| Monthly Visitors | Page Views (3x) | Impressions | Monthly Revenue | Annual Revenue |
+|------------------|-----------------|-------------|-----------------|----------------|
+| 10,000 | 30,000 | 30,000 | $240 | $2,880 |
+| 50,000 | 150,000 | 150,000 | $1,200 | $14,400 |
+| 100,000 | 300,000 | 300,000 | $2,400 | $28,800 |
+| 500,000 | 1,500,000 | 1,500,000 | $12,000 | $144,000 |
+
+**Optimization Factors:**
+- ✅ Fast page loads (optimized images) = better ad viewability
+- ✅ Engaged users (interactive flow) = higher CTR
+- ✅ Multiple pages = more impressions per session
+- ✅ CDN delivery = global performance = global ad reach
+
+---
+
+### Combined Financial Impact
+
+**At 100,000 Monthly Visitors:**
+
+| Item | Monthly | Annual |
+|------|---------|--------|
+| **Costs Saved:** | | |
+| Bandwidth reduction | +$449 | +$5,388 |
+| **Revenue Generated:** | | |
+| AdSense (conservative) | +$2,400 | +$28,800 |
+| **NET BENEFIT** | **$2,849** | **$34,188** |
+
+**ROI on Implementation:**
+- Development time: 6-7 hours
+- Cost (at $50/hour): $300-350
+- Monthly payback: **Immediate** (positive from day 1)
+- Annual ROI: **9,700%+**
+
+---
+
+### Implementation Checklist
+
+**Phase 1: Image Transformation (Priority 1)**
+- [ ] Create `src/utils/supabaseImageLoader.js`
+- [ ] Update `next.config.js` with custom loader
+- [ ] Refactor campaign page image loading (Page 1)
+- [ ] Refactor adjust page canvas loading (Page 2)
+- [ ] Update profile image rendering
+- [ ] Update gallery thumbnail loading
+- [ ] Test WebP delivery and fallbacks
+- [ ] Measure bandwidth reduction
+
+**Phase 2: Storage Optimization (Priority 2)**
+- [ ] Update campaign creation to store paths (not URLs)
+- [ ] Add backward compatibility for existing URLs
+- [ ] Migrate existing campaign URLs to paths (optional)
+- [ ] Update `buildCampaignImageUrl()` utility
+- [ ] Test image loading after migration
+
+**Phase 3: CDN Verification (Priority 3)**
+- [ ] Verify Smart CDN enabled on Supabase project
+- [ ] Test cache hit rates (curl -I)
+- [ ] Verify global edge delivery
+- [ ] Test cache invalidation on image update
+- [ ] Monitor CDN performance
+
+**Phase 4: AdSense Integration (Priority 4)**
+- [ ] Create Google AdSense account
+- [ ] Add site to AdSense
+- [ ] Create ad units for 3 pages
+- [ ] Implement ad code in React components
+- [ ] Test ad display and responsiveness
+- [ ] Monitor ad performance (CTR, viewability)
+- [ ] Optimize ad placements based on data
+
+**Phase 5: Monitoring & Optimization (Ongoing)**
+- [ ] Set up bandwidth monitoring dashboard
+- [ ] Track transformation API usage
+- [ ] Monitor CDN cache hit rates
+- [ ] Track AdSense revenue
+- [ ] A/B test ad placements
+- [ ] Optimize image sizes based on analytics
+
+---
+
+### Performance Targets
+
+**Page Load Times:**
+- Page 1 (Upload): <1.5s (target: 1.2s)
+- Page 2 (Adjust): <2s (target: 1.8s)
+- Page 3 (Result): <1s (target: 0.8s)
+
+**Bandwidth Efficiency:**
+- Per-visitor bandwidth: <600KB (target: 565KB)
+- CDN cache hit rate: >80% (target: 90%)
+- WebP adoption: >90% of requests
+
+**User Experience:**
+- Time to first contentful paint: <1s
+- Largest contentful paint: <2.5s
+- Cumulative layout shift: <0.1
+
+**Financial Metrics:**
+- Bandwidth cost: <$100/month at 100k visitors
+- Ad revenue: >$2,000/month at 100k visitors
+- Net profit margin: >95%
+
+---
+
+### Risk Mitigation
+
+**Potential Risks:**
+
+1. **Image Quality Degradation**
+   - Mitigation: Use quality=85 minimum for main images
+   - Test visual quality across devices
+   - Provide "View Original" option for creators
+
+2. **CDN Cache Invalidation Delays**
+   - Mitigation: Use version parameters for critical updates
+   - Accept 60s propagation delay for non-critical changes
+   - Cache-busting for immediate updates
+
+3. **Transformation API Costs**
+   - Mitigation: Monitor usage monthly
+   - Same image with multiple sizes = 1 origin image charge
+   - Expected cost: $15-20/month at 100k visitors (vs $449 savings)
+
+4. **AdSense Policy Violations**
+   - Mitigation: Follow AdSense policies strictly
+   - No accidental clicks
+   - Proper ad spacing
+   - Regular policy review
+
+5. **Browser Compatibility (WebP)**
+   - Mitigation: Supabase auto-fallback to PNG for old browsers
+   - Test on IE11, old Safari versions
+   - Graceful degradation
+
+---
+
+### Success Criteria
+
+**Must Have:**
+- ✅ 80%+ bandwidth reduction achieved
+- ✅ No visible image quality degradation
+- ✅ Page load times <2s average
+- ✅ AdSense account approved
+- ✅ Ads displaying on all 3 pages
+
+**Should Have:**
+- ✅ 90%+ CDN cache hit rate
+- ✅ WebP delivery to 95%+ of users
+- ✅ Ad viewability >70%
+- ✅ Monthly net profit >$2,000 at 100k visitors
+
+**Nice to Have:**
+- ✅ 95%+ bandwidth reduction
+- ✅ Page loads <1.5s average
+- ✅ Ad RPM >$10
+- ✅ Automatic image optimization on upload
+
+---
+
+### Future Enhancements
+
+**Phase 2 Opportunities:**
+
+1. **AVIF Format Support**
+   - Even smaller file sizes than WebP (30% reduction)
+   - Wait for broader browser support (currently 70%)
+
+2. **Responsive Images with srcset**
+   - Serve perfect size for exact device
+   - Use Next.js Image srcset generation
+
+3. **Lazy Loading Below Fold**
+   - Load only visible images initially
+   - Reduce initial page load
+
+4. **Progressive Image Loading**
+   - Show low-quality placeholder first
+   - Progressive enhancement to full quality
+
+5. **AI-Powered Image Optimization**
+   - Auto-detect optimal quality per image
+   - Smart cropping for thumbnails
+
+6. **Video Campaign Support**
+   - Extend transformation to video thumbnails
+   - Short video backgrounds with WebM/MP4
+
+---
+
+**Last Updated:** January 06, 2025
+**Status:** Ready for implementation
+**Estimated ROI:** 9,700%+ annually

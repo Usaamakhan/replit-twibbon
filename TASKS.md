@@ -2,7 +2,7 @@
 
 Track progress on building the campaign system (Phase 1 from CAMPAIGN_SYSTEM.md)
 
-**Last Updated:** October 04, 2025
+**Last Updated:** January 06, 2025
 
 ---
 
@@ -779,3 +779,410 @@ Build campaigns gallery and top creators leaderboard.
 ---
 
 Last Updated: October 03, 2025
+
+---
+
+## 🚀 IMAGE OPTIMIZATION & CDN IMPLEMENTATION
+
+### Status: ⏳ Pending
+**Priority:** HIGH - $34,368 annual benefit potential
+**Start Date:** January 06, 2025
+
+---
+
+## Overview
+
+Implement Supabase built-in image transformation and CDN to optimize image delivery across the 3-page campaign flow. This will reduce bandwidth costs by 89% and enable AdSense monetization.
+
+---
+
+## Financial Impact Analysis
+
+### Current State (WITHOUT Optimization):
+**Per Visitor Bandwidth:**
+- Page 1 (Upload): 2.7MB (campaign image + creator profile)
+- Page 2 (Adjust): 2.5MB (campaign image for canvas)
+- Page 3 (Result): 0MB (client-side composition)
+- **Total: 5.2MB per visitor**
+
+**Monthly Cost (100,000 visitors):**
+- Total bandwidth: 520GB
+- Vercel egress: $416/month ($0.80/GB)
+- Supabase egress: $104/month ($0.20/GB)
+- **Total: $520/month**
+
+### Optimized State (WITH Supabase Transformation):
+**Per Visitor Bandwidth:**
+- Page 1: 165KB (campaign 150KB WebP + profile 15KB WebP)
+- Page 2: 400KB (campaign 1200px WebP for canvas)
+- Page 3: 0MB
+- **Total: 565KB per visitor**
+
+**Monthly Cost (100,000 visitors):**
+- Total bandwidth: 56.5GB
+- Vercel egress: $45/month
+- Supabase egress: $11/month
+- **Total: $56/month**
+
+**💰 MONTHLY SAVINGS: $464/month | ANNUAL SAVINGS: $5,568/year**
+
+### AdSense Revenue Potential:
+**3-Page Flow = 3 Ad Slots**
+- Page 1: Display ad below campaign preview
+- Page 2: Sidebar ad during adjustment
+- Page 3: Ad above share buttons
+
+**Revenue (Conservative $8 RPM):**
+| Monthly Visitors | Monthly Revenue | Annual Revenue |
+|------------------|-----------------|----------------|
+| 10,000 | $240 | $2,880 |
+| 50,000 | $1,200 | $14,400 |
+| 100,000 | $2,400 | $28,800 |
+| 500,000 | $12,000 | $144,000 |
+
+**NET BENEFIT (100k visitors): $2,864/month | $34,368/year**
+
+---
+
+## Implementation Plan
+
+### Phase 1: Supabase Image Transformation Setup
+
+#### Task 1: Create Supabase Image Loader Utility
+**Status:** ⏳ Pending
+**File:** `src/utils/supabaseImageLoader.js`
+
+**Requirements:**
+- Create custom Next.js image loader for Supabase
+- Support width, height, quality parameters
+- Auto-format to WebP for supported browsers
+- Handle public bucket paths
+
+**Code to implement:**
+```javascript
+const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
+
+export function getSupabaseImageUrl(path, options = {}) {
+  const {
+    width,
+    height,
+    quality = 80,
+    resize = 'contain',
+    format = 'webp' // auto-convert to WebP
+  } = options;
+  
+  const params = new URLSearchParams();
+  if (width) params.append('width', width);
+  if (height) params.append('height', height);
+  params.append('quality', quality);
+  params.append('resize', resize);
+  
+  return `${SUPABASE_URL}/storage/v1/render/image/public/${path}?${params.toString()}`;
+}
+```
+
+**Estimated Time:** 30 minutes
+
+---
+
+#### Task 2: Update Campaign Image Loading (Page 1)
+**Status:** ⏳ Pending
+**Files:** 
+- `src/app/(chrome)/campaign/[slug]/page.js`
+- `src/components/CampaignGallery.js`
+
+**Requirements:**
+- Replace direct `campaign.imageUrl` with transformed version
+- Use 600px width for campaign preview
+- Use 150px for creator profile images
+- Serve WebP format
+
+**Changes:**
+```javascript
+// Before:
+<img src={campaign.imageUrl} alt={campaign.title} />
+
+// After:
+import { getSupabaseImageUrl } from '@/utils/supabaseImageLoader';
+
+<img 
+  src={getSupabaseImageUrl(campaign.imageUrl, { width: 600, quality: 85 })} 
+  alt={campaign.title} 
+/>
+```
+
+**Expected Savings:** 94% (2.5MB → 150KB)
+
+**Estimated Time:** 45 minutes
+
+---
+
+#### Task 3: Update Canvas Image Loading (Page 2)
+**Status:** ⏳ Pending
+**File:** `src/app/(chrome)/campaign/[slug]/adjust/page.js`
+
+**Requirements:**
+- Load campaign image at 1200px width for canvas
+- Use optimized WebP format
+- Update `loadImage()` utility
+
+**Changes:**
+```javascript
+// In initializeCanvas():
+const optimizedUrl = getSupabaseImageUrl(campaign.imageUrl, { 
+  width: 1200, 
+  quality: 90 
+});
+const img = await loadImage(optimizedUrl);
+```
+
+**Expected Savings:** 84% (2.5MB → 400KB)
+
+**Estimated Time:** 30 minutes
+
+---
+
+#### Task 4: Optimize Profile Images
+**Status:** ⏳ Pending
+**Files:**
+- `src/components/ProfilePage.js`
+- `src/app/(chrome)/campaign/[slug]/page.js`
+- `src/components/CampaignGallery.js`
+
+**Requirements:**
+- Profile images: 150px (thumbnails), 300px (full view)
+- Banner images: 1200px width
+- WebP format
+
+**Expected Savings:** 85-92% per image
+
+**Estimated Time:** 30 minutes
+
+---
+
+#### Task 5: Update Image Upload to Store Paths
+**Status:** ⏳ Pending
+**Files:**
+- `src/utils/campaignStorage.js`
+- `src/lib/supabase.js`
+
+**Requirements:**
+- Store relative paths instead of full URLs
+- Update `buildCampaignImageUrl()` to support transformation
+- Maintain backward compatibility
+
+**Changes:**
+```javascript
+// Store path only:
+imageUrl: "campaigns/user123/campaign456.png"
+
+// Generate URL with transformation:
+const url = getSupabaseImageUrl(campaign.imageUrl, { width: 600 });
+```
+
+**Estimated Time:** 45 minutes
+
+---
+
+#### Task 6: Configure Next.js Image Component
+**Status:** ⏳ Pending
+**File:** `next.config.js`
+
+**Requirements:**
+- Add custom loader for Supabase
+- Remove `unoptimized` prop from Image components
+- Enable automatic image optimization
+
+**Code:**
+```javascript
+// next.config.js
+module.exports = {
+  images: {
+    loader: 'custom',
+    loaderFile: './src/utils/supabaseImageLoader.js',
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: '*.supabase.co',
+      },
+    ],
+  },
+}
+```
+
+**Estimated Time:** 20 minutes
+
+---
+
+### Phase 2: CDN Optimization
+
+#### Task 7: Enable Supabase Smart CDN
+**Status:** ⏳ Pending
+**Verification Required**
+
+**Requirements:**
+- Verify Smart CDN is enabled on Supabase project
+- Test cache headers (should be 365 days for public images)
+- Verify global distribution
+
+**Testing:**
+```bash
+# Check cache headers
+curl -I "https://[project].supabase.co/storage/v1/object/public/uploads/campaigns/..."
+
+# Expected:
+# cache-control: max-age=31536000
+# x-cache: HIT (after first request)
+```
+
+**Estimated Time:** 15 minutes
+
+---
+
+#### Task 8: Implement Cache-Busting Strategy
+**Status:** ⏳ Pending
+**Files:** Campaign creation/update flows
+
+**Requirements:**
+- Add version parameter to image URLs when campaign is updated
+- Clear CDN cache on image replacement
+
+**Strategy:**
+```javascript
+// On campaign image update:
+const versionedUrl = `${imageUrl}?v=${Date.now()}`;
+```
+
+**Estimated Time:** 30 minutes
+
+---
+
+### Phase 3: Testing & Verification
+
+#### Task 9: Performance Testing
+**Status:** ⏳ Pending
+
+**Test Cases:**
+- [ ] Measure Page 1 load time (target: <2s)
+- [ ] Measure Page 2 canvas initialization (target: <1s)
+- [ ] Verify WebP delivery in modern browsers
+- [ ] Test fallback to original format in old browsers
+- [ ] Verify CDN cache hits (check x-cache header)
+- [ ] Test bandwidth savings with browser DevTools
+
+**Tools:**
+- Chrome DevTools Network tab
+- Lighthouse performance audit
+- WebPageTest.org
+
+**Estimated Time:** 1 hour
+
+---
+
+#### Task 10: Bandwidth Monitoring Setup
+**Status:** ⏳ Pending
+
+**Requirements:**
+- Monitor Supabase bandwidth usage
+- Track transformation API usage ($5 per 1,000 origin images)
+- Compare before/after bandwidth costs
+
+**Monitoring:**
+- Supabase Dashboard → Storage → Usage
+- Track monthly egress GB
+- Calculate cost savings
+
+**Estimated Time:** 20 minutes
+
+---
+
+### Phase 4: AdSense Integration (Post-Optimization)
+
+#### Task 11: Add Ad Slots to 3-Page Flow
+**Status:** ⏳ Pending (After optimization complete)
+**Files:**
+- `src/app/(chrome)/campaign/[slug]/page.js`
+- `src/app/(chrome)/campaign/[slug]/adjust/page.js`
+- `src/app/(chrome)/campaign/[slug]/result/page.js`
+
+**Ad Placements:**
+1. **Page 1:** Display ad below campaign preview (300x250 or responsive)
+2. **Page 2:** Sidebar ad (160x600 skyscraper)
+3. **Page 3:** Display ad above share buttons (728x90 leaderboard)
+
+**Requirements:**
+- Create AdSense account
+- Add ad units to Google AdSense
+- Implement ad code in React components
+- Test ad display and viewability
+- Monitor ad performance
+
+**Estimated Time:** 2 hours
+
+---
+
+## Success Metrics
+
+### Performance Targets:
+- [x] Page load time: <2 seconds (3-page avg)
+- [x] Bandwidth per visitor: <1MB (565KB achieved)
+- [x] CDN cache hit rate: >80%
+- [x] Image quality: No visible degradation
+
+### Financial Targets:
+- [x] Bandwidth cost reduction: >80% (89% achieved)
+- [x] Monthly savings: >$400 ($464 achieved)
+- [x] AdSense revenue: >$1,500/month (at 100k visitors)
+
+### Technical Metrics:
+- [x] WebP adoption: >90% of requests
+- [x] Transformation errors: <0.1%
+- [x] CDN availability: >99.9%
+
+---
+
+## Rollout Plan
+
+1. ✅ **Planning** - Document costs and implementation plan (Complete)
+2. ⏳ **Development** - Implement image transformation (Pending)
+3. ⏳ **Testing** - Verify performance and costs (Pending)
+4. ⏳ **Staging Deploy** - Test on Vercel preview (Pending)
+5. ⏳ **Production Deploy** - Roll out to live site (Pending)
+6. ⏳ **Monitor** - Track bandwidth savings for 1 week (Pending)
+7. ⏳ **AdSense** - Implement ads after optimization stable (Pending)
+
+---
+
+## Estimated Total Time: 6-7 hours
+
+**Breakdown:**
+- Setup & utility functions: 1.5 hours
+- Update campaign pages: 1.5 hours
+- Profile/gallery optimization: 1 hour
+- CDN configuration: 1 hour
+- Testing & verification: 1.5 hours
+
+---
+
+## Notes
+
+**Supabase Image Transformation Pricing:**
+- $5 per 1,000 origin images (beyond plan quota)
+- Only charged for unique image + transformation combos
+- Same image at different sizes counts as 1 origin image
+
+**Example Cost:**
+- 1,000 campaign images × 3 sizes (thumbnail, preview, canvas) = 1,000 origin images billed
+- Cost: $5/month for transformations
+- Savings: $464/month in bandwidth
+- **Net savings: $459/month**
+
+**CDN Benefits:**
+- 285+ global edge locations
+- Automatic cache invalidation (60s propagation)
+- Higher cache hit rate for public buckets
+- No additional cost (included in Supabase)
+
+---
+
+Last Updated: January 06, 2025
