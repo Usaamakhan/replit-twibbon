@@ -524,4 +524,4 @@ const versionedUrl = `${imageUrl}?v=${Date.now()}`;
 
 ---
 
-Last Updated: January 06, 2025
+Last Updated: October 05, 2025
