@@ -5,7 +5,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { useCampaignSession } from '../../../../../contexts/CampaignSessionContext';
 import { requirePhotoUpload } from '../../../../../utils/campaignRouteGuards';
 import { loadImage, composeImages } from '../../../../../utils/imageComposition';
-import { getCampaignCanvas } from '../../../../../utils/imageTransform';
+import { getCampaignPreview } from '../../../../../utils/imageTransform';
 import LoadingSpinner from '../../../../../components/LoadingSpinner';
 import CampaignStepIndicator from '../../../../../components/CampaignStepIndicator';
 
@@ -89,7 +89,7 @@ export default function CampaignAdjustPage() {
       return;
     }
     
-    const campaignImageUrl = getCampaignCanvas(campaign.imageUrl);
+    const campaignImageUrl = getCampaignPreview(campaign.imageUrl);
     console.log('[DEBUG] Starting campaign image load:', campaignImageUrl);
     
     try {
