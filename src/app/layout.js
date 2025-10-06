@@ -1,5 +1,6 @@
 import { Geist, Geist_Mono } from "next/font/google";
 import Script from "next/script";
+import { Suspense } from "react";
 import "./globals.css";
 import ClientAuthProvider from "../components/ClientAuthProvider";
 import ErrorBoundary from "../components/ErrorBoundary";
@@ -64,7 +65,11 @@ export default function RootLayout({ children }) {
             </ClientAuthProvider>
           </TimeoutWrapper>
         </ErrorBoundary>
-        {gaId && <Analytics />}
+        {gaId && (
+          <Suspense fallback={null}>
+            <Analytics />
+          </Suspense>
+        )}
       </body>
     </html>
   );
