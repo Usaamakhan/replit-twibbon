@@ -142,8 +142,8 @@ Integrated ImageKit.io CDN for image transformation and bandwidth optimization a
 **Pages Using Optimized Images:**
 - `/campaigns` - Campaign thumbnails + creator avatars (ImageKit)
 - `/campaign/[slug]` - Campaign preview + creator avatar (ImageKit)
-- `/campaign/[slug]/adjust` - Canvas image for composition (ImageKit 800px WebP)
-- `/campaign/[slug]/result` - Creator avatar (ImageKit)
+- `/campaign/[slug]/adjust` - Canvas image + download composition (ImageKit 800px WebP)
+- `/campaign/[slug]/result` - Canvas composition + re-download (ImageKit 800px WebP)
 - `/creators` - Creator avatars (ImageKit)
 - `/profile` - Profile avatar + banner + campaign thumbnails (ImageKit)
 - `/profile/edit` - Preview images (ImageKit)

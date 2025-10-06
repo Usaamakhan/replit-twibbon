@@ -409,7 +409,7 @@ export default function CampaignAdjustPage() {
     try {
       const { blob } = await composeImages(
         userPhoto,
-        campaign.imageUrl,
+        getCampaignPreview(campaign.imageUrl),
         adjustments,
         campaign.type
       );

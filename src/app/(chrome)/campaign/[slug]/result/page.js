@@ -5,7 +5,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { useCampaignSession } from '../../../../../contexts/CampaignSessionContext';
 import { requireDownloadComplete } from '../../../../../utils/campaignRouteGuards';
 import { composeImages } from '../../../../../utils/imageComposition';
-import { getProfileAvatar } from '../../../../../utils/imageTransform';
+import { getProfileAvatar, getCampaignPreview } from '../../../../../utils/imageTransform';
 import LoadingSpinner from '../../../../../components/LoadingSpinner';
 import CampaignStepIndicator from '../../../../../components/CampaignStepIndicator';
 
@@ -53,7 +53,7 @@ export default function CampaignResultPage() {
           // Compose image for display
           const { blob: composedBlob } = await composeImages(
             file,
-            currentSession.campaignData.imageUrl,
+            getCampaignPreview(currentSession.campaignData.imageUrl),
             currentSession.adjustments || { scale: 1.0, x: 0, y: 0 },
             currentSession.campaignData.type
           );
@@ -93,7 +93,7 @@ export default function CampaignResultPage() {
     try {
       const { blob } = await composeImages(
         userPhoto,
-        campaign.imageUrl,
+        getCampaignPreview(campaign.imageUrl),
         session.adjustments || { scale: 1.0, x: 0, y: 0 },
         campaign.type
       );
