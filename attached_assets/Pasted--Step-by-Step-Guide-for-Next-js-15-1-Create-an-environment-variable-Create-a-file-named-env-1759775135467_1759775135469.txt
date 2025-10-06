@@ -1,0 +1,122 @@
+✅ Step-by-Step Guide (for Next.js 15)
+🧩 1. Create an environment variable
+
+Create a file named .env.local in the root of your project (same folder as package.json).
+
+Add this line:
+
+NEXT_PUBLIC_GA_ID=G-XXXXXXX
+
+
+Replace G-XXXXXXX with your real Google Analytics Measurement ID (the one you copied from Google Analytics).
+
+🧩 2. Create a new file for tracking route changes
+
+📄 Create a file at:
+app/analytics.js
+
+Paste this:
+
+'use client';
+
+import { usePathname, useSearchParams } from 'next/navigation';
+import { useEffect } from 'react';
+
+export default function Analytics() {
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+
+  useEffect(() => {
+    const url = pathname + (searchParams.toString() ? `?${searchParams.toString()}` : '');
+    if (window.gtag) {
+      window.gtag('config', process.env.NEXT_PUBLIC_GA_ID, {
+        page_path: url,
+      });
+    }
+  }, [pathname, searchParams]);
+
+  return null;
+}
+
+
+✅ This component makes sure Google Analytics tracks all page views, even when users navigate without full reloads (Next.js SPA behavior).
+
+🧩 3. Add the Google Analytics script in your layout
+
+Open your main file:
+📄 app/layout.js
+
+Replace your current layout code with this version:
+
+import Analytics from './analytics';
+
+export const metadata = {
+  title: 'Your Website Title',
+  description: 'Your Website Description',
+};
+
+export default function RootLayout({ children }) {
+  return (
+    <html lang="en">
+      <head>
+        {/* Google Analytics Script */}
+        <script
+          async
+          src={`https://www.googletagmanager.com/gtag/js?id=${process.env.NEXT_PUBLIC_GA_ID}`}
+        ></script>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              window.dataLayer = window.dataLayer || [];
+              function gtag(){dataLayer.push(arguments);}
+              gtag('js', new Date());
+              gtag('config', '${process.env.NEXT_PUBLIC_GA_ID}', {
+                page_path: window.location.pathname,
+              });
+            `,
+          }}
+        />
+      </head>
+      <body>
+        {children}
+        <Analytics />
+      </body>
+    </html>
+  );
+}
+
+
+✅ This script loads GA on the first page load.
+✅ The <Analytics /> component tracks every route change.
+
+🧩 4. Restart Your Server
+
+After adding .env.local, run:
+
+npm run dev
+
+
+Next.js must restart to load your environment variables.
+
+🧪 5. Verify the Setup
+
+Visit your website in your browser.
+
+Open https://analytics.google.com/
+
+Go to Reports → Realtime.
+
+You should see 1 active user (that’s you).
+
+Click through different pages — you’ll see the page paths update in Realtime.
+
+💡 Done!
+
+That’s it 🎉
+Now Google Analytics will:
+
+Automatically track every page load and route change
+
+Work on both local and deployed builds
+
+Stay clean and professional using environment variables

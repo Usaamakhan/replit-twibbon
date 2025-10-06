@@ -7,6 +7,7 @@ import TimeoutWrapper from "../components/TimeoutWrapper";
 import AuthenticatedLayout from "../components/AuthenticatedLayout";
 import AuthGate from "../components/AuthGate";
 import { CampaignSessionProvider } from "../contexts/CampaignSessionContext";
+import Analytics from "./analytics";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -24,24 +25,32 @@ export const metadata = {
 };
 
 export default function RootLayout({ children }) {
+  const gaId = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID;
+
   return (
     <html lang="en" suppressHydrationWarning={true}>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
         suppressHydrationWarning={true}
       >
-        <Script
-          src="https://www.googletagmanager.com/gtag/js?id=G-8GQVR7YHVT"
-          strategy="afterInteractive"
-        />
-        <Script id="google-analytics" strategy="afterInteractive">
-          {`
-            window.dataLayer = window.dataLayer || [];
-            function gtag(){dataLayer.push(arguments);}
-            gtag('js', new Date());
-            gtag('config', 'G-8GQVR7YHVT');
-          `}
-        </Script>
+        {gaId && (
+          <>
+            <Script
+              src={`https://www.googletagmanager.com/gtag/js?id=${gaId}`}
+              strategy="afterInteractive"
+            />
+            <Script id="google-analytics" strategy="afterInteractive">
+              {`
+                window.dataLayer = window.dataLayer || [];
+                function gtag(){dataLayer.push(arguments);}
+                gtag('js', new Date());
+                gtag('config', '${gaId}', {
+                  page_path: window.location.pathname,
+                });
+              `}
+            </Script>
+          </>
+        )}
         <ErrorBoundary>
           <TimeoutWrapper timeout={15000}>
             <ClientAuthProvider>
@@ -55,6 +64,7 @@ export default function RootLayout({ children }) {
             </ClientAuthProvider>
           </TimeoutWrapper>
         </ErrorBoundary>
+        {gaId && <Analytics />}
       </body>
     </html>
   );
