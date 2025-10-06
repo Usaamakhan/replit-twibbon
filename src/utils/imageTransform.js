@@ -152,25 +152,6 @@ export function getCampaignCanvas(imageUrlOrPath) {
     return imageUrlOrPath;
   }
   
-  // TESTING: Fetch through ImageKit without optimization (no transformations)
-  const imagekitUrl = process.env.NEXT_PUBLIC_IMAGEKIT_URL_ENDPOINT;
-  
-  if (imagekitUrl) {
-    // ImageKit original (no ?tr= parameters = unoptimized original)
-    return `${imagekitUrl}/${imagePath}`;
-  }
-  
-  // Fallback to Supabase direct
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  
-  if (!supabaseUrl) {
-    console.error('NEXT_PUBLIC_SUPABASE_URL is not configured');
-    return '';
-  }
-  
-  return `${supabaseUrl}/storage/v1/object/public/uploads/${imagePath}`;
-  
-  /* ORIGINAL: Direct Supabase fetch (no CDN)
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   
   if (!supabaseUrl) {
@@ -180,7 +161,6 @@ export function getCampaignCanvas(imageUrlOrPath) {
   
   // Canvas operations need full-size original from Supabase (no CDN transformation)
   return `${supabaseUrl}/storage/v1/object/public/uploads/${imagePath}`;
-  */
 }
 
 /**
