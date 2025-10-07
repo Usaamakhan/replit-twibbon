@@ -186,114 +186,113 @@ export default function ProfilePage({ isOwnProfile = false, username = null }) {
 
       {/* Profile Content */}
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="relative">
-          <div className="flex flex-col lg:flex-row gap-8">
-            
-            {/* Left Side - Profile Info */}
-            <div className="lg:w-1/3">
-              <div className="bg-white rounded-2xl shadow-lg p-6 relative">
-                {/* Profile Image */}
-                <div className="flex flex-col items-center">
-                  <div className="relative">
-                    {userData.profileImage && userData.profileImage.trim() ? (
-                      <img
-                        src={getProfileAvatar(userData.profileImage)}
-                        alt={userData.displayName}
-                        className="w-32 h-32 rounded-full border-4 border-white shadow-xl object-cover"
-                      />
-                    ) : (
-                      <div className="w-32 h-32 rounded-full border-4 border-white shadow-xl bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center">
-                        <span className="text-white text-2xl font-bold">
-                          {userData.displayName?.charAt(0)?.toUpperCase() || 'U'}
-                        </span>
-                      </div>
-                    )}
-                  </div>
-                  
-                  {/* Name and Username */}
-                  <div className="text-center mt-4">
-                    <h1 className={`font-bold text-gray-900 ${
-                      userData.displayName?.length <= 15 ? 'text-2xl' :
-                      userData.displayName?.length <= 25 ? 'text-xl' :
-                      userData.displayName?.length <= 35 ? 'text-lg' : 'text-base'
-                    } break-words max-w-full leading-tight`} title={userData.displayName}>
-                      {userData.displayName}
-                    </h1>
-                    <p className={`text-emerald-600 font-medium ${
-                      userData.username?.length <= 20 ? 'text-base' : 'text-sm'
-                    } break-words`}>@{userData.username}</p>
-                  </div>
-                  
-                  {/* Bio */}
-                  <div className="mt-4 w-full">
-                    <p className="text-gray-600 text-center leading-relaxed whitespace-pre-wrap">
-                      {userData.bio}
-                    </p>
-                  </div>
-                  
-                  {isOwnProfile && (
-                    <button 
-                      onClick={() => router.push('/profile/edit')}
-                      className="btn-base btn-primary mt-4 w-full py-2 px-4 font-medium"
-                    >
-                      Edit Profile
-                    </button>
-                  )}
+        {/* Profile Info Row - No background box */}
+        <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-6 mb-8">
+          {/* Left: Profile Info */}
+          <div className="flex items-start gap-4">
+            {/* Profile Image */}
+            <div className="flex-shrink-0">
+              {userData.profileImage && userData.profileImage.trim() ? (
+                <img
+                  src={getProfileAvatar(userData.profileImage)}
+                  alt={userData.displayName}
+                  className="w-20 h-20 sm:w-24 sm:h-24 rounded-full border-4 border-white shadow-lg object-cover"
+                />
+              ) : (
+                <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full border-4 border-white shadow-lg bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center">
+                  <span className="text-white text-xl sm:text-2xl font-bold">
+                    {userData.displayName?.charAt(0)?.toUpperCase() || 'U'}
+                  </span>
                 </div>
+              )}
+            </div>
+            
+            {/* Name, Username, Bio, Edit Button */}
+            <div className="flex-1 min-w-0">
+              <h1 className={`font-bold text-gray-900 ${
+                userData.displayName?.length <= 15 ? 'text-2xl sm:text-3xl' :
+                userData.displayName?.length <= 25 ? 'text-xl sm:text-2xl' :
+                userData.displayName?.length <= 35 ? 'text-lg sm:text-xl' : 'text-base sm:text-lg'
+              } break-words leading-tight`} title={userData.displayName}>
+                {userData.displayName}
+              </h1>
+              <p className={`text-gray-500 font-medium ${
+                userData.username?.length <= 20 ? 'text-sm sm:text-base' : 'text-xs sm:text-sm'
+              } break-words mt-1`}>@{userData.username}</p>
+              
+              {userData.bio && (
+                <p className="text-gray-600 text-sm sm:text-base leading-relaxed whitespace-pre-wrap mt-3 max-w-md">
+                  {userData.bio}
+                </p>
+              )}
+              
+              {isOwnProfile && (
+                <button 
+                  onClick={() => router.push('/profile/edit')}
+                  className="btn-base btn-primary mt-4 px-4 py-2 text-sm font-medium inline-flex items-center gap-2"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                  </svg>
+                  Edit Profile
+                </button>
+              )}
+            </div>
+          </div>
+
+          {/* Right: Stats */}
+          <div className="flex flex-row lg:flex-col gap-4 lg:gap-3 lg:items-end">
+            <div className="flex items-center gap-2">
+              <div className="text-right">
+                <div className="text-2xl sm:text-3xl font-bold text-emerald-600">{userStats.supportsCount}</div>
+                <div className="text-xs sm:text-sm text-gray-600 font-medium">Supporters</div>
               </div>
             </div>
-
-            {/* Right Side - Stats and Content */}
-            <div className="lg:w-2/3">
-              {/* Stats Cards */}
-              <div className="grid grid-cols-3 gap-2 sm:gap-4 mb-8">
-                <div className="bg-white rounded-xl shadow-lg p-3 sm:p-6 text-center">
-                  <div className="text-xl sm:text-2xl lg:text-3xl font-bold text-emerald-600">{userStats.supportsCount}</div>
-                  <div className="text-xs sm:text-sm lg:text-base text-gray-600 font-medium">Supports</div>
-                </div>
-                
-                <div className="bg-white rounded-xl shadow-lg p-3 sm:p-6 text-center">
-                  <div className="text-xl sm:text-2xl lg:text-3xl font-bold text-emerald-600">{userStats.campaignsCount}</div>
-                  <div className="text-xs sm:text-sm lg:text-base text-gray-600 font-medium">Campaigns</div>
-                </div>
-                
-                <div className="bg-white rounded-xl shadow-lg p-3 sm:p-6 text-center">
-                  <div className="text-sm sm:text-lg lg:text-xl font-bold text-emerald-600">
-                    {userData.createdAt ? 
-                      new Date(userData.createdAt.seconds ? userData.createdAt.seconds * 1000 : userData.createdAt).toLocaleDateString('en-US', { 
-                        month: 'short', 
-                        day: 'numeric',
-                        year: 'numeric' 
-                      }) : 
-                      'Recently'
-                    }
-                  </div>
-                  <div className="text-xs sm:text-sm lg:text-base text-gray-600 font-medium">Joined since</div>
-                </div>
+            
+            <div className="flex items-center gap-2">
+              <div className="text-right">
+                <div className="text-2xl sm:text-3xl font-bold text-emerald-600">{userStats.campaignsCount}</div>
+                <div className="text-xs sm:text-sm text-gray-600 font-medium">Campaigns</div>
               </div>
-
-              {/* Campaigns Section */}
-              <div className="bg-white rounded-2xl shadow-lg p-6">
-                <div className="flex items-center justify-between mb-6">
-                  <h2 className="text-xl font-bold text-gray-900">Campaigns</h2>
-                  {isOwnProfile && (
-                    <button 
-                      onClick={() => router.push('/create')}
-                      className="btn-base btn-primary px-3 py-1.5 text-sm font-medium"
-                    >
-                      Create Campaign
-                    </button>
-                  )}
+            </div>
+            
+            <div className="flex items-center gap-2">
+              <div className="text-right">
+                <div className="text-base sm:text-lg font-bold text-emerald-600">
+                  {userData.createdAt ? 
+                    new Date(userData.createdAt.seconds ? userData.createdAt.seconds * 1000 : userData.createdAt).toLocaleDateString('en-US', { 
+                      month: 'short', 
+                      day: 'numeric',
+                      year: 'numeric' 
+                    }) : 
+                    'Recently'
+                  }
                 </div>
-
-                <CampaignGallery 
-                  campaigns={campaigns} 
-                  loading={profileLoading}
-                  isOwnProfile={isOwnProfile}
-                />
+                <div className="text-xs sm:text-sm text-gray-600 font-medium">Joined Since</div>
               </div>
             </div>
           </div>
+        </div>
+
+        {/* Campaigns Section - Full Width */}
+        <div className="bg-white rounded-2xl shadow-lg p-6">
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-xl font-bold text-gray-900">Campaigns</h2>
+            {isOwnProfile && (
+              <button 
+                onClick={() => router.push('/create')}
+                className="btn-base btn-primary px-4 py-2 text-sm font-medium"
+              >
+                Create Campaign
+              </button>
+            )}
+          </div>
+
+          <CampaignGallery 
+            campaigns={campaigns} 
+            loading={profileLoading}
+            isOwnProfile={isOwnProfile}
+          />
         </div>
       </div>
       
@@ -309,46 +308,37 @@ function ProfileSkeleton() {
       <div className="h-48 sm:h-56 md:h-64 lg:h-80 bg-gray-300 animate-pulse"></div>
       
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="relative">
-          <div className="flex flex-col lg:flex-row gap-8">
-            
-            {/* Left Side Skeleton */}
-            <div className="lg:w-1/3">
-              <div className="bg-white rounded-2xl shadow-lg p-6">
-                <div className="flex flex-col items-center">
-                  <div className="w-32 h-32 bg-gray-300 rounded-full animate-pulse"></div>
-                  <div className="mt-4 space-y-2">
-                    <div className="h-6 bg-gray-300 rounded w-32 animate-pulse"></div>
-                    <div className="h-4 bg-gray-300 rounded w-24 animate-pulse"></div>
-                  </div>
-                  <div className="mt-4 w-full space-y-2">
-                    <div className="h-4 bg-gray-300 rounded w-full animate-pulse"></div>
-                    <div className="h-4 bg-gray-300 rounded w-3/4 animate-pulse"></div>
-                  </div>
-                </div>
-              </div>
+        {/* Profile Info Row Skeleton */}
+        <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-6 mb-8">
+          {/* Left: Profile Info Skeleton */}
+          <div className="flex items-start gap-4">
+            <div className="w-20 h-20 sm:w-24 sm:h-24 bg-gray-300 rounded-full animate-pulse flex-shrink-0"></div>
+            <div className="flex-1 space-y-3">
+              <div className="h-7 sm:h-8 bg-gray-300 rounded w-40 sm:w-48 animate-pulse"></div>
+              <div className="h-4 sm:h-5 bg-gray-300 rounded w-24 sm:w-32 animate-pulse"></div>
+              <div className="h-4 bg-gray-300 rounded w-full max-w-md animate-pulse"></div>
+              <div className="h-4 bg-gray-300 rounded w-3/4 max-w-md animate-pulse"></div>
             </div>
+          </div>
 
-            {/* Right Side Skeleton */}
-            <div className="lg:w-2/3">
-              <div className="grid grid-cols-3 gap-2 sm:gap-4 mb-8">
-                {[...Array(3)].map((_, i) => (
-                  <div key={i} className="bg-white rounded-xl shadow-lg p-3 sm:p-6">
-                    <div className="h-6 sm:h-8 bg-gray-300 rounded w-12 sm:w-16 mx-auto animate-pulse mb-2"></div>
-                    <div className="h-3 sm:h-4 bg-gray-300 rounded w-16 sm:w-20 mx-auto animate-pulse"></div>
-                  </div>
-                ))}
+          {/* Right: Stats Skeleton */}
+          <div className="flex flex-row lg:flex-col gap-4 lg:gap-3 lg:items-end">
+            {[...Array(3)].map((_, i) => (
+              <div key={i} className="text-right">
+                <div className="h-8 sm:h-9 bg-gray-300 rounded w-12 sm:w-16 ml-auto animate-pulse mb-2"></div>
+                <div className="h-3 sm:h-4 bg-gray-300 rounded w-16 sm:w-20 ml-auto animate-pulse"></div>
               </div>
-              
-              <div className="bg-white rounded-2xl shadow-lg p-6">
-                <div className="h-8 bg-gray-300 rounded w-32 animate-pulse mb-6"></div>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {[...Array(6)].map((_, i) => (
-                    <div key={i} className="h-48 bg-gray-300 rounded-xl animate-pulse"></div>
-                  ))}
-                </div>
-              </div>
-            </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Campaigns Section Skeleton */}
+        <div className="bg-white rounded-2xl shadow-lg p-6">
+          <div className="h-8 bg-gray-300 rounded w-32 animate-pulse mb-6"></div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {[...Array(6)].map((_, i) => (
+              <div key={i} className="h-48 bg-gray-300 rounded-xl animate-pulse"></div>
+            ))}
           </div>
         </div>
       </div>
