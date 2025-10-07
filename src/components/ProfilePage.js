@@ -204,12 +204,13 @@ export default function ProfilePage({ isOwnProfile = false, username = null }) {
       </div>
 
       {/* Profile Content */}
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-16 sm:pt-20 lg:pt-24 pb-8">
-        <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-6 mb-8">
-          {/* Left: Profile Info Below Avatar */}
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-16 sm:pt-18 lg:pt-16 pb-8">
+        {/* Profile Info and Stats Container */}
+        <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4 lg:gap-6 mb-8">
+          {/* Left: Profile Info with Name, Username, Bio, Edit Button, and Mobile Stats */}
           <div className="flex-1">
             {/* Name, Username, Bio, Edit Button */}
-            <div>
+            <div className="mb-4 lg:mb-0">
               <h1 className={`font-bold text-gray-900 ${
                 userData.displayName?.length <= 15 ? 'text-2xl sm:text-3xl' :
                 userData.displayName?.length <= 25 ? 'text-xl sm:text-2xl' :
@@ -239,22 +240,49 @@ export default function ProfilePage({ isOwnProfile = false, username = null }) {
                 </button>
               )}
             </div>
+
+            {/* Stats Row on Mobile/Tablet - Hidden on Large Screens */}
+            <div className="flex flex-row gap-3 mt-4 lg:hidden">
+              <div className="bg-white rounded-xl shadow-lg p-4 flex-1 text-center">
+                <div className="text-2xl font-bold text-emerald-600">{userStats.supportsCount}</div>
+                <div className="text-xs text-gray-600 font-medium mt-1">Supporters</div>
+              </div>
+              
+              <div className="bg-white rounded-xl shadow-lg p-4 flex-1 text-center">
+                <div className="text-2xl font-bold text-emerald-600">{userStats.campaignsCount}</div>
+                <div className="text-xs text-gray-600 font-medium mt-1">Campaigns</div>
+              </div>
+              
+              <div className="bg-white rounded-xl shadow-lg p-4 flex-1 text-center">
+                <div className="text-base font-bold text-emerald-600">
+                  {userData.createdAt ? 
+                    new Date(userData.createdAt.seconds ? userData.createdAt.seconds * 1000 : userData.createdAt).toLocaleDateString('en-US', { 
+                      month: 'short', 
+                      day: 'numeric',
+                      year: 'numeric' 
+                    }) : 
+                    'Recently'
+                  }
+                </div>
+                <div className="text-xs text-gray-600 font-medium mt-1">Joined Since</div>
+              </div>
+            </div>
           </div>
 
-          {/* Right: Stats in Boxes - Row on desktop, Column on mobile */}
-          <div className="flex flex-col sm:flex-row lg:flex-row gap-3 sm:gap-4 lg:gap-4">
-            <div className="bg-white rounded-xl shadow-lg p-4 sm:p-6 text-center">
-              <div className="text-2xl sm:text-3xl font-bold text-emerald-600">{userStats.supportsCount}</div>
-              <div className="text-xs sm:text-sm text-gray-600 font-medium mt-1">Supporters</div>
+          {/* Right: Stats in Boxes - Only visible on Large Screens */}
+          <div className="hidden lg:flex lg:flex-row gap-4">
+            <div className="bg-white rounded-xl shadow-lg p-6 min-h-[120px] flex flex-col items-center justify-center min-w-[140px]">
+              <div className="text-3xl font-bold text-emerald-600">{userStats.supportsCount}</div>
+              <div className="text-sm text-gray-600 font-medium mt-2">Supporters</div>
             </div>
             
-            <div className="bg-white rounded-xl shadow-lg p-4 sm:p-6 text-center">
-              <div className="text-2xl sm:text-3xl font-bold text-emerald-600">{userStats.campaignsCount}</div>
-              <div className="text-xs sm:text-sm text-gray-600 font-medium mt-1">Campaigns</div>
+            <div className="bg-white rounded-xl shadow-lg p-6 min-h-[120px] flex flex-col items-center justify-center min-w-[140px]">
+              <div className="text-3xl font-bold text-emerald-600">{userStats.campaignsCount}</div>
+              <div className="text-sm text-gray-600 font-medium mt-2">Campaigns</div>
             </div>
             
-            <div className="bg-white rounded-xl shadow-lg p-4 sm:p-6 text-center">
-              <div className="text-base sm:text-lg font-bold text-emerald-600">
+            <div className="bg-white rounded-xl shadow-lg p-6 min-h-[120px] flex flex-col items-center justify-center min-w-[140px]">
+              <div className="text-lg font-bold text-emerald-600">
                 {userData.createdAt ? 
                   new Date(userData.createdAt.seconds ? userData.createdAt.seconds * 1000 : userData.createdAt).toLocaleDateString('en-US', { 
                     month: 'short', 
@@ -264,7 +292,7 @@ export default function ProfilePage({ isOwnProfile = false, username = null }) {
                   'Recently'
                 }
               </div>
-              <div className="text-xs sm:text-sm text-gray-600 font-medium mt-1">Joined Since</div>
+              <div className="text-sm text-gray-600 font-medium mt-2">Joined Since</div>
             </div>
           </div>
         </div>
@@ -307,25 +335,35 @@ function ProfileSkeleton() {
         </div>
       </div>
       
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-16 sm:pt-20 lg:pt-24 pb-8">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-16 sm:pt-18 lg:pt-16 pb-8">
         {/* Profile Info Row Skeleton */}
-        <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-6 mb-8">
+        <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4 lg:gap-6 mb-8">
           {/* Left: Profile Info Skeleton */}
           <div className="flex-1">
-            <div className="space-y-3">
+            <div className="space-y-3 mb-4 lg:mb-0">
               <div className="h-7 sm:h-8 bg-gray-300 rounded w-40 sm:w-48 animate-pulse"></div>
               <div className="h-4 sm:h-5 bg-gray-300 rounded w-24 sm:w-32 animate-pulse"></div>
               <div className="h-4 bg-gray-300 rounded w-full max-w-2xl animate-pulse"></div>
               <div className="h-4 bg-gray-300 rounded w-3/4 max-w-2xl animate-pulse"></div>
             </div>
+
+            {/* Mobile Stats Skeleton */}
+            <div className="flex flex-row gap-3 mt-4 lg:hidden">
+              {[...Array(3)].map((_, i) => (
+                <div key={i} className="bg-white rounded-xl shadow-lg p-4 flex-1">
+                  <div className="h-8 bg-gray-300 rounded w-12 mx-auto animate-pulse mb-2"></div>
+                  <div className="h-3 bg-gray-300 rounded w-16 mx-auto animate-pulse"></div>
+                </div>
+              ))}
+            </div>
           </div>
 
-          {/* Right: Stats Skeleton in Boxes */}
-          <div className="flex flex-col sm:flex-row lg:flex-row gap-3 sm:gap-4 lg:gap-4">
+          {/* Right: Stats Skeleton - Large Screens Only */}
+          <div className="hidden lg:flex lg:flex-row gap-4">
             {[...Array(3)].map((_, i) => (
-              <div key={i} className="bg-white rounded-xl shadow-lg p-4 sm:p-6">
-                <div className="h-8 sm:h-9 bg-gray-300 rounded w-12 sm:w-16 mx-auto animate-pulse mb-2"></div>
-                <div className="h-3 sm:h-4 bg-gray-300 rounded w-16 sm:w-20 mx-auto animate-pulse"></div>
+              <div key={i} className="bg-white rounded-xl shadow-lg p-6 min-h-[120px] flex flex-col items-center justify-center min-w-[140px]">
+                <div className="h-9 bg-gray-300 rounded w-16 mx-auto animate-pulse mb-2"></div>
+                <div className="h-4 bg-gray-300 rounded w-20 mx-auto animate-pulse"></div>
               </div>
             ))}
           </div>
