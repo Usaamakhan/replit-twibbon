@@ -185,30 +185,29 @@ export default function ProfilePage({ isOwnProfile = false, username = null }) {
       </div>
 
       {/* Profile Content */}
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Profile Info Row - No background box */}
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 -mt-16 sm:-mt-20 lg:-mt-24">
         <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-6 mb-8">
-          {/* Left: Profile Info */}
-          <div className="flex items-start gap-4">
-            {/* Profile Image */}
-            <div className="flex-shrink-0">
+          {/* Left: Profile Info with Overlaying Avatar */}
+          <div className="flex-1">
+            {/* Profile Image - Overlaying Banner */}
+            <div className="mb-4">
               {userData.profileImage && userData.profileImage.trim() ? (
                 <img
                   src={getProfileAvatar(userData.profileImage)}
                   alt={userData.displayName}
-                  className="w-20 h-20 sm:w-24 sm:h-24 rounded-full border-4 border-white shadow-lg object-cover"
+                  className="w-28 h-28 sm:w-32 sm:h-32 lg:w-40 lg:h-40 rounded-full border-4 border-white shadow-xl object-cover"
                 />
               ) : (
-                <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full border-4 border-white shadow-lg bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center">
-                  <span className="text-white text-xl sm:text-2xl font-bold">
+                <div className="w-28 h-28 sm:w-32 sm:h-32 lg:w-40 lg:h-40 rounded-full border-4 border-white shadow-xl bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center">
+                  <span className="text-white text-3xl sm:text-4xl lg:text-5xl font-bold">
                     {userData.displayName?.charAt(0)?.toUpperCase() || 'U'}
                   </span>
                 </div>
               )}
             </div>
             
-            {/* Name, Username, Bio, Edit Button */}
-            <div className="flex-1 min-w-0">
+            {/* Name, Username, Bio, Edit Button - Below Avatar */}
+            <div>
               <h1 className={`font-bold text-gray-900 ${
                 userData.displayName?.length <= 15 ? 'text-2xl sm:text-3xl' :
                 userData.displayName?.length <= 25 ? 'text-xl sm:text-2xl' :
@@ -221,7 +220,7 @@ export default function ProfilePage({ isOwnProfile = false, username = null }) {
               } break-words mt-1`}>@{userData.username}</p>
               
               {userData.bio && (
-                <p className="text-gray-600 text-sm sm:text-base leading-relaxed whitespace-pre-wrap mt-3 max-w-md">
+                <p className="text-gray-600 text-sm sm:text-base leading-relaxed whitespace-pre-wrap mt-3 max-w-2xl">
                   {userData.bio}
                 </p>
               )}
@@ -240,36 +239,30 @@ export default function ProfilePage({ isOwnProfile = false, username = null }) {
             </div>
           </div>
 
-          {/* Right: Stats */}
-          <div className="flex flex-row lg:flex-col gap-4 lg:gap-3 lg:items-end">
-            <div className="flex items-center gap-2">
-              <div className="text-right">
-                <div className="text-2xl sm:text-3xl font-bold text-emerald-600">{userStats.supportsCount}</div>
-                <div className="text-xs sm:text-sm text-gray-600 font-medium">Supporters</div>
-              </div>
+          {/* Right: Stats in Boxes - Row on desktop, Column on mobile */}
+          <div className="flex flex-col sm:flex-row lg:flex-row gap-3 sm:gap-4 lg:gap-4">
+            <div className="bg-white rounded-xl shadow-lg p-4 sm:p-6 text-center">
+              <div className="text-2xl sm:text-3xl font-bold text-emerald-600">{userStats.supportsCount}</div>
+              <div className="text-xs sm:text-sm text-gray-600 font-medium mt-1">Supporters</div>
             </div>
             
-            <div className="flex items-center gap-2">
-              <div className="text-right">
-                <div className="text-2xl sm:text-3xl font-bold text-emerald-600">{userStats.campaignsCount}</div>
-                <div className="text-xs sm:text-sm text-gray-600 font-medium">Campaigns</div>
-              </div>
+            <div className="bg-white rounded-xl shadow-lg p-4 sm:p-6 text-center">
+              <div className="text-2xl sm:text-3xl font-bold text-emerald-600">{userStats.campaignsCount}</div>
+              <div className="text-xs sm:text-sm text-gray-600 font-medium mt-1">Campaigns</div>
             </div>
             
-            <div className="flex items-center gap-2">
-              <div className="text-right">
-                <div className="text-base sm:text-lg font-bold text-emerald-600">
-                  {userData.createdAt ? 
-                    new Date(userData.createdAt.seconds ? userData.createdAt.seconds * 1000 : userData.createdAt).toLocaleDateString('en-US', { 
-                      month: 'short', 
-                      day: 'numeric',
-                      year: 'numeric' 
-                    }) : 
-                    'Recently'
-                  }
-                </div>
-                <div className="text-xs sm:text-sm text-gray-600 font-medium">Joined Since</div>
+            <div className="bg-white rounded-xl shadow-lg p-4 sm:p-6 text-center">
+              <div className="text-base sm:text-lg font-bold text-emerald-600">
+                {userData.createdAt ? 
+                  new Date(userData.createdAt.seconds ? userData.createdAt.seconds * 1000 : userData.createdAt).toLocaleDateString('en-US', { 
+                    month: 'short', 
+                    day: 'numeric',
+                    year: 'numeric' 
+                  }) : 
+                  'Recently'
+                }
               </div>
+              <div className="text-xs sm:text-sm text-gray-600 font-medium mt-1">Joined Since</div>
             </div>
           </div>
         </div>
@@ -307,26 +300,26 @@ function ProfileSkeleton() {
       {/* Banner Skeleton */}
       <div className="h-48 sm:h-56 md:h-64 lg:h-80 bg-gray-300 animate-pulse"></div>
       
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 -mt-16 sm:-mt-20 lg:-mt-24">
         {/* Profile Info Row Skeleton */}
         <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-6 mb-8">
-          {/* Left: Profile Info Skeleton */}
-          <div className="flex items-start gap-4">
-            <div className="w-20 h-20 sm:w-24 sm:h-24 bg-gray-300 rounded-full animate-pulse flex-shrink-0"></div>
-            <div className="flex-1 space-y-3">
+          {/* Left: Profile Info Skeleton with Overlaying Avatar */}
+          <div className="flex-1">
+            <div className="w-28 h-28 sm:w-32 sm:h-32 lg:w-40 lg:h-40 bg-gray-300 rounded-full animate-pulse mb-4"></div>
+            <div className="space-y-3">
               <div className="h-7 sm:h-8 bg-gray-300 rounded w-40 sm:w-48 animate-pulse"></div>
               <div className="h-4 sm:h-5 bg-gray-300 rounded w-24 sm:w-32 animate-pulse"></div>
-              <div className="h-4 bg-gray-300 rounded w-full max-w-md animate-pulse"></div>
-              <div className="h-4 bg-gray-300 rounded w-3/4 max-w-md animate-pulse"></div>
+              <div className="h-4 bg-gray-300 rounded w-full max-w-2xl animate-pulse"></div>
+              <div className="h-4 bg-gray-300 rounded w-3/4 max-w-2xl animate-pulse"></div>
             </div>
           </div>
 
-          {/* Right: Stats Skeleton */}
-          <div className="flex flex-row lg:flex-col gap-4 lg:gap-3 lg:items-end">
+          {/* Right: Stats Skeleton in Boxes */}
+          <div className="flex flex-col sm:flex-row lg:flex-row gap-3 sm:gap-4 lg:gap-4">
             {[...Array(3)].map((_, i) => (
-              <div key={i} className="text-right">
-                <div className="h-8 sm:h-9 bg-gray-300 rounded w-12 sm:w-16 ml-auto animate-pulse mb-2"></div>
-                <div className="h-3 sm:h-4 bg-gray-300 rounded w-16 sm:w-20 ml-auto animate-pulse"></div>
+              <div key={i} className="bg-white rounded-xl shadow-lg p-4 sm:p-6">
+                <div className="h-8 sm:h-9 bg-gray-300 rounded w-12 sm:w-16 mx-auto animate-pulse mb-2"></div>
+                <div className="h-3 sm:h-4 bg-gray-300 rounded w-16 sm:w-20 mx-auto animate-pulse"></div>
               </div>
             ))}
           </div>
