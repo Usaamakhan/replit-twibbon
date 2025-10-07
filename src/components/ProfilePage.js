@@ -170,8 +170,8 @@ export default function ProfilePage({ isOwnProfile = false, username = null }) {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Banner Section */}
-      <div className="relative w-full aspect-[3/1] bg-gradient-to-r from-emerald-500 to-emerald-600 overflow-hidden">
+      {/* Banner Section with Overlaying Profile Photo */}
+      <div className="relative w-full aspect-[3/1] bg-gradient-to-r from-emerald-500 to-emerald-600 overflow-visible">
         {userData.bannerImage && userData.bannerImage.trim() ? (
           <img
             src={getProfileBanner(userData.bannerImage)}
@@ -182,31 +182,33 @@ export default function ProfilePage({ isOwnProfile = false, username = null }) {
           <div className="w-full h-full bg-gradient-to-r from-emerald-500 to-emerald-600"></div>
         )}
         <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
+        
+        {/* Profile Image - Overlaying Banner (positioned absolutely) */}
+        <div className="absolute bottom-0 left-0 transform translate-y-1/2 max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
+          <div className="relative z-10">
+            {userData.profileImage && userData.profileImage.trim() ? (
+              <img
+                src={getProfileAvatar(userData.profileImage)}
+                alt={userData.displayName}
+                className="w-28 h-28 sm:w-32 sm:h-32 lg:w-40 lg:h-40 rounded-full border-4 border-white shadow-xl object-cover bg-white"
+              />
+            ) : (
+              <div className="w-28 h-28 sm:w-32 sm:h-32 lg:w-40 lg:h-40 rounded-full border-4 border-white shadow-xl bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center">
+                <span className="text-white text-3xl sm:text-4xl lg:text-5xl font-bold">
+                  {userData.displayName?.charAt(0)?.toUpperCase() || 'U'}
+                </span>
+              </div>
+            )}
+          </div>
+        </div>
       </div>
 
       {/* Profile Content */}
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 -mt-16 sm:-mt-20 lg:-mt-24">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-16 sm:pt-20 lg:pt-24 pb-8">
         <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-6 mb-8">
-          {/* Left: Profile Info with Overlaying Avatar */}
+          {/* Left: Profile Info Below Avatar */}
           <div className="flex-1">
-            {/* Profile Image - Overlaying Banner */}
-            <div className="mb-4">
-              {userData.profileImage && userData.profileImage.trim() ? (
-                <img
-                  src={getProfileAvatar(userData.profileImage)}
-                  alt={userData.displayName}
-                  className="w-28 h-28 sm:w-32 sm:h-32 lg:w-40 lg:h-40 rounded-full border-4 border-white shadow-xl object-cover"
-                />
-              ) : (
-                <div className="w-28 h-28 sm:w-32 sm:h-32 lg:w-40 lg:h-40 rounded-full border-4 border-white shadow-xl bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center">
-                  <span className="text-white text-3xl sm:text-4xl lg:text-5xl font-bold">
-                    {userData.displayName?.charAt(0)?.toUpperCase() || 'U'}
-                  </span>
-                </div>
-              )}
-            </div>
-            
-            {/* Name, Username, Bio, Edit Button - Below Avatar */}
+            {/* Name, Username, Bio, Edit Button */}
             <div>
               <h1 className={`font-bold text-gray-900 ${
                 userData.displayName?.length <= 15 ? 'text-2xl sm:text-3xl' :
@@ -297,15 +299,19 @@ export default function ProfilePage({ isOwnProfile = false, username = null }) {
 function ProfileSkeleton() {
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Banner Skeleton */}
-      <div className="h-48 sm:h-56 md:h-64 lg:h-80 bg-gray-300 animate-pulse"></div>
+      {/* Banner Skeleton with Overlaying Profile Photo */}
+      <div className="relative h-48 sm:h-56 md:h-64 lg:h-80 bg-gray-300 animate-pulse overflow-visible">
+        {/* Profile Photo Skeleton - Overlaying Banner */}
+        <div className="absolute bottom-0 left-0 transform translate-y-1/2 max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
+          <div className="w-28 h-28 sm:w-32 sm:h-32 lg:w-40 lg:h-40 bg-gray-400 rounded-full animate-pulse"></div>
+        </div>
+      </div>
       
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 -mt-16 sm:-mt-20 lg:-mt-24">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-16 sm:pt-20 lg:pt-24 pb-8">
         {/* Profile Info Row Skeleton */}
         <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-6 mb-8">
-          {/* Left: Profile Info Skeleton with Overlaying Avatar */}
+          {/* Left: Profile Info Skeleton */}
           <div className="flex-1">
-            <div className="w-28 h-28 sm:w-32 sm:h-32 lg:w-40 lg:h-40 bg-gray-300 rounded-full animate-pulse mb-4"></div>
             <div className="space-y-3">
               <div className="h-7 sm:h-8 bg-gray-300 rounded w-40 sm:w-48 animate-pulse"></div>
               <div className="h-4 sm:h-5 bg-gray-300 rounded w-24 sm:w-32 animate-pulse"></div>
