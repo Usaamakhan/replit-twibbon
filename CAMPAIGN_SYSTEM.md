@@ -517,6 +517,406 @@ canvas.addEventListener('pointerup', handleDragEnd);
 
 ---
 
+## Admin Dashboard System (Phase 2)
+
+### Overview
+**Status:** ⏸️ Not Implemented (Planned for Phase 2)
+
+The admin dashboard provides platform moderators with tools to manage reports, campaigns, users, and monitor platform health. Access is restricted to users with `role: "admin"` in their profile.
+
+---
+
+### Features
+
+#### 1. Reports Management (`/admin/reports`)
+**Purpose:** Review and moderate user-submitted reports
+
+**Functionality:**
+- View all reports with filters (status, reason, date)
+- Quick campaign preview (thumbnail + metadata)
+- One-click actions: Dismiss, Remove campaign, Warn creator
+- Bulk operations for multiple reports
+- Filter by: pending, reviewed, resolved, dismissed
+- Search by campaign slug or reporter ID
+
+**Layout:**
+- Table view with pagination (20 per page)
+- Columns: Report ID, Campaign, Reason, Status, Created, Actions
+- Side panel: Full report details + campaign preview
+
+---
+
+#### 2. Campaign Moderation (`/admin/campaigns`)
+**Purpose:** Manage flagged and active campaigns
+
+**Functionality:**
+- View all campaigns with moderation status filter
+- Quick actions: Remove, Under Review, Restore
+- View campaign reports (inline)
+- Edit campaign metadata (admin override)
+- Delete campaigns (permanent + image cleanup)
+- Filter by: active, under-review, removed
+- Sort by: reports count, creation date, supporters
+
+**Layout:**
+- Grid view with status badges
+- Card: Thumbnail, title, creator, supporters, reports count
+- Modal: Full campaign details + all reports
+
+---
+
+#### 3. User Management (`/admin/users`)
+**Purpose:** Manage user accounts and roles
+
+**Functionality:**
+- View all users with search
+- Assign/revoke admin role
+- View user stats (campaigns created, reports filed)
+- Ban/unban users (prevents login)
+- View user's campaigns
+- Filter by: all, admins, banned
+
+**Layout:**
+- Table view with pagination
+- Columns: Avatar, Name, Email, Role, Campaigns, Supports, Actions
+- Modal: User details + activity history
+
+---
+
+#### 4. Platform Analytics (`/admin/analytics`)
+**Purpose:** Monitor platform metrics and health
+
+**Functionality:**
+- Total campaigns (active, removed, under-review)
+- Total users (creators, supporters)
+- Reports statistics (pending, resolved rate)
+- Daily/weekly/monthly trends
+- Top creators leaderboard
+- Most reported campaigns
+
+**Layout:**
+- Dashboard with metric cards
+- Charts: Line graphs for trends, bar charts for top items
+- Date range selector (7d, 30d, 90d, all time)
+
+---
+
+### Security & Access Control
+
+#### Admin Role Implementation
+
+**1. User Schema Update (`src/lib/firestore.js`):**
+```javascript
+// User profile schema
+{
+  uid: string,
+  email: string,
+  displayName: string,
+  username: string,
+  role: "admin" | "user",  // NEW FIELD (default: "user")
+  // ... other fields
+}
+```
+
+**2. Admin Assignment Function:**
+```javascript
+// firestore.js
+export async function setUserRole(userId, role, adminId) {
+  // Verify adminId is admin
+  // Update user's role field
+  // Log action
+}
+```
+
+**3. Firestore Security Rules:**
+```javascript
+// firestore.rules
+match /users/{userId} {
+  allow update: if request.auth != null
+    && request.auth.uid == userId
+    && !request.resource.data.diff(resource.data).hasAny(['role']);
+    
+  // Only admins can update roles (enforced in app layer)
+}
+```
+
+#### Middleware Protection
+
+**Admin Middleware (`src/middleware/adminAuth.js`):**
+```javascript
+export async function requireAdmin(req) {
+  const token = req.headers.authorization;
+  const decodedToken = await verifyIdToken(token);
+  const user = await getUserProfile(decodedToken.uid);
+  
+  if (user.role !== 'admin') {
+    throw new Error('Unauthorized: Admin access required');
+  }
+  
+  return user;
+}
+```
+
+**Usage in API Routes:**
+```javascript
+// /api/admin/*/route.js
+import { requireAdmin } from '@/middleware/adminAuth';
+
+export async function GET(request) {
+  await requireAdmin(request); // Throws if not admin
+  // ... admin-only logic
+}
+```
+
+---
+
+### File Structure
+
+```
+src/
+├── app/
+│   ├── (chrome)/
+│   │   └── admin/
+│   │       ├── layout.js                    # Admin layout with sidebar
+│   │       ├── page.js                      # Analytics dashboard (default)
+│   │       ├── reports/
+│   │       │   ├── page.js                  # Reports table + filters
+│   │       │   └── [reportId]/
+│   │       │       └── page.js              # Report details modal
+│   │       ├── campaigns/
+│   │       │   ├── page.js                  # Campaigns grid + filters
+│   │       │   └── [campaignId]/
+│   │       │       └── page.js              # Campaign moderation view
+│   │       └── users/
+│   │           ├── page.js                  # Users table + search
+│   │           └── [userId]/
+│   │               └── page.js              # User details + actions
+│   └── api/
+│       └── admin/
+│           ├── reports/
+│           │   ├── route.js                 # GET all reports
+│           │   └── [reportId]/
+│           │       └── route.js             # PATCH update report status
+│           ├── campaigns/
+│           │   ├── route.js                 # GET all campaigns (admin view)
+│           │   └── [campaignId]/
+│           │       ├── route.js             # PATCH moderate campaign
+│           │       └── delete/
+│           │           └── route.js         # DELETE remove campaign
+│           ├── users/
+│           │   ├── route.js                 # GET all users
+│           │   └── [userId]/
+│           │       ├── role/
+│           │       │   └── route.js         # PATCH set user role
+│           │       └── ban/
+│           │           └── route.js         # PATCH ban/unban user
+│           └── analytics/
+│               └── route.js                 # GET platform stats
+├── components/
+│   └── admin/
+│       ├── AdminSidebar.js                  # Navigation sidebar
+│       ├── AdminHeader.js                   # Top header with user menu
+│       ├── ReportsTable.js                  # Reports data table
+│       ├── ReportDetailsPanel.js            # Report details side panel
+│       ├── CampaignModerationCard.js        # Campaign card with actions
+│       ├── UsersTable.js                    # Users data table
+│       ├── UserDetailsModal.js              # User info modal
+│       ├── AnalyticsCard.js                 # Metric display card
+│       ├── AnalyticsChart.js                # Chart component
+│       └── AdminActionButton.js             # Reusable action button
+├── middleware/
+│   └── adminAuth.js                         # Admin authentication middleware
+├── lib/
+│   ├── firebaseAdmin.js                     # Add Firestore admin export
+│   └── firestore.js                         # Add admin-only functions
+└── utils/
+    └── admin/
+        ├── adminHelpers.js                  # Admin utility functions
+        └── adminValidation.js               # Input validation for admin actions
+```
+
+---
+
+### API Endpoints
+
+#### Reports Management
+
+**GET `/api/admin/reports`**
+- Query params: `?status=pending&limit=20&offset=0`
+- Returns: Array of reports with campaign/reporter details
+- Auth: Admin only
+
+**PATCH `/api/admin/reports/[reportId]`**
+- Body: `{ status: "resolved", action: "removed", reviewedBy: adminId }`
+- Updates report status and records action
+- Auth: Admin only
+
+---
+
+#### Campaign Moderation
+
+**GET `/api/admin/campaigns`**
+- Query params: `?moderationStatus=under-review&limit=20`
+- Returns: Campaigns with extended metadata
+- Auth: Admin only
+
+**PATCH `/api/admin/campaigns/[campaignId]`**
+- Body: `{ moderationStatus: "removed", removedBy: adminId, removeReason: "Inappropriate content" }`
+- Updates campaign moderation status
+- Auth: Admin only
+
+**DELETE `/api/admin/campaigns/[campaignId]/delete`**
+- Permanently deletes campaign + Supabase image
+- Records deletion in audit log
+- Auth: Admin only
+
+---
+
+#### User Management
+
+**GET `/api/admin/users`**
+- Query params: `?search=john&role=admin&limit=50`
+- Returns: User list with stats
+- Auth: Admin only
+
+**PATCH `/api/admin/users/[userId]/role`**
+- Body: `{ role: "admin", updatedBy: adminId }`
+- Sets user role (admin/user)
+- Auth: Admin only
+
+**PATCH `/api/admin/users/[userId]/ban`**
+- Body: `{ banned: true, reason: "Spam", bannedBy: adminId }`
+- Bans or unbans user
+- Auth: Admin only
+
+---
+
+#### Analytics
+
+**GET `/api/admin/analytics`**
+- Query params: `?period=30d`
+- Returns: Platform metrics and trends
+- Auth: Admin only
+
+---
+
+### Firestore Functions (Admin-Only)
+
+Add to `src/lib/firestore.js`:
+
+```javascript
+// Reports
+export async function getAllReportsAdmin(filters) {
+  // Fetch reports with filters (admin access)
+}
+
+export async function updateReportAdmin(reportId, updates, adminId) {
+  // Update report with admin user tracking
+}
+
+// Campaigns
+export async function getAllCampaignsAdmin(filters) {
+  // Fetch campaigns with extended metadata
+}
+
+export async function moderateCampaign(campaignId, moderationData, adminId) {
+  // Update campaign moderation status
+}
+
+export async function deleteCampaignAdmin(campaignId, adminId) {
+  // Permanently delete campaign + image
+}
+
+// Users
+export async function getAllUsersAdmin(filters) {
+  // Fetch all users with stats
+}
+
+export async function setUserRole(userId, role, adminId) {
+  // Assign admin/user role
+}
+
+export async function banUser(userId, banData, adminId) {
+  // Ban or unban user
+}
+
+// Analytics
+export async function getPlatformStats(period) {
+  // Calculate platform metrics
+}
+```
+
+---
+
+### Firebase Admin Setup
+
+Update `src/lib/firebaseAdmin.js`:
+
+```javascript
+import { getAuth } from 'firebase-admin/auth';
+import { getFirestore } from 'firebase-admin/firestore'; // NEW
+
+const adminApp = getAdminApp();
+export const adminAuth = getAuth(adminApp);
+export const adminFirestore = getFirestore(adminApp); // NEW
+```
+
+**Usage:**
+- Use `adminFirestore` for server-side queries in admin API routes
+- Bypasses security rules (full database access)
+- Required for aggregation queries and batch operations
+
+---
+
+### UI Components
+
+#### AdminSidebar
+- Links: Analytics, Reports, Campaigns, Users
+- Active state indication
+- Admin user info at bottom
+- Logout button
+
+#### ReportsTable
+- Columns: ID, Campaign (thumbnail + title), Reason, Reporter, Status, Date, Actions
+- Filters: Status dropdown, reason dropdown
+- Pagination controls
+- Click row → Opens ReportDetailsPanel
+
+#### CampaignModerationCard
+- Campaign thumbnail with type badge
+- Title, creator, supporters, reports count
+- Status badge (active/under-review/removed)
+- Quick actions: View Reports, Remove, Restore
+- Click → Opens campaign details modal
+
+#### UsersTable
+- Columns: Avatar, Display Name, Email, Role, Campaigns, Supports, Joined, Actions
+- Search bar (name/email)
+- Filter: All, Admins, Banned
+- Actions: Make Admin, Ban, View Campaigns
+
+---
+
+### Implementation Priority
+
+**Phase 2A (Critical):**
+1. Admin role field + assignment function
+2. Middleware authentication
+3. Reports management UI + API
+4. Campaign moderation UI + API
+
+**Phase 2B (Important):**
+5. User management UI + API
+6. Platform analytics dashboard
+7. Audit logging system
+
+**Phase 2C (Nice to Have):**
+8. Bulk actions for reports/campaigns
+9. Advanced analytics (charts, trends)
+10. Export data (CSV reports)
+
+---
+
 ## Best Practices & Recommendations
 
 ### Performance Optimization
