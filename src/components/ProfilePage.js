@@ -186,26 +186,26 @@ export default function ProfilePage({ isOwnProfile = false, username = null }) {
 
       {/* Profile Content - Below Banner */}
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Profile Photo and Info Container */}
-        <div className="flex flex-col sm:flex-row gap-6 mb-6">
-          {/* Profile Image */}
+        {/* Profile Photo and Name/Username - Side by Side on All Screens */}
+        <div className="flex items-center gap-4 mb-4">
+          {/* Profile Image - Smaller Size */}
           <div className="flex-shrink-0">
             {userData.profileImage && userData.profileImage.trim() ? (
               <img
                 src={getProfileAvatar(userData.profileImage)}
                 alt={userData.displayName}
-                className="w-28 h-28 sm:w-32 sm:h-32 lg:w-40 lg:h-40 rounded-full border-4 border-white shadow-xl object-cover bg-white"
+                className="w-20 h-20 sm:w-24 sm:h-24 rounded-full border-4 border-white shadow-xl object-cover bg-white"
               />
             ) : (
-              <div className="w-28 h-28 sm:w-32 sm:h-32 lg:w-40 lg:h-40 rounded-full border-4 border-white shadow-xl bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center">
-                <span className="text-white text-3xl sm:text-4xl lg:text-5xl font-bold">
+              <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full border-4 border-white shadow-xl bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center">
+                <span className="text-white text-2xl sm:text-3xl font-bold">
                   {userData.displayName?.charAt(0)?.toUpperCase() || 'U'}
                 </span>
               </div>
             )}
           </div>
 
-          {/* Name, Username, Bio, Edit Button */}
+          {/* Name and Username - Beside Photo */}
           <div className="flex-1 min-w-0">
             <h1 className={`font-bold text-gray-900 ${
               userData.displayName?.length <= 15 ? 'text-2xl sm:text-3xl' :
@@ -217,26 +217,28 @@ export default function ProfilePage({ isOwnProfile = false, username = null }) {
             <p className={`text-gray-500 font-medium ${
               userData.username?.length <= 20 ? 'text-sm sm:text-base' : 'text-xs sm:text-sm'
             } break-words mt-1`}>@{userData.username}</p>
-            
-            {userData.bio && (
-              <p className="text-gray-600 text-sm sm:text-base leading-relaxed whitespace-pre-wrap mt-3 max-w-2xl">
-                {userData.bio}
-              </p>
-            )}
-            
-            {isOwnProfile && (
-              <button 
-                onClick={() => router.push('/profile/edit')}
-                className="btn-base btn-primary mt-4 px-4 py-2 text-sm font-medium inline-flex items-center gap-2"
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                </svg>
-                Edit Profile
-              </button>
-            )}
           </div>
         </div>
+
+        {/* Bio - Below Photo and Name */}
+        {userData.bio && (
+          <p className="text-gray-600 text-sm sm:text-base leading-relaxed whitespace-pre-wrap mb-4 max-w-2xl">
+            {userData.bio}
+          </p>
+        )}
+        
+        {/* Edit Button - Below Bio */}
+        {isOwnProfile && (
+          <button 
+            onClick={() => router.push('/profile/edit')}
+            className="btn-base btn-primary mb-6 px-4 py-2 text-sm font-medium inline-flex items-center gap-2"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+            </svg>
+            Edit Profile
+          </button>
+        )}
 
         {/* Stats Row */}
         <div className="flex flex-row gap-3 mb-8">
@@ -299,19 +301,26 @@ function ProfileSkeleton() {
       <div className="relative h-48 sm:h-56 md:h-64 lg:h-80 bg-gray-300 animate-pulse"></div>
       
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Profile Photo and Info Skeleton */}
-        <div className="flex flex-col sm:flex-row gap-6 mb-6">
+        {/* Profile Photo and Name/Username Skeleton */}
+        <div className="flex items-center gap-4 mb-4">
           {/* Profile Photo Skeleton */}
-          <div className="w-28 h-28 sm:w-32 sm:h-32 lg:w-40 lg:h-40 bg-gray-400 rounded-full animate-pulse flex-shrink-0"></div>
+          <div className="w-20 h-20 sm:w-24 sm:h-24 bg-gray-400 rounded-full animate-pulse flex-shrink-0"></div>
           
-          {/* Profile Info Skeleton */}
+          {/* Name and Username Skeleton */}
           <div className="flex-1 min-w-0 space-y-3">
             <div className="h-7 sm:h-8 bg-gray-300 rounded w-40 sm:w-48 animate-pulse"></div>
             <div className="h-4 sm:h-5 bg-gray-300 rounded w-24 sm:w-32 animate-pulse"></div>
-            <div className="h-4 bg-gray-300 rounded w-full max-w-2xl animate-pulse"></div>
-            <div className="h-4 bg-gray-300 rounded w-3/4 max-w-2xl animate-pulse"></div>
           </div>
         </div>
+
+        {/* Bio Skeleton */}
+        <div className="mb-4 space-y-2">
+          <div className="h-4 bg-gray-300 rounded w-full max-w-2xl animate-pulse"></div>
+          <div className="h-4 bg-gray-300 rounded w-3/4 max-w-2xl animate-pulse"></div>
+        </div>
+
+        {/* Edit Button Skeleton */}
+        <div className="h-10 bg-gray-300 rounded w-32 animate-pulse mb-6"></div>
 
         {/* Stats Skeleton */}
         <div className="flex flex-row gap-3 mb-8">
