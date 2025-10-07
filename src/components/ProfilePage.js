@@ -170,8 +170,8 @@ export default function ProfilePage({ isOwnProfile = false, username = null }) {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Banner Section with Overlaying Profile Photo */}
-      <div className="relative w-full aspect-[3/1] bg-gradient-to-r from-emerald-500 to-emerald-600 overflow-visible">
+      {/* Banner Section */}
+      <div className="relative w-full aspect-[3/1] bg-gradient-to-r from-emerald-500 to-emerald-600">
         {userData.bannerImage && userData.bannerImage.trim() ? (
           <img
             src={getProfileBanner(userData.bannerImage)}
@@ -182,35 +182,34 @@ export default function ProfilePage({ isOwnProfile = false, username = null }) {
           <div className="w-full h-full bg-gradient-to-r from-emerald-500 to-emerald-600"></div>
         )}
         <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
-        
-        {/* Profile Image - Overlaying Banner (positioned absolutely) */}
-        <div className="absolute bottom-0 left-0 transform translate-y-1/2 max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
-          <div className="relative z-10">
-            {userData.profileImage && userData.profileImage.trim() ? (
-              <img
-                src={getProfileAvatar(userData.profileImage)}
-                alt={userData.displayName}
-                className="w-28 h-28 sm:w-32 sm:h-32 lg:w-40 lg:h-40 rounded-full border-4 border-white shadow-xl object-cover bg-white"
-              />
-            ) : (
-              <div className="w-28 h-28 sm:w-32 sm:h-32 lg:w-40 lg:h-40 rounded-full border-4 border-white shadow-xl bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center">
-                <span className="text-white text-3xl sm:text-4xl lg:text-5xl font-bold">
-                  {userData.displayName?.charAt(0)?.toUpperCase() || 'U'}
-                </span>
-              </div>
-            )}
-          </div>
-        </div>
       </div>
 
       {/* Profile Content */}
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-16 sm:pt-18 lg:pt-16 pb-8">
-        {/* Profile Info and Stats Container */}
-        <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4 lg:gap-6 mb-8">
-          {/* Left: Profile Info with Name, Username, Bio, Edit Button, and Mobile Stats */}
-          <div className="flex-1">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+        {/* Profile Info and Stats Container - with proper spacing for profile photo */}
+        <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-4 lg:gap-6 -mt-14 sm:-mt-16 lg:-mt-20 pb-8">
+          
+          {/* Left: Profile Photo + Profile Info Container */}
+          <div className="flex flex-col sm:flex-row sm:items-end gap-4 sm:gap-6 flex-1">
+            {/* Profile Image */}
+            <div className="relative z-10 flex-shrink-0">
+              {userData.profileImage && userData.profileImage.trim() ? (
+                <img
+                  src={getProfileAvatar(userData.profileImage)}
+                  alt={userData.displayName}
+                  className="w-28 h-28 sm:w-32 sm:h-32 lg:w-40 lg:h-40 rounded-full border-4 border-white shadow-xl object-cover bg-white"
+                />
+              ) : (
+                <div className="w-28 h-28 sm:w-32 sm:h-32 lg:w-40 lg:h-40 rounded-full border-4 border-white shadow-xl bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center">
+                  <span className="text-white text-3xl sm:text-4xl lg:text-5xl font-bold">
+                    {userData.displayName?.charAt(0)?.toUpperCase() || 'U'}
+                  </span>
+                </div>
+              )}
+            </div>
+
             {/* Name, Username, Bio, Edit Button */}
-            <div className="mb-4 lg:mb-0">
+            <div className="flex-1 sm:pb-2">
               <h1 className={`font-bold text-gray-900 ${
                 userData.displayName?.length <= 15 ? 'text-2xl sm:text-3xl' :
                 userData.displayName?.length <= 25 ? 'text-xl sm:text-2xl' :
@@ -240,37 +239,10 @@ export default function ProfilePage({ isOwnProfile = false, username = null }) {
                 </button>
               )}
             </div>
-
-            {/* Stats Row on Mobile/Tablet - Hidden on Large Screens */}
-            <div className="flex flex-row gap-3 mt-4 lg:hidden">
-              <div className="bg-white rounded-xl shadow-lg p-4 flex-1 text-center">
-                <div className="text-2xl font-bold text-emerald-600">{userStats.supportsCount}</div>
-                <div className="text-xs text-gray-600 font-medium mt-1">Supporters</div>
-              </div>
-              
-              <div className="bg-white rounded-xl shadow-lg p-4 flex-1 text-center">
-                <div className="text-2xl font-bold text-emerald-600">{userStats.campaignsCount}</div>
-                <div className="text-xs text-gray-600 font-medium mt-1">Campaigns</div>
-              </div>
-              
-              <div className="bg-white rounded-xl shadow-lg p-4 flex-1 text-center">
-                <div className="text-base font-bold text-emerald-600">
-                  {userData.createdAt ? 
-                    new Date(userData.createdAt.seconds ? userData.createdAt.seconds * 1000 : userData.createdAt).toLocaleDateString('en-US', { 
-                      month: 'short', 
-                      day: 'numeric',
-                      year: 'numeric' 
-                    }) : 
-                    'Recently'
-                  }
-                </div>
-                <div className="text-xs text-gray-600 font-medium mt-1">Joined Since</div>
-              </div>
-            </div>
           </div>
 
           {/* Right: Stats in Boxes - Only visible on Large Screens */}
-          <div className="hidden lg:flex lg:flex-row gap-4">
+          <div className="hidden lg:flex lg:flex-row gap-4 lg:pb-2">
             <div className="bg-white rounded-xl shadow-lg p-6 min-h-[120px] flex flex-col items-center justify-center min-w-[140px]">
               <div className="text-3xl font-bold text-emerald-600">{userStats.supportsCount}</div>
               <div className="text-sm text-gray-600 font-medium mt-2">Supporters</div>
@@ -294,6 +266,33 @@ export default function ProfilePage({ isOwnProfile = false, username = null }) {
               </div>
               <div className="text-sm text-gray-600 font-medium mt-2">Joined Since</div>
             </div>
+          </div>
+        </div>
+
+        {/* Stats Row on Mobile/Tablet - Hidden on Large Screens */}
+        <div className="flex flex-row gap-3 mb-8 lg:hidden">
+          <div className="bg-white rounded-xl shadow-lg p-4 flex-1 text-center">
+            <div className="text-2xl font-bold text-emerald-600">{userStats.supportsCount}</div>
+            <div className="text-xs text-gray-600 font-medium mt-1">Supporters</div>
+          </div>
+          
+          <div className="bg-white rounded-xl shadow-lg p-4 flex-1 text-center">
+            <div className="text-2xl font-bold text-emerald-600">{userStats.campaignsCount}</div>
+            <div className="text-xs text-gray-600 font-medium mt-1">Campaigns</div>
+          </div>
+          
+          <div className="bg-white rounded-xl shadow-lg p-4 flex-1 text-center">
+            <div className="text-base font-bold text-emerald-600">
+              {userData.createdAt ? 
+                new Date(userData.createdAt.seconds ? userData.createdAt.seconds * 1000 : userData.createdAt).toLocaleDateString('en-US', { 
+                  month: 'short', 
+                  day: 'numeric',
+                  year: 'numeric' 
+                }) : 
+                'Recently'
+              }
+            </div>
+            <div className="text-xs text-gray-600 font-medium mt-1">Joined Since</div>
           </div>
         </div>
 
@@ -327,39 +326,28 @@ export default function ProfilePage({ isOwnProfile = false, username = null }) {
 function ProfileSkeleton() {
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Banner Skeleton with Overlaying Profile Photo */}
-      <div className="relative h-48 sm:h-56 md:h-64 lg:h-80 bg-gray-300 animate-pulse overflow-visible">
-        {/* Profile Photo Skeleton - Overlaying Banner */}
-        <div className="absolute bottom-0 left-0 transform translate-y-1/2 max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
-          <div className="w-28 h-28 sm:w-32 sm:h-32 lg:w-40 lg:h-40 bg-gray-400 rounded-full animate-pulse"></div>
-        </div>
-      </div>
+      {/* Banner Skeleton */}
+      <div className="relative h-48 sm:h-56 md:h-64 lg:h-80 bg-gray-300 animate-pulse"></div>
       
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-16 sm:pt-18 lg:pt-16 pb-8">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Profile Info Row Skeleton */}
-        <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4 lg:gap-6 mb-8">
-          {/* Left: Profile Info Skeleton */}
-          <div className="flex-1">
-            <div className="space-y-3 mb-4 lg:mb-0">
+        <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-4 lg:gap-6 -mt-14 sm:-mt-16 lg:-mt-20 pb-8">
+          {/* Left: Profile Photo + Info Skeleton */}
+          <div className="flex flex-col sm:flex-row sm:items-end gap-4 sm:gap-6 flex-1">
+            {/* Profile Photo Skeleton */}
+            <div className="w-28 h-28 sm:w-32 sm:h-32 lg:w-40 lg:h-40 bg-gray-400 rounded-full animate-pulse flex-shrink-0"></div>
+            
+            {/* Profile Info Skeleton */}
+            <div className="flex-1 sm:pb-2 space-y-3">
               <div className="h-7 sm:h-8 bg-gray-300 rounded w-40 sm:w-48 animate-pulse"></div>
               <div className="h-4 sm:h-5 bg-gray-300 rounded w-24 sm:w-32 animate-pulse"></div>
               <div className="h-4 bg-gray-300 rounded w-full max-w-2xl animate-pulse"></div>
               <div className="h-4 bg-gray-300 rounded w-3/4 max-w-2xl animate-pulse"></div>
             </div>
-
-            {/* Mobile Stats Skeleton */}
-            <div className="flex flex-row gap-3 mt-4 lg:hidden">
-              {[...Array(3)].map((_, i) => (
-                <div key={i} className="bg-white rounded-xl shadow-lg p-4 flex-1">
-                  <div className="h-8 bg-gray-300 rounded w-12 mx-auto animate-pulse mb-2"></div>
-                  <div className="h-3 bg-gray-300 rounded w-16 mx-auto animate-pulse"></div>
-                </div>
-              ))}
-            </div>
           </div>
 
           {/* Right: Stats Skeleton - Large Screens Only */}
-          <div className="hidden lg:flex lg:flex-row gap-4">
+          <div className="hidden lg:flex lg:flex-row gap-4 lg:pb-2">
             {[...Array(3)].map((_, i) => (
               <div key={i} className="bg-white rounded-xl shadow-lg p-6 min-h-[120px] flex flex-col items-center justify-center min-w-[140px]">
                 <div className="h-9 bg-gray-300 rounded w-16 mx-auto animate-pulse mb-2"></div>
@@ -367,6 +355,16 @@ function ProfileSkeleton() {
               </div>
             ))}
           </div>
+        </div>
+
+        {/* Mobile Stats Skeleton */}
+        <div className="flex flex-row gap-3 mb-8 lg:hidden">
+          {[...Array(3)].map((_, i) => (
+            <div key={i} className="bg-white rounded-xl shadow-lg p-4 flex-1">
+              <div className="h-8 bg-gray-300 rounded w-12 mx-auto animate-pulse mb-2"></div>
+              <div className="h-3 bg-gray-300 rounded w-16 mx-auto animate-pulse"></div>
+            </div>
+          ))}
         </div>
 
         {/* Campaigns Section Skeleton */}
