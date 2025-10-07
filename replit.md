@@ -130,7 +130,7 @@ Integrated ImageKit.io CDN for image transformation and bandwidth optimization a
 **Implementation:**
 - **ImageKit.io CDN** - Image transformations (WebP, resizing, quality optimization)
 - **imageTransform.js utility** - Centralized transformation functions with preset sizes
-- **89% bandwidth reduction** - WebP compression + smart resizing vs raw images
+- **Bandwidth optimization** - WebP compression + smart resizing vs raw images
 - **100% coverage** - All pages use optimized images (including canvas operations)
 
 **Transformation Functions:**

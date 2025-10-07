@@ -526,7 +526,7 @@ canvas.addEventListener('pointerup', handleDragEnd);
    - ImageKit.io CDN with WebP transformations
    - Smart resizing with imageTransform.js utility
    - Thumbnails for gallery, full resolution for canvas
-   - **Impact:** 89% bandwidth cost reduction achieved
+   - **Impact:** Significant bandwidth cost reduction through optimized delivery
 
 2. **Lazy Loading**
    - Load images on scroll in gallery
