@@ -184,105 +184,74 @@ export default function ProfilePage({ isOwnProfile = false, username = null }) {
         <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
       </div>
 
-      {/* Profile Content */}
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Profile Info and Stats Container - with proper spacing for profile photo */}
-        <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-4 lg:gap-6 -mt-14 sm:-mt-16 lg:-mt-20 pb-8">
-          
-          {/* Left: Profile Photo + Profile Info Container */}
-          <div className="flex flex-col sm:flex-row sm:items-end gap-4 sm:gap-6 flex-1">
-            {/* Profile Image */}
-            <div className="relative z-10 flex-shrink-0">
-              {userData.profileImage && userData.profileImage.trim() ? (
-                <img
-                  src={getProfileAvatar(userData.profileImage)}
-                  alt={userData.displayName}
-                  className="w-28 h-28 sm:w-32 sm:h-32 lg:w-40 lg:h-40 rounded-full border-4 border-white shadow-xl object-cover bg-white"
-                />
-              ) : (
-                <div className="w-28 h-28 sm:w-32 sm:h-32 lg:w-40 lg:h-40 rounded-full border-4 border-white shadow-xl bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center">
-                  <span className="text-white text-3xl sm:text-4xl lg:text-5xl font-bold">
-                    {userData.displayName?.charAt(0)?.toUpperCase() || 'U'}
-                  </span>
-                </div>
-              )}
-            </div>
-
-            {/* Name, Username, Bio, Edit Button */}
-            <div className="flex-1 sm:pb-2">
-              <h1 className={`font-bold text-gray-900 ${
-                userData.displayName?.length <= 15 ? 'text-2xl sm:text-3xl' :
-                userData.displayName?.length <= 25 ? 'text-xl sm:text-2xl' :
-                userData.displayName?.length <= 35 ? 'text-lg sm:text-xl' : 'text-base sm:text-lg'
-              } break-words leading-tight`} title={userData.displayName}>
-                {userData.displayName}
-              </h1>
-              <p className={`text-gray-500 font-medium ${
-                userData.username?.length <= 20 ? 'text-sm sm:text-base' : 'text-xs sm:text-sm'
-              } break-words mt-1`}>@{userData.username}</p>
-              
-              {userData.bio && (
-                <p className="text-gray-600 text-sm sm:text-base leading-relaxed whitespace-pre-wrap mt-3 max-w-2xl">
-                  {userData.bio}
-                </p>
-              )}
-              
-              {isOwnProfile && (
-                <button 
-                  onClick={() => router.push('/profile/edit')}
-                  className="btn-base btn-primary mt-4 px-4 py-2 text-sm font-medium inline-flex items-center gap-2"
-                >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                  </svg>
-                  Edit Profile
-                </button>
-              )}
-            </div>
+      {/* Profile Content - Below Banner */}
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Profile Photo and Info Container */}
+        <div className="flex flex-col sm:flex-row gap-6 mb-6">
+          {/* Profile Image */}
+          <div className="flex-shrink-0">
+            {userData.profileImage && userData.profileImage.trim() ? (
+              <img
+                src={getProfileAvatar(userData.profileImage)}
+                alt={userData.displayName}
+                className="w-28 h-28 sm:w-32 sm:h-32 lg:w-40 lg:h-40 rounded-full border-4 border-white shadow-xl object-cover bg-white"
+              />
+            ) : (
+              <div className="w-28 h-28 sm:w-32 sm:h-32 lg:w-40 lg:h-40 rounded-full border-4 border-white shadow-xl bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center">
+                <span className="text-white text-3xl sm:text-4xl lg:text-5xl font-bold">
+                  {userData.displayName?.charAt(0)?.toUpperCase() || 'U'}
+                </span>
+              </div>
+            )}
           </div>
 
-          {/* Right: Stats in Boxes - Only visible on Large Screens */}
-          <div className="hidden lg:flex lg:flex-row gap-4 lg:pb-2">
-            <div className="bg-white rounded-xl shadow-lg p-6 min-h-[120px] flex flex-col items-center justify-center min-w-[140px]">
-              <div className="text-3xl font-bold text-emerald-600">{userStats.supportsCount}</div>
-              <div className="text-sm text-gray-600 font-medium mt-2">Supporters</div>
-            </div>
+          {/* Name, Username, Bio, Edit Button */}
+          <div className="flex-1 min-w-0">
+            <h1 className={`font-bold text-gray-900 ${
+              userData.displayName?.length <= 15 ? 'text-2xl sm:text-3xl' :
+              userData.displayName?.length <= 25 ? 'text-xl sm:text-2xl' :
+              userData.displayName?.length <= 35 ? 'text-lg sm:text-xl' : 'text-base sm:text-lg'
+            } break-words leading-tight`} title={userData.displayName}>
+              {userData.displayName}
+            </h1>
+            <p className={`text-gray-500 font-medium ${
+              userData.username?.length <= 20 ? 'text-sm sm:text-base' : 'text-xs sm:text-sm'
+            } break-words mt-1`}>@{userData.username}</p>
             
-            <div className="bg-white rounded-xl shadow-lg p-6 min-h-[120px] flex flex-col items-center justify-center min-w-[140px]">
-              <div className="text-3xl font-bold text-emerald-600">{userStats.campaignsCount}</div>
-              <div className="text-sm text-gray-600 font-medium mt-2">Campaigns</div>
-            </div>
+            {userData.bio && (
+              <p className="text-gray-600 text-sm sm:text-base leading-relaxed whitespace-pre-wrap mt-3 max-w-2xl">
+                {userData.bio}
+              </p>
+            )}
             
-            <div className="bg-white rounded-xl shadow-lg p-6 min-h-[120px] flex flex-col items-center justify-center min-w-[140px]">
-              <div className="text-lg font-bold text-emerald-600">
-                {userData.createdAt ? 
-                  new Date(userData.createdAt.seconds ? userData.createdAt.seconds * 1000 : userData.createdAt).toLocaleDateString('en-US', { 
-                    month: 'short', 
-                    day: 'numeric',
-                    year: 'numeric' 
-                  }) : 
-                  'Recently'
-                }
-              </div>
-              <div className="text-sm text-gray-600 font-medium mt-2">Joined Since</div>
-            </div>
+            {isOwnProfile && (
+              <button 
+                onClick={() => router.push('/profile/edit')}
+                className="btn-base btn-primary mt-4 px-4 py-2 text-sm font-medium inline-flex items-center gap-2"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                </svg>
+                Edit Profile
+              </button>
+            )}
           </div>
         </div>
 
-        {/* Stats Row on Mobile/Tablet - Hidden on Large Screens */}
-        <div className="flex flex-row gap-3 mb-8 lg:hidden">
-          <div className="bg-white rounded-xl shadow-lg p-4 flex-1 text-center">
-            <div className="text-2xl font-bold text-emerald-600">{userStats.supportsCount}</div>
-            <div className="text-xs text-gray-600 font-medium mt-1">Supporters</div>
+        {/* Stats Row */}
+        <div className="flex flex-row gap-3 mb-8">
+          <div className="bg-white rounded-xl shadow-lg p-4 sm:p-6 flex-1 text-center">
+            <div className="text-2xl sm:text-3xl font-bold text-emerald-600">{userStats.supportsCount}</div>
+            <div className="text-xs sm:text-sm text-gray-600 font-medium mt-1 sm:mt-2">Supporters</div>
           </div>
           
-          <div className="bg-white rounded-xl shadow-lg p-4 flex-1 text-center">
-            <div className="text-2xl font-bold text-emerald-600">{userStats.campaignsCount}</div>
-            <div className="text-xs text-gray-600 font-medium mt-1">Campaigns</div>
+          <div className="bg-white rounded-xl shadow-lg p-4 sm:p-6 flex-1 text-center">
+            <div className="text-2xl sm:text-3xl font-bold text-emerald-600">{userStats.campaignsCount}</div>
+            <div className="text-xs sm:text-sm text-gray-600 font-medium mt-1 sm:mt-2">Campaigns</div>
           </div>
           
-          <div className="bg-white rounded-xl shadow-lg p-4 flex-1 text-center">
-            <div className="text-base font-bold text-emerald-600">
+          <div className="bg-white rounded-xl shadow-lg p-4 sm:p-6 flex-1 text-center">
+            <div className="text-base sm:text-lg font-bold text-emerald-600">
               {userData.createdAt ? 
                 new Date(userData.createdAt.seconds ? userData.createdAt.seconds * 1000 : userData.createdAt).toLocaleDateString('en-US', { 
                   month: 'short', 
@@ -292,7 +261,7 @@ export default function ProfilePage({ isOwnProfile = false, username = null }) {
                 'Recently'
               }
             </div>
-            <div className="text-xs text-gray-600 font-medium mt-1">Joined Since</div>
+            <div className="text-xs sm:text-sm text-gray-600 font-medium mt-1 sm:mt-2">Joined Since</div>
           </div>
         </div>
 
@@ -329,40 +298,27 @@ function ProfileSkeleton() {
       {/* Banner Skeleton */}
       <div className="relative h-48 sm:h-56 md:h-64 lg:h-80 bg-gray-300 animate-pulse"></div>
       
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Profile Info Row Skeleton */}
-        <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-4 lg:gap-6 -mt-14 sm:-mt-16 lg:-mt-20 pb-8">
-          {/* Left: Profile Photo + Info Skeleton */}
-          <div className="flex flex-col sm:flex-row sm:items-end gap-4 sm:gap-6 flex-1">
-            {/* Profile Photo Skeleton */}
-            <div className="w-28 h-28 sm:w-32 sm:h-32 lg:w-40 lg:h-40 bg-gray-400 rounded-full animate-pulse flex-shrink-0"></div>
-            
-            {/* Profile Info Skeleton */}
-            <div className="flex-1 sm:pb-2 space-y-3">
-              <div className="h-7 sm:h-8 bg-gray-300 rounded w-40 sm:w-48 animate-pulse"></div>
-              <div className="h-4 sm:h-5 bg-gray-300 rounded w-24 sm:w-32 animate-pulse"></div>
-              <div className="h-4 bg-gray-300 rounded w-full max-w-2xl animate-pulse"></div>
-              <div className="h-4 bg-gray-300 rounded w-3/4 max-w-2xl animate-pulse"></div>
-            </div>
-          </div>
-
-          {/* Right: Stats Skeleton - Large Screens Only */}
-          <div className="hidden lg:flex lg:flex-row gap-4 lg:pb-2">
-            {[...Array(3)].map((_, i) => (
-              <div key={i} className="bg-white rounded-xl shadow-lg p-6 min-h-[120px] flex flex-col items-center justify-center min-w-[140px]">
-                <div className="h-9 bg-gray-300 rounded w-16 mx-auto animate-pulse mb-2"></div>
-                <div className="h-4 bg-gray-300 rounded w-20 mx-auto animate-pulse"></div>
-              </div>
-            ))}
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Profile Photo and Info Skeleton */}
+        <div className="flex flex-col sm:flex-row gap-6 mb-6">
+          {/* Profile Photo Skeleton */}
+          <div className="w-28 h-28 sm:w-32 sm:h-32 lg:w-40 lg:h-40 bg-gray-400 rounded-full animate-pulse flex-shrink-0"></div>
+          
+          {/* Profile Info Skeleton */}
+          <div className="flex-1 min-w-0 space-y-3">
+            <div className="h-7 sm:h-8 bg-gray-300 rounded w-40 sm:w-48 animate-pulse"></div>
+            <div className="h-4 sm:h-5 bg-gray-300 rounded w-24 sm:w-32 animate-pulse"></div>
+            <div className="h-4 bg-gray-300 rounded w-full max-w-2xl animate-pulse"></div>
+            <div className="h-4 bg-gray-300 rounded w-3/4 max-w-2xl animate-pulse"></div>
           </div>
         </div>
 
-        {/* Mobile Stats Skeleton */}
-        <div className="flex flex-row gap-3 mb-8 lg:hidden">
+        {/* Stats Skeleton */}
+        <div className="flex flex-row gap-3 mb-8">
           {[...Array(3)].map((_, i) => (
-            <div key={i} className="bg-white rounded-xl shadow-lg p-4 flex-1">
-              <div className="h-8 bg-gray-300 rounded w-12 mx-auto animate-pulse mb-2"></div>
-              <div className="h-3 bg-gray-300 rounded w-16 mx-auto animate-pulse"></div>
+            <div key={i} className="bg-white rounded-xl shadow-lg p-4 sm:p-6 flex-1">
+              <div className="h-8 sm:h-9 bg-gray-300 rounded w-12 mx-auto animate-pulse mb-2"></div>
+              <div className="h-3 sm:h-4 bg-gray-300 rounded w-16 mx-auto animate-pulse"></div>
             </div>
           ))}
         </div>
