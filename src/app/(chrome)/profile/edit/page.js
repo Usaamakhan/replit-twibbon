@@ -501,7 +501,7 @@ export default function ProfileEditPage() {
                     Profile Banner
                   </label>
                   <div className="space-y-3">
-                    <div className="w-full aspect-[3/1] rounded-lg overflow-hidden border-2 border-gray-200">
+                    <div className="w-full aspect-[4/1] rounded-lg overflow-hidden border-2 border-gray-200">
                       {formData.profileBannerPreview ? (
                         <img
                           src={formData.profileBannerPreview}
@@ -513,7 +513,7 @@ export default function ProfileEditPage() {
                           <svg className="w-12 h-12 text-white/70 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 002 2v12a2 2 0 002 2z" />
                           </svg>
-                          <p className="text-white/70 text-sm font-medium">Recommended: 1500x500px</p>
+                          <p className="text-white/70 text-sm font-medium">Recommended: 800x200px</p>
                         </div>
                       )}
                     </div>

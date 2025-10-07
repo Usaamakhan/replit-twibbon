@@ -190,16 +190,16 @@ export function getProfileAvatar(imageUrlOrPath) {
 }
 
 /**
- * Get profile banner (900x300 WebP, quality 85)
+ * Get profile banner (800x200 WebP, quality 85)
  * Used in: Profile page headers
  * 
  * @param {string} imagePath - Banner image path
- * @returns {string} Banner URL (~200 KB)
+ * @returns {string} Banner URL (~150 KB)
  */
 export function getProfileBanner(imagePath) {
   return getTransformedImageUrl(imagePath, { 
-    width: 900, 
-    height: 300, 
+    width: 800, 
+    height: 200, 
     format: 'webp', 
     quality: 85 
   });

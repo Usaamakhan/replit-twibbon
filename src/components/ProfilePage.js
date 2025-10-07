@@ -171,7 +171,7 @@ export default function ProfilePage({ isOwnProfile = false, username = null }) {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Banner Section */}
-      <div className="relative w-full aspect-[3/1] bg-gradient-to-r from-emerald-500 to-emerald-600">
+      <div className="relative w-full aspect-[4/1] bg-gradient-to-r from-emerald-500 to-emerald-600">
         {userData.bannerImage && userData.bannerImage.trim() ? (
           <img
             src={getProfileBanner(userData.bannerImage)}
@@ -185,7 +185,7 @@ export default function ProfilePage({ isOwnProfile = false, username = null }) {
       </div>
 
       {/* Profile Content - Below Banner */}
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
         {/* Profile Photo and Name/Username - Side by Side on All Screens */}
         <div className="flex items-center gap-4 mb-4">
           {/* Profile Image - Smaller Size */}
@@ -298,9 +298,9 @@ function ProfileSkeleton() {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Banner Skeleton */}
-      <div className="relative h-48 sm:h-56 md:h-64 lg:h-80 bg-gray-300 animate-pulse"></div>
+      <div className="relative w-full aspect-[4/1] bg-gray-300 animate-pulse"></div>
       
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
         {/* Profile Photo and Name/Username Skeleton */}
         <div className="flex items-center gap-4 mb-4">
           {/* Profile Photo Skeleton */}
