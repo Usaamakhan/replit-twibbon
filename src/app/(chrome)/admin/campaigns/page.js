@@ -80,12 +80,12 @@ export default function AdminCampaignsPage() {
               id="status-filter"
               value={filters.moderationStatus}
               onChange={(e) => setFilters({ ...filters, moderationStatus: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-500 text-gray-900 bg-white"
             >
-              <option value="all">All Statuses</option>
-              <option value="active">Active</option>
-              <option value="under-review">Under Review</option>
-              <option value="removed">Removed</option>
+              <option value="all" className="text-gray-900">All Statuses</option>
+              <option value="active" className="text-gray-900">Active</option>
+              <option value="under-review" className="text-gray-900">Under Review</option>
+              <option value="removed" className="text-gray-900">Removed</option>
             </select>
           </div>
 
@@ -97,11 +97,11 @@ export default function AdminCampaignsPage() {
               id="sort-filter"
               value={filters.sortBy}
               onChange={(e) => setFilters({ ...filters, sortBy: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-500 text-gray-900 bg-white"
             >
-              <option value="createdAt">Most Recent</option>
-              <option value="reports">Most Reports</option>
-              <option value="supporters">Most Supporters</option>
+              <option value="createdAt" className="text-gray-900">Most Recent</option>
+              <option value="reports" className="text-gray-900">Most Reports</option>
+              <option value="supporters" className="text-gray-900">Most Supporters</option>
             </select>
           </div>
         </div>

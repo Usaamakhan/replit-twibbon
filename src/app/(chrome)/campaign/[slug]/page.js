@@ -30,6 +30,18 @@ export default function CampaignUploadPage() {
   const [reportSubmitting, setReportSubmitting] = useState(false);
   const [error, setError] = useState('');
 
+  // Lock body scroll when modal is open
+  useEffect(() => {
+    if (showReportModal) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, [showReportModal]);
+
   const fileInputRef = useRef();
 
   // Fetch campaign data
@@ -131,7 +143,9 @@ export default function CampaignUploadPage() {
         details: reportDetails
       };
       
+      console.log('Submitting report:', reportData);
       const result = await createReport(reportData);
+      console.log('Report result:', result);
       
       if (result.success) {
         setShowReportModal(false);
@@ -139,13 +153,15 @@ export default function CampaignUploadPage() {
         setReportDetails('');
         alert('Thank you for your report. We will review it shortly.');
       } else {
-        setError(result.error || 'Failed to submit report');
+        const errorMessage = result.error || 'Failed to submit report';
+        console.error('Report submission failed:', errorMessage);
+        setError(errorMessage);
       }
       
       setReportSubmitting(false);
     } catch (error) {
       console.error('Error submitting report:', error);
-      setError('Failed to submit report. Please try again.');
+      setError(error.message || 'Failed to submit report. Please try again.');
       setReportSubmitting(false);
     }
   };

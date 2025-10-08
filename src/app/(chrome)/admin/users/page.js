@@ -81,7 +81,7 @@ export default function AdminUsersPage() {
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               placeholder="Search by name, email, or username..."
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-500 text-gray-900 bg-white"
             />
           </div>
 
@@ -93,11 +93,11 @@ export default function AdminUsersPage() {
               id="role-filter"
               value={roleFilter}
               onChange={(e) => setRoleFilter(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-500 text-gray-900 bg-white"
             >
-              <option value="all">All Roles</option>
-              <option value="user">Users</option>
-              <option value="admin">Admins</option>
+              <option value="all" className="text-gray-900">All Roles</option>
+              <option value="user" className="text-gray-900">Users</option>
+              <option value="admin" className="text-gray-900">Admins</option>
             </select>
           </div>
         </div>

@@ -82,13 +82,13 @@ export default function AdminReportsPage() {
               id="status-filter"
               value={filters.status}
               onChange={(e) => setFilters({ ...filters, status: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-500 text-gray-900 bg-white"
             >
-              <option value="all">All Statuses</option>
-              <option value="pending">Pending</option>
-              <option value="reviewed">Reviewed</option>
-              <option value="resolved">Resolved</option>
-              <option value="dismissed">Dismissed</option>
+              <option value="all" className="text-gray-900">All Statuses</option>
+              <option value="pending" className="text-gray-900">Pending</option>
+              <option value="reviewed" className="text-gray-900">Reviewed</option>
+              <option value="resolved" className="text-gray-900">Resolved</option>
+              <option value="dismissed" className="text-gray-900">Dismissed</option>
             </select>
           </div>
 
@@ -100,13 +100,13 @@ export default function AdminReportsPage() {
               id="reason-filter"
               value={filters.reason}
               onChange={(e) => setFilters({ ...filters, reason: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-500 text-gray-900 bg-white"
             >
-              <option value="all">All Reasons</option>
-              <option value="inappropriate">Inappropriate Content</option>
-              <option value="spam">Spam</option>
-              <option value="copyright">Copyright Violation</option>
-              <option value="other">Other</option>
+              <option value="all" className="text-gray-900">All Reasons</option>
+              <option value="inappropriate" className="text-gray-900">Inappropriate Content</option>
+              <option value="spam" className="text-gray-900">Spam</option>
+              <option value="copyright" className="text-gray-900">Copyright Violation</option>
+              <option value="other" className="text-gray-900">Other</option>
             </select>
           </div>
         </div>
