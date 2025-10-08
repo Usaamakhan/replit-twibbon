@@ -1,6 +1,70 @@
 "use client";
 
+import { useState, useEffect } from "react";
+import { useAuth } from "@/hooks/useAuth";
+
 export default function AdminDashboard() {
+  const { user } = useAuth();
+  const [stats, setStats] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    const fetchAnalytics = async () => {
+      if (!user) return;
+
+      setLoading(true);
+      setError(null);
+
+      try {
+        const token = await user.getIdToken();
+        
+        const response = await fetch('/api/admin/analytics', {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          },
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to fetch analytics');
+        }
+
+        const data = await response.json();
+        setStats(data.data);
+      } catch (error) {
+        console.error('Error fetching analytics:', error);
+        setError(error.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchAnalytics();
+  }, [user]);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-center">
+          <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-600"></div>
+          <p className="mt-2 text-gray-600">Loading analytics...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
+        Error loading analytics: {error}
+      </div>
+    );
+  }
+
+  if (!stats) {
+    return null;
+  }
+
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -16,7 +80,10 @@ export default function AdminDashboard() {
             <div className="ml-5 w-0 flex-1">
               <dl>
                 <dt className="text-sm font-medium text-gray-500 truncate">Total Campaigns</dt>
-                <dd className="text-2xl font-semibold text-gray-900">-</dd>
+                <dd className="text-2xl font-semibold text-gray-900">{stats.campaigns.total}</dd>
+                <dd className="text-xs text-gray-500 mt-1">
+                  {stats.campaigns.active} active, {stats.campaigns.removed} removed
+                </dd>
               </dl>
             </div>
           </div>
@@ -34,7 +101,10 @@ export default function AdminDashboard() {
             <div className="ml-5 w-0 flex-1">
               <dl>
                 <dt className="text-sm font-medium text-gray-500 truncate">Total Users</dt>
-                <dd className="text-2xl font-semibold text-gray-900">-</dd>
+                <dd className="text-2xl font-semibold text-gray-900">{stats.users.total}</dd>
+                <dd className="text-xs text-gray-500 mt-1">
+                  {stats.users.admins} admins, {stats.users.banned} banned
+                </dd>
               </dl>
             </div>
           </div>
@@ -52,7 +122,10 @@ export default function AdminDashboard() {
             <div className="ml-5 w-0 flex-1">
               <dl>
                 <dt className="text-sm font-medium text-gray-500 truncate">Pending Reports</dt>
-                <dd className="text-2xl font-semibold text-gray-900">-</dd>
+                <dd className="text-2xl font-semibold text-gray-900">{stats.reports.pending}</dd>
+                <dd className="text-xs text-gray-500 mt-1">
+                  {stats.reports.total} total, {stats.reports.resolutionRate}% resolved
+                </dd>
               </dl>
             </div>
           </div>
@@ -70,19 +143,95 @@ export default function AdminDashboard() {
             <div className="ml-5 w-0 flex-1">
               <dl>
                 <dt className="text-sm font-medium text-gray-500 truncate">Active Campaigns</dt>
-                <dd className="text-2xl font-semibold text-gray-900">-</dd>
+                <dd className="text-2xl font-semibold text-gray-900">{stats.campaigns.active}</dd>
+                <dd className="text-xs text-gray-500 mt-1">
+                  {stats.campaigns.underReview} under review
+                </dd>
               </dl>
             </div>
           </div>
         </div>
       </div>
 
-      <div className="bg-white rounded-lg shadow p-6">
-        <h2 className="text-lg font-semibold text-gray-900 mb-4">Analytics Dashboard</h2>
-        <p className="text-gray-600">
-          Platform analytics and metrics will be displayed here. This is a placeholder for the analytics dashboard that will show platform statistics, trends, and insights.
-        </p>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="bg-white rounded-lg shadow p-6">
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">Campaign Breakdown</h3>
+          <div className="space-y-4">
+            <div>
+              <div className="flex justify-between mb-1">
+                <span className="text-sm font-medium text-gray-700">Frames</span>
+                <span className="text-sm text-gray-600">{stats.campaigns.frames}</span>
+              </div>
+              <div className="w-full bg-gray-200 rounded-full h-2">
+                <div 
+                  className="bg-blue-600 h-2 rounded-full" 
+                  style={{ width: `${stats.campaigns.total > 0 ? (stats.campaigns.frames / stats.campaigns.total * 100) : 0}%` }}
+                ></div>
+              </div>
+            </div>
+            <div>
+              <div className="flex justify-between mb-1">
+                <span className="text-sm font-medium text-gray-700">Backgrounds</span>
+                <span className="text-sm text-gray-600">{stats.campaigns.backgrounds}</span>
+              </div>
+              <div className="w-full bg-gray-200 rounded-full h-2">
+                <div 
+                  className="bg-purple-600 h-2 rounded-full" 
+                  style={{ width: `${stats.campaigns.total > 0 ? (stats.campaigns.backgrounds / stats.campaigns.total * 100) : 0}%` }}
+                ></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white rounded-lg shadow p-6">
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">Engagement Metrics</h3>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="bg-emerald-50 rounded-lg p-4">
+              <dt className="text-xs text-emerald-700 font-medium">Total Supports</dt>
+              <dd className="text-2xl font-semibold text-emerald-900 mt-1">{stats.engagement.totalSupports.toLocaleString()}</dd>
+            </div>
+            <div className="bg-blue-50 rounded-lg p-4">
+              <dt className="text-xs text-blue-700 font-medium">Avg per Campaign</dt>
+              <dd className="text-2xl font-semibold text-blue-900 mt-1">{stats.engagement.avgSupportsPerCampaign}</dd>
+            </div>
+          </div>
+        </div>
       </div>
+
+      {stats.insights.topReportedCampaigns.length > 0 && (
+        <div className="bg-white rounded-lg shadow p-6">
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">Top Reported Campaigns</h3>
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead>
+                <tr>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Campaign</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Reports</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-200">
+                {stats.insights.topReportedCampaigns.map((campaign) => (
+                  <tr key={campaign.id}>
+                    <td className="px-4 py-3 text-sm text-gray-900">{campaign.title}</td>
+                    <td className="px-4 py-3 text-sm text-gray-900">{campaign.reportsCount}</td>
+                    <td className="px-4 py-3 text-sm">
+                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                        campaign.moderationStatus === 'active' ? 'bg-green-100 text-green-800' :
+                        campaign.moderationStatus === 'under-review' ? 'bg-yellow-100 text-yellow-800' :
+                        'bg-red-100 text-red-800'
+                      }`}>
+                        {campaign.moderationStatus}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
