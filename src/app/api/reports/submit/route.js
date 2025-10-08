@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { adminDb } from '@/lib/firebaseAdmin';
+import { adminFirestore } from '@/lib/firebaseAdmin';
 
 export async function POST(request) {
   try {
@@ -24,11 +24,14 @@ export async function POST(request) {
       );
     }
     
-    // Use Firestore transaction for atomic operations
-    const reportRef = adminDb.collection('reports').doc();
-    const campaignRef = adminDb.collection('campaigns').doc(campaignId);
+    // Get Firestore instance
+    const db = adminFirestore();
     
-    await adminDb.runTransaction(async (transaction) => {
+    // Use Firestore transaction for atomic operations
+    const reportRef = db.collection('reports').doc();
+    const campaignRef = db.collection('campaigns').doc(campaignId);
+    
+    await db.runTransaction(async (transaction) => {
       // Get the campaign
       const campaignDoc = await transaction.get(campaignRef);
       
