@@ -74,13 +74,13 @@ export default function AdminLayout({ children }) {
   }
 
   return (
-    <div className="flex h-screen bg-gray-100">
+    <div className="flex h-screen bg-gray-100 overflow-hidden">
       <AdminSidebar user={{ ...user, ...userProfile }} onSignOut={handleSignOut} />
       
-      <div className="flex-1 flex flex-col lg:ml-64 overflow-hidden">
+      <div className="flex-1 flex flex-col lg:ml-64 overflow-hidden relative">
         <AdminHeader user={{ ...user, ...userProfile }} />
         
-        <main className="flex-1 overflow-y-auto p-6">
+        <main className="flex-1 overflow-y-auto p-6 bg-gray-50">
           {children}
         </main>
       </div>

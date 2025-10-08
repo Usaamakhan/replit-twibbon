@@ -2,11 +2,25 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 export default function AdminSidebar({ user, onSignOut }) {
   const pathname = usePathname();
-  const [isCollapsed, setIsCollapsed] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState(true);
+
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth >= 1024) {
+        setIsCollapsed(false);
+      } else {
+        setIsCollapsed(true);
+      }
+    };
+
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   const navItems = [
     {
@@ -49,9 +63,18 @@ export default function AdminSidebar({ user, onSignOut }) {
 
   return (
     <>
+      {!isCollapsed && (
+        <div
+          onClick={() => setIsCollapsed(true)}
+          className="lg:hidden fixed inset-0 bg-black/50 z-30 transition-opacity"
+        />
+      )}
+
       <button
         onClick={() => setIsCollapsed(!isCollapsed)}
-        className="lg:hidden fixed top-4 left-4 z-50 p-2 bg-emerald-700 text-white rounded-md"
+        className={`lg:hidden fixed top-4 z-50 p-2 bg-emerald-700 text-white rounded-md shadow-lg transition-all ${
+          isCollapsed ? "left-4" : "left-[272px]"
+        }`}
       >
         <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={!isCollapsed ? "M6 18L18 6M6 6l12 12" : "M4 6h16M4 12h16M4 18h16"} />
@@ -59,8 +82,8 @@ export default function AdminSidebar({ user, onSignOut }) {
       </button>
 
       <aside
-        className={`fixed left-0 top-0 h-full bg-gray-900 text-white transition-all duration-300 z-40 ${
-          isCollapsed ? "-translate-x-full lg:translate-x-0 lg:w-20" : "w-64"
+        className={`fixed left-0 top-0 h-full bg-gray-900 text-white transition-all duration-300 z-40 shadow-2xl ${
+          isCollapsed ? "-translate-x-full lg:translate-x-0 lg:w-20" : "w-64 translate-x-0"
         }`}
       >
         <div className="flex flex-col h-full">
