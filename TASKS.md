@@ -621,3 +621,274 @@ If you find any issues during testing, note them here:
 ---
 
 **End of Testing Checklist**
+
+---
+
+## 🚨 Section 9: Report System - Critical Fixes & Enhancements
+
+**Priority:** CRITICAL  
+**Status:** ⏸️ PENDING - Action Buttons Currently Non-Functional  
+**Last Updated:** October 08, 2025
+
+### Problem Discovered
+
+The admin report action buttons (**Dismiss Report**, **Warn Creator**, **Remove Campaign**) currently **only update the report status** but **do NOT perform the actual actions** they claim to do. This is a critical gap in functionality.
+
+---
+
+### 9.1: Fix Report Action Buttons (CRITICAL)
+
+**Current Behavior vs Expected Behavior:**
+
+#### 1. **Dismiss Report** Button
+- ✅ **Current:** Updates report to `status: dismissed`, `action: no-action`
+- ❌ **Missing:** No actual functionality needed (working as intended)
+- ✅ **Status:** COMPLETE
+
+#### 2. **Warn Creator** Button
+- ✅ **Current:** Updates report to `status: resolved`, `action: warned`
+- ❌ **Missing:**
+  - Does NOT send any warning notification to creator
+  - Does NOT create warning record in user's account
+  - Does NOT track warning count
+  - Does NOT have escalation logic (3 warnings = ban?)
+
+**Tasks to Fix:**
+- [ ] Create `warnings` collection in Firestore
+  ```javascript
+  {
+    userId: string,
+    campaignId: string,
+    reportId: string,
+    reason: string,
+    issuedBy: adminId,
+    issuedAt: timestamp,
+    acknowledged: boolean,
+  }
+  ```
+- [ ] Update API route `/api/admin/reports/[reportId]/route.js`:
+  - When `action: warned`, create warning document in Firestore
+  - Increment user's `warningsCount` field
+  - Send notification to creator (email or in-app)
+- [ ] Create warning escalation logic:
+  - 3 warnings = 7-day ban
+  - 5 warnings = permanent ban
+  - Track warnings in user profile
+
+#### 3. **Remove Campaign** Button
+- ✅ **Current:** Updates report to `status: resolved`, `action: removed`
+- ❌ **Missing:**
+  - Does NOT actually remove the campaign
+  - Does NOT update campaign's `moderationStatus`
+  - Campaign remains public and accessible
+  - Creator is NOT notified
+
+**Tasks to Fix:**
+- [ ] Update API route `/api/admin/reports/[reportId]/route.js`:
+  - When `action: removed`, update campaign's `moderationStatus` to `removed`
+  - Set campaign's `removedAt` timestamp
+  - Set campaign's `removalReason` field
+  - Optionally delete campaign image from Supabase (or keep for records)
+  - Send notification to creator
+- [ ] Update campaign queries to filter out `moderationStatus: removed` campaigns
+- [ ] Add ability for creator to appeal removal (Phase 3)
+
+---
+
+### 9.2: Notification & Messaging System
+
+**Priority:** HIGH  
+**Status:** ⏸️ NOT IMPLEMENTED - No notification system exists
+
+**Current State:**
+- ❌ No email notifications
+- ❌ No in-app notifications
+- ❌ No notification preferences
+- ❌ Users are unaware when:
+  - Their campaign is reported
+  - Their campaign is removed
+  - They receive a warning
+  - They are banned
+
+**Implementation Tasks:**
+
+#### A. Email Notification System (Recommended: Resend.com or SendGrid)
+- [ ] Choose email service provider (Resend.com recommended - 3,000 free emails/month)
+- [ ] Set up email templates:
+  - Campaign removed notification
+  - Warning issued notification
+  - Account banned notification
+  - Campaign under review notification
+- [ ] Create `/api/notifications/email/route.js` for sending emails
+- [ ] Integrate with report action buttons
+- [ ] Add unsubscribe functionality
+
+#### B. In-App Notification System (Future - Phase 3)
+- [ ] Create `notifications` collection in Firestore:
+  ```javascript
+  {
+    userId: string,
+    type: 'warning' | 'campaign_removed' | 'under_review' | 'ban',
+    title: string,
+    message: string,
+    link: string,
+    read: boolean,
+    createdAt: timestamp,
+  }
+  ```
+- [ ] Create notification bell component in header
+- [ ] Create `/api/notifications/route.js` for CRUD operations
+- [ ] Add notification preferences page (`/profile/notifications`)
+- [ ] Real-time notifications using Firebase Cloud Messaging (optional)
+
+#### C. Notification Triggers
+- [ ] Campaign removed → Email + In-app notification to creator
+- [ ] Warning issued → Email + In-app notification to creator
+- [ ] Account banned → Email to user
+- [ ] Campaign under review (3+ reports) → Email to creator
+- [ ] Report resolved (for reporter) → Optional in-app notification
+
+---
+
+### 9.3: Profile/User Reporting System
+
+**Priority:** MEDIUM  
+**Status:** ⏸️ NOT IMPLEMENTED
+
+**Current State:**
+- ✅ Campaign reporting works
+- ❌ No ability to report user profiles
+- ❌ No moderation for user-generated content (bio, username, avatar)
+
+**Use Cases:**
+- Inappropriate profile pictures
+- Offensive usernames
+- Spam in bio/description
+- Impersonation
+
+**Implementation Tasks:**
+
+#### A. Backend - User Report API
+- [ ] Create `/api/reports/user/route.js`:
+  ```javascript
+  POST /api/reports/user
+  {
+    reportedUserId: string,
+    reportedBy: string | 'anonymous',
+    reason: 'inappropriate_avatar' | 'offensive_username' | 'spam_bio' | 'impersonation' | 'other',
+    details: string,
+  }
+  ```
+- [ ] Update `reports` collection schema to support `type: 'campaign' | 'user'`
+- [ ] Add `reportedUserId` field (optional, for user reports)
+- [ ] Update admin reports page to filter by report type
+
+#### B. Frontend - Report User UI
+- [ ] Add "Report User" button to public profile pages (`/u/[username]`)
+- [ ] Create `ReportUserModal` component (similar to campaign report modal)
+- [ ] Add report reasons dropdown specific to user reports
+- [ ] Integrate with `/api/reports/user` endpoint
+
+#### C. Admin Moderation - User Reports
+- [ ] Update `/admin/reports` to show user reports
+- [ ] Add filter: Campaign Reports | User Reports | All
+- [ ] User report actions:
+  - Dismiss report
+  - Warn user
+  - Force username change
+  - Remove profile picture
+  - Ban user
+- [ ] Update `ReportDetailsPanel` to display user info for user reports
+
+#### D. Auto-Moderation for User Content
+- [ ] Implement profanity filter for usernames (during onboarding)
+- [ ] Implement image moderation for avatars (Cloud Vision API or similar)
+- [ ] Auto-flag suspicious usernames containing:
+  - Admin, mod, official, support
+  - Common offensive terms
+  - URLs or contact info
+
+---
+
+### 9.4: Reporting System Enhancements (Suggestions)
+
+**Priority:** LOW  
+**Status:** ⏸️ FUTURE ENHANCEMENTS
+
+#### A. Report Abuse Prevention
+- [ ] Rate limiting: Max 5 reports per user per day
+- [ ] Prevent duplicate reports (same user + same campaign)
+- [ ] Track reporter reputation (false report detection)
+- [ ] Auto-dismiss reports from users with low reputation
+
+#### B. Bulk Actions for Admins
+- [ ] Select multiple reports and take action
+- [ ] Bulk dismiss spam reports
+- [ ] Bulk resolve reports for same campaign
+
+#### C. Report Analytics
+- [ ] Most reported campaigns dashboard
+- [ ] Most common report reasons (pie chart)
+- [ ] Reporter leaderboard (identify serial reporters)
+- [ ] False report rate tracking
+
+#### D. Appeal System (Phase 3)
+- [ ] Allow creators to appeal campaign removals
+- [ ] Allow users to appeal bans
+- [ ] Create `/admin/appeals` page
+- [ ] Appeal workflow: Submitted → Under Review → Approved/Rejected
+
+#### E. Community Moderation (Future)
+- [ ] Trusted user program (community moderators)
+- [ ] Voting system for reports (requires X votes to action)
+- [ ] Reputation-based moderation powers
+
+---
+
+### 9.5: Implementation Priority Order
+
+**Immediate (Week 1):**
+1. ✅ Fix "Remove Campaign" button to actually remove campaigns
+2. ✅ Fix "Warn Creator" button to create warning records
+3. ✅ Implement email notification system (Resend.com)
+
+**Short-term (Week 2-3):**
+4. ✅ Implement user/profile reporting system
+5. ✅ Add report abuse prevention (rate limiting)
+6. ✅ Add bulk actions for admins
+
+**Long-term (Month 2-3):**
+7. ✅ In-app notification system
+8. ✅ Appeal system for removals/bans
+9. ✅ Community moderation features
+
+---
+
+### 9.6: Files to Create/Modify
+
+**API Routes:**
+- Modify: `/src/app/api/admin/reports/[reportId]/route.js` (fix action buttons)
+- Create: `/src/app/api/notifications/email/route.js` (email notifications)
+- Create: `/src/app/api/reports/user/route.js` (user reporting)
+- Create: `/src/app/api/notifications/route.js` (in-app notifications)
+
+**Components:**
+- Create: `ReportUserModal.js` (user report modal)
+- Modify: `ReportDetailsPanel.js` (handle user reports)
+- Create: `NotificationBell.js` (header notification icon)
+- Create: `NotificationsList.js` (notification dropdown)
+
+**Collections:**
+- Update: `reports` (add `type` field: 'campaign' | 'user')
+- Create: `warnings` (track user warnings)
+- Create: `notifications` (in-app notifications)
+- Create: `appeals` (appeal submissions)
+
+**Utilities:**
+- Create: `/src/lib/email.js` (email service integration)
+- Create: `/src/utils/reportValidation.js` (rate limiting, duplicate check)
+- Create: `/src/utils/profanityFilter.js` (username/bio moderation)
+
+---
+
+**End of Report System Section**
