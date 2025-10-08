@@ -99,40 +99,37 @@ Build comprehensive admin dashboard for platform moderation, user management, an
 
 #### 1. Admin Role Infrastructure
 **Priority:** Critical (Required for all admin features)
+**Status:** ✅ Completed (October 08, 2025)
 
 **Tasks:**
-- [ ] Add `role` field to user profile schema (default: `"user"`)
-  - Update `createUserProfile()` in `firestore.js`
-  - Add `role` to allowed update fields
-  - Update TypeScript types if applicable
+- [x] Add `role` field to user profile schema (default: `"user"`)
+  - Updated `createUserProfile()` in `firestore.js`
+  - Role field defaults to "user" for all new profiles
 
-- [ ] Create `setUserRole()` function in `firestore.js`
-  - Verify calling user is admin
-  - Update target user's role field
-  - Add validation (role must be "admin" or "user")
-  - Return success/error response
+- [x] Create server-side role management API
+  - Created `PATCH /api/admin/users/[userId]/role` endpoint
+  - Uses Firebase Admin SDK (adminFirestore) for secure updates
+  - Bypasses Firestore rules safely with admin authorization
 
-- [ ] Update Firestore security rules
-  - Prevent non-admins from updating `role` field
-  - Add rule: `!request.resource.data.diff(resource.data).hasAny(['role'])`
+- [x] Update Firestore security rules
+  - Prevents client-side role updates with `request.resource.data.role == resource.data.role`
+  - Role changes only possible via server-side Admin SDK
 
-- [ ] Create admin middleware (`src/middleware/adminAuth.js`)
-  - `requireAdmin(request)` function
-  - Verify Firebase auth token
-  - Check user role from Firestore
-  - Throw error if not admin
-  - Return admin user object
+- [x] Create admin middleware (`src/middleware/adminAuth.js`)
+  - `requireAdmin(request)` function verifies Firebase auth token
+  - Checks user role via adminFirestore
+  - Throws error if not admin, returns admin user object
 
-- [ ] Add Firestore Admin to `firebaseAdmin.js`
-  - Import `getFirestore` from firebase-admin
-  - Export `adminFirestore` instance
-  - Test server-side query execution
+- [x] Verify Firestore Admin in `firebaseAdmin.js`
+  - `adminFirestore()` export confirmed working
+  - Ready for all admin server-side operations
 
 **Files:**
-- `src/lib/firestore.js` - Add role field + setUserRole function
-- `firestore.rules` - Update security rules
-- `src/middleware/adminAuth.js` - New file
-- `src/lib/firebaseAdmin.js` - Add Firestore admin export
+- `src/lib/firestore.js` - Added role field to user schema
+- `firestore.rules` - Updated security rules to block client role changes
+- `src/middleware/adminAuth.js` - Admin authorization middleware
+- `src/app/api/admin/users/[userId]/role/route.js` - Server-side role management API
+- `src/lib/firebaseAdmin.js` - Verified adminFirestore export
 
 ---
 
