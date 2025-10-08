@@ -9,68 +9,128 @@ export async function GET(request) {
     const { searchParams } = new URL(request.url);
     const search = searchParams.get('search') || '';
     const role = searchParams.get('role');
-    const limitParam = searchParams.get('limit') || '50';
+    const limitParam = searchParams.get('limit') || '100';
     const limitValue = parseInt(limitParam, 10);
     
     const db = adminFirestore();
-    let usersQuery = db.collection('users');
-    
-    if (role && role !== 'all') {
-      usersQuery = usersQuery.where('role', '==', role);
-    }
-    
-    usersQuery = usersQuery.orderBy('createdAt', 'desc').limit(limitValue);
-    
-    const usersSnapshot = await usersQuery.get();
-    
     const users = [];
     
-    for (const doc of usersSnapshot.docs) {
-      const userData = { id: doc.id, ...doc.data() };
-      
-      const campaignsQuery = db.collection('campaigns')
-        .where('creatorId', '==', doc.id)
-        .where('moderationStatus', '==', 'active');
-      const campaignsSnapshot = await campaignsQuery.get();
-      const campaignsCount = campaignsSnapshot.size;
-      
-      let totalSupports = 0;
-      campaignsSnapshot.docs.forEach(campaignDoc => {
-        const campaignData = campaignDoc.data();
-        totalSupports += campaignData.supportersCount || 0;
-      });
-      
-      userData.campaignsCount = campaignsCount;
-      userData.totalSupports = totalSupports;
-      
-      if (userData.createdAt && userData.createdAt.toDate) {
-        userData.createdAt = userData.createdAt.toDate().toISOString();
-      }
-      if (userData.updatedAt && userData.updatedAt.toDate) {
-        userData.updatedAt = userData.updatedAt.toDate().toISOString();
-      }
-      if (userData.bannedAt && userData.bannedAt.toDate) {
-        userData.bannedAt = userData.bannedAt.toDate().toISOString();
-      }
-      
-      users.push(userData);
-    }
-    
-    let filteredUsers = users;
-    
     if (search) {
+      let query = db.collection('users');
+      if (role && role !== 'all') {
+        query = query.where('role', '==', role);
+      }
+      query = query.orderBy('createdAt', 'desc');
+      
+      let hasMore = true;
+      let lastDoc = null;
+      const batchSize = 500;
       const searchLower = search.toLowerCase();
-      filteredUsers = users.filter(user => 
-        (user.displayName && user.displayName.toLowerCase().includes(searchLower)) ||
-        (user.email && user.email.toLowerCase().includes(searchLower)) ||
-        (user.username && user.username.toLowerCase().includes(searchLower))
-      );
+      
+      while (hasMore && users.length < limitValue) {
+        let batchQuery = lastDoc ? query.startAfter(lastDoc).limit(batchSize) : query.limit(batchSize);
+        const snapshot = await batchQuery.get();
+        
+        if (snapshot.empty) {
+          break;
+        }
+        
+        for (const doc of snapshot.docs) {
+          if (users.length >= limitValue) {
+            hasMore = false;
+            break;
+          }
+          
+          const userData = { id: doc.id, ...doc.data() };
+          
+          const matchesSearch = 
+            (userData.displayName && userData.displayName.toLowerCase().includes(searchLower)) ||
+            (userData.email && userData.email.toLowerCase().includes(searchLower)) ||
+            (userData.username && userData.username.toLowerCase().includes(searchLower));
+          
+          if (!matchesSearch) {
+            continue;
+          }
+          
+          const campaignsQuery = db.collection('campaigns')
+            .where('creatorId', '==', doc.id)
+            .where('moderationStatus', '==', 'active');
+          const campaignsSnapshot = await campaignsQuery.get();
+          const campaignsCount = campaignsSnapshot.size;
+          
+          let totalSupports = 0;
+          campaignsSnapshot.docs.forEach(campaignDoc => {
+            const campaignData = campaignDoc.data();
+            totalSupports += campaignData.supportersCount || 0;
+          });
+          
+          userData.campaignsCount = campaignsCount;
+          userData.totalSupports = totalSupports;
+          
+          if (userData.createdAt && userData.createdAt.toDate) {
+            userData.createdAt = userData.createdAt.toDate().toISOString();
+          }
+          if (userData.updatedAt && userData.updatedAt.toDate) {
+            userData.updatedAt = userData.updatedAt.toDate().toISOString();
+          }
+          if (userData.bannedAt && userData.bannedAt.toDate) {
+            userData.bannedAt = userData.bannedAt.toDate().toISOString();
+          }
+          
+          users.push(userData);
+        }
+        
+        lastDoc = snapshot.docs[snapshot.docs.length - 1];
+        
+        if (snapshot.docs.length < batchSize) {
+          hasMore = false;
+        }
+      }
+    } else {
+      let query = db.collection('users');
+      if (role && role !== 'all') {
+        query = query.where('role', '==', role);
+      }
+      query = query.orderBy('createdAt', 'desc').limit(limitValue);
+      
+      const snapshot = await query.get();
+      
+      for (const doc of snapshot.docs) {
+        const userData = { id: doc.id, ...doc.data() };
+        
+        const campaignsQuery = db.collection('campaigns')
+          .where('creatorId', '==', doc.id)
+          .where('moderationStatus', '==', 'active');
+        const campaignsSnapshot = await campaignsQuery.get();
+        const campaignsCount = campaignsSnapshot.size;
+        
+        let totalSupports = 0;
+        campaignsSnapshot.docs.forEach(campaignDoc => {
+          const campaignData = campaignDoc.data();
+          totalSupports += campaignData.supportersCount || 0;
+        });
+        
+        userData.campaignsCount = campaignsCount;
+        userData.totalSupports = totalSupports;
+        
+        if (userData.createdAt && userData.createdAt.toDate) {
+          userData.createdAt = userData.createdAt.toDate().toISOString();
+        }
+        if (userData.updatedAt && userData.updatedAt.toDate) {
+          userData.updatedAt = userData.updatedAt.toDate().toISOString();
+        }
+        if (userData.bannedAt && userData.bannedAt.toDate) {
+          userData.bannedAt = userData.bannedAt.toDate().toISOString();
+        }
+        
+        users.push(userData);
+      }
     }
     
     return NextResponse.json({
       success: true,
-      data: filteredUsers,
-      total: filteredUsers.length,
+      data: users,
+      total: users.length,
     });
   } catch (error) {
     console.error('Error fetching users:', error);
