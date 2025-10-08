@@ -33,6 +33,7 @@ service cloud.firestore {
                    // Protect system fields from tampering
                    request.resource.data.email == resource.data.email &&
                    request.resource.data.createdAt == resource.data.createdAt &&
+                   request.resource.data.role == resource.data.role && // Prevent role updates (admin-only via server-side)
                    // Enforce username format when present
                    (!('username' in request.resource.data) || 
                     request.resource.data.username.matches('^[a-z0-9]{3,}$'));
@@ -46,6 +47,7 @@ service cloud.firestore {
                    // Protect system fields
                    request.resource.data.email == resource.data.email &&
                    request.resource.data.createdAt == resource.data.createdAt &&
+                   request.resource.data.role == resource.data.role && // Prevent role updates
                    // Ensure campaignsCount only increases by 1 (prevent manipulation)
                    (!('campaignsCount' in request.resource.data.diff(resource.data).changedKeys()) ||
                     request.resource.data.campaignsCount == resource.data.campaignsCount + 1);
