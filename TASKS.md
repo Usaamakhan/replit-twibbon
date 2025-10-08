@@ -1,547 +1,623 @@
-# Campaign System - Task Tracker
+# Admin Dashboard - Implementation Tasks
 
-Track progress on building the campaign system (Phase 1 from CAMPAIGN_SYSTEM.md)
-
-**Last Updated:** October 05, 2025
-
----
-
-## ✅ COMPLETED TASKS
-
-### 3-Page Campaign Flow Implementation
-**Status:** ✅ Completed (October 03-04, 2025)
-
-Implemented multi-page visitor experience (Upload → Adjust → Result) with session persistence, route guards, canvas-based image composition, and download tracking. Files: `CampaignSessionContext.js`, `campaignRouteGuards.js`, 3 page components, step indicator, and track-download API.
+**Project:** Twibbonize Campaign Platform  
+**Phase:** Admin Dashboard (Phase 2)  
+**Last Updated:** October 08, 2025
 
 ---
 
-### Pre-Build Tasks
-**Status:** ✅ Completed (October 02, 2025)
-
-Added Supabase security validations: file size limits (5MB campaigns), file type validation (PNG/JPG/WEBP), and robust validation checks. Updated: `upload-url/route.js` and `campaign-upload-url/route.js`.
-
----
-
-### Bug Fixes
-**Status:** ✅ Completed (October 02, 2025)
-
-Fixed ProfilePage field mappings (`imageUrl`, `supportersCount`) and resolved Firebase initialization race condition with module-level initialization. Updated: `ProfilePage.js` and `firebase-optimized.js`.
-
----
-
-### Campaign Entry Point
-**Status:** ✅ Completed (October 02, 2025)
-
-Created `CreateCampaignModal` component with Frame/Background selection, integrated in Hero and MobileMenu. File: `CreateCampaignModal.js`.
-
----
-
-### Upload Flows (Frame & Background)
-**Status:** ✅ Completed (October 02, 2025)
-
-Built two-step upload pages for frames (with transparency detection) and backgrounds (multi-format). Includes delayed authentication, form state preservation, slug generation, and Supabase upload integration. Files: `/create/frame/page.js` and `/create/background/page.js`.
-
----
-
-### Prerequisites & Utilities
-**Status:** ✅ Completed (October 01-02, 2025)
-
-Implemented core utilities and backend functions:
-- `getCampaignBySlug()` in `firestore.js` - Fetch campaigns by URL slug
-- `imageComposition.js` - Canvas-based composition with zoom/drag/rotate adjustments
-- `transparencyDetector.js` - PNG transparency validation (5% minimum)
-- `slugGenerator.js` - URL-friendly slug generation with random suffix
-- `campaignStorage.js` - Storage path utilities for `campaigns/{userId}/{campaignId}.png`
-
----
-
-### Data Structure Updates
-**Status:** ✅ Completed (September 30 - October 01, 2025)
-
-Updated Firestore schema and security rules:
-- Collection renamed from `frames` to `campaigns`
-- Added required fields: `type`, `slug`, `moderationStatus`, `supportersCount`, `reportsCount`, `captionTemplate`
-- Renamed `createdBy` → `creatorId` throughout codebase
-- Created `reports` collection with full CRUD functions
-- Updated security rules for campaign creation/editing validation
-
----
-
-### Storage & Upload System
-**Status:** ✅ Completed (October 01, 2025)
-
-Configured Supabase storage structure:
-- Single bucket approach: `uploads` with `campaigns/` folder
-- Dedicated campaign upload endpoint with predictable paths
-- Profile/banner image upload fixed (no more base64 in Firestore)
-- API endpoints: `campaign-upload-url`, `signed-url`, `delete`, `list`
-
----
-
-## 🚀 IMAGE OPTIMIZATION & CDN IMPLEMENTATION
-
-**Status:** ✅ Completed (October 05-06, 2025)
-
-Image optimization has been fully implemented using ImageKit.io CDN with automatic WebP conversion and smart resizing across all pages. The `imageTransform.js` utility provides centralized transformation functions to significantly reduce bandwidth usage through optimized image delivery.
-
----
-
-## 📋 PHASE 2: ADMIN DASHBOARD
-
-**Status:** ⏸️ Pending (Planned)
-
-### Overview
-Build comprehensive admin dashboard for platform moderation, user management, and analytics. Includes 4 main sections: Reports, Campaigns, Users, and Analytics.
-
----
-
-### Foundation Tasks
-
-#### 1. Admin Role Infrastructure
-**Priority:** Critical (Required for all admin features)
-**Status:** ✅ Completed (October 08, 2025)
-
-**Tasks:**
-- [x] Add `role` field to user profile schema (default: `"user"`)
-  - Updated `createUserProfile()` in `firestore.js`
-  - Role field defaults to "user" for all new profiles
-
-- [x] Create server-side role management API
-  - Created `PATCH /api/admin/users/[userId]/role` endpoint
-  - Uses Firebase Admin SDK (adminFirestore) for secure updates
-  - Bypasses Firestore rules safely with admin authorization
-
-- [x] Update Firestore security rules
-  - Prevents client-side role updates with `request.resource.data.role == resource.data.role`
-  - Role changes only possible via server-side Admin SDK
-
-- [x] Create admin middleware (`src/middleware/adminAuth.js`)
-  - `requireAdmin(request)` function verifies Firebase auth token
-  - Checks user role via adminFirestore
-  - Throws error if not admin, returns admin user object
-
-- [x] Verify Firestore Admin in `firebaseAdmin.js`
-  - `adminFirestore()` export confirmed working
-  - Ready for all admin server-side operations
-
-**Files:**
-- `src/lib/firestore.js` - Added role field to user schema
-- `firestore.rules` - Updated security rules to block client role changes
-- `src/middleware/adminAuth.js` - Admin authorization middleware
-- `src/app/api/admin/users/[userId]/role/route.js` - Server-side role management API
-- `src/lib/firebaseAdmin.js` - Verified adminFirestore export
-
----
-
-### Admin Layout & Navigation
-
-#### 2. Admin Layout Components
-**Priority:** High (Required before building pages)
-**Status:** ✅ Completed (October 08, 2025)
-
-**Tasks:**
-- [x] Create `AdminSidebar` component
-  - Navigation links: Analytics, Reports, Campaigns, Users
-  - Active link highlighting with pathname detection
-  - Admin user info at bottom with merged auth/profile data
-  - Logout button with callback
-  - Mobile responsive (collapsible with fixed toggle button)
-
-- [x] Create `AdminHeader` component
-  - Page title display (dynamic based on route)
-  - Breadcrumb navigation with route parsing
-  - Quick actions (notifications, view site link)
-  - User avatar display
-
-- [x] Create admin layout (`src/app/(chrome)/admin/layout.js`)
-  - Sidebar + main content area with responsive flex layout
-  - Admin auth check using useAuth and useUserProfile
-  - Proper authorization flow with isAuthorized state
-  - Loading states and unauthorized fallback
-  - Redirect non-admins to home
-
-- [x] Create placeholder admin analytics page
-  - Metric cards for key statistics (campaigns, users, reports)
-  - Placeholder dashboard layout
-
-**Files:**
-- `src/components/admin/AdminSidebar.js` - Created with responsive design
-- `src/components/admin/AdminHeader.js` - Created with breadcrumb navigation
-- `src/app/(chrome)/admin/layout.js` - Created with secure admin-only access
-- `src/app/(chrome)/admin/page.js` - Placeholder analytics dashboard
-
----
-
-### Reports Management
-
-#### 3. Reports Table & API
-**Priority:** High (Core moderation feature)
-**Status:** ✅ Completed (October 08, 2025)
-
-**Tasks:**
-- [x] Create admin reports API with server-side logic
-  - Server-side query using adminFirestore (in API routes)
-  - Support filters: status, campaignId, reason
-  - Include campaign and reporter details with joins
-  - Pagination support (limit parameter)
-
-- [x] Build GET `/api/admin/reports` endpoint
-  - Admin auth via requireAdmin middleware
-  - Returns reports with campaign previews and creator info
-  - Supports status and reason filtering
-  - Timestamp conversion for client compatibility
-
-- [x] Build PATCH `/api/admin/reports/[reportId]` endpoint
-  - Admin auth via requireAdmin middleware
-  - Updates report status and action
-  - Tracks reviewedBy (admin user ID) and reviewedAt
-  - Validates status and action values
-
-- [x] Create `ReportsTable` component
-  - Table with columns: Campaign, Reason, Reporter, Status, Date, Actions
-  - Campaign thumbnail preview in table
-  - Color-coded status badges
-  - Click row to show details panel
-  - Loading and empty states
-
-- [x] Create `ReportDetailsPanel` component
-  - Slide-out panel with full report info
-  - Campaign preview (image + metadata + link)
-  - Action buttons: Dismiss, Warn Creator, Remove Campaign
-  - Real-time status updates
-  - Close button
-
-- [x] Build `/admin/reports` page
-  - Filter controls for status and reason
-  - ReportsTable integration with real-time fetching
-  - ReportDetailsPanel with update callbacks
-  - Auto-refresh after actions
-
-**Files:**
-- `src/app/api/admin/reports/route.js` - GET endpoint with admin logic
-- `src/app/api/admin/reports/[reportId]/route.js` - PATCH endpoint with admin logic
-- `src/components/admin/ReportsTable.js` - Created with full functionality
-- `src/components/admin/ReportDetailsPanel.js` - Created with action buttons
-- `src/app/(chrome)/admin/reports/page.js` - Created with filters and state management
-
----
-
-### Campaign Moderation
-
-#### 4. Campaign Moderation UI & API
-**Priority:** High (Content safety)
-**Status:** ✅ Completed (October 08, 2025)
-
-**Tasks:**
-- [x] Build admin campaigns API with server-side logic
-  - Server-side query using adminFirestore (in API routes)
-  - Fetches all campaigns (not just active)
-  - Includes creator details with joins
-  - Supports moderationStatus filter
-  - Sort by: reports count, creation date, supporters
-
-- [x] Build GET `/api/admin/campaigns` endpoint
-  - Admin auth via requireAdmin middleware
-  - Returns campaigns with creator info
-  - Supports moderationStatus and sortBy filtering
-  - Timestamp conversion for client compatibility
-
-- [x] Build PATCH `/api/admin/campaigns/[campaignId]` endpoint
-  - Admin auth via requireAdmin middleware
-  - Updates moderationStatus (active, under-review, removed)
-  - Records removedBy (admin UID) and removedAt timestamp
-  - Validates moderationStatus values
-  - Supports removeReason field
-
-- [x] Build DELETE `/api/admin/campaigns/[campaignId]/delete` endpoint
-  - Admin auth via requireAdmin middleware with confirmation
-  - Deletes from Firestore + Supabase storage
-  - Logs deletion action with reason
-  - Returns deletion log
-  - Cannot be undone (permanent deletion)
-
-- [x] Create `CampaignModerationCard` component
-  - Campaign thumbnail with type and status badges
-  - Title, creator, supporters, reports count display
-  - Color-coded moderation status badges
-  - Actions dropdown: View Reports, Restore, Mark Under Review, Remove, Delete
-  - Delete confirmation modal with reason input
-  - Real-time status updates
-
-- [x] Build `/admin/campaigns` page
-  - Responsive grid view of campaigns (1/2/3 columns)
-  - Filter by moderationStatus dropdown
-  - Sort controls (recent, reports, supporters)
-  - CampaignModerationCard integration with callbacks
-  - Auto-refresh after actions
-  - Loading and empty states
-
-**Files:**
-- `src/app/api/admin/campaigns/route.js` - GET endpoint with admin logic
-- `src/app/api/admin/campaigns/[campaignId]/route.js` - PATCH endpoint with moderation logic
-- `src/app/api/admin/campaigns/[campaignId]/delete/route.js` - DELETE endpoint with storage cleanup
-- `src/components/admin/CampaignModerationCard.js` - Created with full functionality
-- `src/app/(chrome)/admin/campaigns/page.js` - Created with filters and state management
-
----
-
-### User Management
-
-#### 5. User Management UI & API
-**Priority:** Medium (Admin control)
-**Status:** ✅ Completed (October 08, 2025)
-
-**Tasks:**
-- [x] Create user fetching logic with admin auth
-  - Fetch all users with stats (campaigns count, total supports)
-  - Support search by name/email/username (debounced, 300ms)
-  - Filter by role (all, admin, user)
-  - Pagination support (limit parameter)
-  - **Implementation:** Server-side logic in API routes using adminFirestore
-
-- [x] Create ban/unban functionality
-  - Add `banned` field to user profile
-  - Add `banReason` and `bannedBy` fields
-  - Set `bannedAt` timestamp
-  - Support unban (removes ban fields)
-  - **Implementation:** Server-side logic in ban API route
-
-- [x] Build GET `/api/admin/users` endpoint
-  - Fetches users with admin auth via requireAdmin middleware
-  - Supports search (filters by displayName, email, username)
-  - Supports role filtering
-  - Includes campaign count and total supports per user
-  - Timestamp conversion for client compatibility
-
-- [x] Build PATCH `/api/admin/users/[userId]/role` endpoint
-  - Updates user role (admin/user) via adminFirestore
-  - Requires admin auth via requireAdmin middleware
-  - Validates role values
-  - Returns updated user data
-
-- [x] Build PATCH `/api/admin/users/[userId]/ban` endpoint
-  - Bans/unbans users via adminFirestore
-  - Requires admin auth + ban reason validation
-  - Tracks bannedBy (admin UID) and bannedAt timestamp
-  - Removes ban fields on unban
-
-- [x] Create `UsersTable` component
-  - Columns: Avatar, Name, Email, Role, Campaigns, Supports, Joined, Actions
-  - Debounced search (300ms timeout)
-  - Role filter dropdown (All, Users, Admins)
-  - Click row to open UserDetailsModal
-  - Shows "Banned" badge on banned users
-  - Loading and empty states
-
-- [x] Create `UserDetailsModal` component
-  - Slide-out panel with user profile info
-  - Activity stats (campaigns created, total supports)
-  - Admin actions: Make/Revoke Admin, Ban/Unban User
-  - Ban modal with reason input (required for banning)
-  - "View Public Profile" link
-  - Real-time updates
-
-- [x] Build `/admin/users` page
-  - Renders UsersTable with search and filters
-  - Shows UserDetailsModal on row click
-  - Auto-refresh after admin actions
-  - Integrated with Firebase Auth for token-based API calls
-
-**Files:**
-- `src/app/api/admin/users/route.js` - GET endpoint with search/filter logic
-- `src/app/api/admin/users/[userId]/role/route.js` - PATCH endpoint for role updates
-- `src/app/api/admin/users/[userId]/ban/route.js` - PATCH endpoint for ban/unban
-- `src/components/admin/UsersTable.js` - Created with full functionality
-- `src/components/admin/UserDetailsModal.js` - Created with admin actions
-- `src/app/(chrome)/admin/users/page.js` - Created with search/filter state management
-
-**Note:** Implementation uses server-side logic directly in API routes (via adminFirestore) instead of firestore.js helper functions - this is a modern, valid approach for admin operations.
-
----
-
-### Platform Analytics
-
-#### 6. Analytics Dashboard
-**Priority:** Low (Nice to have)
-**Status:** ✅ Completed (October 08, 2025)
-
-**Tasks:**
-- [x] Create platform stats logic with server-side queries
-  - Count total campaigns by status (active, under-review, removed)
-  - Count total users with role breakdown (admins, regular, banned)
-  - Count reports by status (pending, reviewed, resolved, dismissed)
-  - Calculate resolution rate (resolved + dismissed / total reports)
-  - Calculate engagement metrics (total supports, avg per campaign)
-  - Get top reported campaigns (top 5 by report count)
-  - **Implementation:** Server-side logic in API route using adminFirestore
-
-- [x] Build GET `/api/admin/analytics` endpoint
-  - Fetches all platform statistics with admin auth
-  - Requires admin auth via requireAdmin middleware
-  - Returns comprehensive metrics object with campaigns, users, reports, engagement, insights
-  - Real-time calculations (no caching implemented - can be added if needed)
-
-- [x] Create analytics dashboard with metric cards
-  - 4 primary metric cards with icons and color coding:
-    - Total Campaigns (blue) - shows active/removed breakdown
-    - Total Users (green) - shows admins/banned breakdown
-    - Pending Reports (yellow) - shows total/resolution rate
-    - Active Campaigns (emerald) - shows under-review count
-  - Responsive grid layout (1/2/4 columns)
-
-- [x] Create detailed analytics sections
-  - Campaign Breakdown panel - visualizes frames vs backgrounds with progress bars
-  - Engagement Metrics panel - displays total supports and average per campaign
-  - Top Reported Campaigns table - shows most reported campaigns with status badges
-  - Conditional rendering (only shows if data exists)
-
-- [x] Build `/admin` page (analytics dashboard)
-  - Fetches real-time analytics data on mount
-  - Loading state with spinner
-  - Error handling with user-friendly message
-  - Auto-refresh capability (fetches on component mount)
-  - Fully responsive design
-
-**Files:**
-- `src/app/api/admin/analytics/route.js` - Created with comprehensive stats logic
-- `src/app/(chrome)/admin/page.js` - Updated with real data fetching and display
-
-**Features Implemented:**
-- ✅ Real-time platform metrics
-- ✅ Campaign type breakdown (frames vs backgrounds)
-- ✅ User role breakdown (admins, regular, banned)
-- ✅ Report status breakdown (pending, resolved, dismissed)
-- ✅ Resolution rate calculation
+## 📋 Completed Tasks Summary
+
+### ✅ Section 1-7: COMPLETED (October 4-8, 2025)
+
+All admin dashboard features have been successfully implemented:
+
+**1. Foundation & Security**
+- ✅ Admin role field in user schema (`role: "admin" | "user"`)
+- ✅ Admin middleware (`adminAuth.js` with `requireAdmin()`)
+- ✅ All admin API routes protected
+
+**2. Admin Layout**
+- ✅ AdminSidebar with navigation (4 sections)
+- ✅ AdminHeader with breadcrumbs
+- ✅ Admin layout wrapper at `/admin`
+
+**3. Reports Management** (`/admin/reports`)
+- ✅ ReportsTable with filters and pagination
+- ✅ ReportDetailsPanel slide-out
+- ✅ API: GET reports, PATCH update status
+- ✅ Actions: Update status, resolve, dismiss
+
+**4. Campaign Moderation** (`/admin/campaigns`)
+- ✅ CampaignModerationCard grid view
+- ✅ Moderation status updates (active/under-review/removed)
+- ✅ API: GET campaigns, PATCH moderation status, DELETE campaign
+- ✅ Delete campaigns with Supabase image cleanup
+
+**5. User Management** (`/admin/users`)
+- ✅ UsersTable with search
+- ✅ UserDetailsModal with admin actions
+- ✅ API: GET users, PATCH role, PATCH ban/unban
+- ✅ Role assignment (admin/user)
+- ✅ Ban/unban functionality
+
+**6. Analytics Dashboard** (`/admin` - default page)
+- ✅ Platform metrics (campaigns, users, reports)
+- ✅ Real-time aggregation queries using Firebase Admin SDK
+- ✅ Firestore count() optimization (replaced .get().length)
+- ✅ Campaign type breakdown, user role breakdown, report status breakdown
+- ✅ Top reported campaigns table
 - ✅ Engagement metrics (supports, averages)
-- ✅ Top reported campaigns insights
-- ✅ Responsive design with loading/error states
+- ✅ 2-minute HTTP caching
 
-**Performance Optimizations:**
-- ✅ Firestore aggregation queries using `getAggregateFromServer(count())` for all counts
-- ✅ Parallel query execution with `Promise.all()` (14 count queries in parallel)
-- ✅ Field selection with `.select()` to minimize data transfer (supportersCount only)
-- ✅ Targeted queries with `.orderBy().limit(5)` for top reported campaigns
-- ✅ 2-minute HTTP caching with `Cache-Control: private, max-age=120`
-- ✅ O(1) complexity for count queries (vs previous O(N) full collection scans)
-- ✅ Production-ready scalability (confirmed by architect review)
+**7. Admin Utilities**
+- ✅ `adminHelpers.js` - 7 formatting functions (formatReportReason, getModerationStatusColor, etc.)
+- ✅ `adminValidation.js` - 6 validation functions (validateReportStatus, etc.)
+- ✅ `AdminActionButton.js` - Reusable action button with loading/confirm dialog
+- ✅ Refactored 3 admin components to use shared utilities
 
-**Optional Features (Not Implemented - Can Add Later):**
-- Date range filtering (currently shows all-time data)
-- Charts/graphs visualization (currently uses progress bars and tables)
-- Redis/Memcached layer for additional caching (HTTP cache is sufficient for now)
+**Files Created:** 24 files (routes, APIs, components, utilities)  
+**Total Lines:** ~3,500 lines of code
 
 ---
 
-### Utilities & Helpers
+## 🧪 Section 8: Testing & Quality Assurance
 
-#### 7. Admin Utilities
-**Priority:** Low (Quality of life)
-**Status:** ✅ Completed (October 08, 2025)
+**Priority:** High (Before Production Launch)  
+**Status:** ⏸️ PENDING - User Testing Required
 
-**Tasks:**
-- [x] Create `adminHelpers.js` utility file
-  - `formatReportReason()` - Human-readable reason text
-  - `getModerationStatusColor()` - Badge color mapping for moderation status
-  - `getReportStatusColor()` - Badge color mapping for report status
-  - `getRoleBadgeColor()` - Badge color mapping for user roles
-  - `formatTimestamp()` - Date formatting for admin tables (with optional time)
-  - `truncateText()` - Text truncation helper with ellipsis
-  - `formatNumber()` - Number formatting with thousands separator
-
-- [x] Create `adminValidation.js` utility file
-  - `validateReportStatus()` - Check valid status values
-  - `validateModerationStatus()` - Check valid moderation status
-  - `validateUserRole()` - Check valid role values
-  - `validateBanReason()` - Ensure ban reason is provided
-  - `validateReportAction()` - Validate report action types
-  - `getValidationError()` - Get validation error message for any field
-
-- [x] Create `AdminActionButton` component
-  - Reusable button with loading state
-  - Confirm dialog for destructive actions (optional)
-  - Error display within component
-  - Icon support with flexible positioning
-  - Multiple variants (primary, danger, warning, success, secondary)
-  - Multiple sizes (sm, md, lg)
-  - Async action handling with proper error catching
-
-- [x] Refactor existing admin components to use utilities
-  - `CampaignModerationCard.js` - Uses `getModerationStatusColor()`
-  - `ReportsTable.js` - Uses `formatReportReason()`, `getReportStatusColor()`, `formatTimestamp()`
-  - `UsersTable.js` - Uses `getRoleBadgeColor()`, `formatTimestamp()`
-
-**Files:**
-- `src/utils/admin/adminHelpers.js` - Created with 7 helper functions
-- `src/utils/admin/adminValidation.js` - Created with 6 validation functions
-- `src/components/admin/AdminActionButton.js` - Created with full feature set
-- Updated 3 admin components to use shared utilities
-
-**Benefits:**
-- ✅ Eliminated code duplication across admin components
-- ✅ Centralized formatting logic for easy maintenance
-- ✅ Consistent styling and behavior across admin dashboard
-- ✅ Reusable validation for form inputs and API calls
-- ✅ Type-safe action button component with built-in error handling
+This section provides a comprehensive testing checklist for all admin dashboard features. Test systematically to ensure everything works correctly before deploying to production.
 
 ---
 
-### Testing & Polish
+### Prerequisites for Testing
 
-#### 8. Admin Dashboard Testing
-**Priority:** Medium (Before launch)
+**1. Admin User Setup**
+- Create a test user account
+- Manually update Firestore: `users/{userId}` → Set `role: "admin"`
+- Verify admin role is saved correctly
 
-**Tasks:**
-- [ ] Test admin auth middleware
-  - Verify admin access granted
-  - Verify non-admin access blocked
-  - Test token expiry handling
+**2. Test Data Preparation**
+- Have at least 3-5 campaigns created
+- Create 2-3 test reports (use "Report Campaign" button on public pages)
+- Have multiple user accounts (mix of regular users and 1-2 admins)
 
-- [ ] Test reports management
-  - Filter and search functionality
-  - Report status updates
-  - Campaign moderation actions
-
-- [ ] Test campaign moderation
-  - View all campaigns
-  - Update moderation status
-  - Delete campaigns (with image cleanup)
-
-- [ ] Test user management
-  - Search and filter users
-  - Assign/revoke admin role
-  - Ban/unban users
-
-- [ ] Test analytics
-  - Verify metrics accuracy
-  - Test date range filtering
-  - Check performance with large datasets
-
-- [ ] Security testing
-  - Attempt API access without auth
-  - Attempt access with non-admin user
-  - Test SQL injection / XSS protection
-
-**No new files - testing only**
+**3. Environment**
+- Test on deployed Vercel environment (NOT localhost)
+- Test on both desktop and mobile browsers
+- Clear browser cache before testing
 
 ---
 
-## 📝 Phase 2 Summary
+### A. Admin Authentication & Access Control
 
-**Total Estimated Tasks:** ~60 tasks across 8 sections
+**Test Cases:**
 
-**Implementation Order:**
-1. Foundation (Admin role + middleware) - Week 1
-2. Admin Layout - Week 1
-3. Reports Management - Week 2
-4. Campaign Moderation - Week 2-3
-5. User Management - Week 3
-6. Analytics Dashboard - Week 4
-7. Utilities & Polish - Week 4
-8. Testing - Ongoing
+1. **Admin Access - Positive Test**
+   - [ ] Login with admin user
+   - [ ] Navigate to `/admin`
+   - [ ] Verify: You can access the admin dashboard
+   - [ ] Verify: Sidebar shows all 4 sections (Analytics, Reports, Campaigns, Users)
 
-**Dependencies:**
-- Foundation must be completed first (blocks all other tasks)
-- Admin Layout required before building pages
-- Utilities can be built in parallel with features
+2. **Non-Admin Access - Negative Test**
+   - [ ] Login with regular user (non-admin)
+   - [ ] Try to navigate to `/admin`
+   - [ ] Verify: Access is blocked with error message
+   - [ ] Try direct URL access to `/admin/reports`
+   - [ ] Verify: Access is blocked
+
+3. **Unauthenticated Access - Negative Test**
+   - [ ] Logout completely
+   - [ ] Try to navigate to `/admin`
+   - [ ] Verify: Redirected to login page or access denied
+
+4. **API Protection**
+   - [ ] Open browser DevTools → Network tab
+   - [ ] Navigate to `/admin` (as admin)
+   - [ ] Check API requests to `/api/admin/*`
+   - [ ] Verify: All requests return 200 OK
+   - [ ] Try accessing API endpoints manually without auth
+   - [ ] Verify: Returns 401 Unauthorized
+
+**Expected Results:**
+- ✅ Admin users can access all admin features
+- ✅ Non-admin users cannot access admin dashboard
+- ✅ API endpoints reject unauthorized requests
 
 ---
+
+### B. Reports Management Testing
+
+**Page:** `/admin/reports`
+
+**Test Cases:**
+
+1. **Reports Table Display**
+   - [ ] Navigate to `/admin/reports`
+   - [ ] Verify: Table loads with all reports
+   - [ ] Check columns: Campaign thumbnail, Campaign title, Reason, Reporter, Status, Date
+   - [ ] Verify: Campaign thumbnails display correctly
+   - [ ] Verify: Dates are formatted properly
+
+2. **Filter by Status**
+   - [ ] Click "Status" filter dropdown
+   - [ ] Select "Pending"
+   - [ ] Verify: Only pending reports are shown
+   - [ ] Select "Resolved"
+   - [ ] Verify: Only resolved reports are shown
+   - [ ] Select "All"
+   - [ ] Verify: All reports are shown again
+
+3. **Report Details Panel**
+   - [ ] Click on any report row
+   - [ ] Verify: Right side panel opens with full report details
+   - [ ] Check: Campaign preview image is visible
+   - [ ] Check: Reporter information is shown
+   - [ ] Check: Report reason and details are displayed
+   - [ ] Check: Created date is shown
+   - [ ] Click "Close" or outside panel
+   - [ ] Verify: Panel closes
+
+4. **Update Report Status**
+   - [ ] Select a "Pending" report
+   - [ ] Click "Mark as Reviewed" button
+   - [ ] Verify: Status updates to "Reviewed"
+   - [ ] Verify: Table updates immediately
+   - [ ] Refresh page
+   - [ ] Verify: Status persists after refresh
+
+5. **Resolve Report**
+   - [ ] Select a "Reviewed" report
+   - [ ] Click "Resolve" button
+   - [ ] Verify: Status updates to "Resolved"
+   - [ ] Verify: Report moves to "Resolved" filter
+
+6. **Dismiss Report**
+   - [ ] Select a "Pending" report
+   - [ ] Click "Dismiss" button
+   - [ ] Verify: Status updates to "Dismissed"
+   - [ ] Verify: Report appears under "Dismissed" filter
+
+**Expected Results:**
+- ✅ All reports display correctly with campaign previews
+- ✅ Filters work properly
+- ✅ Status updates persist to Firestore
+- ✅ UI updates immediately after actions
+
+---
+
+### C. Campaign Moderation Testing
+
+**Page:** `/admin/campaigns`
+
+**Test Cases:**
+
+1. **Campaigns Grid Display**
+   - [ ] Navigate to `/admin/campaigns`
+   - [ ] Verify: All campaigns display in grid layout
+   - [ ] Check: Campaign thumbnails load correctly
+   - [ ] Check: Campaign titles, creator names visible
+   - [ ] Check: Supporters count is shown
+   - [ ] Check: Reports count badge is visible (if campaign has reports)
+   - [ ] Verify: Moderation status badges show correct colors
+
+2. **Filter by Moderation Status**
+   - [ ] Click "Filter" dropdown
+   - [ ] Select "Active"
+   - [ ] Verify: Only active campaigns are shown
+   - [ ] Select "Under Review"
+   - [ ] Verify: Only under-review campaigns are shown
+   - [ ] Select "Removed"
+   - [ ] Verify: Only removed campaigns are shown
+
+3. **Change Moderation Status - Mark Under Review**
+   - [ ] Find an "Active" campaign
+   - [ ] Click "..." menu → "Mark Under Review"
+   - [ ] Verify: Confirmation dialog appears
+   - [ ] Click "Confirm"
+   - [ ] Verify: Status changes to "Under Review" (yellow badge)
+   - [ ] Refresh page
+   - [ ] Verify: Status persists
+
+4. **Remove Campaign**
+   - [ ] Find a campaign to remove
+   - [ ] Click "..." menu → "Remove Campaign"
+   - [ ] Verify: Confirmation dialog appears with reason input
+   - [ ] Enter removal reason: "Test removal - inappropriate content"
+   - [ ] Click "Confirm"
+   - [ ] Verify: Status changes to "Removed" (red badge)
+   - [ ] Navigate to public `/campaigns` page
+   - [ ] Verify: Removed campaign is NOT visible to public
+
+5. **Restore Campaign**
+   - [ ] Filter by "Removed" campaigns
+   - [ ] Find the campaign you just removed
+   - [ ] Click "..." menu → "Restore Campaign"
+   - [ ] Click "Confirm"
+   - [ ] Verify: Status changes back to "Active"
+   - [ ] Navigate to public `/campaigns` page
+   - [ ] Verify: Campaign is visible again
+
+6. **Delete Campaign Permanently**
+   - [ ] Find a test campaign (NOT an important one)
+   - [ ] Click "..." menu → "Delete Permanently"
+   - [ ] Verify: Warning dialog appears (mentions irreversible action)
+   - [ ] Click "Confirm Delete"
+   - [ ] Verify: Campaign is removed from list
+   - [ ] Check Firestore manually
+   - [ ] Verify: Campaign document is deleted
+   - [ ] Check Supabase storage
+   - [ ] Verify: Campaign image file is deleted
+
+**Expected Results:**
+- ✅ Moderation status updates work correctly
+- ✅ Removed campaigns are hidden from public view
+- ✅ Restored campaigns become public again
+- ✅ Permanent deletion removes both Firestore doc and Supabase image
+- ✅ Confirmation dialogs prevent accidental actions
+
+---
+
+### D. User Management Testing
+
+**Page:** `/admin/users`
+
+**Test Cases:**
+
+1. **Users Table Display**
+   - [ ] Navigate to `/admin/users`
+   - [ ] Verify: Table loads with all users
+   - [ ] Check columns: Avatar, Display Name, Email, Role, Campaigns, Supports, Joined Date
+   - [ ] Verify: Profile pictures display correctly
+   - [ ] Verify: Role badges show correct colors (purple for admin, gray for user)
+
+2. **Search Users**
+   - [ ] Enter a user's name in search box
+   - [ ] Verify: Table filters to matching users only
+   - [ ] Enter an email address
+   - [ ] Verify: Finds the correct user
+   - [ ] Clear search
+   - [ ] Verify: All users are shown again
+
+3. **View User Details**
+   - [ ] Click on any user row
+   - [ ] Verify: User details modal opens
+   - [ ] Check: Full user information is displayed
+   - [ ] Check: Total campaigns and supports are shown
+   - [ ] Check: Join date is correct
+   - [ ] Close modal
+
+4. **Assign Admin Role**
+   - [ ] Find a regular user (Role: "user")
+   - [ ] Click "..." menu → "Make Admin"
+   - [ ] Verify: Confirmation dialog appears
+   - [ ] Click "Confirm"
+   - [ ] Verify: Role badge changes to "Admin" (purple)
+   - [ ] Refresh page
+   - [ ] Verify: Role persists
+   - [ ] Logout and login with that user account
+   - [ ] Try accessing `/admin`
+   - [ ] Verify: User now has admin access
+
+5. **Revoke Admin Role**
+   - [ ] Find the user you just promoted
+   - [ ] Click "..." menu → "Revoke Admin"
+   - [ ] Click "Confirm"
+   - [ ] Verify: Role changes back to "User"
+   - [ ] Logout and login with that user account
+   - [ ] Try accessing `/admin`
+   - [ ] Verify: Access is now denied
+
+6. **Ban User**
+   - [ ] Find a test user to ban (NOT your main admin account)
+   - [ ] Click "..." menu → "Ban User"
+   - [ ] Verify: Ban reason dialog appears
+   - [ ] Enter reason: "Test ban - spam violation"
+   - [ ] Click "Confirm"
+   - [ ] Verify: User status shows as "Banned"
+   - [ ] Logout and login with that user account
+   - [ ] Verify: User cannot login OR sees "Account banned" message
+
+7. **Unban User**
+   - [ ] Find the banned user in admin panel
+   - [ ] Click "..." menu → "Unban User"
+   - [ ] Click "Confirm"
+   - [ ] Verify: Ban status is removed
+   - [ ] Logout and login with that user account
+   - [ ] Verify: User can now login successfully
+
+**Expected Results:**
+- ✅ User search works correctly
+- ✅ Role changes persist to Firestore
+- ✅ Promoted users immediately gain admin access
+- ✅ Banned users cannot login
+- ✅ Unbanned users can login again
+
+---
+
+### E. Analytics Dashboard Testing
+
+**Page:** `/admin` (default admin page)
+
+**Test Cases:**
+
+1. **Platform Metrics Display**
+   - [ ] Navigate to `/admin`
+   - [ ] Verify: Dashboard loads with metric cards
+   - [ ] Check "Total Campaigns" card
+   - [ ] Verify: Number matches actual campaign count
+   - [ ] Check "Total Users" card
+   - [ ] Verify: Number matches actual user count
+   - [ ] Check "Total Reports" card
+   - [ ] Verify: Number matches actual report count
+
+2. **Campaign Type Breakdown**
+   - [ ] Find "Campaign Types" section
+   - [ ] Verify: Shows Frame count
+   - [ ] Verify: Shows Background count
+   - [ ] Verify: Total = Frames + Backgrounds
+   - [ ] Create a new frame campaign (if possible)
+   - [ ] Refresh admin dashboard
+   - [ ] Verify: Frame count increases by 1
+
+3. **User Role Breakdown**
+   - [ ] Find "User Roles" section
+   - [ ] Verify: Shows admin count
+   - [ ] Verify: Shows regular user count
+   - [ ] Verify: Shows banned user count (if any)
+   - [ ] Make a user admin (from Users section)
+   - [ ] Refresh dashboard
+   - [ ] Verify: Admin count increases
+
+4. **Report Status Breakdown**
+   - [ ] Find "Report Status" section
+   - [ ] Verify: Shows pending count
+   - [ ] Verify: Shows reviewed count
+   - [ ] Verify: Shows resolved count
+   - [ ] Verify: Shows dismissed count
+   - [ ] Resolve a pending report
+   - [ ] Refresh dashboard
+   - [ ] Verify: Pending decreases, Resolved increases
+
+5. **Engagement Metrics**
+   - [ ] Find "Engagement" section
+   - [ ] Verify: Shows total supports count
+   - [ ] Verify: Shows average supports per campaign
+   - [ ] Download a campaign (as regular user)
+   - [ ] Refresh admin dashboard
+   - [ ] Verify: Total supports increases
+
+6. **Top Reported Campaigns**
+   - [ ] Find "Top Reported Campaigns" table
+   - [ ] Verify: Shows campaigns with most reports
+   - [ ] Verify: Sorted by report count (highest first)
+   - [ ] Verify: Shows campaign title and report count
+   - [ ] Submit a new report for a campaign
+   - [ ] Refresh dashboard
+   - [ ] Verify: Report count for that campaign increases
+
+7. **Performance Check**
+   - [ ] Open browser DevTools → Network tab
+   - [ ] Refresh `/admin` page
+   - [ ] Check `/api/admin/analytics` request
+   - [ ] Verify: Response time is < 3 seconds
+   - [ ] Check response data format
+   - [ ] Verify: All counts are numbers (not null/undefined)
+
+**Expected Results:**
+- ✅ All metrics display accurate real-time data
+- ✅ Counts update when underlying data changes
+- ✅ Aggregation queries perform well (< 3s response time)
+- ✅ No null/undefined errors in metrics
+
+---
+
+### F. Admin Utilities Testing
+
+**Components to Test:**
+
+1. **AdminActionButton Component**
+   - [ ] Find any admin action button (e.g., "Remove Campaign")
+   - [ ] Click the button
+   - [ ] Verify: Loading spinner appears during action
+   - [ ] Verify: Button is disabled while loading
+   - [ ] Verify: Success/error state shows after completion
+   - [ ] Test a button with confirmation dialog
+   - [ ] Verify: Confirmation modal appears before action
+   - [ ] Click "Cancel"
+   - [ ] Verify: Action is not executed
+
+2. **Helper Functions (Visual Check)**
+   - [ ] Navigate to `/admin/reports`
+   - [ ] Verify: Report reasons show as "Inappropriate Content" (not "inappropriate")
+   - [ ] Verify: Dates are formatted as "Oct 08, 2025" format
+   - [ ] Check status badges
+   - [ ] Verify: Colors are consistent (pending=yellow, resolved=green, etc.)
+
+3. **Validation Functions (Error Prevention)**
+   - [ ] Try to update a report status with invalid value (use DevTools console)
+   - [ ] Verify: Validation prevents invalid status
+   - [ ] Try to ban a user without reason
+   - [ ] Verify: Error message requires ban reason
+
+**Expected Results:**
+- ✅ Action buttons show proper loading states
+- ✅ Confirmation dialogs prevent accidental actions
+- ✅ Helper functions format data consistently
+- ✅ Validation prevents invalid inputs
+
+---
+
+### G. Mobile Responsiveness Testing
+
+**Test on Mobile Device or Browser DevTools Mobile View:**
+
+1. **Admin Sidebar**
+   - [ ] Open `/admin` on mobile
+   - [ ] Verify: Sidebar is collapsible or responsive
+   - [ ] Navigate between sections
+   - [ ] Verify: Navigation works smoothly
+
+2. **Tables on Mobile**
+   - [ ] Open `/admin/reports` on mobile
+   - [ ] Verify: Table is horizontally scrollable OR stacks vertically
+   - [ ] Check `/admin/users` table
+   - [ ] Verify: All columns are accessible
+
+3. **Modals and Panels**
+   - [ ] Open report details panel on mobile
+   - [ ] Verify: Panel takes full screen or adapts to mobile width
+   - [ ] Open user details modal
+   - [ ] Verify: Modal is readable and functional
+
+**Expected Results:**
+- ✅ Admin dashboard is usable on mobile devices
+- ✅ Tables are scrollable or responsive
+- ✅ Modals and panels work on small screens
+
+---
+
+### H. Security Testing
+
+**Critical Security Checks:**
+
+1. **API Authorization**
+   - [ ] Open browser DevTools → Console
+   - [ ] Logout from admin account
+   - [ ] Try to call: `fetch('/api/admin/reports')`
+   - [ ] Verify: Returns 401 Unauthorized
+   - [ ] Login as regular user (non-admin)
+   - [ ] Try to call: `fetch('/api/admin/analytics')`
+   - [ ] Verify: Returns 403 Forbidden (not admin)
+
+2. **Direct URL Access**
+   - [ ] Logout completely
+   - [ ] Try to access: `/admin/campaigns`
+   - [ ] Verify: Access is blocked
+   - [ ] Login as non-admin user
+   - [ ] Try to access: `/admin/users`
+   - [ ] Verify: Access is blocked
+
+3. **Role Manipulation Test**
+   - [ ] As regular user, open Firestore
+   - [ ] Try to manually update your own `role` field to "admin"
+   - [ ] Verify: Firestore rules prevent this (or changes don't grant access)
+   - [ ] Only admins should be able to change roles
+
+**Expected Results:**
+- ✅ All admin API endpoints reject non-admin users
+- ✅ Direct URL access is blocked for non-admins
+- ✅ Users cannot self-promote to admin role
+- ✅ Token-based authentication works correctly
+
+---
+
+### I. Error Handling Testing
+
+**Test Error States:**
+
+1. **Network Errors**
+   - [ ] Open DevTools → Network tab
+   - [ ] Set throttling to "Offline"
+   - [ ] Try to load `/admin/reports`
+   - [ ] Verify: Error message appears
+   - [ ] Re-enable network
+   - [ ] Verify: Page recovers
+
+2. **Empty States**
+   - [ ] Create a new admin account with no data
+   - [ ] Navigate to `/admin/reports`
+   - [ ] Verify: Shows "No reports found" message (not blank page)
+   - [ ] Navigate to `/admin/campaigns`
+   - [ ] Verify: Shows empty state message
+
+3. **Loading States**
+   - [ ] Refresh `/admin/analytics`
+   - [ ] Watch for loading indicators
+   - [ ] Verify: Loading spinners or skeletons appear
+   - [ ] Verify: Data loads and replaces loading state
+
+**Expected Results:**
+- ✅ Network errors show user-friendly messages
+- ✅ Empty states are handled gracefully
+- ✅ Loading states prevent layout shift
+
+---
+
+### J. Performance Testing
+
+**Measure Performance:**
+
+1. **Page Load Time**
+   - [ ] Clear browser cache
+   - [ ] Open DevTools → Performance tab
+   - [ ] Record page load for `/admin`
+   - [ ] Verify: Page loads in < 3 seconds
+   - [ ] Check for any blocking scripts
+
+2. **API Response Time**
+   - [ ] Open DevTools → Network tab
+   - [ ] Navigate to `/admin/analytics`
+   - [ ] Check `/api/admin/analytics` request
+   - [ ] Verify: Response time < 3 seconds (even with 100+ campaigns)
+
+3. **Memory Leaks**
+   - [ ] Open DevTools → Memory tab
+   - [ ] Take heap snapshot
+   - [ ] Navigate between admin sections multiple times
+   - [ ] Take another heap snapshot
+   - [ ] Verify: Memory usage is stable (no major leaks)
+
+**Expected Results:**
+- ✅ Admin pages load quickly
+- ✅ API responses are fast
+- ✅ No memory leaks during navigation
+
+---
+
+## 📝 Testing Summary Checklist
+
+Before marking admin dashboard as production-ready, ensure:
+
+- [ ] ✅ Admin authentication works correctly
+- [ ] ✅ All API endpoints are protected
+- [ ] ✅ Reports management is fully functional
+- [ ] ✅ Campaign moderation works (status updates, deletion)
+- [ ] ✅ User management works (role assignment, banning)
+- [ ] ✅ Analytics dashboard shows accurate metrics
+- [ ] ✅ Mobile responsiveness is acceptable
+- [ ] ✅ Security tests pass (no unauthorized access)
+- [ ] ✅ Error states are handled gracefully
+- [ ] ✅ Performance is acceptable (< 3s load times)
+
+---
+
+## 🐛 Bug Reporting
+
+If you find any issues during testing, note them here:
+
+**Bug Template:**
+```
+**Issue:** [Brief description]
+**Steps to Reproduce:**
+1. [Step 1]
+2. [Step 2]
+3. [Expected vs Actual]
+
+**Severity:** Critical / High / Medium / Low
+**Browser:** Chrome/Firefox/Safari/Mobile
+**Screenshot:** [If applicable]
+```
+
+---
+
+## ✅ Sign-Off
+
+**Tested By:** _________________  
+**Date:** _________________  
+**Status:** Pass / Fail / Needs Fixes  
+**Notes:** _________________
+
+---
+
+**End of Testing Checklist**
