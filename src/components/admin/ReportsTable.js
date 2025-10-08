@@ -1,54 +1,14 @@
 "use client";
 
 import { useState } from "react";
+import { 
+  formatReportReason, 
+  getReportStatusColor, 
+  formatTimestamp 
+} from "@/utils/admin/adminHelpers";
 
 export default function ReportsTable({ reports, loading, onSelectReport, onStatusChange }) {
   const [selectedReportId, setSelectedReportId] = useState(null);
-
-  const getStatusColor = (status) => {
-    switch (status) {
-      case 'pending':
-        return 'bg-yellow-100 text-yellow-800';
-      case 'reviewed':
-        return 'bg-blue-100 text-blue-800';
-      case 'resolved':
-        return 'bg-green-100 text-green-800';
-      case 'dismissed':
-        return 'bg-gray-100 text-gray-800';
-      default:
-        return 'bg-gray-100 text-gray-800';
-    }
-  };
-
-  const getReasonText = (reason) => {
-    switch (reason) {
-      case 'inappropriate':
-        return 'Inappropriate Content';
-      case 'spam':
-        return 'Spam';
-      case 'copyright':
-        return 'Copyright Violation';
-      case 'other':
-        return 'Other';
-      default:
-        return reason;
-    }
-  };
-
-  const formatDate = (dateString) => {
-    if (!dateString) return '-';
-    try {
-      return new Date(dateString).toLocaleDateString('en-US', {
-        year: 'numeric',
-        month: 'short',
-        day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit',
-      });
-    } catch {
-      return '-';
-    }
-  };
 
   const handleRowClick = (report) => {
     setSelectedReportId(report.id);
@@ -143,7 +103,7 @@ export default function ReportsTable({ reports, loading, onSelectReport, onStatu
                   </div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="text-sm text-gray-900">{getReasonText(report.reason)}</div>
+                  <div className="text-sm text-gray-900">{formatReportReason(report.reason)}</div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
                   <div className="text-sm text-gray-900">
@@ -151,12 +111,12 @@ export default function ReportsTable({ reports, loading, onSelectReport, onStatu
                   </div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
-                  <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(report.status)}`}>
+                  <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getReportStatusColor(report.status)}`}>
                     {report.status}
                   </span>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  {formatDate(report.createdAt)}
+                  {formatTimestamp(report.createdAt, true)}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                   <button

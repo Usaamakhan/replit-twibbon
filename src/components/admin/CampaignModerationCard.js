@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
+import { getModerationStatusColor } from "@/utils/admin/adminHelpers";
 
 export default function CampaignModerationCard({ campaign, onUpdate }) {
   const { user } = useAuth();
@@ -10,19 +11,6 @@ export default function CampaignModerationCard({ campaign, onUpdate }) {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deleteReason, setDeleteReason] = useState('');
   const [updateError, setUpdateError] = useState(null);
-
-  const getModerationStatusColor = (status) => {
-    switch (status) {
-      case 'active':
-        return 'bg-green-100 text-green-800';
-      case 'under-review':
-        return 'bg-yellow-100 text-yellow-800';
-      case 'removed':
-        return 'bg-red-100 text-red-800';
-      default:
-        return 'bg-gray-100 text-gray-800';
-    }
-  };
 
   const handleModerationChange = async (newStatus, reason = '') => {
     if (!user) return;

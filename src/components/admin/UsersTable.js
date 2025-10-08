@@ -1,28 +1,10 @@
 "use client";
 
 import { useState } from "react";
+import { getRoleBadgeColor, formatTimestamp } from "@/utils/admin/adminHelpers";
 
 export default function UsersTable({ users, loading, onSelectUser, searchTerm, onSearchChange }) {
   const [selectedUserId, setSelectedUserId] = useState(null);
-
-  const getRoleBadgeColor = (role) => {
-    return role === 'admin' 
-      ? 'bg-purple-100 text-purple-800' 
-      : 'bg-gray-100 text-gray-800';
-  };
-
-  const formatDate = (dateString) => {
-    if (!dateString) return '-';
-    try {
-      return new Date(dateString).toLocaleDateString('en-US', {
-        year: 'numeric',
-        month: 'short',
-        day: 'numeric',
-      });
-    } catch {
-      return '-';
-    }
-  };
 
   const handleRowClick = (user) => {
     setSelectedUserId(user.id);
@@ -141,7 +123,7 @@ export default function UsersTable({ users, loading, onSelectUser, searchTerm, o
                   {user.totalSupports || 0}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  {formatDate(user.createdAt)}
+                  {formatTimestamp(user.createdAt)}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                   <button

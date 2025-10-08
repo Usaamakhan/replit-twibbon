@@ -275,10 +275,11 @@ Reusable UI components organized by feature.
 
 - **`AdminSidebar.js`** - Admin dashboard sidebar navigation
 - **`AdminHeader.js`** - Admin dashboard header with breadcrumbs
-- **`ReportsTable.js`** - Reports data table with filters
+- **`AdminActionButton.js`** - Reusable action button with loading/confirm dialog
+- **`ReportsTable.js`** - Reports data table with filters (uses adminHelpers)
 - **`ReportDetailsPanel.js`** - Report details slide-out panel
-- **`CampaignModerationCard.js`** - Campaign card with moderation actions
-- **`UsersTable.js`** - Users data table with search
+- **`CampaignModerationCard.js`** - Campaign card with moderation actions (uses adminHelpers)
+- **`UsersTable.js`** - Users data table with search (uses adminHelpers)
 - **`UserDetailsModal.js`** - User details modal with admin actions
 
 ### Utility Components
@@ -371,6 +372,25 @@ Helper functions and algorithms.
 - **`imageTransform.js`** - ImageKit.io CDN transformations
   - Thumbnail, preview, avatar, banner presets
   - WebP conversion and quality optimization
+
+### Admin Utilities
+
+- **`admin/adminHelpers.js`** - Admin dashboard formatting utilities
+  - `formatReportReason()` - Human-readable report reasons
+  - `getModerationStatusColor()` - Badge colors for moderation status
+  - `getReportStatusColor()` - Badge colors for report status
+  - `getRoleBadgeColor()` - Badge colors for user roles
+  - `formatTimestamp()` - Date formatting with optional time
+  - `truncateText()` - Text truncation with ellipsis
+  - `formatNumber()` - Number formatting with thousands separator
+
+- **`admin/adminValidation.js`** - Admin input validation
+  - `validateReportStatus()` - Validate report status values
+  - `validateModerationStatus()` - Validate moderation status values
+  - `validateUserRole()` - Validate user role values
+  - `validateBanReason()` - Validate ban reason is provided
+  - `validateReportAction()` - Validate report action types
+  - `getValidationError()` - Get validation error message
 
 ### General Utilities
 
