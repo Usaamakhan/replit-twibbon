@@ -340,67 +340,90 @@ export default function CampaignUploadPage() {
 
       {/* Report Modal */}
       {showReportModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg max-w-md w-full p-6">
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">Report Campaign</h2>
-            
-            <form onSubmit={handleReportSubmit}>
-              <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Reason <span className="text-red-500">*</span>
-                </label>
-                <select
-                  value={reportReason}
-                  onChange={(e) => setReportReason(e.target.value)}
-                  required
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all"
-                >
-                  <option value="">Select a reason</option>
-                  <option value="inappropriate">Inappropriate Content</option>
-                  <option value="spam">Spam</option>
-                  <option value="copyright">Copyright Violation</option>
-                  <option value="other">Other</option>
-                </select>
-              </div>
+        <>
+          {/* Backdrop with blur */}
+          <div 
+            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 transition-opacity"
+            onClick={() => {
+              setShowReportModal(false);
+              setReportReason('');
+              setReportDetails('');
+              setError('');
+            }}
+          />
+          
+          {/* Modal */}
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-none">
+            <div 
+              className="bg-white rounded-lg max-w-md w-full p-6 pointer-events-auto"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <h2 className="text-2xl font-bold text-gray-900 mb-4">Report Campaign</h2>
               
-              <div className="mb-6">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Additional Details (Optional)
-                </label>
-                <textarea
-                  value={reportDetails}
-                  onChange={(e) => setReportDetails(e.target.value)}
-                  rows={3}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all resize-none"
-                  placeholder="Provide more context about your report..."
-                />
-              </div>
+              {error && (
+                <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-600 text-sm">
+                  {error}
+                </div>
+              )}
               
-              <div className="flex gap-3">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setShowReportModal(false);
-                    setReportReason('');
-                    setReportDetails('');
-                    setError('');
-                  }}
-                  className="btn-base btn-secondary flex-1 py-2 font-medium"
-                  disabled={reportSubmitting}
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="btn-base bg-red-500 hover:bg-red-600 text-white flex-1 py-2 font-medium"
-                  disabled={reportSubmitting || !reportReason}
-                >
-                  {reportSubmitting ? 'Submitting...' : 'Submit Report'}
-                </button>
-              </div>
-            </form>
+              <form onSubmit={handleReportSubmit}>
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Reason <span className="text-red-500">*</span>
+                  </label>
+                  <select
+                    value={reportReason}
+                    onChange={(e) => setReportReason(e.target.value)}
+                    required
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all text-gray-900 bg-white"
+                  >
+                    <option value="" className="text-gray-400">Select a reason</option>
+                    <option value="inappropriate" className="text-gray-900">Inappropriate Content</option>
+                    <option value="spam" className="text-gray-900">Spam</option>
+                    <option value="copyright" className="text-gray-900">Copyright Violation</option>
+                    <option value="other" className="text-gray-900">Other</option>
+                  </select>
+                </div>
+                
+                <div className="mb-6">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Additional Details (Optional)
+                  </label>
+                  <textarea
+                    value={reportDetails}
+                    onChange={(e) => setReportDetails(e.target.value)}
+                    rows={3}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all resize-none text-gray-900 bg-white"
+                    placeholder="Provide more context about your report..."
+                  />
+                </div>
+                
+                <div className="flex gap-3">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowReportModal(false);
+                      setReportReason('');
+                      setReportDetails('');
+                      setError('');
+                    }}
+                    className="btn-base btn-secondary flex-1 py-2 font-medium"
+                    disabled={reportSubmitting}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="btn-base bg-red-500 hover:bg-red-600 text-white flex-1 py-2 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                    disabled={reportSubmitting || !reportReason}
+                  >
+                    {reportSubmitting ? 'Submitting...' : 'Submit Report'}
+                  </button>
+                </div>
+              </form>
+            </div>
           </div>
-        </div>
+        </>
       )}
     </div>
   );
