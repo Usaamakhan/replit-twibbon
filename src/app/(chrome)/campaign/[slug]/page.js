@@ -156,14 +156,6 @@ export default function CampaignUploadPage() {
       
       if (result.success) {
         setReportSuccess(true);
-        
-        // Auto-close modal after 2 seconds
-        setTimeout(() => {
-          setShowReportModal(false);
-          setReportReason('');
-          setReportDetails('');
-          setReportSuccess(false);
-        }, 2000);
       } else {
         setError(result.error || 'Failed to submit report');
       }
@@ -393,9 +385,21 @@ export default function CampaignUploadPage() {
                     </svg>
                   </div>
                   <h3 className="text-xl font-bold text-gray-900 mb-2">Report Submitted</h3>
-                  <p className="text-gray-600">
+                  <p className="text-gray-600 mb-6">
                     Thank you for your report. We will review it shortly.
                   </p>
+                  <button
+                    onClick={() => {
+                      setShowReportModal(false);
+                      setReportReason('');
+                      setReportDetails('');
+                      setReportSuccess(false);
+                      setError('');
+                    }}
+                    className="btn-base btn-primary px-8 py-2 font-medium"
+                  >
+                    OK
+                  </button>
                 </div>
               ) : (
                 // Report Form
