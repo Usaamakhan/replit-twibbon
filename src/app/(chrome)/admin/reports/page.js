@@ -1,0 +1,130 @@
+"use client";
+
+import { useState, useEffect } from "react";
+import { useAuth } from "@/hooks/useAuth";
+import ReportsTable from "@/components/admin/ReportsTable";
+import ReportDetailsPanel from "@/components/admin/ReportDetailsPanel";
+
+export default function AdminReportsPage() {
+  const { user } = useAuth();
+  const [reports, setReports] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [selectedReport, setSelectedReport] = useState(null);
+  const [filters, setFilters] = useState({
+    status: 'all',
+    reason: 'all',
+  });
+
+  const fetchReports = async () => {
+    if (!user) return;
+
+    setLoading(true);
+    try {
+      const token = await user.getIdToken();
+      
+      const params = new URLSearchParams();
+      if (filters.status !== 'all') params.append('status', filters.status);
+      if (filters.reason !== 'all') params.append('reason', filters.reason);
+      
+      const response = await fetch(`/api/admin/reports?${params.toString()}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch reports');
+      }
+
+      const data = await response.json();
+      setReports(data.data || []);
+    } catch (error) {
+      console.error('Error fetching reports:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (user) {
+      fetchReports();
+    }
+  }, [user, filters]);
+
+  const handleSelectReport = (report) => {
+    setSelectedReport(report);
+  };
+
+  const handleClosePanel = () => {
+    setSelectedReport(null);
+  };
+
+  const handleReportUpdate = (updatedReport) => {
+    setReports(prevReports =>
+      prevReports.map(report =>
+        report.id === updatedReport.id ? { ...report, ...updatedReport } : report
+      )
+    );
+    setSelectedReport(null);
+    fetchReports();
+  };
+
+  return (
+    <div className="space-y-6">
+      <div className="bg-white rounded-lg shadow p-6">
+        <h2 className="text-lg font-semibold text-gray-900 mb-4">Filter Reports</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label htmlFor="status-filter" className="block text-sm font-medium text-gray-700 mb-2">
+              Status
+            </label>
+            <select
+              id="status-filter"
+              value={filters.status}
+              onChange={(e) => setFilters({ ...filters, status: e.target.value })}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-500"
+            >
+              <option value="all">All Statuses</option>
+              <option value="pending">Pending</option>
+              <option value="reviewed">Reviewed</option>
+              <option value="resolved">Resolved</option>
+              <option value="dismissed">Dismissed</option>
+            </select>
+          </div>
+
+          <div>
+            <label htmlFor="reason-filter" className="block text-sm font-medium text-gray-700 mb-2">
+              Reason
+            </label>
+            <select
+              id="reason-filter"
+              value={filters.reason}
+              onChange={(e) => setFilters({ ...filters, reason: e.target.value })}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-500"
+            >
+              <option value="all">All Reasons</option>
+              <option value="inappropriate">Inappropriate Content</option>
+              <option value="spam">Spam</option>
+              <option value="copyright">Copyright Violation</option>
+              <option value="other">Other</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <ReportsTable
+        reports={reports}
+        loading={loading}
+        onSelectReport={handleSelectReport}
+      />
+
+      {selectedReport && (
+        <ReportDetailsPanel
+          report={selectedReport}
+          onClose={handleClosePanel}
+          onUpdate={handleReportUpdate}
+        />
+      )}
+    </div>
+  );
+}
