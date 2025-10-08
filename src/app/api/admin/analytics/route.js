@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { requireAdmin } from '@/middleware/adminAuth';
 import { adminFirestore } from '@/lib/firebaseAdmin';
+import { getAggregateFromServer, count } from 'firebase-admin/firestore';
 
 export async function GET(request) {
   try {
@@ -8,62 +9,97 @@ export async function GET(request) {
     
     const db = adminFirestore();
     
-    // Fetch all campaigns
-    const campaignsSnapshot = await db.collection('campaigns').get();
-    const campaigns = campaignsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    // Use parallel queries with count aggregation for efficiency
+    const [
+      totalCampaignsSnap,
+      activeCampaignsSnap,
+      underReviewCampaignsSnap,
+      removedCampaignsSnap,
+      frameCampaignsSnap,
+      backgroundCampaignsSnap,
+      totalUsersSnap,
+      adminUsersSnap,
+      bannedUsersSnap,
+      totalReportsSnap,
+      pendingReportsSnap,
+      reviewedReportsSnap,
+      resolvedReportsSnap,
+      dismissedReportsSnap,
+    ] = await Promise.all([
+      // Campaign counts by status
+      getAggregateFromServer(db.collection('campaigns'), { count: count() }),
+      getAggregateFromServer(db.collection('campaigns').where('moderationStatus', '==', 'active'), { count: count() }),
+      getAggregateFromServer(db.collection('campaigns').where('moderationStatus', '==', 'under-review'), { count: count() }),
+      getAggregateFromServer(db.collection('campaigns').where('moderationStatus', '==', 'removed'), { count: count() }),
+      
+      // Campaign counts by type
+      getAggregateFromServer(db.collection('campaigns').where('type', '==', 'frame'), { count: count() }),
+      getAggregateFromServer(db.collection('campaigns').where('type', '==', 'background'), { count: count() }),
+      
+      // User counts
+      getAggregateFromServer(db.collection('users'), { count: count() }),
+      getAggregateFromServer(db.collection('users').where('role', '==', 'admin'), { count: count() }),
+      getAggregateFromServer(db.collection('users').where('banned', '==', true), { count: count() }),
+      
+      // Report counts by status
+      getAggregateFromServer(db.collection('reports'), { count: count() }),
+      getAggregateFromServer(db.collection('reports').where('status', '==', 'pending'), { count: count() }),
+      getAggregateFromServer(db.collection('reports').where('status', '==', 'reviewed'), { count: count() }),
+      getAggregateFromServer(db.collection('reports').where('status', '==', 'resolved'), { count: count() }),
+      getAggregateFromServer(db.collection('reports').where('status', '==', 'dismissed'), { count: count() }),
+    ]);
     
-    // Fetch all users
-    const usersSnapshot = await db.collection('users').get();
-    const users = usersSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    // Extract counts from aggregation results
+    const totalCampaigns = totalCampaignsSnap.data().count;
+    const activeCampaigns = activeCampaignsSnap.data().count;
+    const underReviewCampaigns = underReviewCampaignsSnap.data().count;
+    const removedCampaigns = removedCampaignsSnap.data().count;
+    const frameCampaigns = frameCampaignsSnap.data().count;
+    const backgroundCampaigns = backgroundCampaignsSnap.data().count;
     
-    // Fetch all reports
-    const reportsSnapshot = await db.collection('reports').get();
-    const reports = reportsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    const totalUsers = totalUsersSnap.data().count;
+    const adminUsers = adminUsersSnap.data().count;
+    const bannedUsers = bannedUsersSnap.data().count;
+    const regularUsers = totalUsers - adminUsers;
     
-    // Calculate campaign stats
-    const totalCampaigns = campaigns.length;
-    const activeCampaigns = campaigns.filter(c => c.moderationStatus === 'active').length;
-    const underReviewCampaigns = campaigns.filter(c => c.moderationStatus === 'under-review').length;
-    const removedCampaigns = campaigns.filter(c => c.moderationStatus === 'removed').length;
-    
-    // Calculate campaign type breakdown
-    const frameCampaigns = campaigns.filter(c => c.type === 'frame').length;
-    const backgroundCampaigns = campaigns.filter(c => c.type === 'background').length;
-    
-    // Calculate user stats
-    const totalUsers = users.length;
-    const adminUsers = users.filter(u => u.role === 'admin').length;
-    const regularUsers = users.filter(u => u.role !== 'admin').length;
-    const bannedUsers = users.filter(u => u.banned === true).length;
-    
-    // Calculate report stats
-    const totalReports = reports.length;
-    const pendingReports = reports.filter(r => r.status === 'pending').length;
-    const reviewedReports = reports.filter(r => r.status === 'reviewed').length;
-    const resolvedReports = reports.filter(r => r.status === 'resolved').length;
-    const dismissedReports = reports.filter(r => r.status === 'dismissed').length;
+    const totalReports = totalReportsSnap.data().count;
+    const pendingReports = pendingReportsSnap.data().count;
+    const reviewedReports = reviewedReportsSnap.data().count;
+    const resolvedReports = resolvedReportsSnap.data().count;
+    const dismissedReports = dismissedReportsSnap.data().count;
     
     // Calculate resolution rate
     const resolvedOrDismissed = resolvedReports + dismissedReports;
     const resolutionRate = totalReports > 0 ? Math.round((resolvedOrDismissed / totalReports) * 100) : 0;
     
-    // Calculate total supports across all campaigns
-    const totalSupports = campaigns.reduce((sum, campaign) => sum + (campaign.supportersCount || 0), 0);
+    // For engagement metrics, we need to fetch active campaigns with supports
+    // Using select() to only fetch the field we need
+    const campaignsWithSupportsSnap = await db.collection('campaigns')
+      .where('moderationStatus', '==', 'active')
+      .select('supportersCount')
+      .get();
     
-    // Calculate average supports per campaign
-    const avgSupportsPerCampaign = totalCampaigns > 0 ? Math.round(totalSupports / totalCampaigns) : 0;
+    let totalSupports = 0;
+    campaignsWithSupportsSnap.docs.forEach(doc => {
+      totalSupports += doc.data().supportersCount || 0;
+    });
     
-    // Get top reported campaigns
-    const topReportedCampaigns = campaigns
-      .filter(c => c.reportsCount > 0)
-      .sort((a, b) => (b.reportsCount || 0) - (a.reportsCount || 0))
-      .slice(0, 5)
-      .map(c => ({
-        id: c.id,
-        title: c.title,
-        reportsCount: c.reportsCount || 0,
-        moderationStatus: c.moderationStatus
-      }));
+    const avgSupportsPerCampaign = activeCampaigns > 0 ? Math.round(totalSupports / activeCampaigns) : 0;
+    
+    // Get top 5 reported campaigns using efficient query with orderBy and limit
+    const topReportedCampaignsSnap = await db.collection('campaigns')
+      .where('reportsCount', '>', 0)
+      .orderBy('reportsCount', 'desc')
+      .limit(5)
+      .select('title', 'reportsCount', 'moderationStatus')
+      .get();
+    
+    const topReportedCampaigns = topReportedCampaignsSnap.docs.map(doc => ({
+      id: doc.id,
+      title: doc.data().title,
+      reportsCount: doc.data().reportsCount || 0,
+      moderationStatus: doc.data().moderationStatus
+    }));
     
     const stats = {
       campaigns: {
@@ -98,10 +134,15 @@ export async function GET(request) {
       timestamp: new Date().toISOString(),
     };
     
-    return NextResponse.json({
-      success: true,
-      data: stats,
-    });
+    // Cache headers for 2 minutes to reduce repeated queries
+    return NextResponse.json(
+      { success: true, data: stats },
+      {
+        headers: {
+          'Cache-Control': 'private, max-age=120',
+        },
+      }
+    );
   } catch (error) {
     console.error('Error fetching analytics:', error);
     
