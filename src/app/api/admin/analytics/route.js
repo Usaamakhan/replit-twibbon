@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server';
 import { requireAdmin } from '@/middleware/adminAuth';
 import { adminFirestore } from '@/lib/firebaseAdmin';
-import { getAggregateFromServer, count } from 'firebase-admin/firestore';
 
 export async function GET(request) {
   try {
@@ -27,26 +26,26 @@ export async function GET(request) {
       dismissedReportsSnap,
     ] = await Promise.all([
       // Campaign counts by status
-      getAggregateFromServer(db.collection('campaigns'), { count: count() }),
-      getAggregateFromServer(db.collection('campaigns').where('moderationStatus', '==', 'active'), { count: count() }),
-      getAggregateFromServer(db.collection('campaigns').where('moderationStatus', '==', 'under-review'), { count: count() }),
-      getAggregateFromServer(db.collection('campaigns').where('moderationStatus', '==', 'removed'), { count: count() }),
+      db.collection('campaigns').count().get(),
+      db.collection('campaigns').where('moderationStatus', '==', 'active').count().get(),
+      db.collection('campaigns').where('moderationStatus', '==', 'under-review').count().get(),
+      db.collection('campaigns').where('moderationStatus', '==', 'removed').count().get(),
       
       // Campaign counts by type
-      getAggregateFromServer(db.collection('campaigns').where('type', '==', 'frame'), { count: count() }),
-      getAggregateFromServer(db.collection('campaigns').where('type', '==', 'background'), { count: count() }),
+      db.collection('campaigns').where('type', '==', 'frame').count().get(),
+      db.collection('campaigns').where('type', '==', 'background').count().get(),
       
       // User counts
-      getAggregateFromServer(db.collection('users'), { count: count() }),
-      getAggregateFromServer(db.collection('users').where('role', '==', 'admin'), { count: count() }),
-      getAggregateFromServer(db.collection('users').where('banned', '==', true), { count: count() }),
+      db.collection('users').count().get(),
+      db.collection('users').where('role', '==', 'admin').count().get(),
+      db.collection('users').where('banned', '==', true).count().get(),
       
       // Report counts by status
-      getAggregateFromServer(db.collection('reports'), { count: count() }),
-      getAggregateFromServer(db.collection('reports').where('status', '==', 'pending'), { count: count() }),
-      getAggregateFromServer(db.collection('reports').where('status', '==', 'reviewed'), { count: count() }),
-      getAggregateFromServer(db.collection('reports').where('status', '==', 'resolved'), { count: count() }),
-      getAggregateFromServer(db.collection('reports').where('status', '==', 'dismissed'), { count: count() }),
+      db.collection('reports').count().get(),
+      db.collection('reports').where('status', '==', 'pending').count().get(),
+      db.collection('reports').where('status', '==', 'reviewed').count().get(),
+      db.collection('reports').where('status', '==', 'resolved').count().get(),
+      db.collection('reports').where('status', '==', 'dismissed').count().get(),
     ]);
     
     // Extract counts from aggregation results
