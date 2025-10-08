@@ -163,6 +163,7 @@ export const createUserProfile = async (user) => {
         country: '',
         bannerImage: '',
         profileImage: photoURL || '',
+        role: 'user', // Default role for new users (admin role assigned separately)
         supportersCount: 0,
         campaignsCount: 0,
         createdAt: serverTimestamp(),
