@@ -28,6 +28,7 @@ export default function CampaignUploadPage() {
   const [reportReason, setReportReason] = useState('');
   const [reportDetails, setReportDetails] = useState('');
   const [reportSubmitting, setReportSubmitting] = useState(false);
+  const [reportSuccess, setReportSuccess] = useState(false);
   const [error, setError] = useState('');
 
   // Lock body scroll when modal is open
@@ -154,10 +155,15 @@ export default function CampaignUploadPage() {
       const result = await response.json();
       
       if (result.success) {
-        setShowReportModal(false);
-        setReportReason('');
-        setReportDetails('');
-        alert('Thank you for your report. We will review it shortly.');
+        setReportSuccess(true);
+        
+        // Auto-close modal after 2 seconds
+        setTimeout(() => {
+          setShowReportModal(false);
+          setReportReason('');
+          setReportDetails('');
+          setReportSuccess(false);
+        }, 2000);
       } else {
         setError(result.error || 'Failed to submit report');
       }
@@ -378,69 +384,87 @@ export default function CampaignUploadPage() {
               className="bg-white rounded-lg max-w-md w-full p-6 pointer-events-auto"
               onClick={(e) => e.stopPropagation()}
             >
-              <h2 className="text-2xl font-bold text-gray-900 mb-4">Report Campaign</h2>
-              
-              {error && (
-                <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-600 text-sm">
-                  {error}
+              {reportSuccess ? (
+                // Success State
+                <div className="text-center py-4">
+                  <div className="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-green-100 mb-4">
+                    <svg className="h-8 w-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
+                  </div>
+                  <h3 className="text-xl font-bold text-gray-900 mb-2">Report Submitted</h3>
+                  <p className="text-gray-600">
+                    Thank you for your report. We will review it shortly.
+                  </p>
                 </div>
+              ) : (
+                // Report Form
+                <>
+                  <h2 className="text-2xl font-bold text-gray-900 mb-4">Report Campaign</h2>
+                  
+                  {error && (
+                    <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-600 text-sm">
+                      {error}
+                    </div>
+                  )}
+                  
+                  <form onSubmit={handleReportSubmit}>
+                    <div className="mb-4">
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Reason <span className="text-red-500">*</span>
+                      </label>
+                      <select
+                        value={reportReason}
+                        onChange={(e) => setReportReason(e.target.value)}
+                        required
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all text-gray-900 bg-white"
+                      >
+                        <option value="" className="text-gray-400">Select a reason</option>
+                        <option value="inappropriate" className="text-gray-900">Inappropriate Content</option>
+                        <option value="spam" className="text-gray-900">Spam</option>
+                        <option value="copyright" className="text-gray-900">Copyright Violation</option>
+                        <option value="other" className="text-gray-900">Other</option>
+                      </select>
+                    </div>
+                    
+                    <div className="mb-6">
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Additional Details (Optional)
+                      </label>
+                      <textarea
+                        value={reportDetails}
+                        onChange={(e) => setReportDetails(e.target.value)}
+                        rows={3}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all resize-none text-gray-900 bg-white"
+                        placeholder="Provide more context about your report..."
+                      />
+                    </div>
+                    
+                    <div className="flex gap-3">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setShowReportModal(false);
+                          setReportReason('');
+                          setReportDetails('');
+                          setError('');
+                        }}
+                        className="btn-base btn-secondary flex-1 py-2 font-medium"
+                        disabled={reportSubmitting}
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        type="submit"
+                        className="btn-base bg-red-500 hover:bg-red-600 text-white flex-1 py-2 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                        disabled={reportSubmitting || !reportReason}
+                      >
+                        {reportSubmitting ? 'Submitting...' : 'Submit Report'}
+                      </button>
+                    </div>
+                  </form>
+                </>
               )}
-              
-              <form onSubmit={handleReportSubmit}>
-                <div className="mb-4">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Reason <span className="text-red-500">*</span>
-                  </label>
-                  <select
-                    value={reportReason}
-                    onChange={(e) => setReportReason(e.target.value)}
-                    required
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all text-gray-900 bg-white"
-                  >
-                    <option value="" className="text-gray-400">Select a reason</option>
-                    <option value="inappropriate" className="text-gray-900">Inappropriate Content</option>
-                    <option value="spam" className="text-gray-900">Spam</option>
-                    <option value="copyright" className="text-gray-900">Copyright Violation</option>
-                    <option value="other" className="text-gray-900">Other</option>
-                  </select>
-                </div>
-                
-                <div className="mb-6">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Additional Details (Optional)
-                  </label>
-                  <textarea
-                    value={reportDetails}
-                    onChange={(e) => setReportDetails(e.target.value)}
-                    rows={3}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all resize-none text-gray-900 bg-white"
-                    placeholder="Provide more context about your report..."
-                  />
-                </div>
-                
-                <div className="flex gap-3">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setShowReportModal(false);
-                      setReportReason('');
-                      setReportDetails('');
-                      setError('');
-                    }}
-                    className="btn-base btn-secondary flex-1 py-2 font-medium"
-                    disabled={reportSubmitting}
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    className="btn-base bg-red-500 hover:bg-red-600 text-white flex-1 py-2 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
-                    disabled={reportSubmitting || !reportReason}
-                  >
-                    {reportSubmitting ? 'Submitting...' : 'Submit Report'}
-                  </button>
-                </div>
-              </form>
             </div>
           </div>
         </>
