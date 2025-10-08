@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { getCampaignBySlug, createReport } from '../../../../lib/firestore';
+import { getCampaignBySlug } from '../../../../lib/firestore';
 import { useCampaignSession } from '../../../../contexts/CampaignSessionContext';
 import { useAuth } from '../../../../hooks/useAuth';
 import { getCampaignPreview, getProfileAvatar } from '../../../../utils/imageTransform';
@@ -143,9 +143,15 @@ export default function CampaignUploadPage() {
         details: reportDetails
       };
       
-      console.log('Submitting report:', reportData);
-      const result = await createReport(reportData);
-      console.log('Report result:', result);
+      const response = await fetch('/api/reports/submit', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(reportData),
+      });
+      
+      const result = await response.json();
       
       if (result.success) {
         setShowReportModal(false);
@@ -153,15 +159,13 @@ export default function CampaignUploadPage() {
         setReportDetails('');
         alert('Thank you for your report. We will review it shortly.');
       } else {
-        const errorMessage = result.error || 'Failed to submit report';
-        console.error('Report submission failed:', errorMessage);
-        setError(errorMessage);
+        setError(result.error || 'Failed to submit report');
       }
       
       setReportSubmitting(false);
     } catch (error) {
       console.error('Error submitting report:', error);
-      setError(error.message || 'Failed to submit report. Please try again.');
+      setError('Failed to submit report. Please try again.');
       setReportSubmitting(false);
     }
   };

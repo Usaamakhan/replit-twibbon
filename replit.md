@@ -183,3 +183,25 @@ Integrated ImageKit.io CDN for image transformation and bandwidth optimization a
   - Triggered by "Create Campaign" buttons in Hero and MobileMenu
   - Compact design with 2-column grid layout
   - Navigates to `/create/frame` or `/create/background` on selection
+  - Includes body scroll lock when modal is open
+
+- **Report Modal**: Campaign reporting system with scroll lock
+  - Submit reports via server-side API (`/api/reports/submit`)
+  - Body scroll lock when modal is active
+  - Atomic transaction: creates report + updates campaign reportsCount
+  - Auto-flags campaigns for review at 3+ reports
+
+### Admin Dashboard (Phase 2 - October 8, 2025)
+Comprehensive admin panel for platform moderation and management:
+
+**Features Implemented:**
+- **Reports Management** (`/admin/reports`) - Review and action user reports
+- **Campaign Moderation** (`/admin/campaigns`) - Review, approve, or remove campaigns
+- **User Management** (`/admin/users`) - Manage user roles and bans
+- **Analytics Dashboard** (`/admin`) - Platform-wide statistics
+
+**Admin UI Features:**
+- Responsive sidebar navigation with mobile overlay
+- Filter fields with proper text visibility (text-gray-900)
+- Role-based access control (admin only)
+- Z-index hierarchy: backdrop (30) → sidebar (40) → toggle (50)
