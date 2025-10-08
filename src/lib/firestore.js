@@ -1172,59 +1172,6 @@ export const getTopCreators = async (filters = {}) => {
 };
 
 // ==================== ADMIN FUNCTIONS ====================
-
-// Set user role (admin only - must be called from server-side with admin verification)
-export const setUserRole = async (userId, role, adminId) => {
-  if (!userId) {
-    return { success: false, error: 'User ID is required' };
-  }
-  
-  if (!role || !['admin', 'user'].includes(role)) {
-    return { success: false, error: 'Role must be either "admin" or "user"' };
-  }
-  
-  if (!adminId) {
-    return { success: false, error: 'Admin ID is required for authorization' };
-  }
-  
-  const database = getDatabase();
-  if (!database) {
-    return { success: false, error: 'Database not available' };
-  }
-  
-  try {
-    // Verify admin user has admin role
-    const adminDocRef = doc(database, 'users', adminId);
-    const adminDoc = await getDoc(adminDocRef);
-    
-    if (!adminDoc.exists()) {
-      return { success: false, error: 'Admin user not found' };
-    }
-    
-    const adminData = adminDoc.data();
-    if (adminData.role !== 'admin') {
-      return { success: false, error: 'Unauthorized: Only admins can change user roles' };
-    }
-    
-    // Update target user's role
-    const userDocRef = doc(database, 'users', userId);
-    const userDoc = await getDoc(userDocRef);
-    
-    if (!userDoc.exists()) {
-      return { success: false, error: 'User not found' };
-    }
-    
-    await updateDoc(userDocRef, {
-      role: role,
-      updatedAt: serverTimestamp(),
-    });
-    
-    return { success: true, message: `User role updated to ${role}` };
-  } catch (error) {
-    if (process.env.NODE_ENV === 'development') {
-      console.error('Error setting user role:', error);
-    }
-    const errorResponse = await handleFirebaseError(error, 'firestore', { returnType: 'string' });
-    return { success: false, error: errorResponse || 'Failed to update user role. Please try again.' };
-  }
-};
+// Note: Admin role management is handled server-side via API routes
+// See: /api/admin/users/[userId]/role for setUserRole implementation
+// This ensures admin operations use Firebase Admin SDK and bypass client-side security rules
