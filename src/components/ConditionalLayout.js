@@ -22,7 +22,9 @@ export default function ConditionalLayout({ children }) {
   const { hideChrome } = useLayoutVisibility();
   
   // Check if current page should exclude header/footer
-  const shouldExcludeLayout = hideChrome || EXCLUDED_PAGES.includes(pathname);
+  const shouldExcludeLayout = hideChrome || 
+    EXCLUDED_PAGES.includes(pathname) || 
+    pathname.startsWith('/admin');
   
   // If layout should be excluded, just return children
   if (shouldExcludeLayout) {
