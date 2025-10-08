@@ -176,58 +176,53 @@ Build comprehensive admin dashboard for platform moderation, user management, an
 
 #### 3. Reports Table & API
 **Priority:** High (Core moderation feature)
+**Status:** ✅ Completed (October 08, 2025)
 
 **Tasks:**
-- [ ] Create `getAllReportsAdmin()` function in `firestore.js`
-  - Server-side query (uses adminFirestore)
+- [x] Create admin reports API with server-side logic
+  - Server-side query using adminFirestore (in API routes)
   - Support filters: status, campaignId, reason
-  - Include campaign and reporter details
-  - Pagination support (limit, offset)
+  - Include campaign and reporter details with joins
+  - Pagination support (limit parameter)
 
-- [ ] Create `updateReportAdmin()` function in `firestore.js`
-  - Update report status
-  - Record action taken (removed, warned, no-action)
-  - Track reviewedBy (admin user ID)
-  - Set reviewedAt timestamp
+- [x] Build GET `/api/admin/reports` endpoint
+  - Admin auth via requireAdmin middleware
+  - Returns reports with campaign previews and creator info
+  - Supports status and reason filtering
+  - Timestamp conversion for client compatibility
 
-- [ ] Build GET `/api/admin/reports` endpoint
-  - Call `getAllReportsAdmin()` with filters
-  - Require admin auth via middleware
-  - Return reports with campaign previews
-  - Support pagination
+- [x] Build PATCH `/api/admin/reports/[reportId]` endpoint
+  - Admin auth via requireAdmin middleware
+  - Updates report status and action
+  - Tracks reviewedBy (admin user ID) and reviewedAt
+  - Validates status and action values
 
-- [ ] Build PATCH `/api/admin/reports/[reportId]` endpoint
-  - Call `updateReportAdmin()` with updates
-  - Require admin auth
-  - Validate status and action values
-  - Return updated report
-
-- [ ] Create `ReportsTable` component
-  - Table with columns: ID, Campaign, Reason, Reporter, Status, Date, Actions
-  - Filter dropdowns: Status, Reason
-  - Pagination controls
-  - Click row → Show details panel
+- [x] Create `ReportsTable` component
+  - Table with columns: Campaign, Reason, Reporter, Status, Date, Actions
+  - Campaign thumbnail preview in table
+  - Color-coded status badges
+  - Click row to show details panel
   - Loading and empty states
 
-- [ ] Create `ReportDetailsPanel` component
-  - Side panel with full report info
-  - Campaign preview (thumbnail + metadata)
-  - Action buttons: Dismiss, Remove Campaign, Warn Creator
+- [x] Create `ReportDetailsPanel` component
+  - Slide-out panel with full report info
+  - Campaign preview (image + metadata + link)
+  - Action buttons: Dismiss, Warn Creator, Remove Campaign
+  - Real-time status updates
   - Close button
 
-- [ ] Build `/admin/reports` page
-  - Render ReportsTable with filters
-  - Fetch reports from API
-  - Handle filter changes
-  - Show ReportDetailsPanel on row click
+- [x] Build `/admin/reports` page
+  - Filter controls for status and reason
+  - ReportsTable integration with real-time fetching
+  - ReportDetailsPanel with update callbacks
+  - Auto-refresh after actions
 
 **Files:**
-- `src/lib/firestore.js` - Add admin report functions
-- `src/app/api/admin/reports/route.js` - New file
-- `src/app/api/admin/reports/[reportId]/route.js` - New file
-- `src/components/admin/ReportsTable.js` - New file
-- `src/components/admin/ReportDetailsPanel.js` - New file
-- `src/app/(chrome)/admin/reports/page.js` - New file
+- `src/app/api/admin/reports/route.js` - GET endpoint with admin logic
+- `src/app/api/admin/reports/[reportId]/route.js` - PATCH endpoint with admin logic
+- `src/components/admin/ReportsTable.js` - Created with full functionality
+- `src/components/admin/ReportDetailsPanel.js` - Created with action buttons
+- `src/app/(chrome)/admin/reports/page.js` - Created with filters and state management
 
 ---
 
