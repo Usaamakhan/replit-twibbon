@@ -45,21 +45,151 @@ export async function PATCH(request, { params }) {
       );
     }
     
-    const updateData = {
-      updatedAt: FieldValue.serverTimestamp(),
-    };
+    const reportData = reportDoc.data();
+    const reportType = reportData.type || 'campaign';
     
-    if (status) {
-      updateData.status = status;
-      updateData.reviewedAt = FieldValue.serverTimestamp();
-      updateData.reviewedBy = adminUser.uid;
-    }
-    
-    if (action) {
-      updateData.action = action;
-    }
-    
-    await reportRef.update(updateData);
+    await db.runTransaction(async (transaction) => {
+      const reportUpdateData = {
+        updatedAt: new Date(),
+      };
+      
+      if (status) {
+        reportUpdateData.status = status;
+        reportUpdateData.reviewedAt = new Date();
+        reportUpdateData.reviewedBy = adminUser.uid;
+      }
+      
+      if (action) {
+        reportUpdateData.action = action;
+      }
+      
+      transaction.update(reportRef, reportUpdateData);
+      
+      if (reportType === 'campaign' && reportData.campaignId) {
+        const campaignRef = db.collection('campaigns').doc(reportData.campaignId);
+        const campaignDoc = await transaction.get(campaignRef);
+        
+        if (campaignDoc.exists) {
+          const campaignData = campaignDoc.data();
+          const campaignUpdates = {};
+          
+          if (action === 'no-action' && status === 'dismissed') {
+            campaignUpdates.reportsCount = 0;
+            campaignUpdates.moderationStatus = 'active';
+            if (campaignData.hiddenAt) {
+              campaignUpdates.hiddenAt = FieldValue.delete();
+            }
+            
+            const allReportsQuery = db.collection('reports')
+              .where('campaignId', '==', reportData.campaignId)
+              .where('status', '!=', 'dismissed');
+            const relatedReports = await allReportsQuery.get();
+            relatedReports.forEach(doc => {
+              transaction.update(doc.ref, { 
+                status: 'dismissed', 
+                action: 'no-action',
+                reviewedAt: new Date(),
+                reviewedBy: adminUser.uid
+              });
+            });
+          }
+          
+          else if (action === 'warned') {
+            const warningRef = db.collection('warnings').doc();
+            const warningData = {
+              userId: campaignData.creatorId,
+              targetType: 'campaign',
+              targetId: reportData.campaignId,
+              reportId: reportId,
+              reason: reportData.reason,
+              details: reportData.details || '',
+              issuedBy: adminUser.uid,
+              issuedAt: new Date(),
+              acknowledged: false,
+            };
+            transaction.set(warningRef, warningData);
+          }
+          
+          else if (action === 'removed') {
+            const appealDeadline = new Date();
+            appealDeadline.setDate(appealDeadline.getDate() + 30);
+            
+            campaignUpdates.moderationStatus = 'removed-temporary';
+            campaignUpdates.removedAt = new Date();
+            campaignUpdates.removalReason = reportData.reason;
+            campaignUpdates.appealDeadline = appealDeadline;
+            campaignUpdates.appealCount = campaignData.appealCount || 0;
+          }
+          
+          if (Object.keys(campaignUpdates).length > 0) {
+            campaignUpdates.updatedAt = new Date();
+            transaction.update(campaignRef, campaignUpdates);
+          }
+        }
+      }
+      
+      else if (reportType === 'profile' && reportData.reportedUserId) {
+        const userRef = db.collection('users').doc(reportData.reportedUserId);
+        const userDoc = await transaction.get(userRef);
+        
+        if (userDoc.exists) {
+          const userData = userDoc.data();
+          const userUpdates = {};
+          
+          if (action === 'no-action' && status === 'dismissed') {
+            userUpdates.reportsCount = 0;
+            userUpdates.moderationStatus = 'active';
+            if (userData.hiddenAt) {
+              userUpdates.hiddenAt = FieldValue.delete();
+            }
+            
+            const allReportsQuery = db.collection('reports')
+              .where('reportedUserId', '==', reportData.reportedUserId)
+              .where('status', '!=', 'dismissed');
+            const relatedReports = await allReportsQuery.get();
+            relatedReports.forEach(doc => {
+              transaction.update(doc.ref, { 
+                status: 'dismissed', 
+                action: 'no-action',
+                reviewedAt: new Date(),
+                reviewedBy: adminUser.uid
+              });
+            });
+          }
+          
+          else if (action === 'warned') {
+            const warningRef = db.collection('warnings').doc();
+            const warningData = {
+              userId: reportData.reportedUserId,
+              targetType: 'profile',
+              targetId: reportData.reportedUserId,
+              reportId: reportId,
+              reason: reportData.reason,
+              details: reportData.details || '',
+              issuedBy: adminUser.uid,
+              issuedAt: new Date(),
+              acknowledged: false,
+            };
+            transaction.set(warningRef, warningData);
+          }
+          
+          else if (action === 'removed') {
+            const appealDeadline = new Date();
+            appealDeadline.setDate(appealDeadline.getDate() + 30);
+            
+            userUpdates.accountStatus = 'banned-temporary';
+            userUpdates.bannedAt = new Date();
+            userUpdates.banReason = reportData.reason;
+            userUpdates.appealDeadline = appealDeadline;
+          }
+          
+          if (Object.keys(userUpdates).length > 0) {
+            userUpdates.updatedAt = new Date();
+            transaction.update(userRef, userUpdates);
+          }
+        }
+      }
+    });
     
     const updatedDoc = await reportRef.get();
     const updatedData = { id: updatedDoc.id, ...updatedDoc.data() };

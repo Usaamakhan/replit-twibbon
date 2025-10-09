@@ -11,7 +11,7 @@ const VALID_REPORT_STATUSES = ['pending', 'reviewed', 'resolved', 'dismissed'];
 /**
  * Valid moderation status values
  */
-const VALID_MODERATION_STATUSES = ['active', 'under-review', 'removed'];
+const VALID_MODERATION_STATUSES = ['active', 'under-review', 'under-review-hidden', 'removed-temporary', 'removed-permanent'];
 
 /**
  * Valid user role values
