@@ -47,7 +47,7 @@ export default function ReportsTable({ reports, loading, onSelectReport, onStatu
           <thead className="bg-gray-50">
             <tr>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Campaign
+                Reported Item
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Reason
@@ -78,7 +78,21 @@ export default function ReportsTable({ reports, loading, onSelectReport, onStatu
                 <td className="px-6 py-4 whitespace-nowrap">
                   <div className="flex items-center">
                     <div className="h-10 w-10 flex-shrink-0">
-                      {report.campaign?.imageUrl ? (
+                      {report.type === 'profile' ? (
+                        report.reportedUser?.profileImage ? (
+                          <img
+                            className="h-10 w-10 rounded-full object-cover"
+                            src={report.reportedUser.profileImage}
+                            alt={report.reportedUser.displayName || 'User'}
+                          />
+                        ) : (
+                          <div className="h-10 w-10 rounded-full bg-emerald-500 flex items-center justify-center">
+                            <span className="text-white text-sm font-medium">
+                              {report.reportedUser?.displayName?.charAt(0)?.toUpperCase() || 'U'}
+                            </span>
+                          </div>
+                        )
+                      ) : report.campaign?.imageUrl ? (
                         <img
                           className="h-10 w-10 rounded object-cover"
                           src={report.campaign.imageUrl}
@@ -93,12 +107,25 @@ export default function ReportsTable({ reports, loading, onSelectReport, onStatu
                       )}
                     </div>
                     <div className="ml-4">
-                      <div className="text-sm font-medium text-gray-900">
-                        {report.campaign?.title || 'Unknown Campaign'}
-                      </div>
-                      <div className="text-sm text-gray-500">
-                        by {report.campaign?.creator?.displayName || 'Unknown'}
-                      </div>
+                      {report.type === 'profile' ? (
+                        <>
+                          <div className="text-sm font-medium text-gray-900">
+                            {report.reportedUser?.displayName || 'Unknown User'}
+                          </div>
+                          <div className="text-sm text-gray-500">
+                            @{report.reportedUser?.username || report.reportedUsername || 'unknown'}
+                          </div>
+                        </>
+                      ) : (
+                        <>
+                          <div className="text-sm font-medium text-gray-900">
+                            {report.campaign?.title || 'Unknown Campaign'}
+                          </div>
+                          <div className="text-sm text-gray-500">
+                            by {report.campaign?.creator?.displayName || 'Unknown'}
+                          </div>
+                        </>
+                      )}
                     </div>
                   </div>
                 </td>

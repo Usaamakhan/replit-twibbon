@@ -16,6 +16,14 @@ export function formatReportReason(reason) {
       return 'Spam';
     case 'copyright':
       return 'Copyright Violation';
+    case 'inappropriate_avatar':
+      return 'Inappropriate Profile Picture';
+    case 'offensive_username':
+      return 'Offensive Username';
+    case 'spam_bio':
+      return 'Spam in Bio';
+    case 'impersonation':
+      return 'Impersonation';
     case 'other':
       return 'Other';
     default:

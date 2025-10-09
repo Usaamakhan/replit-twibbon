@@ -9,6 +9,7 @@ export async function GET(request) {
     const { searchParams } = new URL(request.url);
     const status = searchParams.get('status');
     const reason = searchParams.get('reason');
+    const type = searchParams.get('type');
     const campaignId = searchParams.get('campaignId');
     const limitParam = searchParams.get('limit') || '50';
     const limitValue = parseInt(limitParam, 10);
@@ -22,6 +23,10 @@ export async function GET(request) {
     
     if (reason && reason !== 'all') {
       reportsQuery = reportsQuery.where('reason', '==', reason);
+    }
+    
+    if (type && type !== 'all') {
+      reportsQuery = reportsQuery.where('type', '==', type);
     }
     
     if (campaignId) {
@@ -62,6 +67,21 @@ export async function GET(request) {
               };
             }
           }
+        }
+      }
+      
+      if (reportData.reportedUserId) {
+        const userDoc = await db.collection('users').doc(reportData.reportedUserId).get();
+        if (userDoc.exists) {
+          const userData = userDoc.data();
+          reportData.reportedUser = {
+            uid: userDoc.id,
+            displayName: userData.displayName,
+            username: userData.username,
+            profileImage: userData.profileImage,
+            moderationStatus: userData.moderationStatus || 'active',
+            reportsCount: userData.reportsCount || 0,
+          };
         }
       }
       
