@@ -11,6 +11,7 @@ import {
 } from '../lib/firestore';
 import { getProfileAvatar, getProfileBanner } from '../utils/imageTransform';
 import CampaignGallery from './CampaignGallery';
+import ReportUserModal from './ReportUserModal';
 
 export default function ProfilePage({ isOwnProfile = false, username = null }) {
   const { user, loading } = useAuth();
@@ -20,6 +21,7 @@ export default function ProfilePage({ isOwnProfile = false, username = null }) {
   const [userStats, setUserStats] = useState({ supportsCount: 0, campaignsCount: 0 });
   const [campaigns, setCampaigns] = useState([]);
   const [error, setError] = useState(null);
+  const [showReportModal, setShowReportModal] = useState(false);
 
   useEffect(() => {
     // If viewing own profile, redirect to login if not authenticated
@@ -227,7 +229,7 @@ export default function ProfilePage({ isOwnProfile = false, username = null }) {
           </p>
         )}
         
-        {/* Edit Button - Below Bio */}
+        {/* Edit Button - Below Bio (Own Profile Only) */}
         {isOwnProfile && (
           <button 
             onClick={() => router.push('/profile/edit')}
@@ -237,6 +239,19 @@ export default function ProfilePage({ isOwnProfile = false, username = null }) {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
             </svg>
             Edit Profile
+          </button>
+        )}
+
+        {/* Report Button - Below Bio (Public Profile Only) */}
+        {!isOwnProfile && (
+          <button 
+            onClick={() => setShowReportModal(true)}
+            className="btn-base bg-red-100 hover:bg-red-200 text-red-700 mb-6 px-4 py-2 text-sm font-medium inline-flex items-center gap-2"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16c-.77.833.192 2.5 1.732 2.5z" />
+            </svg>
+            Report User
           </button>
         )}
 
@@ -288,6 +303,16 @@ export default function ProfilePage({ isOwnProfile = false, username = null }) {
           />
         </div>
       </div>
+
+      {/* Report User Modal */}
+      {!isOwnProfile && (
+        <ReportUserModal
+          isOpen={showReportModal}
+          onClose={() => setShowReportModal(false)}
+          reportedUserId={userData?.id}
+          reportedUsername={userData?.username}
+        />
+      )}
       
     </div>
   );
