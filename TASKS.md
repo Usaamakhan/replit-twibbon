@@ -727,8 +727,8 @@ The admin report action buttons (**Dismiss Report**, **Warn Creator**, **Remove 
 **Status:** ⏸️ NOT IMPLEMENTED - No notification system exists
 
 **Current State:**
+- ❌ No push notifications
 - ❌ No email notifications
-- ❌ No in-app notifications
 - ❌ No notification preferences
 - ❌ Users are unaware when:
   - Their campaign is reported
@@ -736,44 +736,51 @@ The admin report action buttons (**Dismiss Report**, **Warn Creator**, **Remove 
   - They receive a warning
   - They are banned
 
-**Decision: Use Firestore for In-App Notifications (Not Firebase Cloud Messaging)**
+**Decision: Use Firebase Cloud Messaging (FCM) for Push Notifications**
 
-#### A. In-App Notification System (Using Firestore)
-- [ ] Create `notifications` collection in Firestore:
+#### A. FCM Push Notification System
+- [ ] Set up Firebase Cloud Messaging in Firebase Console
+- [ ] Configure FCM for web push notifications (VAPID keys)
+- [ ] Store FCM device tokens in Firestore:
   ```javascript
+  // Collection: users/{userId}/tokens/{tokenId}
   {
-    userId: string,
-    type: 'warning' | 'campaign_removed' | 'campaign_under_review' | 'profile_under_review' | 'account_banned' | 'appeal_deadline',
-    title: string,
-    message: string,
-    actionUrl: string,  // Link to take action (appeal, view campaign, etc.)
-    actionLabel: string,  // "Appeal Removal", "View Campaign", etc.
-    metadata: {
-      campaignId?: string,
-      reportId?: string,
-      appealDeadline?: timestamp,
-    },
-    read: boolean,
+    token: string,              // FCM device token
+    device: 'web' | 'android' | 'ios',
     createdAt: timestamp,
+    lastUsed: timestamp,
   }
   ```
-- [ ] Create notification bell component in header
-- [ ] Create `/api/notifications/route.js` for CRUD operations:
-  - GET: Fetch user's notifications
-  - PATCH: Mark as read
-  - DELETE: Delete notification
-- [ ] Add notification badge showing unread count
-- [ ] Create `/profile/notifications` page to view all notifications
-- [ ] Add notification preferences page (`/profile/settings`)
-- [ ] Auto-delete notifications older than 90 days
+- [ ] Create `/api/notifications/register-token/route.js`:
+  - POST: Save user's FCM device token
+  - Support multiple devices per user
+- [ ] Create `/api/notifications/send/route.js` (server-side):
+  - Use Firebase Admin SDK to send FCM messages
+  - Support notification payload with data payload
+  - Handle multi-device delivery
+- [ ] Implement FCM token management:
+  - Request permission on login
+  - Save token to Firestore
+  - Refresh token on expiry
+  - Delete token on logout
+- [ ] Create notification service worker for web push:
+  - Handle background notifications
+  - Deep link to action URLs
+  - Show notification UI
 
-#### B. Email Notification System (Future - Phase 3)
+#### B. Notification UI Components
+- [ ] Create `useFCM()` hook for token management
+- [ ] Add notification permission request modal
+- [ ] Create notification preferences page (`/profile/settings`)
+- [ ] Allow users to enable/disable push notifications
+
+#### C. Email Notification System (Future - Phase 3)
 - [ ] Email as secondary notification channel (optional)
 - [ ] Resend.com integration for critical notifications only
 - [ ] Templates: Account banned, Appeal deadline reminder (3 days before)
-- [ ] User can opt-out of emails (keep in-app notifications only)
+- [ ] User can opt-out of emails (keep push notifications only)
 
-#### C. Notification Triggers (In-App)
+#### D. Notification Triggers (FCM Push)
 - [ ] Campaign gets 3 reports → Auto-hide + Notify creator "Campaign Under Review"
 - [ ] Campaign removed temporarily → Notify with appeal link (30-day deadline)
 - [ ] Warning issued → Notify creator (track in warning history)
@@ -958,7 +965,7 @@ The admin report action buttons (**Dismiss Report**, **Warn Creator**, **Remove 
 **Phase 1 (Week 1) - CRITICAL:**
 1. ✅ Implement profile/user reporting system (Backend + Frontend)
 2. ✅ Update reports collection schema to support `type: 'campaign' | 'profile'`
-3. ✅ Implement in-app notification system (Firestore-based)
+3. ✅ Implement push notification system (FCM-based)
 4. ✅ Fix "Dismiss Report" to reset reportsCount and restore status
 5. ✅ Implement auto-hide logic (3 reports for campaigns, 10 for profiles)
 
@@ -974,7 +981,7 @@ The admin report action buttons (**Dismiss Report**, **Warn Creator**, **Remove 
 12. ✅ Appeal submission form for users
 13. ✅ Admin appeal review interface
 14. ✅ Permanent deletion workflow (campaigns + user data)
-15. ✅ Notification bell component in header
+15. ✅ FCM integration (web push notifications)
 
 **Phase 4 (Month 2) - LOW:**
 16. ✅ Email notifications (optional, Resend.com)
@@ -1025,22 +1032,34 @@ The admin report action buttons (**Dismiss Report**, **Warn Creator**, **Remove 
 }
 ```
 
-#### Notifications Collection (New - Firestore)
+#### FCM Device Tokens (New - Firestore Subcollection)
+```javascript
+// Collection: users/{userId}/tokens/{tokenId}
+{
+  token: string,              // FCM device token
+  device: 'web' | 'android' | 'ios',
+  createdAt: timestamp,
+  lastUsed: timestamp,
+}
+```
+
+**FCM Notification Payload:**
 ```javascript
 {
-  userId: string,
-  type: 'warning' | 'campaign_removed' | 'campaign_under_review' | 'profile_under_review' | 'account_banned' | 'appeal_deadline',
-  title: string,
-  message: string,
-  actionUrl: string,
-  actionLabel: string,
-  metadata: {
+  notification: {
+    title: string,
+    body: string,
+    image?: string,
+  },
+  data: {
+    type: 'warning' | 'campaign_removed' | 'campaign_under_review' | 'profile_under_review' | 'account_banned' | 'appeal_deadline',
+    actionUrl: string,
+    actionLabel: string,
     campaignId?: string,
     reportId?: string,
-    appealDeadline?: timestamp,
+    appealDeadline?: string,
   },
-  read: boolean,
-  createdAt: timestamp,
+  token: string,
 }
 ```
 
@@ -1098,8 +1117,8 @@ The admin report action buttons (**Dismiss Report**, **Warn Creator**, **Remove 
 **API Routes:**
 - Modify: `/src/app/api/admin/reports/[reportId]/route.js` (fix action buttons)
 - Create: `/src/app/api/reports/user/route.js` (profile reporting)
-- Create: `/src/app/api/notifications/route.js` (in-app notifications CRUD)
-- Create: `/src/app/api/notifications/create/route.js` (create notification helper)
+- Create: `/src/app/api/notifications/register-token/route.js` (save FCM token)
+- Create: `/src/app/api/notifications/send/route.js` (send FCM push notification)
 - Create: `/src/app/api/appeals/route.js` (submit appeal)
 - Create: `/src/app/api/admin/appeals/route.js` (admin get appeals)
 - Create: `/src/app/api/admin/appeals/[appealId]/route.js` (admin approve/reject)
@@ -1109,22 +1128,21 @@ The admin report action buttons (**Dismiss Report**, **Warn Creator**, **Remove 
 - Modify: `/src/app/(chrome)/admin/reports/page.js` (add profile reports filter)
 
 **User Pages:**
-- Create: `/src/app/(chrome)/profile/notifications/page.js` (view notifications)
+- Create: `/src/app/(chrome)/profile/settings/page.js` (notification preferences)
 - Create: `/src/app/appeal-ban/page.js` (ban message + appeal form)
 
 **Components:**
 - Create: `ReportUserModal.js` (user report modal)
 - Modify: `ReportDetailsPanel.js` (handle profile reports + new actions)
-- Create: `NotificationBell.js` (header notification icon with badge)
-- Create: `NotificationsList.js` (notification dropdown)
-- Create: `NotificationItem.js` (single notification component)
+- Create: `NotificationPermissionModal.js` (request push notification permission)
 - Create: `AppealForm.js` (appeal submission form)
 - Create: `BanMessage.js` (account banned message)
-- Modify: `Header.js` (add NotificationBell component)
 
 **Utilities:**
-- Create: `/src/utils/notifications/createNotification.js` (helper function)
-- Create: `/src/utils/notifications/notificationTemplates.js` (message templates)
+- Create: `/src/utils/notifications/sendFCMNotification.js` (send FCM push via Firebase Admin SDK)
+- Create: `/src/utils/notifications/notificationTemplates.js` (FCM message templates)
+- Create: `/src/hooks/useFCM.js` (FCM token management hook)
+- Create: `/public/firebase-messaging-sw.js` (service worker for web push)
 - Create: `/src/utils/reportValidation.js` (rate limiting, duplicate check)
 - Create: `/src/utils/profanityFilter.js` (username/bio moderation)
 - Create: `/src/utils/autoModeration.js` (auto-hide logic)

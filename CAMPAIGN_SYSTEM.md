@@ -146,32 +146,45 @@ Twibbonize supports two campaign types:
 
 ---
 
-### Notifications Collection (Firestore: `notifications`)
+### Notifications System (FCM - Firebase Cloud Messaging)
 ⏸️ **Status: Pending Implementation**
 
+**Push Notification Data Payload:**
 ```javascript
 {
-  userId: string,
-  type: "warning" | "campaign_removed" | "campaign_under_review" | "profile_under_review" | "account_banned" | "appeal_deadline",
-  title: string,
-  message: string,
-  actionUrl: string,                     // Link to take action
-  actionLabel: string,                   // "Appeal Removal", "View Campaign", etc.
-  metadata: {
+  notification: {
+    title: string,                       // Notification title
+    body: string,                        // Notification message
+    image?: string,                      // Optional image URL
+  },
+  data: {
+    type: "warning" | "campaign_removed" | "campaign_under_review" | "profile_under_review" | "account_banned" | "appeal_deadline",
+    actionUrl: string,                   // Deep link to take action
+    actionLabel: string,                 // "Appeal Removal", "View Campaign", etc.
     campaignId?: string,
     reportId?: string,
-    appealDeadline?: timestamp,
+    appealDeadline?: string,             // ISO timestamp
   },
-  read: boolean,
+  token: string,                         // User's FCM device token
+}
+```
+
+**FCM Device Tokens (Firestore: `users/{userId}/tokens`):**
+```javascript
+{
+  token: string,                         // FCM device token
+  device: string,                        // "web" | "android" | "ios"
   createdAt: timestamp,
+  lastUsed: timestamp,
 }
 ```
 
 **Purpose:**
-- In-app notifications using Firestore (NOT Firebase Cloud Messaging)
-- Notify users about moderation actions
-- Include action buttons (appeal, view details)
-- Auto-delete after 90 days
+- Push notifications using Firebase Cloud Messaging (FCM)
+- Notify users about moderation actions in real-time
+- Support web push, Android, and iOS notifications
+- Include action buttons (appeal, view details) via deep links
+- Tokens stored in user subcollection for multi-device support
 
 ---
 
