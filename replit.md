@@ -105,10 +105,12 @@ The Firebase/Firestore database has been optimized to reduce storage costs while
 ### Environment Variables (Configured on Vercel)
 Environment variables are configured on Vercel deployment (NOT in Replit):
 
-**Firebase (Authentication):**
+**Firebase (Authentication & Messaging):**
 - `NEXT_PUBLIC_FIREBASE_API_KEY`
 - `NEXT_PUBLIC_FIREBASE_PROJECT_ID`
 - `NEXT_PUBLIC_FIREBASE_APP_ID`
+- `NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID`
+- `NEXT_PUBLIC_FIREBASE_VAPID_KEY` (for FCM web push)
 - `FIREBASE_SERVICE_ACCOUNT_KEY` (JSON string for server-side auth)
 
 **Supabase (Database & Storage):**
@@ -205,3 +207,28 @@ Comprehensive admin panel for platform moderation and management:
 - Filter fields with proper text visibility (text-gray-900)
 - Role-based access control (admin only)
 - Z-index hierarchy: backdrop (30) → sidebar (40) → toggle (50)
+
+### FCM Push Notification System (October 9, 2025)
+Firebase Cloud Messaging (FCM) integration for real-time push notifications:
+
+**Implementation:**
+- **Dynamic Service Worker** (`/firebase-messaging-sw`) - Serves service worker with Firebase config from env vars
+- **FCM Hook** (`useFCM`) - React hook for permission requests and token management
+- **Token Management APIs** - Register, remove, and send notifications via Firebase Admin SDK
+- **Notification Templates** - Pre-built templates for all moderation scenarios
+- **Multi-Device Support** - Users can receive notifications on all their devices
+
+**Notification Triggers:**
+- Campaign removed → Notify with appeal link (30-day deadline)
+- Warning issued → Notify creator with reason
+- Account banned → Notify with appeal link
+- Admin dismisses reports → Notify "Campaign/Profile Restored"
+
+**Collections:**
+- `users/{userId}/tokens/{tokenId}` - FCM device tokens (web/android/ios)
+- `warnings/{warningId}` - Warning history for admins
+
+**UI Components:**
+- `NotificationPermissionModal` - Request permission with "Don't ask again" option
+- Foreground and background notification support
+- Deep linking to action URLs
