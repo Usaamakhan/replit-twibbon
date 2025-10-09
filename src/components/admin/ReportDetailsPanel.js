@@ -64,11 +64,13 @@ export default function ReportDetailsPanel({ report, onClose, onUpdate }) {
   const handleAction = async (status, action) => {
     if (!user) return;
 
+    console.log('[CLIENT] Action button clicked:', { status, action, reportId: report.id });
     setIsUpdating(true);
     setUpdateError(null);
 
     try {
       const token = await user.getIdToken();
+      console.log('[CLIENT] Token obtained, sending request...');
       
       const response = await fetch(`/api/admin/reports/${report.id}`, {
         method: 'PATCH',
@@ -79,18 +81,26 @@ export default function ReportDetailsPanel({ report, onClose, onUpdate }) {
         body: JSON.stringify({ status, action }),
       });
 
+      console.log('[CLIENT] Response status:', response.status);
       const data = await response.json();
+      console.log('[CLIENT] Response data:', data);
 
       if (!response.ok) {
         throw new Error(data.error || 'Failed to update report');
       }
 
+      // Show success message
+      console.log('[CLIENT] ✅ Action completed successfully!');
+      alert(`✅ Action completed successfully! ${action === 'no-action' ? 'Report dismissed' : action === 'warned' ? 'Warning issued' : 'Content removed'}`);
+
       if (onUpdate) {
         onUpdate(data.data);
       }
     } catch (error) {
-      console.error('Error updating report:', error);
+      console.error('[CLIENT] ❌ Error updating report:', error);
+      console.error('[CLIENT] Error details:', error.message);
       setUpdateError(error.message);
+      alert(`❌ Error: ${error.message}`);
     } finally {
       setIsUpdating(false);
     }
