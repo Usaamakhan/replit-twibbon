@@ -31,6 +31,14 @@ export default function ReportDetailsPanel({ report, onClose, onUpdate }) {
         return 'Spam';
       case 'copyright':
         return 'Copyright Violation';
+      case 'inappropriate_avatar':
+        return 'Inappropriate Profile Picture';
+      case 'offensive_username':
+        return 'Offensive Username';
+      case 'spam_bio':
+        return 'Spam in Bio';
+      case 'impersonation':
+        return 'Impersonation';
       case 'other':
         return 'Other';
       default:
@@ -125,40 +133,79 @@ export default function ReportDetailsPanel({ report, onClose, onUpdate }) {
                 </span>
               </div>
 
-              <div>
-                <h3 className="text-sm font-medium text-gray-500 mb-2">Campaign</h3>
-                <div className="bg-gray-50 rounded-lg p-4">
-                  {report.campaign?.imageUrl && (
-                    <img
-                      src={report.campaign.imageUrl}
-                      alt={report.campaign.title}
-                      className="w-full h-48 object-cover rounded-lg mb-3"
-                    />
-                  )}
-                  <h4 className="font-medium text-gray-900">{report.campaign?.title || 'Unknown Campaign'}</h4>
-                  <p className="text-sm text-gray-600 mt-1">
-                    Type: <span className="capitalize">{report.campaign?.type || 'Unknown'}</span>
-                  </p>
-                  <p className="text-sm text-gray-600">
-                    Status: <span className="capitalize">{report.campaign?.moderationStatus || 'Unknown'}</span>
-                  </p>
-                  {report.campaign?.creator && (
-                    <p className="text-sm text-gray-600">
-                      Creator: {report.campaign.creator.displayName}
+              {report.type === 'profile' ? (
+                <div>
+                  <h3 className="text-sm font-medium text-gray-500 mb-2">Reported User</h3>
+                  <div className="bg-gray-50 rounded-lg p-4">
+                    {report.reportedUser?.avatarUrl && (
+                      <img
+                        src={report.reportedUser.avatarUrl}
+                        alt={report.reportedUser.displayName}
+                        className="w-20 h-20 rounded-full mb-3 object-cover"
+                      />
+                    )}
+                    <h4 className="font-medium text-gray-900">{report.reportedUser?.displayName || report.reportedUsername || 'Unknown User'}</h4>
+                    {report.reportedUser?.username && (
+                      <p className="text-sm text-gray-600 mt-1">
+                        @{report.reportedUser.username}
+                      </p>
+                    )}
+                    <p className="text-sm text-gray-600 mt-1">
+                      Status: <span className="capitalize">{report.reportedUser?.moderationStatus || 'Unknown'}</span>
                     </p>
-                  )}
-                  {report.campaign?.slug && (
-                    <a
-                      href={`/campaign/${report.campaign.slug}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-sm text-emerald-600 hover:text-emerald-700 mt-2 inline-block"
-                    >
-                      View Campaign →
-                    </a>
-                  )}
+                    {report.reportedUser?.reportsCount > 0 && (
+                      <p className="text-sm text-gray-600">
+                        Total Reports: {report.reportedUser.reportsCount}
+                      </p>
+                    )}
+                    {report.reportedUsername && (
+                      <a
+                        href={`/u/${report.reportedUsername}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-sm text-emerald-600 hover:text-emerald-700 mt-2 inline-block"
+                      >
+                        View Profile →
+                      </a>
+                    )}
+                  </div>
                 </div>
-              </div>
+              ) : (
+                <div>
+                  <h3 className="text-sm font-medium text-gray-500 mb-2">Campaign</h3>
+                  <div className="bg-gray-50 rounded-lg p-4">
+                    {report.campaign?.imageUrl && (
+                      <img
+                        src={report.campaign.imageUrl}
+                        alt={report.campaign.title}
+                        className="w-full h-48 object-cover rounded-lg mb-3"
+                      />
+                    )}
+                    <h4 className="font-medium text-gray-900">{report.campaign?.title || 'Unknown Campaign'}</h4>
+                    <p className="text-sm text-gray-600 mt-1">
+                      Type: <span className="capitalize">{report.campaign?.type || 'Unknown'}</span>
+                    </p>
+                    <p className="text-sm text-gray-600">
+                      Status: <span className="capitalize">{report.campaign?.moderationStatus || 'Unknown'}</span>
+                    </p>
+                    {report.campaign?.creator && (
+                      <p className="text-sm text-gray-600">
+                        Creator: {report.campaign.creator.displayName}
+                      </p>
+                    )}
+                    {report.campaign?.slug && (
+                      <a
+                        href={`/campaign/${report.campaign.slug}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-sm text-emerald-600 hover:text-emerald-700 mt-2 inline-block"
+                      >
+                        View Campaign →
+                      </a>
+                    )}
+                  </div>
+                </div>
+              )}
 
               <div>
                 <h3 className="text-sm font-medium text-gray-500 mb-2">Report Details</h3>
@@ -217,7 +264,7 @@ export default function ReportDetailsPanel({ report, onClose, onUpdate }) {
                     disabled={isUpdating || report.status === 'resolved'}
                     className="w-full btn-base bg-yellow-600 text-white hover:bg-yellow-700 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    {isUpdating ? 'Processing...' : 'Warn Creator'}
+                    {isUpdating ? 'Processing...' : (report.type === 'profile' ? 'Warn User' : 'Warn Creator')}
                   </button>
                   
                   <button
@@ -225,7 +272,7 @@ export default function ReportDetailsPanel({ report, onClose, onUpdate }) {
                     disabled={isUpdating || report.status === 'resolved'}
                     className="w-full btn-base bg-red-600 text-white hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    {isUpdating ? 'Processing...' : 'Remove Campaign'}
+                    {isUpdating ? 'Processing...' : (report.type === 'profile' ? 'Ban User' : 'Remove Campaign')}
                   </button>
                 </div>
               </div>
