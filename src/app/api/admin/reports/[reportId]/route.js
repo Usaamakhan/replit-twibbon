@@ -285,6 +285,12 @@ export async function PATCH(request, { params }) {
     });
   } catch (error) {
     console.error('Error updating report:', error);
+    console.error('Error stack:', error.stack);
+    console.error('Error details:', {
+      message: error.message,
+      code: error.code,
+      name: error.name,
+    });
     
     if (error.message.includes('Unauthorized') || error.message.includes('Admin access required')) {
       return NextResponse.json(
@@ -294,7 +300,12 @@ export async function PATCH(request, { params }) {
     }
     
     return NextResponse.json(
-      { success: false, error: 'Failed to update report' },
+      { 
+        success: false, 
+        error: 'Failed to update report',
+        details: error.message,
+        errorCode: error.code
+      },
       { status: 500 }
     );
   }
