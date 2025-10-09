@@ -627,18 +627,18 @@ If you find any issues during testing, note them here:
 ## 🚨 Section 9: Report System - Critical Fixes & Enhancements
 
 **Priority:** CRITICAL  
-**Status:** ⏸️ PENDING - Action Buttons Currently Non-Functional  
-**Last Updated:** October 08, 2025
+**Status:** ✅ COMPLETED (Sections 9.1-9.2) | ⏸️ PENDING (Section 9.2 Notifications)  
+**Last Updated:** October 09, 2025
 
 ### Problem Discovered
 
-The admin report action buttons (**Dismiss Report**, **Warn Creator**, **Remove Campaign**) currently **only update the report status** but **do NOT perform the actual actions** they claim to do. This is a critical gap in functionality.
+The admin report action buttons (**Dismiss Report**, **Warn Creator**, **Remove Campaign**) previously **only updated the report status** but **did NOT perform the actual actions**. This has been fixed.
 
 ---
 
-### 9.1: Fix Report Action Buttons (CRITICAL)
+### 9.1: Fix Report Action Buttons ✅ COMPLETED
 
-**Updated Moderation Workflow (October 2025):**
+**Status:** ✅ All core moderation actions fully implemented (October 09, 2025)
 
 #### Auto-Moderation Rules:
 - **Campaigns:** Hide from public at 3+ reports (status: `under-review-hidden`)
@@ -647,84 +647,95 @@ The admin report action buttons (**Dismiss Report**, **Warn Creator**, **Remove 
 
 ---
 
-#### 1. **Dismiss Report** Button
-- ✅ **Current:** Updates report to `status: dismissed`, `action: no-action`
-- **New Behavior:**
-  - Reset campaign/profile `reportsCount` to 0
-  - Change status back to `active` (unhide if hidden)
-  - Mark all related reports as `dismissed`
-  - No notification sent
+#### 1. **Dismiss Report** Button ✅ COMPLETED
+**Implementation:**
+- ✅ Resets campaign/profile `reportsCount` to 0
+- ✅ Changes status back to `active` (unhides if hidden)
+- ✅ Marks all related reports as `dismissed`
+- ✅ No notification sent
+- ✅ Atomic transaction prevents race conditions
 
-**Tasks to Fix:**
-- [ ] Update dismiss action to reset reportsCount to 0
-- [ ] Change campaign/profile status back to `active`
-- [ ] Unhide from public if it was hidden
-
----
-
-#### 2. **Warn Creator** Button
-- ✅ **Current:** Updates report to `status: resolved`, `action: warned`
-- **New Behavior (No Auto-Ban):**
-  - Create warning record in Firestore (for admin tracking only)
-  - Send in-app notification to creator about warning
-  - Track warning history visible to admins
-  - Does NOT auto-ban or remove content
-  - Admin manually decides ban/removal based on warning count
-
-**Tasks to Fix:**
-- [ ] Create `warnings` collection in Firestore:
-  ```javascript
-  {
-    userId: string,
-    targetType: 'campaign' | 'profile',
-    targetId: string,  // campaignId or userId
-    reportId: string,
-    reason: string,
-    issuedBy: adminId,
-    issuedAt: timestamp,
-    acknowledged: boolean,
-  }
-  ```
-- [ ] Update API route `/api/admin/reports/[reportId]/route.js`:
-  - Create warning document in Firestore
-  - Send in-app notification to creator (NOT email)
-  - Display warning count on admin user details panel
-- [ ] Create admin view to see user's warning history
-- [ ] NO auto-escalation logic (admin manually decides)
+**Completed Tasks:**
+- ✅ Updated `/api/admin/reports/[reportId]/route.js` with transaction-based dismiss logic
+- ✅ Resets reportsCount to 0 for both campaigns and profiles
+- ✅ Changes moderationStatus back to `active`
+- ✅ Removes `hiddenAt` timestamp if present
+- ✅ Updates all related reports to dismissed status
 
 ---
 
-#### 3. **Remove Campaign** Button
-- ✅ **Current:** Updates report to `status: resolved`, `action: removed`
-- **New Behavior (Temporary Removal with 30-Day Appeal):**
-  - Mark campaign as `removed-temporary` (soft delete)
-  - Campaign hidden from public but NOT deleted
-  - Send in-app notification with appeal option
-  - 30-day appeal window before permanent deletion
-  - If resubmitted and removed again → permanent deletion
+#### 2. **Warn Creator** Button ✅ COMPLETED
+**Implementation:**
+- ✅ Creates warning record in Firestore `warnings` collection
+- ✅ Tracks warning history for admin visibility
+- ✅ Does NOT auto-ban or remove content
+- ✅ Admin manually decides ban/removal based on warning count
 
-**Tasks to Fix:**
-- [ ] Update API route `/api/admin/reports/[reportId]/route.js`:
-  - Set campaign `moderationStatus` to `removed-temporary`
-  - Set `removedAt` timestamp
-  - Set `removalReason` field
-  - Set `appealDeadline` (30 days from removal)
-  - Keep image in Supabase (don't delete yet)
-  - Send in-app notification with appeal link
-- [ ] Create appeal submission system:
-  - Creator can appeal within 30 days
-  - Appeal creates entry in `appeals` collection
-  - Admin reviews appeals in `/admin/appeals`
-- [ ] After 30 days without appeal → auto-delete permanently
-- [ ] On second removal (after appeal approved) → permanent deletion
-- [ ] Update campaign queries to filter `removed-temporary` status
+**Warnings Collection Schema:**
+```javascript
+{
+  userId: string,
+  targetType: 'campaign' | 'profile',
+  targetId: string,  // campaignId or userId
+  reportId: string,
+  reason: string,
+  details: string,
+  issuedBy: adminId,
+  issuedAt: timestamp,
+  acknowledged: boolean,
+}
+```
+
+**Completed Tasks:**
+- ✅ Created `warnings` collection structure in API
+- ✅ Updated API route to create warning documents
+- ✅ Supports both campaign and profile warnings
+- ⏸️ Admin warning history view (deferred to future update)
+- ⏸️ In-app notification delivery (deferred - see Section 9.2)
+
+---
+
+#### 3. **Remove Campaign/Ban User** Button ✅ COMPLETED
+**Implementation:**
+- ✅ **Campaigns:** Sets `moderationStatus` to `removed-temporary`
+- ✅ **Profiles:** Sets `accountStatus` to `banned-temporary`
+- ✅ Sets 30-day appeal deadline
+- ✅ Tracks removal reason and timestamp
+- ✅ Hidden from public but NOT deleted (soft delete)
+
+**Completed Tasks:**
+- ✅ Updated API route with temporary removal logic
+- ✅ Sets `moderationStatus: removed-temporary` for campaigns
+- ✅ Sets `accountStatus: banned-temporary` for profiles
+- ✅ Sets `removedAt` timestamp
+- ✅ Sets `removalReason` from report reason
+- ✅ Calculates `appealDeadline` (30 days from removal)
+- ✅ Tracks `appealCount` for campaigns
+- ⏸️ Appeal submission UI (deferred to future update)
+- ⏸️ Auto-deletion after 30 days (deferred - requires cron job)
+- ⏸️ In-app notification with appeal link (deferred - see Section 9.2)
+
+---
+
+#### 4. **Admin Validation & UI Updates** ✅ COMPLETED
+**Completed Tasks:**
+- ✅ Updated `adminValidation.js` with new moderation statuses:
+  - `under-review-hidden`
+  - `removed-temporary`
+  - `removed-permanent`
+- ✅ Updated `ReportDetailsPanel` component:
+  - Supports both campaign and profile reports
+  - Dynamic action button labels (Ban User vs Remove Campaign)
+  - Shows appropriate report information based on type
+  - Enhanced reason text for profile report reasons
+- ✅ Profile report reasons added to panel display
 
 ---
 
 ### 9.2: Notification & Messaging System
 
 **Priority:** HIGH  
-**Status:** ⏸️ NOT IMPLEMENTED - No notification system exists
+**Status:** ⏸️ DEFERRED - No notification system currently exists
 
 **Current State:**
 - ❌ No push notifications

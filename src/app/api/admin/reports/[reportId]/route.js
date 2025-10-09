@@ -82,8 +82,8 @@ export async function PATCH(request, { params }) {
             
             const allReportsQuery = db.collection('reports')
               .where('campaignId', '==', reportData.campaignId)
-              .where('status', '!=', 'dismissed');
-            const relatedReports = await allReportsQuery.get();
+              .where('status', 'in', ['pending', 'reviewed', 'resolved']);
+            const relatedReports = await transaction.get(allReportsQuery);
             relatedReports.forEach(doc => {
               transaction.update(doc.ref, { 
                 status: 'dismissed', 
@@ -145,8 +145,8 @@ export async function PATCH(request, { params }) {
             
             const allReportsQuery = db.collection('reports')
               .where('reportedUserId', '==', reportData.reportedUserId)
-              .where('status', '!=', 'dismissed');
-            const relatedReports = await allReportsQuery.get();
+              .where('status', 'in', ['pending', 'reviewed', 'resolved']);
+            const relatedReports = await transaction.get(allReportsQuery);
             relatedReports.forEach(doc => {
               transaction.update(doc.ref, { 
                 status: 'dismissed', 
