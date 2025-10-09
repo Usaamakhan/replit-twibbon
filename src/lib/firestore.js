@@ -523,9 +523,11 @@ export const getUserCampaigns = async (userId, options = {}) => {
   
   try {
     // Use Firebase orderBy for better performance (newest first by default)
+    // Only show active and under-review campaigns (hide removed/hidden ones)
     let q = query(
       collection(db, 'campaigns'),
       where('creatorId', '==', userId),
+      where('moderationStatus', 'in', ['active', 'under-review']),
       orderBy(orderByField, orderDirection),
       limit(pageSize)
     );
