@@ -179,7 +179,7 @@ export async function PATCH(request, { params }) {
             const appealDeadline = new Date();
             appealDeadline.setDate(appealDeadline.getDate() + 30);
             
-            userUpdates.accountStatus = 'banned-temporary';
+            userUpdates.banned = true;
             userUpdates.bannedAt = new Date();
             userUpdates.banReason = reportData.reason;
             userUpdates.appealDeadline = appealDeadline;
