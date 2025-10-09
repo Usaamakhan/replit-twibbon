@@ -13,6 +13,7 @@ export function useFCM() {
   const [fcmToken, setFcmToken] = useState(null);
   const [isSupported, setIsSupported] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [foregroundNotification, setForegroundNotification] = useState(null);
 
   useEffect(() => {
     if (typeof window !== 'undefined' && 'Notification' in window) {
@@ -108,16 +109,16 @@ export function useFCM() {
       console.log('Foreground notification received:', payload);
 
       if (payload.notification) {
-        new Notification(payload.notification.title, {
-          body: payload.notification.body,
-          icon: payload.notification.icon || '/icon-192x192.png',
-          data: payload.data,
-        });
+        setForegroundNotification(payload);
       }
     });
 
     return () => unsubscribe();
   }, [fcmToken]);
+
+  const clearNotification = useCallback(() => {
+    setForegroundNotification(null);
+  }, []);
 
   return {
     notificationPermission,
@@ -126,5 +127,7 @@ export function useFCM() {
     loading,
     requestPermission,
     removeToken,
+    foregroundNotification,
+    clearNotification,
   };
 }
