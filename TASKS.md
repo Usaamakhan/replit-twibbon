@@ -353,7 +353,7 @@
 ## 🚨 Section 9: Report System - Critical Fixes & Enhancements
 
 **Priority:** CRITICAL  
-**Status:** ✅ COMPLETED (Section 9.1 - Report Actions) | ✅ COMPLETED (Section 9.2 - FCM Backend) | ⏸️ PENDING (Section 9.2 - UI Integration)  
+**Status:** ✅ FULLY COMPLETED (All Sections)  
 **Last Updated:** October 09, 2025
 
 ### Problem Discovered
@@ -461,7 +461,7 @@ The admin report action buttons (**Dismiss Report**, **Warn Creator**, **Remove 
 ### 9.2: FCM Push Notification System
 
 **Priority:** HIGH  
-**Status:** ✅ BACKEND COMPLETED | ⏸️ UI INTEGRATION PENDING  
+**Status:** ✅ FULLY COMPLETED  
 **Last Updated:** October 09, 2025
 
 **Backend Infrastructure (✅ COMPLETED):**
@@ -473,10 +473,13 @@ The admin report action buttons (**Dismiss Report**, **Warn Creator**, **Remove 
 - ✅ All admin actions trigger notifications (dismiss, warn, remove)
 - ✅ NotificationPermissionModal component
 
-**UI Integration (⏸️ PENDING):**
-- ⏸️ Notification permission prompt strategy (when/where to show modal)
-- ⏸️ User notification preferences page (`/profile/notifications`)
-- ⏸️ Foreground notification toast/banner component
+**UI Integration (✅ COMPLETED):**
+- ✅ Notification permission prompt strategy (after campaign creation + dashboard banner)
+- ✅ User notification preferences page (`/profile/notifications`)
+- ✅ Foreground notification toast/banner component (NotificationToast, NotificationBanner)
+- ✅ NotificationProvider integrated in app layout
+- ✅ Toast animations with Tailwind CSS
+- ✅ Custom toast system replacing browser notifications
 
 **Implementation: Firebase Cloud Messaging (FCM) for Web Push Notifications**
 
@@ -581,10 +584,11 @@ The admin report action buttons (**Dismiss Report**, **Warn Creator**, **Remove 
   - Send FCM notification on "Remove/Ban" → "Content Removed/Account Banned"
   - Integrated with existing transaction-based moderation logic
 
-- ⏸️ Update auto-hide logic in report APIs:
+- ✅ Updated auto-hide logic in report APIs:
   - Send FCM notification when campaign gets 3 reports → "Campaign Under Review"
   - Send FCM notification when profile gets 10 reports → "Profile Under Review"
-  - **Deferred to future update** (requires updating campaign/user report submission APIs)
+  - Fixed campaign auto-hide status to `under-review-hidden` (was incorrectly `under-review`)
+  - Added `hiddenAt` timestamp for campaigns
 
 ---
 
@@ -593,8 +597,8 @@ The admin report action buttons (**Dismiss Report**, **Warn Creator**, **Remove 
 - ✅ Warning issued → Notify creator (track in warning history)
 - ✅ Account banned → Notify with appeal link (30-day deadline)
 - ✅ Admin dismisses reports → Notify creator "Campaign/Profile Restored"
-- ⏸️ Campaign gets 3 reports → Auto-hide + Notify creator "Campaign Under Review" (deferred)
-- ⏸️ Profile gets 10 reports → Auto-hide + Notify user "Profile Under Review" (deferred)
+- ✅ Campaign gets 3 reports → Auto-hide + Notify creator "Campaign Under Review"
+- ✅ Profile gets 10 reports → Auto-hide + Notify user "Profile Under Review"
 - ⏸️ Appeal deadline reminder → 3 days before expiry (requires cron job - see Phase 5 in Future Recommendations)
 
 ---
