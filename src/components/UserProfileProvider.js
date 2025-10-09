@@ -1,6 +1,7 @@
 "use client";
 
 import { createContext, useContext, useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { useOptionalAuth } from '../hooks/useAuth';
 import { getUserProfile } from '../lib/firestore';
 
@@ -8,9 +9,10 @@ import { getUserProfile } from '../lib/firestore';
 const UserProfileContext = createContext(null);
 
 export function UserProfileProvider({ children }) {
-  const { user, loading: authLoading } = useOptionalAuth() || { user: null, loading: false };
+  const { user, loading: authLoading, logout } = useOptionalAuth() || { user: null, loading: false, logout: async () => {} };
   const [userProfile, setUserProfile] = useState(null);
   const [loading, setLoading] = useState(true);
+  const router = useRouter();
 
   // Fetch user profile data from Firestore when user changes
   useEffect(() => {
@@ -24,6 +26,25 @@ export function UserProfileProvider({ children }) {
       try {
         setLoading(true);
         const profile = await getUserProfile(user.uid);
+        
+        // CHECK FOR BAN STATUS - Enforce ban immediately
+        if (profile?.banned === true) {
+          console.log('User is banned, logging out...');
+          
+          // Store ban info in sessionStorage for ban page to display
+          if (typeof window !== 'undefined') {
+            sessionStorage.setItem('banInfo', JSON.stringify({
+              reason: profile.banReason || 'Your account has been suspended.',
+              bannedAt: profile.bannedAt || new Date().toISOString()
+            }));
+          }
+          
+          // Logout and redirect to banned page
+          await logout();
+          router.replace('/banned');
+          return;
+        }
+        
         setUserProfile(profile);
       } catch (error) {
         if (process.env.NODE_ENV === 'development') {
@@ -38,7 +59,7 @@ export function UserProfileProvider({ children }) {
     if (!authLoading) {
       fetchUserProfile();
     }
-  }, [user, authLoading]);
+  }, [user, authLoading, logout, router]);
 
   // Function to update the user profile in context (called after profile updates)
   const updateUserProfile = (updatedProfile) => {

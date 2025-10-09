@@ -77,6 +77,9 @@ export default function SignInPage() {
       const result = await signInWithEmail(formData.get('email'), formData.get('password'));
       if (result.success) {
         // Will be handled by useEffect redirect based on email verification status
+      } else if (result.banned) {
+        // User is banned - redirect to banned page
+        router.push('/banned');
       } else {
         setError(result.error || 'Failed to sign in');
       }
@@ -95,6 +98,9 @@ export default function SignInPage() {
       const result = await signInWithGoogle();
       if (result.success) {
         // Will be handled by useEffect redirect based on email verification status
+      } else if (result.banned) {
+        // User is banned - redirect to banned page
+        router.push('/banned');
       } else {
         setError(result.error || 'Failed to sign in with Google');
       }

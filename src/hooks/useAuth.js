@@ -123,6 +123,29 @@ export function AuthProvider({ children }) {
       const googleProvider = new GoogleAuthProvider();
       const result = await signInWithPopup(firebase.auth, googleProvider);
       
+      // Check if user is banned by fetching their profile
+      const { getUserProfile } = await import('../lib/firestore');
+      const profile = await getUserProfile(result.user.uid);
+      
+      if (profile?.banned === true) {
+        // User is banned - sign them out immediately
+        await signOut(firebase.auth);
+        
+        // Store ban info for the banned page
+        if (typeof window !== 'undefined') {
+          sessionStorage.setItem('banInfo', JSON.stringify({
+            reason: profile.banReason || 'Your account has been suspended.',
+            bannedAt: profile.bannedAt || new Date().toISOString()
+          }));
+        }
+        
+        return { 
+          success: false, 
+          error: 'Your account has been suspended. Please contact support for more information.',
+          banned: true 
+        };
+      }
+      
       // User state will be automatically updated via onAuthStateChanged
       return { success: true };
     } catch (error) {
@@ -168,6 +191,30 @@ export function AuthProvider({ children }) {
     
     try {
       const result = await signInWithEmailAndPassword(firebase.auth, email, password);
+      
+      // Check if user is banned by fetching their profile
+      const { getUserProfile } = await import('../lib/firestore');
+      const profile = await getUserProfile(result.user.uid);
+      
+      if (profile?.banned === true) {
+        // User is banned - sign them out immediately
+        await signOut(firebase.auth);
+        
+        // Store ban info for the banned page
+        if (typeof window !== 'undefined') {
+          sessionStorage.setItem('banInfo', JSON.stringify({
+            reason: profile.banReason || 'Your account has been suspended.',
+            bannedAt: profile.bannedAt || new Date().toISOString()
+          }));
+        }
+        
+        return { 
+          success: false, 
+          error: 'Your account has been suspended. Please contact support for more information.',
+          banned: true 
+        };
+      }
+      
       return { success: true };
     } catch (error) {
       // Use centralized error handling for sign-in
