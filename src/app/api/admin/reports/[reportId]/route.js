@@ -5,13 +5,21 @@ import { FieldValue } from 'firebase-admin/firestore';
 import { getNotificationTemplate } from '@/utils/notifications/notificationTemplates';
 import { sendFCMNotification } from '@/utils/notifications/sendFCMNotification';
 
-export async function PATCH(request, { params }) {
+export async function PATCH(request, context) {
   try {
+    console.log('[ADMIN REPORT UPDATE] Starting request...');
+    console.log('[ADMIN REPORT UPDATE] Context:', context);
+    
+    const params = await Promise.resolve(context.params);
+    console.log('[ADMIN REPORT UPDATE] Params:', params);
+    
     const adminUser = await requireAdmin(request);
+    console.log('[ADMIN REPORT UPDATE] Admin user verified:', adminUser.uid);
     
     const { reportId } = params;
     const body = await request.json();
     const { status, action } = body;
+    console.log('[ADMIN REPORT UPDATE] Request body:', { status, action, reportId });
     
     const validStatuses = ['pending', 'reviewed', 'resolved', 'dismissed'];
     if (status && !validStatuses.includes(status)) {
@@ -36,11 +44,15 @@ export async function PATCH(request, { params }) {
       );
     }
     
+    console.log('[ADMIN REPORT UPDATE] Getting Firestore instance...');
     const db = adminFirestore();
     const reportRef = db.collection('reports').doc(reportId);
+    
+    console.log('[ADMIN REPORT UPDATE] Fetching report document...');
     const reportDoc = await reportRef.get();
     
     if (!reportDoc.exists) {
+      console.log('[ADMIN REPORT UPDATE] Report not found:', reportId);
       return NextResponse.json(
         { success: false, error: 'Report not found' },
         { status: 404 }
@@ -49,23 +61,34 @@ export async function PATCH(request, { params }) {
     
     const reportData = reportDoc.data();
     const reportType = reportData.type || 'campaign';
+    console.log('[ADMIN REPORT UPDATE] Report data:', { 
+      reportType, 
+      campaignId: reportData.campaignId,
+      reportedUserId: reportData.reportedUserId,
+      currentStatus: reportData.status
+    });
     
     let relatedReportsSnapshot = null;
     if (action === 'no-action' && status === 'dismissed') {
+      console.log('[ADMIN REPORT UPDATE] Fetching related reports for dismissal...');
       if (reportType === 'campaign' && reportData.campaignId) {
         relatedReportsSnapshot = await db.collection('reports')
           .where('campaignId', '==', reportData.campaignId)
           .where('status', 'in', ['pending', 'reviewed', 'resolved'])
           .get();
+        console.log('[ADMIN REPORT UPDATE] Found', relatedReportsSnapshot.size, 'related campaign reports');
       } else if (reportType === 'profile' && reportData.reportedUserId) {
         relatedReportsSnapshot = await db.collection('reports')
           .where('reportedUserId', '==', reportData.reportedUserId)
           .where('status', 'in', ['pending', 'reviewed', 'resolved'])
           .get();
+        console.log('[ADMIN REPORT UPDATE] Found', relatedReportsSnapshot.size, 'related profile reports');
       }
     }
     
+    console.log('[ADMIN REPORT UPDATE] Starting transaction...');
     await db.runTransaction(async (transaction) => {
+      console.log('[ADMIN REPORT UPDATE] Inside transaction - preparing report update...');
       const reportUpdateData = {
         updatedAt: new Date(),
       };
@@ -80,17 +103,22 @@ export async function PATCH(request, { params }) {
         reportUpdateData.action = action;
       }
       
+      console.log('[ADMIN REPORT UPDATE] Updating report document with:', reportUpdateData);
       transaction.update(reportRef, reportUpdateData);
+      console.log('[ADMIN REPORT UPDATE] Report update queued successfully');
       
       if (reportType === 'campaign' && reportData.campaignId) {
+        console.log('[ADMIN REPORT UPDATE] Processing campaign report...');
         const campaignRef = db.collection('campaigns').doc(reportData.campaignId);
         const campaignDoc = await transaction.get(campaignRef);
         
         if (campaignDoc.exists) {
+          console.log('[ADMIN REPORT UPDATE] Campaign found, processing action:', action);
           const campaignData = campaignDoc.data();
           const campaignUpdates = {};
           
           if (action === 'no-action' && status === 'dismissed') {
+            console.log('[ADMIN REPORT UPDATE] Dismissing campaign report - resetting counts...');
             campaignUpdates.reportsCount = 0;
             campaignUpdates.moderationStatus = 'active';
             if (campaignData.hiddenAt) {
@@ -98,6 +126,7 @@ export async function PATCH(request, { params }) {
             }
             
             if (relatedReportsSnapshot && !relatedReportsSnapshot.empty) {
+              console.log('[ADMIN REPORT UPDATE] Dismissing', relatedReportsSnapshot.size, 'related reports');
               relatedReportsSnapshot.forEach(doc => {
                 transaction.update(doc.ref, { 
                   status: 'dismissed', 
@@ -110,6 +139,7 @@ export async function PATCH(request, { params }) {
           }
           
           else if (action === 'warned') {
+            console.log('[ADMIN REPORT UPDATE] Creating warning for campaign creator...');
             const warningRef = db.collection('warnings').doc();
             const warningData = {
               userId: campaignData.creatorId,
@@ -123,9 +153,11 @@ export async function PATCH(request, { params }) {
               acknowledged: false,
             };
             transaction.set(warningRef, warningData);
+            console.log('[ADMIN REPORT UPDATE] Warning queued successfully');
           }
           
           else if (action === 'removed') {
+            console.log('[ADMIN REPORT UPDATE] Removing campaign temporarily...');
             const appealDeadline = new Date();
             appealDeadline.setDate(appealDeadline.getDate() + 30);
             
@@ -137,21 +169,26 @@ export async function PATCH(request, { params }) {
           }
           
           if (Object.keys(campaignUpdates).length > 0) {
+            console.log('[ADMIN REPORT UPDATE] Updating campaign with:', campaignUpdates);
             campaignUpdates.updatedAt = new Date();
             transaction.update(campaignRef, campaignUpdates);
+            console.log('[ADMIN REPORT UPDATE] Campaign update queued successfully');
           }
         }
       }
       
       else if (reportType === 'profile' && reportData.reportedUserId) {
+        console.log('[ADMIN REPORT UPDATE] Processing profile report...');
         const userRef = db.collection('users').doc(reportData.reportedUserId);
         const userDoc = await transaction.get(userRef);
         
         if (userDoc.exists) {
+          console.log('[ADMIN REPORT UPDATE] User found, processing action:', action);
           const userData = userDoc.data();
           const userUpdates = {};
           
           if (action === 'no-action' && status === 'dismissed') {
+            console.log('[ADMIN REPORT UPDATE] Dismissing profile report - resetting counts...');
             userUpdates.reportsCount = 0;
             userUpdates.moderationStatus = 'active';
             if (userData.hiddenAt) {
@@ -159,6 +196,7 @@ export async function PATCH(request, { params }) {
             }
             
             if (relatedReportsSnapshot && !relatedReportsSnapshot.empty) {
+              console.log('[ADMIN REPORT UPDATE] Dismissing', relatedReportsSnapshot.size, 'related reports');
               relatedReportsSnapshot.forEach(doc => {
                 transaction.update(doc.ref, { 
                   status: 'dismissed', 
@@ -171,6 +209,7 @@ export async function PATCH(request, { params }) {
           }
           
           else if (action === 'warned') {
+            console.log('[ADMIN REPORT UPDATE] Creating warning for user...');
             const warningRef = db.collection('warnings').doc();
             const warningData = {
               userId: reportData.reportedUserId,
@@ -184,9 +223,11 @@ export async function PATCH(request, { params }) {
               acknowledged: false,
             };
             transaction.set(warningRef, warningData);
+            console.log('[ADMIN REPORT UPDATE] Warning queued successfully');
           }
           
           else if (action === 'removed') {
+            console.log('[ADMIN REPORT UPDATE] Banning user temporarily...');
             const appealDeadline = new Date();
             appealDeadline.setDate(appealDeadline.getDate() + 30);
             
@@ -197,13 +238,20 @@ export async function PATCH(request, { params }) {
           }
           
           if (Object.keys(userUpdates).length > 0) {
+            console.log('[ADMIN REPORT UPDATE] Updating user with:', userUpdates);
             userUpdates.updatedAt = new Date();
             transaction.update(userRef, userUpdates);
+            console.log('[ADMIN REPORT UPDATE] User update queued successfully');
           }
+        } else {
+          console.log('[ADMIN REPORT UPDATE] User not found:', reportData.reportedUserId);
         }
       }
     });
     
+    console.log('[ADMIN REPORT UPDATE] Transaction completed successfully');
+    
+    console.log('[ADMIN REPORT UPDATE] Fetching updated report document...');
     const updatedDoc = await reportRef.get();
     const updatedReportData = updatedDoc.data();
     const updatedData = { id: updatedDoc.id, ...updatedReportData };
@@ -212,19 +260,25 @@ export async function PATCH(request, { params }) {
     let campaignTitle = null;
     let notificationData = null;
     
+    console.log('[ADMIN REPORT UPDATE] Preparing notification...');
     if (reportType === 'campaign' && reportData.campaignId) {
+      console.log('[ADMIN REPORT UPDATE] Fetching campaign for notification...');
       const campaignDoc = await db.collection('campaigns').doc(reportData.campaignId).get();
       if (campaignDoc.exists) {
         const campaignData = campaignDoc.data();
         targetUserId = campaignData.creatorId;
         campaignTitle = campaignData.title;
+        console.log('[ADMIN REPORT UPDATE] Target user:', targetUserId, 'Campaign:', campaignTitle);
         
         if (action === 'no-action' && status === 'dismissed') {
+          console.log('[ADMIN REPORT UPDATE] Creating campaignRestored notification');
           notificationData = getNotificationTemplate('campaignRestored', { campaignTitle });
         } else if (action === 'warned') {
+          console.log('[ADMIN REPORT UPDATE] Creating warningIssued notification');
           const reasonText = reportData.reason?.replace(/_/g, ' ') || 'policy violation';
           notificationData = getNotificationTemplate('warningIssued', { reason: reasonText });
         } else if (action === 'removed') {
+          console.log('[ADMIN REPORT UPDATE] Creating campaignRemoved notification');
           const appealDeadline = new Date();
           appealDeadline.setDate(appealDeadline.getDate() + 30);
           notificationData = getNotificationTemplate('campaignRemoved', {
@@ -236,14 +290,18 @@ export async function PATCH(request, { params }) {
     }
     
     else if (reportType === 'profile' && reportData.reportedUserId) {
+      console.log('[ADMIN REPORT UPDATE] Profile report - target user:', reportData.reportedUserId);
       targetUserId = reportData.reportedUserId;
       
       if (action === 'no-action' && status === 'dismissed') {
+        console.log('[ADMIN REPORT UPDATE] Creating profileRestored notification');
         notificationData = getNotificationTemplate('profileRestored');
       } else if (action === 'warned') {
+        console.log('[ADMIN REPORT UPDATE] Creating warningIssued notification');
         const reasonText = reportData.reason?.replace(/_/g, ' ') || 'policy violation';
         notificationData = getNotificationTemplate('warningIssued', { reason: reasonText });
       } else if (action === 'removed') {
+        console.log('[ADMIN REPORT UPDATE] Creating accountBanned notification');
         const appealDeadline = new Date();
         appealDeadline.setDate(appealDeadline.getDate() + 30);
         const banReasonText = reportData.reason?.replace(/_/g, ' ') || 'policy violation';
@@ -255,6 +313,7 @@ export async function PATCH(request, { params }) {
     }
     
     if (targetUserId && notificationData) {
+      console.log('[ADMIN REPORT UPDATE] Sending FCM notification to user:', targetUserId);
       try {
         await sendFCMNotification({
           userId: targetUserId,
@@ -263,11 +322,15 @@ export async function PATCH(request, { params }) {
           actionUrl: notificationData.actionUrl,
           icon: notificationData.icon,
         });
+        console.log('[ADMIN REPORT UPDATE] FCM notification sent successfully');
       } catch (notificationError) {
-        console.error('Failed to send FCM notification:', notificationError);
+        console.error('[ADMIN REPORT UPDATE] Failed to send FCM notification:', notificationError);
       }
+    } else {
+      console.log('[ADMIN REPORT UPDATE] No notification to send (targetUserId:', targetUserId, ', notificationData:', !!notificationData, ')');
     }
     
+    console.log('[ADMIN REPORT UPDATE] Converting timestamps...');
     if (updatedData.createdAt && updatedData.createdAt.toDate) {
       updatedData.createdAt = updatedData.createdAt.toDate().toISOString();
     }
@@ -278,6 +341,7 @@ export async function PATCH(request, { params }) {
       updatedData.updatedAt = updatedData.updatedAt.toDate().toISOString();
     }
     
+    console.log('[ADMIN REPORT UPDATE] Success! Returning response');
     return NextResponse.json({
       success: true,
       message: 'Report updated successfully',
