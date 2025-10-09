@@ -609,8 +609,10 @@ export const getCampaignBySlug = async (slug) => {
     const campaignDoc = querySnapshot.docs[0];
     const campaignData = { id: campaignDoc.id, ...campaignDoc.data() };
     
-    // Don't show removed campaigns
-    if (campaignData.moderationStatus === 'removed') {
+    // Don't show removed or hidden campaigns
+    if (campaignData.moderationStatus === 'removed-temporary' || 
+        campaignData.moderationStatus === 'removed-permanent' ||
+        campaignData.moderationStatus === 'under-review-hidden') {
       return null;
     }
     
@@ -962,9 +964,9 @@ export const getAllCampaigns = async (filters = {}) => {
       }
     }
     
-    // Build query
+    // Build query - Only show active campaigns (exclude removed and hidden)
     let constraints = [
-      where('moderationStatus', '!=', 'removed')
+      where('moderationStatus', 'in', ['active', 'under-review'])
     ];
     
     // Add type filter
