@@ -1,7 +1,7 @@
 # Campaign System - Implementation Guide
 
-**Last Updated:** October 05, 2025  
-**Status:** Phase 1 Complete | Phase 2 Pending
+**Last Updated:** October 08, 2025  
+**Status:** Phase 1 Complete | Phase 2 Pending | Moderation System Updated
 
 ---
 
@@ -23,7 +23,7 @@ Twibbonize supports two campaign types:
 ## Data Schema
 
 ### Campaign Collection (Firestore: `campaigns`)
-✅ **Status: Implemented**
+✅ **Status: Implemented** | 🔄 **Updated: Moderation Fields (Oct 2025)**
 
 ```javascript
 {
@@ -41,10 +41,15 @@ Twibbonize supports two campaign types:
   
   // Counters
   supportersCount: 0,                    // Total downloads (increments on each download)
-  reportsCount: 0,
+  reportsCount: 0,                       // Increments with each report
   
-  // Status
-  moderationStatus: "active" | "under-review" | "removed",
+  // Moderation Status (UPDATED)
+  moderationStatus: "active" | "under-review" | "under-review-hidden" | "removed-temporary" | "removed-permanent",
+  hiddenAt: timestamp,                   // When auto-hidden (3+ reports)
+  removedAt: timestamp,                  // When admin removed temporarily
+  removalReason: string,                 // Admin's reason for removal
+  appealDeadline: timestamp,             // 30 days from removal
+  appealCount: number,                   // How many times appealed (max 1)
   
   // Timestamps
   createdAt: timestamp,                  // Publish time
@@ -58,31 +63,211 @@ Twibbonize supports two campaign types:
 - Edit window: 7 days from publish AND less than 10 supporters
 - After limit: Campaign permanently locked
 
+**Moderation Policy (NEW):**
+- **3+ reports** → Auto-hide from public (`under-review-hidden`)
+- **Admin dismiss** → Restore to `active`, reset reportsCount to 0
+- **Admin remove** → `removed-temporary` for 30 days with appeal option
+- **After 30 days** → Auto-delete permanently if no appeal
+- **Second removal** → `removed-permanent` (no recovery)
+
 **Deletion Policy:**
-- Only creator can delete
-- Requires confirmation popup
-- Deletes both Firestore document and Supabase image
-- No recovery possible
+- Only creator can delete (for `active` campaigns)
+- Admin can remove (temporary or permanent)
+- Temporary removal allows 30-day appeal
+- Permanent deletion removes Firestore doc + Supabase image
 
 ---
 
 ### Reports Collection (Firestore: `reports`)
-✅ **Status: Implemented**
+✅ **Status: Implemented** | 🔄 **Updated: Profile Reports (Oct 2025)**
 
 ```javascript
 {
-  campaignId: "campaign-id",
-  campaignSlug: "campaign-slug",
+  type: "campaign" | "profile",          // NEW: Report type
+  
+  // Campaign reports (when type = "campaign")
+  campaignId: string,                    // Optional (campaign reports only)
+  campaignSlug: string,                  // Optional (campaign reports only)
+  
+  // Profile reports (when type = "profile")
+  reportedUserId: string,                // Optional (profile reports only)
+  reportedUsername: string,              // Optional (profile reports only)
+  
+  // Common fields
   reportedBy: "user-id" | "anonymous",   // Anonymous allowed
-  reason: "inappropriate" | "spam" | "copyright" | "other",
+  reason: string,                        // Varies by type
   details: "Optional explanation",
   status: "pending" | "reviewed" | "resolved" | "dismissed",
   createdAt: timestamp,
   reviewedAt: timestamp,                 // Optional
   reviewedBy: "admin-user-id",           // Optional
-  action: "removed" | "warned" | "no-action"  // Optional
+  action: "warned" | "removed" | "no-action"  // Optional
 }
 ```
+
+**Report Reasons by Type:**
+
+**Campaign Reports:**
+- `inappropriate` - Inappropriate Content
+- `spam` - Spam
+- `copyright` - Copyright Violation
+- `other` - Other
+
+**Profile Reports:**
+- `inappropriate_avatar` - Inappropriate Profile Picture
+- `offensive_username` - Offensive Username
+- `spam_bio` - Spam in Bio/Description
+- `impersonation` - Impersonation
+- `other` - Other
+
+---
+
+### Warnings Collection (Firestore: `warnings`)
+⏸️ **Status: Pending Implementation**
+
+```javascript
+{
+  userId: string,                        // User who received warning
+  targetType: "campaign" | "profile",
+  targetId: string,                      // campaignId or userId
+  reportId: string,                      // Related report
+  reason: string,
+  issuedBy: string,                      // adminId
+  issuedAt: timestamp,
+  acknowledged: boolean,                 // User read the warning
+}
+```
+
+**Purpose:**
+- Track warning history for admin review
+- Does NOT auto-ban users
+- Admin manually decides actions based on warning count
+- Visible in admin user details panel
+
+---
+
+### Notifications Collection (Firestore: `notifications`)
+⏸️ **Status: Pending Implementation**
+
+```javascript
+{
+  userId: string,
+  type: "warning" | "campaign_removed" | "campaign_under_review" | "profile_under_review" | "account_banned" | "appeal_deadline",
+  title: string,
+  message: string,
+  actionUrl: string,                     // Link to take action
+  actionLabel: string,                   // "Appeal Removal", "View Campaign", etc.
+  metadata: {
+    campaignId?: string,
+    reportId?: string,
+    appealDeadline?: timestamp,
+  },
+  read: boolean,
+  createdAt: timestamp,
+}
+```
+
+**Purpose:**
+- In-app notifications using Firestore (NOT Firebase Cloud Messaging)
+- Notify users about moderation actions
+- Include action buttons (appeal, view details)
+- Auto-delete after 90 days
+
+---
+
+### Appeals Collection (Firestore: `appeals`)
+⏸️ **Status: Pending Implementation**
+
+```javascript
+{
+  userId: string,
+  type: "campaign" | "account",
+  targetId: string,                      // campaignId or userId
+  reason: string,                        // User's explanation
+  status: "pending" | "approved" | "rejected",
+  submittedAt: timestamp,
+  reviewedAt?: timestamp,
+  reviewedBy?: string,                   // adminId
+  adminNotes?: string,
+}
+```
+
+**Purpose:**
+- 30-day appeal window for removed content/banned accounts
+- Admin reviews in `/admin/appeals`
+- Approve → Restore content/account
+- Reject → Permanent deletion
+
+---
+
+### User Schema Updates
+⏸️ **Status: Pending Implementation**
+
+**NEW moderation fields:**
+```javascript
+{
+  // Existing fields...
+  
+  // Profile Moderation
+  moderationStatus: "active" | "under-review" | "under-review-hidden",
+  reportsCount: number,
+  hiddenAt?: timestamp,
+  
+  // Account Status
+  accountStatus: "active" | "banned-temporary" | "banned-permanent",
+  bannedAt?: timestamp,
+  banReason?: string,
+  appealDeadline?: timestamp,
+}
+```
+
+**Profile Moderation Rules:**
+- **10+ reports** → Auto-hide from public (`under-review-hidden`)
+- **Admin dismiss** → Restore to `active`, reset reportsCount to 0
+- **Admin ban** → `banned-temporary` for 30 days with appeal
+- **Permanent ban** → Delete all data (profile + campaigns)
+
+---
+
+## Moderation Workflows (NEW)
+
+### Campaign Moderation Workflow
+
+1. **Report Received** → `moderationStatus: "under-review"` (still public)
+2. **3+ Reports** → `moderationStatus: "under-review-hidden"` (auto-hide)
+   - Send notification to creator
+   - Campaign invisible to public
+3. **Admin Actions:**
+   - **Dismiss:** Reset reportsCount to 0, restore to `active`, unhide
+   - **Warn:** Create warning record, send notification
+   - **Remove:** `removed-temporary` + 30-day appeal deadline
+4. **Appeal Process:**
+   - Creator appeals within 30 days
+   - Admin reviews in `/admin/appeals`
+   - Approve → Restore campaign
+   - Reject → `removed-permanent` (delete all data)
+5. **No Appeal:** After 30 days → Auto-delete permanently
+
+### Profile Moderation Workflow
+
+1. **Report Received** → Track in reportsCount
+2. **10+ Reports** → `moderationStatus: "under-review-hidden"` (auto-hide)
+   - Send notification to user
+   - Profile invisible to public
+3. **Admin Actions:**
+   - **Dismiss:** Reset reportsCount to 0, restore to `active`, unhide
+   - **Warn:** Create warning record, send notification
+   - **Ban Account:** `banned-temporary` + 30-day appeal deadline
+4. **Ban Message:**
+   - User cannot login
+   - Shows ban reason + appeal deadline
+   - "Appeal" button available
+5. **Appeal Process:**
+   - User appeals within 30 days
+   - Admin reviews in `/admin/appeals`
+   - Approve → Restore account
+   - Reject → `banned-permanent` + delete all data (profile + campaigns)
+6. **No Appeal:** After 30 days → Permanent ban + delete data
 
 ---
 
