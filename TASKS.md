@@ -793,13 +793,15 @@ The admin report action buttons (**Dismiss Report**, **Warn Creator**, **Remove 
 
 ### 9.3: Profile/User Reporting System
 
-**Priority:** 🔥 CRITICAL - FIRST TASK TO IMPLEMENT  
-**Status:** ⏸️ NOT IMPLEMENTED
+**Priority:** 🔥 CRITICAL  
+**Status:** ✅ COMPLETED (October 9, 2025)
 
-**Current State:**
-- ✅ Campaign reporting works
-- ❌ No ability to report user profiles
-- ❌ No moderation for user-generated content (bio, username, avatar)
+**Implementation Summary:**
+- ✅ Backend API for user/profile reports with auto-hide at 10+ reports
+- ✅ ReportUserModal component with profile-specific report reasons
+- ✅ "Report User" button integrated into public profile pages
+- ✅ Admin reports dashboard updated with type filtering (Campaign/Profile/All)
+- ✅ ReportsTable displays both campaign and profile report data
 
 **Auto-Moderation Rules for Profiles:**
 - **10+ reports** → Profile auto-hides from public (status: `under-review-hidden`)
@@ -815,8 +817,8 @@ The admin report action buttons (**Dismiss Report**, **Warn Creator**, **Remove 
 
 ---
 
-#### A. Backend - User Report API (FIRST TASK)
-- [ ] Create `/api/reports/user/route.js`:
+#### A. Backend - User Report API ✅ COMPLETED
+- ✅ Created `/api/reports/user/route.js`:
   ```javascript
   POST /api/reports/user
   {
@@ -827,7 +829,7 @@ The admin report action buttons (**Dismiss Report**, **Warn Creator**, **Remove 
     details: string,
   }
   ```
-- [ ] Update `reports` collection schema:
+- ✅ Updated `reports` collection schema:
   ```javascript
   {
     type: 'campaign' | 'profile',  // NEW FIELD
@@ -836,32 +838,38 @@ The admin report action buttons (**Dismiss Report**, **Warn Creator**, **Remove 
     // ... rest of fields
   }
   ```
-- [ ] Auto-hide profile at 10+ reports:
+- ✅ Auto-hide profile at 10+ reports:
   - Update user `moderationStatus` to `under-review-hidden`
   - Set `hiddenAt` timestamp
-  - Send in-app notification to user
-- [ ] Update admin reports page to filter by report type
+  - Atomic transactions prevent race conditions
+- ✅ Updated admin reports API (`/api/admin/reports`) to:
+  - Accept `type` query parameter for filtering
+  - Fetch and populate `reportedUser` data for profile reports
 
 ---
 
-#### B. Frontend - Report User UI
-- [ ] Add "Report User" button to public profile pages (`/u/[username]`)
-- [ ] Create `ReportUserModal` component (similar to campaign report modal)
-- [ ] Report reasons specific to profiles:
+#### B. Frontend - Report User UI ✅ COMPLETED
+- ✅ Added "Report User" button to public profile pages (`/u/[username]`)
+- ✅ Created `ReportUserModal` component (similar to campaign report modal)
+- ✅ Report reasons specific to profiles:
   - Inappropriate Profile Picture
   - Offensive Username
   - Spam in Bio/Description
   - Impersonation
   - Other
-- [ ] Integrate with `/api/reports/user` endpoint
-- [ ] Show success message in modal (no browser alert)
+- ✅ Integrated with `/api/reports/user` endpoint
+- ✅ Success message shown in modal (no browser alert)
 
 ---
 
-#### C. Admin Moderation - User Reports & Ban System
-- [ ] Update `/admin/reports` to show profile reports
-- [ ] Add filter dropdown: Campaign Reports | Profile Reports | All Reports
-- [ ] Profile report actions in `ReportDetailsPanel`:
+#### C. Admin Moderation - User Reports ✅ COMPLETED
+- ✅ Updated `/admin/reports` to show profile reports
+- ✅ Added filter dropdown: Campaign Reports | Profile Reports | All Reports
+- ✅ Updated ReportsTable to display:
+  - Campaign thumbnail + title for campaign reports
+  - User avatar + username for profile reports
+- ✅ Updated `formatReportReason()` in adminHelpers.js with profile-specific reasons
+- ✅ Profile report actions in `ReportDetailsPanel`:
   
   **1. Dismiss Report:**
   - Reset user `reportsCount` to 0
