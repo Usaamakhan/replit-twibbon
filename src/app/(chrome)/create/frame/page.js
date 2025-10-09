@@ -8,6 +8,7 @@ import { generateSlug } from '../../../../utils/slugGenerator';
 import { getCampaignUploadUrl } from '../../../../utils/campaignStorage';
 import { createCampaign } from '../../../../lib/firestore';
 import CampaignStepIndicator from '../../../../components/CampaignStepIndicator';
+import NotificationPermissionModal from '../../../../components/notifications/NotificationPermissionModal';
 
 export default function CreateFramePage() {
   const router = useRouter();
@@ -16,6 +17,7 @@ export default function CreateFramePage() {
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState({});
   const [showAuthModal, setShowAuthModal] = useState(false);
+  const [showNotificationPrompt, setShowNotificationPrompt] = useState(false);
   
   const imageInputRef = useRef();
 
@@ -158,8 +160,15 @@ export default function CreateFramePage() {
       const result = await createCampaign(campaignData, user.uid);
 
       if (result.success) {
-        // Navigate to campaign page
-        router.push(`/campaign/${slug}`);
+        const hasDeclined = localStorage.getItem('fcm-permission-declined');
+        const currentPermission = typeof window !== 'undefined' && 'Notification' in window ? Notification.permission : 'default';
+        
+        if (currentPermission === 'default' && !hasDeclined) {
+          setShowNotificationPrompt(true);
+          setLoading(false);
+        } else {
+          router.push(`/campaign/${slug}`);
+        }
       } else {
         throw new Error(result.error || 'Failed to create campaign');
       }
@@ -404,6 +413,17 @@ export default function CreateFramePage() {
             </div>
           </div>
         </>
+      )}
+
+      {/* Notification Permission Modal */}
+      {showNotificationPrompt && (
+        <NotificationPermissionModal 
+          onClose={() => {
+            setShowNotificationPrompt(false);
+            const slug = generateSlug(formData.title);
+            router.push(`/campaign/${slug}`);
+          }}
+        />
       )}
     </div>
   );
