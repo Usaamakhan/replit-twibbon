@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server';
 import { adminFirestore } from '@/lib/firebaseAdmin';
+import { sendNotificationToUser } from '@/utils/notifications/sendFCMNotification';
+import { profileUnderReviewTemplate } from '@/utils/notifications/notificationTemplates';
 
 export async function POST(request) {
   try {
@@ -88,6 +90,16 @@ export async function POST(request) {
       }
       
       transaction.update(userRef, userUpdates);
+      
+      // Send notification if profile is auto-hidden
+      if (newReportsCount >= 10 && userData.moderationStatus === 'active') {
+        const notification = profileUnderReviewTemplate(
+          userData.username || 'Your profile',
+          `/@${userData.username || reportedUserId}`
+        );
+        
+        await sendNotificationToUser(reportedUserId, notification);
+      }
     });
     
     return NextResponse.json(

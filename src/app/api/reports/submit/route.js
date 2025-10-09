@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server';
 import { adminFirestore } from '@/lib/firebaseAdmin';
+import { sendNotificationToUser } from '@/utils/notifications/sendFCMNotification';
+import { campaignUnderReviewTemplate } from '@/utils/notifications/notificationTemplates';
 
 export async function POST(request) {
   try {
@@ -67,10 +69,21 @@ export async function POST(request) {
       
       // Auto-flag for review if threshold reached (3+ reports)
       if (newReportsCount >= 3 && campaignData.moderationStatus === 'active') {
-        campaignUpdates.moderationStatus = 'under-review';
+        campaignUpdates.moderationStatus = 'under-review-hidden';
+        campaignUpdates.hiddenAt = new Date();
       }
       
       transaction.update(campaignRef, campaignUpdates);
+      
+      // Send notification if campaign is auto-hidden
+      if (newReportsCount >= 3 && campaignData.moderationStatus === 'active' && campaignData.creatorId) {
+        const notification = campaignUnderReviewTemplate(
+          campaignData.title || 'Your campaign',
+          `/campaign/${campaignData.slug || campaignId}`
+        );
+        
+        await sendNotificationToUser(campaignData.creatorId, notification);
+      }
     });
     
     return NextResponse.json(
