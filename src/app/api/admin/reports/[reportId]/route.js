@@ -50,6 +50,21 @@ export async function PATCH(request, { params }) {
     const reportData = reportDoc.data();
     const reportType = reportData.type || 'campaign';
     
+    let relatedReportsSnapshot = null;
+    if (action === 'no-action' && status === 'dismissed') {
+      if (reportType === 'campaign' && reportData.campaignId) {
+        relatedReportsSnapshot = await db.collection('reports')
+          .where('campaignId', '==', reportData.campaignId)
+          .where('status', 'in', ['pending', 'reviewed', 'resolved'])
+          .get();
+      } else if (reportType === 'profile' && reportData.reportedUserId) {
+        relatedReportsSnapshot = await db.collection('reports')
+          .where('reportedUserId', '==', reportData.reportedUserId)
+          .where('status', 'in', ['pending', 'reviewed', 'resolved'])
+          .get();
+      }
+    }
+    
     await db.runTransaction(async (transaction) => {
       const reportUpdateData = {
         updatedAt: new Date(),
@@ -82,18 +97,16 @@ export async function PATCH(request, { params }) {
               campaignUpdates.hiddenAt = FieldValue.delete();
             }
             
-            const allReportsQuery = db.collection('reports')
-              .where('campaignId', '==', reportData.campaignId)
-              .where('status', 'in', ['pending', 'reviewed', 'resolved']);
-            const relatedReports = await transaction.get(allReportsQuery);
-            relatedReports.forEach(doc => {
-              transaction.update(doc.ref, { 
-                status: 'dismissed', 
-                action: 'no-action',
-                reviewedAt: new Date(),
-                reviewedBy: adminUser.uid
+            if (relatedReportsSnapshot && !relatedReportsSnapshot.empty) {
+              relatedReportsSnapshot.forEach(doc => {
+                transaction.update(doc.ref, { 
+                  status: 'dismissed', 
+                  action: 'no-action',
+                  reviewedAt: new Date(),
+                  reviewedBy: adminUser.uid
+                });
               });
-            });
+            }
           }
           
           else if (action === 'warned') {
@@ -145,18 +158,16 @@ export async function PATCH(request, { params }) {
               userUpdates.hiddenAt = FieldValue.delete();
             }
             
-            const allReportsQuery = db.collection('reports')
-              .where('reportedUserId', '==', reportData.reportedUserId)
-              .where('status', 'in', ['pending', 'reviewed', 'resolved']);
-            const relatedReports = await transaction.get(allReportsQuery);
-            relatedReports.forEach(doc => {
-              transaction.update(doc.ref, { 
-                status: 'dismissed', 
-                action: 'no-action',
-                reviewedAt: new Date(),
-                reviewedBy: adminUser.uid
+            if (relatedReportsSnapshot && !relatedReportsSnapshot.empty) {
+              relatedReportsSnapshot.forEach(doc => {
+                transaction.update(doc.ref, { 
+                  status: 'dismissed', 
+                  action: 'no-action',
+                  reviewedAt: new Date(),
+                  reviewedBy: adminUser.uid
+                });
               });
-            });
+            }
           }
           
           else if (action === 'warned') {
