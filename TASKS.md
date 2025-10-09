@@ -732,14 +732,14 @@ The admin report action buttons (**Dismiss Report**, **Warn Creator**, **Remove 
 
 ---
 
-### 9.2: Notification & Messaging System
+### 9.2: FCM Push Notification System
 
 **Priority:** HIGH  
-**Status:** ⏸️ DEFERRED - No notification system currently exists
+**Status:** 🔄 IN PROGRESS  
+**Last Updated:** October 09, 2025
 
 **Current State:**
 - ❌ No push notifications
-- ❌ No email notifications
 - ❌ No notification preferences
 - ❌ Users are unaware when:
   - Their campaign is reported
@@ -747,58 +747,116 @@ The admin report action buttons (**Dismiss Report**, **Warn Creator**, **Remove 
   - They receive a warning
   - They are banned
 
-**Decision: Use Firebase Cloud Messaging (FCM) for Push Notifications**
+**Implementation: Firebase Cloud Messaging (FCM) for Web Push Notifications**
 
-#### A. FCM Push Notification System
+---
+
+#### A. FCM Setup & Token Management
 - [ ] Set up Firebase Cloud Messaging in Firebase Console
 - [ ] Configure FCM for web push notifications (VAPID keys)
+- [ ] Add FCM config to Firebase initialization
 - [ ] Store FCM device tokens in Firestore:
   ```javascript
   // Collection: users/{userId}/tokens/{tokenId}
   {
     token: string,              // FCM device token
     device: 'web' | 'android' | 'ios',
+    browser?: string,           // Chrome, Firefox, Safari, etc.
     createdAt: timestamp,
     lastUsed: timestamp,
   }
   ```
+
+---
+
+#### B. API Routes for Token Management
 - [ ] Create `/api/notifications/register-token/route.js`:
-  - POST: Save user's FCM device token
+  - POST: Save user's FCM device token to Firestore
   - Support multiple devices per user
+  - Update `lastUsed` timestamp on token refresh
+  - Validate token format before saving
+  
+- [ ] Create `/api/notifications/remove-token/route.js`:
+  - DELETE: Remove FCM token on logout
+  - Clean up expired/invalid tokens
+
 - [ ] Create `/api/notifications/send/route.js` (server-side):
   - Use Firebase Admin SDK to send FCM messages
-  - Support notification payload with data payload
-  - Handle multi-device delivery
-- [ ] Implement FCM token management:
-  - Request permission on login
-  - Save token to Firestore
+  - Support notification payload + data payload
+  - Handle multi-device delivery (send to all user's tokens)
+  - Error handling for invalid/expired tokens
+
+---
+
+#### C. Service Worker for Web Push
+- [ ] Create `/public/firebase-messaging-sw.js`:
+  - Handle background notifications when app is closed
+  - Show notification UI with title, body, icon
+  - Deep link to action URLs on notification click
+  - Handle notification actions (View Campaign, Appeal, etc.)
+
+---
+
+#### D. Frontend FCM Integration
+- [ ] Create `useFCM()` hook for token management:
+  - Request notification permission on user action (not automatic)
+  - Get FCM token from Firebase SDK
+  - Save token to Firestore via API
   - Refresh token on expiry
   - Delete token on logout
-- [ ] Create notification service worker for web push:
-  - Handle background notifications
-  - Deep link to action URLs
-  - Show notification UI
+  
+- [ ] Create `NotificationPermissionModal` component:
+  - Explain why notifications are helpful
+  - Request permission button
+  - Show "Don't ask again" option
+  - Store user preference in localStorage
 
-#### B. Notification UI Components
-- [ ] Create `useFCM()` hook for token management
-- [ ] Add notification permission request modal
-- [ ] Create notification preferences page (`/profile/settings`)
-- [ ] Allow users to enable/disable push notifications
+- [ ] Create notification preferences page (`/profile/settings`):
+  - Toggle to enable/disable push notifications
+  - Option to re-request permission if denied
+  - List of active devices with notification access
+  - Remove device tokens individually
 
-#### C. Email Notification System (Future - Phase 3)
-- [ ] Email as secondary notification channel (optional)
-- [ ] Resend.com integration for critical notifications only
-- [ ] Templates: Account banned, Appeal deadline reminder (3 days before)
-- [ ] User can opt-out of emails (keep push notifications only)
+---
 
-#### D. Notification Triggers (FCM Push)
+#### E. Notification Utility Functions
+- [ ] Create `/src/utils/notifications/sendFCMNotification.js`:
+  - Server-side function using Firebase Admin SDK
+  - Send to single user (all their devices)
+  - Send to multiple users (batch)
+  - Include notification title, body, icon, click action URL
+  
+- [ ] Create `/src/utils/notifications/notificationTemplates.js`:
+  - Template: Campaign Under Review (3+ reports)
+  - Template: Campaign Removed (with appeal link)
+  - Template: Warning Issued
+  - Template: Profile Under Review (10+ reports)
+  - Template: Account Banned (with appeal link)
+  - Template: Campaign/Profile Restored
+  - Template: Appeal Deadline Reminder (3 days before)
+
+---
+
+#### F. Integration with Moderation Actions
+- [ ] Update `/api/admin/reports/[reportId]/route.js`:
+  - Send FCM notification on "Dismiss" → "Campaign/Profile Restored"
+  - Send FCM notification on "Warn" → "Warning Issued"
+  - Send FCM notification on "Remove/Ban" → "Content Removed/Account Banned"
+
+- [ ] Update auto-hide logic in report APIs:
+  - Send FCM notification when campaign gets 3 reports → "Campaign Under Review"
+  - Send FCM notification when profile gets 10 reports → "Profile Under Review"
+
+---
+
+#### G. Notification Triggers Summary
 - [ ] Campaign gets 3 reports → Auto-hide + Notify creator "Campaign Under Review"
 - [ ] Campaign removed temporarily → Notify with appeal link (30-day deadline)
 - [ ] Warning issued → Notify creator (track in warning history)
 - [ ] Profile gets 10 reports → Auto-hide + Notify user "Profile Under Review"
 - [ ] Account banned → Notify with appeal link (30-day deadline)
-- [ ] Appeal deadline reminder → 3 days before expiry
 - [ ] Admin dismisses reports → Notify creator "Campaign/Profile Restored"
+- [ ] Appeal deadline reminder → 3 days before expiry (requires cron job)
 
 ---
 
@@ -1169,3 +1227,274 @@ The admin report action buttons (**Dismiss Report**, **Warn Creator**, **Remove 
 ---
 
 **End of Report System Section**
+
+---
+
+---
+
+## 📋 Future Recommendations & Enhancements
+
+**Purpose:** This section contains potential features, improvements, and enhancements for future development phases. Items here are NOT currently prioritized but may be implemented based on user demand and platform growth.
+
+**Last Updated:** October 09, 2025
+
+---
+
+### Phase 3: Email Notification System
+
+**Priority:** LOW (Optional Secondary Channel)  
+**Status:** ⏸️ DEFERRED - Not currently needed
+
+**Overview:**
+Email notifications as a secondary notification channel for critical events only. FCM push notifications remain the primary notification method.
+
+**Implementation Plan:**
+- [ ] Integrate email service provider (Resend.com recommended)
+- [ ] Create email templates for critical notifications:
+  - Account banned (with appeal instructions)
+  - Appeal deadline reminder (3 days before expiry)
+  - Important policy updates
+  
+- [ ] User email preferences:
+  - Opt-in/opt-out toggle in `/profile/settings`
+  - Separate from push notification settings
+  - Default: Disabled (users must opt-in)
+  
+- [ ] Email triggers (critical only):
+  - Account banned → Send email with appeal link
+  - Appeal deadline in 3 days → Reminder email
+  - Appeal approved/rejected → Email notification
+  
+- [ ] Rate limiting:
+  - Max 3 emails per day per user
+  - Batch multiple events into single digest email
+  - Avoid spam and email fatigue
+
+**Why Deferred:**
+- FCM push notifications cover all use cases
+- Email adds complexity and cost
+- Most users prefer in-app notifications
+- Can be added later if needed
+
+---
+
+### Phase 4: Appeal System UI
+
+**Priority:** MEDIUM  
+**Status:** ⏸️ DEFERRED - Appeal data structure exists, UI pending
+
+**Overview:**
+User-facing UI for submitting appeals when content is removed or account is banned. Admin UI for reviewing and approving/rejecting appeals.
+
+**Backend (Partially Complete):**
+- ✅ Appeals collection structure defined
+- ✅ `appealDeadline` tracked in campaigns and user profiles
+- ✅ `appealCount` tracked for campaigns
+- ⏸️ API routes for appeal submission
+- ⏸️ Admin API for appeal review
+
+**Frontend (Pending):**
+- [ ] Create `/appeal-ban/page.js`:
+  - Show ban message with reason
+  - Display appeal deadline countdown
+  - Appeal submission form (explain why it should be restored)
+  - Submit appeal button
+  - Confirmation message after submission
+
+- [ ] Create `/campaign/[slug]/appeal/page.js`:
+  - Show removal reason
+  - Display appeal deadline countdown
+  - Appeal form for campaign restoration
+  - Show previous appeal history if any
+  
+- [ ] Create `/admin/appeals/page.js`:
+  - List all pending appeals
+  - Filter by type (Campaign / Account)
+  - View appeal details with original report context
+  - Approve/Reject buttons with admin notes
+  - Track appeal history
+
+**API Routes Needed:**
+- [ ] POST `/api/appeals/submit` - User submits appeal
+- [ ] GET `/api/admin/appeals` - Admin fetches all appeals
+- [ ] PATCH `/api/admin/appeals/[appealId]` - Admin approve/reject
+
+**Business Logic:**
+- Appeals must be submitted before `appealDeadline` (30 days)
+- Campaigns can appeal max 2 times (tracked in `appealCount`)
+- Accounts can appeal once per ban
+- After appeal rejected → permanent removal/ban
+- After 30 days with no appeal → automatic permanent removal
+
+---
+
+### Phase 5: Auto-Deletion Cron Jobs
+
+**Priority:** LOW  
+**Status:** ⏸️ DEFERRED - Requires serverless functions or cron service
+
+**Overview:**
+Automated cleanup of content marked for temporary removal after appeal deadlines pass.
+
+**Requirements:**
+- [ ] Set up cron job service (Vercel Cron, Firebase Scheduled Functions, etc.)
+- [ ] Daily job to check for expired appeal deadlines
+- [ ] Query campaigns where `moderationStatus == 'removed-temporary'` AND `appealDeadline < now()`
+- [ ] Query users where `accountStatus == 'banned-temporary'` AND `appealDeadline < now()`
+- [ ] Permanently delete:
+  - Campaign images from Supabase Storage
+  - Campaign documents from Firestore
+  - User profile data and all associated campaigns
+- [ ] Update status to `removed-permanent` or `banned-permanent`
+- [ ] Send final notification (if user still has valid tokens)
+
+**Why Deferred:**
+- Manual admin cleanup is sufficient for now
+- Low volume doesn't justify automation yet
+- Can be added when platform scales
+
+---
+
+### Phase 6: Advanced Moderation Tools
+
+**Priority:** LOW  
+**Status:** ⏸️ DEFERRED - Basic moderation is sufficient
+
+**Potential Features:**
+- [ ] **Profanity Filter:**
+  - Auto-detect offensive usernames and bio text
+  - Flag campaigns with inappropriate titles
+  - Require manual review before publishing
+  
+- [ ] **Image Content Moderation:**
+  - AI-based image analysis (Google Cloud Vision, AWS Rekognition)
+  - Detect inappropriate content in campaign images
+  - Auto-flag NSFW content for admin review
+  
+- [ ] **Warning History Dashboard:**
+  - Admin view to see all warnings issued to a user
+  - Track warning patterns across platform
+  - Identify repeat offenders
+  
+- [ ] **Ban Appeals Analytics:**
+  - Track appeal approval/rejection rates
+  - Identify common ban reasons
+  - Improve moderation policies based on data
+  
+- [ ] **IP-Based Rate Limiting:**
+  - Prevent spam reports from same IP
+  - Block malicious users creating multiple accounts
+  - Protect against report brigading
+
+---
+
+### Phase 7: Enhanced Analytics & Insights
+
+**Priority:** LOW  
+**Status:** ⏸️ DEFERRED - Basic analytics exist
+
+**Potential Features:**
+- [ ] **Creator Dashboard:**
+  - Campaign performance metrics (views, downloads, shares)
+  - Audience demographics (country, device type)
+  - Trending campaigns from same creator
+  
+- [ ] **Platform-Wide Statistics:**
+  - Total campaigns created (public stats page)
+  - Most popular campaign types
+  - Top countries by campaign creation
+  
+- [ ] **Admin Analytics:**
+  - Report trends over time
+  - Moderation action frequency
+  - Average appeal response time
+  
+- [ ] **Export Data:**
+  - Users can export their campaign data (CSV)
+  - Admin can export moderation reports for audits
+  - Compliance with data export regulations
+
+---
+
+### Phase 8: Social Features
+
+**Priority:** LOW  
+**Status:** ⏸️ DEFERRED - Platform is discovery-focused, not social
+
+**Potential Features:**
+- [ ] **Follow Creators:**
+  - Users can follow favorite creators
+  - Get notified when they publish new campaigns
+  
+- [ ] **Campaign Collections:**
+  - Users can save campaigns to personal collections
+  - Create themed collections (Holidays, Sports, etc.)
+  - Share collections with others
+  
+- [ ] **Comments/Reactions:**
+  - Allow visitors to react to campaigns (❤️, 🔥, etc.)
+  - Comment section for feedback (with moderation)
+  
+- [ ] **Sharing Features:**
+  - Generate shareable links for campaigns
+  - Social media preview cards (Open Graph)
+  - Twitter/Facebook share buttons
+
+---
+
+### Phase 9: Performance & Optimization
+
+**Priority:** MEDIUM  
+**Status:** ⏸️ DEFERRED - Current performance is acceptable
+
+**Potential Improvements:**
+- [ ] **CDN for Campaign Images:**
+  - Already using ImageKit.io (✅ implemented)
+  - Monitor bandwidth usage and optimize further if needed
+  
+- [ ] **Database Indexing:**
+  - Review Firestore composite indexes
+  - Optimize slow queries
+  - Add indexes for new filter combinations
+  
+- [ ] **Caching Strategy:**
+  - Redis cache for frequently accessed campaigns
+  - Cache top creators leaderboard
+  - Reduce Firestore read costs
+  
+- [ ] **Progressive Web App (PWA):**
+  - Service worker for offline support
+  - Install prompt for mobile users
+  - Cache static assets locally
+
+---
+
+### Phase 10: Monetization & Business Features
+
+**Priority:** LOW  
+**Status:** ⏸️ DEFERRED - Platform is free and community-driven
+
+**Potential Revenue Streams:**
+- [ ] **Premium Creator Accounts:**
+  - Remove upload limits
+  - Priority placement in gallery
+  - Advanced analytics dashboard
+  - Custom branding options
+  
+- [ ] **Ad-Free Experience:**
+  - Subscription to remove ads (if ads are added)
+  - Support platform without ads
+  
+- [ ] **Campaign Sponsorships:**
+  - Allow brands to sponsor campaigns
+  - Featured campaigns section
+  - Revenue sharing with creators
+  
+- [ ] **White-Label Solution:**
+  - Offer platform as service to organizations
+  - Custom domains and branding
+  - Enterprise support
+
+---
+
+**End of Future Recommendations Section**
