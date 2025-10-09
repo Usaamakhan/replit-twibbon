@@ -33,6 +33,15 @@ export function useFCM() {
       setNotificationPermission(permission);
 
       if (permission === 'granted') {
+        if ('serviceWorker' in navigator) {
+          const registration = await navigator.serviceWorker.register(
+            '/firebase-messaging-sw',
+            { scope: '/' }
+          );
+          await navigator.serviceWorker.ready;
+          console.log('Service Worker registered:', registration);
+        }
+
         const messagingInstance = messaging;
         
         if (!messagingInstance) {

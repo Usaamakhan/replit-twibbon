@@ -1,13 +1,40 @@
+import { NextResponse } from 'next/server';
+
+export async function GET() {
+  const requiredEnvVars = [
+    'NEXT_PUBLIC_FIREBASE_API_KEY',
+    'NEXT_PUBLIC_FIREBASE_PROJECT_ID',
+    'NEXT_PUBLIC_FIREBASE_APP_ID',
+    'NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID'
+  ];
+
+  const missingVars = requiredEnvVars.filter(varName => !process.env[varName]);
+  
+  if (missingVars.length > 0) {
+    console.error('Missing Firebase environment variables:', missingVars);
+    return new NextResponse(
+      `// Firebase config incomplete. Missing: ${missingVars.join(', ')}`,
+      {
+        status: 500,
+        headers: { 'Content-Type': 'application/javascript' }
+      }
+    );
+  }
+
+  const firebaseConfig = {
+    apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
+    authDomain: `${process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID}.firebaseapp.com`,
+    projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+    storageBucket: `${process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID}.appspot.com`,
+    messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
+    appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID
+  };
+
+  const swContent = `
 importScripts('https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js');
 importScripts('https://www.gstatic.com/firebasejs/10.7.1/firebase-messaging-compat.js');
 
-const firebaseConfig = {
-  apiKey: "YOUR_API_KEY_PLACEHOLDER",
-  authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
-  projectId: "YOUR_PROJECT_ID",
-  storageBucket: "YOUR_PROJECT_ID.appspot.com",
-  appId: "YOUR_APP_ID_PLACEHOLDER"
-};
+const firebaseConfig = ${JSON.stringify(firebaseConfig)};
 
 firebase.initializeApp(firebaseConfig);
 
@@ -63,3 +90,12 @@ self.addEventListener('notificationclick', (event) => {
     })
   );
 });
+  `.trim();
+
+  return new NextResponse(swContent, {
+    headers: {
+      'Content-Type': 'application/javascript',
+      'Service-Worker-Allowed': '/',
+    },
+  });
+}

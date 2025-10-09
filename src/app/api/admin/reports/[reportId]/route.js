@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server';
 import { requireAdmin } from '@/middleware/adminAuth';
 import { adminFirestore } from '@/lib/firebaseAdmin';
 import { FieldValue } from 'firebase-admin/firestore';
+import { getNotificationTemplate } from '@/utils/notifications/notificationTemplates';
+import { sendFCMNotification } from '@/utils/notifications/sendFCMNotification';
 
 export async function PATCH(request, { params }) {
   try {
@@ -192,7 +194,68 @@ export async function PATCH(request, { params }) {
     });
     
     const updatedDoc = await reportRef.get();
-    const updatedData = { id: updatedDoc.id, ...updatedDoc.data() };
+    const updatedReportData = updatedDoc.data();
+    const updatedData = { id: updatedDoc.id, ...updatedReportData };
+    
+    let targetUserId = null;
+    let campaignTitle = null;
+    let notificationData = null;
+    
+    if (reportType === 'campaign' && reportData.campaignId) {
+      const campaignDoc = await db.collection('campaigns').doc(reportData.campaignId).get();
+      if (campaignDoc.exists) {
+        const campaignData = campaignDoc.data();
+        targetUserId = campaignData.creatorId;
+        campaignTitle = campaignData.title;
+        
+        if (action === 'no-action' && status === 'dismissed') {
+          notificationData = getNotificationTemplate('campaignRestored', { campaignTitle });
+        } else if (action === 'warned') {
+          const reasonText = reportData.reason?.replace(/_/g, ' ') || 'policy violation';
+          notificationData = getNotificationTemplate('warningIssued', { reason: reasonText });
+        } else if (action === 'removed') {
+          const appealDeadline = new Date();
+          appealDeadline.setDate(appealDeadline.getDate() + 30);
+          notificationData = getNotificationTemplate('campaignRemoved', {
+            campaignTitle,
+            appealDeadline: appealDeadline.toLocaleDateString()
+          });
+        }
+      }
+    }
+    
+    else if (reportType === 'profile' && reportData.reportedUserId) {
+      targetUserId = reportData.reportedUserId;
+      
+      if (action === 'no-action' && status === 'dismissed') {
+        notificationData = getNotificationTemplate('profileRestored');
+      } else if (action === 'warned') {
+        const reasonText = reportData.reason?.replace(/_/g, ' ') || 'policy violation';
+        notificationData = getNotificationTemplate('warningIssued', { reason: reasonText });
+      } else if (action === 'removed') {
+        const appealDeadline = new Date();
+        appealDeadline.setDate(appealDeadline.getDate() + 30);
+        const banReasonText = reportData.reason?.replace(/_/g, ' ') || 'policy violation';
+        notificationData = getNotificationTemplate('accountBanned', {
+          banReason: banReasonText,
+          appealDeadline: appealDeadline.toLocaleDateString()
+        });
+      }
+    }
+    
+    if (targetUserId && notificationData) {
+      try {
+        await sendFCMNotification({
+          userId: targetUserId,
+          title: notificationData.title,
+          body: notificationData.body,
+          actionUrl: notificationData.actionUrl,
+          icon: notificationData.icon,
+        });
+      } catch (notificationError) {
+        console.error('Failed to send FCM notification:', notificationError);
+      }
+    }
     
     if (updatedData.createdAt && updatedData.createdAt.toDate) {
       updatedData.createdAt = updatedData.createdAt.toDate().toISOString();
