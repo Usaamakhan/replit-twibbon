@@ -68,6 +68,7 @@ export async function PATCH(request, context) {
       currentStatus: reportData.status
     });
     
+    // Fetch related reports BEFORE transaction (for dismissals)
     let relatedReportsSnapshot = null;
     if (action === 'no-action' && status === 'dismissed') {
       console.log('[ADMIN REPORT UPDATE] Fetching related reports for dismissal...');
@@ -83,6 +84,25 @@ export async function PATCH(request, context) {
           .where('status', 'in', ['pending', 'reviewed', 'resolved'])
           .get();
         console.log('[ADMIN REPORT UPDATE] Found', relatedReportsSnapshot.size, 'related profile reports');
+      }
+    }
+    
+    // Fetch campaign/user document BEFORE transaction (all reads must be before writes)
+    let targetDoc = null;
+    let targetData = null;
+    if (reportType === 'campaign' && reportData.campaignId) {
+      console.log('[ADMIN REPORT UPDATE] Fetching campaign document before transaction...');
+      targetDoc = await db.collection('campaigns').doc(reportData.campaignId).get();
+      if (targetDoc.exists) {
+        targetData = targetDoc.data();
+        console.log('[ADMIN REPORT UPDATE] Campaign data fetched:', { creatorId: targetData.creatorId, title: targetData.title });
+      }
+    } else if (reportType === 'profile' && reportData.reportedUserId) {
+      console.log('[ADMIN REPORT UPDATE] Fetching user document before transaction...');
+      targetDoc = await db.collection('users').doc(reportData.reportedUserId).get();
+      if (targetDoc.exists) {
+        targetData = targetDoc.data();
+        console.log('[ADMIN REPORT UPDATE] User data fetched');
       }
     }
     
@@ -107,15 +127,12 @@ export async function PATCH(request, context) {
       transaction.update(reportRef, reportUpdateData);
       console.log('[ADMIN REPORT UPDATE] Report update queued successfully');
       
-      if (reportType === 'campaign' && reportData.campaignId) {
+      // Process campaign report (using pre-fetched data)
+      if (reportType === 'campaign' && reportData.campaignId && targetDoc && targetDoc.exists) {
         console.log('[ADMIN REPORT UPDATE] Processing campaign report...');
         const campaignRef = db.collection('campaigns').doc(reportData.campaignId);
-        const campaignDoc = await transaction.get(campaignRef);
-        
-        if (campaignDoc.exists) {
-          console.log('[ADMIN REPORT UPDATE] Campaign found, processing action:', action);
-          const campaignData = campaignDoc.data();
-          const campaignUpdates = {};
+        const campaignData = targetData;
+        const campaignUpdates = {};
           
           if (action === 'no-action' && status === 'dismissed') {
             console.log('[ADMIN REPORT UPDATE] Dismissing campaign report - resetting counts...');
@@ -168,24 +185,20 @@ export async function PATCH(request, context) {
             campaignUpdates.appealCount = campaignData.appealCount || 0;
           }
           
-          if (Object.keys(campaignUpdates).length > 0) {
-            console.log('[ADMIN REPORT UPDATE] Updating campaign with:', campaignUpdates);
-            campaignUpdates.updatedAt = new Date();
-            transaction.update(campaignRef, campaignUpdates);
-            console.log('[ADMIN REPORT UPDATE] Campaign update queued successfully');
-          }
+        if (Object.keys(campaignUpdates).length > 0) {
+          console.log('[ADMIN REPORT UPDATE] Updating campaign with:', campaignUpdates);
+          campaignUpdates.updatedAt = new Date();
+          transaction.update(campaignRef, campaignUpdates);
+          console.log('[ADMIN REPORT UPDATE] Campaign update queued successfully');
         }
       }
       
-      else if (reportType === 'profile' && reportData.reportedUserId) {
+      // Process profile report (using pre-fetched data)
+      else if (reportType === 'profile' && reportData.reportedUserId && targetDoc && targetDoc.exists) {
         console.log('[ADMIN REPORT UPDATE] Processing profile report...');
         const userRef = db.collection('users').doc(reportData.reportedUserId);
-        const userDoc = await transaction.get(userRef);
-        
-        if (userDoc.exists) {
-          console.log('[ADMIN REPORT UPDATE] User found, processing action:', action);
-          const userData = userDoc.data();
-          const userUpdates = {};
+        const userData = targetData;
+        const userUpdates = {};
           
           if (action === 'no-action' && status === 'dismissed') {
             console.log('[ADMIN REPORT UPDATE] Dismissing profile report - resetting counts...');
@@ -237,14 +250,11 @@ export async function PATCH(request, context) {
             userUpdates.appealDeadline = appealDeadline;
           }
           
-          if (Object.keys(userUpdates).length > 0) {
-            console.log('[ADMIN REPORT UPDATE] Updating user with:', userUpdates);
-            userUpdates.updatedAt = new Date();
-            transaction.update(userRef, userUpdates);
-            console.log('[ADMIN REPORT UPDATE] User update queued successfully');
-          }
-        } else {
-          console.log('[ADMIN REPORT UPDATE] User not found:', reportData.reportedUserId);
+        if (Object.keys(userUpdates).length > 0) {
+          console.log('[ADMIN REPORT UPDATE] Updating user with:', userUpdates);
+          userUpdates.updatedAt = new Date();
+          transaction.update(userRef, userUpdates);
+          console.log('[ADMIN REPORT UPDATE] User update queued successfully');
         }
       }
     });
