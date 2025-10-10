@@ -18,6 +18,7 @@
 8. [Section 8: Testing Checklist](#section-8-testing-checklist)
 9. [Section 9: Report System - Critical Fixes & Enhancements](#section-9-report-system---critical-fixes--enhancements)
 10. [Section 10: FCM UI Integration - Implementation Plan](#section-10-fcm-ui-integration---implementation-plan)
+11. [Section 11: Settings & Navigation Architecture Restructure](#section-11-settings--navigation-architecture-restructure)
 
 ---
 
@@ -1601,6 +1602,695 @@ Once Section 10 is complete, the notification system will be fully operational. 
 ---
 
 **End of Section 10: FCM UI Integration Plan**
+
+---
+
+---
+
+## 🔧 Section 11: Settings & Navigation Architecture Restructure
+
+**Priority:** HIGH  
+**Status:** ⏸️ PLANNING PHASE  
+**Last Updated:** October 10, 2025
+
+### Problem Analysis
+
+**Current Navigation Issues:**
+
+1. **Confusing Settings Structure:**
+   - `/settings` page → Only handles notification preferences (FCM tokens, push notifications)
+   - `/profile/edit` page → Only handles profile information (avatar, bio, username, banner)
+   - No unified settings hub for users to manage all preferences
+
+2. **Navigation Inconsistencies:**
+   - ✅ Bell icon in header → `/profile/notifications` (correct)
+   - ✅ "Notifications" in sidebar menu → `/profile/notifications` (correct)
+   - ⚠️ "Settings" button on `/profile/notifications` page → `/settings` (only notification settings)
+   - ⚠️ "Settings" in sidebar menu → `/settings` (only notification settings)
+   - ⚠️ "Edit Profile" on profile page → `/profile/edit` (profile info only)
+
+3. **Missing Settings Categories:**
+   - No account settings (password, email, 2FA)
+   - No privacy settings (profile visibility, data preferences)
+   - No general preferences (language, theme)
+   - No consolidated view of all settings
+
+---
+
+### Proposed Solution: Unified Settings Architecture
+
+**Goal:** Create a comprehensive settings system with clear navigation and logical organization.
+
+---
+
+### 11.1: Settings Page Architecture ⏸️ PLANNED
+
+**New Structure:**
+
+```
+/settings (Main Hub with Sidebar Navigation)
+├── /settings/profile          → Profile Information (current /profile/edit)
+├── /settings/account          → Account & Security (NEW)
+├── /settings/notifications    → Notification Preferences (current /settings)
+├── /settings/privacy          → Privacy & Data (NEW)
+└── /settings/preferences      → General Preferences (NEW - Future)
+```
+
+**Benefits:**
+- Single entry point for all user settings
+- Consistent navigation with sidebar/tabs
+- Logical grouping of related settings
+- Room for future expansion
+
+---
+
+### 11.2: Detailed Page Specifications
+
+#### A. `/settings` - Main Settings Hub (NEW) ⏸️
+
+**Layout:**
+- Desktop: Sidebar navigation (left) + Content area (right)
+- Mobile: Tabs/Accordion navigation at top
+
+**Sidebar Navigation Items:**
+1. 📝 Profile Information
+2. 🔒 Account & Security
+3. 🔔 Notifications
+4. 🔐 Privacy & Data
+5. ⚙️ Preferences (Future)
+
+**Default View:** Opens `/settings/profile` automatically
+
+---
+
+#### B. `/settings/profile` - Profile Information ⏸️
+
+**Purpose:** Edit public profile information
+
+**Content (Migrated from `/profile/edit`):**
+- ✅ Profile picture upload
+- ✅ Banner image upload
+- ✅ Display name
+- ✅ Username (with availability check)
+- ✅ Bio/Description
+- ✅ Country selection
+- ✅ Social media links (Future)
+
+**Actions:**
+- Save Changes button
+- Cancel/Reset button
+- Unsaved changes warning
+
+---
+
+#### C. `/settings/account` - Account & Security (NEW) ⏸️
+
+**Purpose:** Manage account credentials and security
+
+**Content:**
+- Email address (with verification status)
+- Change password
+- Two-Factor Authentication (2FA) - Future
+- Connected accounts (Google, etc.)
+- Active sessions management
+- Account deletion (with confirmation)
+
+**Features:**
+- Password strength indicator
+- Email verification resend
+- Session revoke functionality
+- Danger zone for account deletion
+
+---
+
+#### D. `/settings/notifications` - Notification Preferences ⏸️
+
+**Purpose:** Manage push notifications and preferences
+
+**Content (Migrated from `/settings`):**
+- ✅ Push notification toggle
+- ✅ Active devices list
+- ✅ Device management (remove devices)
+- ✅ Browser permission status
+- 🆕 Notification type preferences:
+  - Campaign warnings
+  - Campaign removals
+  - Campaign restorations
+  - Profile reports
+  - Admin actions
+  - Marketing emails (Future)
+
+**Features:**
+- Per-notification-type toggles
+- Email notification preferences (Future)
+- Quiet hours settings (Future)
+
+---
+
+#### E. `/settings/privacy` - Privacy & Data (NEW) ⏸️
+
+**Purpose:** Control privacy and data settings
+
+**Content:**
+- Profile visibility (Public/Private/Custom)
+- Campaign visibility defaults
+- Search engine indexing preference
+- Data download (GDPR compliance)
+- Analytics preferences
+- Block list management (Future)
+
+**Features:**
+- Privacy level indicators
+- Data export functionality
+- Clear privacy explanations
+
+---
+
+#### F. `/settings/preferences` - General Preferences (FUTURE) ⏸️
+
+**Purpose:** App-wide user preferences
+
+**Content (Future Implementation):**
+- Language selection
+- Date/Time format
+- Theme (Light/Dark/Auto)
+- Accessibility options
+- Dashboard layout preferences
+
+---
+
+### 11.3: Navigation Updates
+
+#### A. Update Mobile Sidebar (MobileMenu.js) ⏸️
+
+**Current Links:**
+```javascript
+- Profile → /profile
+- Notifications → /profile/notifications
+- Settings → /settings (only notifications)
+```
+
+**Proposed Links:**
+```javascript
+- Profile → /profile
+- Notifications → /profile/notifications
+- Settings → /settings (unified hub, opens /settings/profile by default)
+```
+
+---
+
+#### B. Update Notifications Page Header ⏸️
+
+**Current:**
+```javascript
+// Settings button on /profile/notifications
+<Link href="/settings">Settings</Link>
+```
+
+**Proposed:**
+```javascript
+// Settings button on /profile/notifications
+<Link href="/settings/notifications">Notification Settings</Link>
+```
+
+---
+
+#### C. Remove "Edit Profile" Button from Profile Page ⏸️
+
+**Current:**
+```javascript
+// On /profile page
+<button onClick={() => router.push('/profile/edit')}>
+  Edit Profile
+</button>
+```
+
+**Proposed:**
+```javascript
+// On /profile page
+<button onClick={() => router.push('/settings/profile')}>
+  Edit Profile
+</button>
+```
+
+---
+
+### 11.4: Migration & Backward Compatibility
+
+#### A. Route Redirects ⏸️
+
+**Preserve old URLs with redirects:**
+```javascript
+// In middleware.js or next.config.js
+/profile/edit → /settings/profile (301 redirect)
+/settings → /settings/notifications (301 redirect - or keep as main hub)
+```
+
+**Benefits:**
+- No broken bookmarks
+- Smooth user transition
+- SEO preservation
+
+---
+
+#### B. Data Migration ⏸️
+
+**No data migration needed** - Only UI/routing changes:
+- Profile edit functionality moves to `/settings/profile`
+- Notification settings functionality moves to `/settings/notifications`
+- All existing APIs remain unchanged
+
+---
+
+### 11.5: Implementation Phases
+
+#### Phase 1: Core Structure (Week 1) ⏸️
+
+**Tasks:**
+1. ✅ Create `/app/(chrome)/settings/layout.js` with sidebar navigation
+2. ✅ Create settings navigation component (SettingsSidebar.js)
+3. ✅ Set up route structure for all settings pages
+4. ✅ Add mobile-responsive navigation (tabs/accordion)
+
+**Deliverables:**
+- Settings layout with working navigation
+- Mobile and desktop responsive design
+- Active tab/section highlighting
+
+---
+
+#### Phase 2: Profile Settings Migration (Week 1-2) ⏸️
+
+**Tasks:**
+1. ✅ Create `/app/(chrome)/settings/profile/page.js`
+2. ✅ Migrate all profile edit functionality from `/profile/edit`
+3. ✅ Update all navigation links pointing to `/profile/edit`
+4. ✅ Add redirect from `/profile/edit` → `/settings/profile`
+5. ✅ Test profile editing functionality
+
+**Deliverables:**
+- Fully functional profile settings page
+- All edit features working correctly
+- Redirect in place
+
+---
+
+#### Phase 3: Notification Settings Migration (Week 2) ⏸️
+
+**Tasks:**
+1. ✅ Create `/app/(chrome)/settings/notifications/page.js`
+2. ✅ Migrate notification settings from `/settings`
+3. ✅ Add per-notification-type preferences
+4. ✅ Update notification page header link
+5. ✅ Add redirect from `/settings` → `/settings/notifications` (or make `/settings` the hub)
+
+**Deliverables:**
+- Enhanced notification settings page
+- Granular notification control
+- Updated navigation links
+
+---
+
+#### Phase 4: Account & Security (Week 2-3) ⏸️
+
+**Tasks:**
+1. ✅ Create `/app/(chrome)/settings/account/page.js`
+2. ✅ Build email management UI
+3. ✅ Implement password change functionality
+4. ✅ Add session management
+5. ✅ Create account deletion flow
+6. ✅ Build API routes for account operations
+
+**Deliverables:**
+- Account settings page
+- Password change functionality
+- Session management
+- Account deletion with safeguards
+
+---
+
+#### Phase 5: Privacy Settings (Week 3) ⏸️
+
+**Tasks:**
+1. ✅ Create `/app/(chrome)/settings/privacy/page.js`
+2. ✅ Build profile visibility controls
+3. ✅ Implement data export functionality (GDPR)
+4. ✅ Add privacy preference toggles
+5. ✅ Create API routes for privacy settings
+
+**Deliverables:**
+- Privacy settings page
+- Data export feature
+- Visibility controls
+- GDPR compliance
+
+---
+
+#### Phase 6: Polish & Testing (Week 4) ⏸️
+
+**Tasks:**
+1. ✅ Cross-browser testing
+2. ✅ Mobile responsiveness testing
+3. ✅ Update all documentation
+4. ✅ Add onboarding tooltips for new settings
+5. ✅ Performance optimization
+6. ✅ Accessibility audit
+
+**Deliverables:**
+- Polished settings experience
+- Full test coverage
+- Updated documentation
+- Accessibility improvements
+
+---
+
+### 11.6: UI/UX Design Guidelines
+
+#### A. Settings Sidebar Navigation ⏸️
+
+**Desktop (≥768px):**
+```
+┌─────────────────────────────────────────┐
+│ Settings                                 │
+├──────────────┬──────────────────────────┤
+│              │                          │
+│ 📝 Profile    │  [Profile Settings      │
+│ 🔒 Account    │   Content Area]         │
+│ 🔔 Notif...   │                          │
+│ 🔐 Privacy    │  Forms, toggles,        │
+│ ⚙️ Prefs      │  inputs, etc.           │
+│              │                          │
+│              │  [Save Button]          │
+└──────────────┴──────────────────────────┘
+```
+
+**Mobile (<768px):**
+```
+┌─────────────────────────────────────────┐
+│ Settings                                 │
+├─────────────────────────────────────────┤
+│ [Profile][Account][Notif][Privacy]...   │ (Horizontal scroll tabs)
+├─────────────────────────────────────────┤
+│                                         │
+│  [Active Tab Content]                   │
+│                                         │
+│  Forms, toggles, inputs, etc.           │
+│                                         │
+│  [Save Button]                          │
+└─────────────────────────────────────────┘
+```
+
+---
+
+#### B. Design Consistency ⏸️
+
+**Colors:**
+- Primary: Emerald (#059669)
+- Secondary: Yellow (#FCD34D)
+- Danger: Red (#DC2626)
+- Success: Green (#10B981)
+
+**Components:**
+- Use existing button styles (btn-base, btn-primary, etc.)
+- Maintain yellow header sections
+- Keep emerald accent colors
+- Use card-based layouts with shadows
+
+**Spacing:**
+- Consistent padding: px-4, py-3
+- Section gaps: mb-6, gap-6
+- Form field spacing: space-y-4
+
+---
+
+### 11.7: API Requirements
+
+#### New API Routes Needed ⏸️
+
+**Account Management:**
+```
+POST /api/account/change-password
+POST /api/account/update-email
+GET  /api/account/sessions
+DELETE /api/account/sessions/:sessionId
+POST /api/account/export-data
+DELETE /api/account/delete
+```
+
+**Privacy Settings:**
+```
+PATCH /api/privacy/visibility
+PATCH /api/privacy/preferences
+GET   /api/privacy/export-data
+```
+
+**Notification Preferences:**
+```
+PATCH /api/notifications/preferences
+GET   /api/notifications/preferences
+```
+
+---
+
+### 11.8: Database Schema Updates
+
+#### A. User Profile Updates ⏸️
+
+**Add new fields to `users` collection:**
+```javascript
+{
+  // ... existing fields
+  
+  // Privacy Settings
+  privacySettings: {
+    profileVisibility: "public" | "private" | "custom",
+    campaignVisibilityDefault: "public" | "private",
+    allowSearchEngineIndexing: boolean,
+    allowDataAnalytics: boolean,
+  },
+  
+  // Notification Preferences
+  notificationPreferences: {
+    warnings: boolean,              // Default: true
+    removals: boolean,              // Default: true
+    restorations: boolean,          // Default: true
+    profileReports: boolean,        // Default: true
+    adminActions: boolean,          // Default: true
+    emailNotifications: boolean,    // Default: false
+  },
+  
+  // Account Settings
+  emailVerified: boolean,
+  twoFactorEnabled: boolean,        // Future
+  lastPasswordChange: timestamp,
+}
+```
+
+---
+
+#### B. Active Sessions Collection (NEW) ⏸️
+
+**Create `users/{userId}/sessions` subcollection:**
+```javascript
+{
+  sessionId: string,
+  deviceInfo: {
+    browser: string,
+    os: string,
+    device: string,
+  },
+  ipAddress: string,
+  location: string,               // Optional: City, Country
+  createdAt: timestamp,
+  lastActivity: timestamp,
+  isCurrent: boolean,
+}
+```
+
+**Purpose:**
+- Track active login sessions
+- Allow users to revoke access from other devices
+- Security monitoring
+
+---
+
+### 11.9: Security Considerations
+
+#### A. Password Change Security ⏸️
+
+**Requirements:**
+1. Require current password verification
+2. Password strength validation (min 8 chars, complexity)
+3. Rate limiting (max 3 attempts per hour)
+4. Email notification on password change
+5. Force logout on all other sessions
+
+---
+
+#### B. Account Deletion Safety ⏸️
+
+**Requirements:**
+1. Require password confirmation
+2. Grace period before permanent deletion (30 days)
+3. Clear warning about data loss
+4. Email confirmation sent
+5. Cascade delete all user data:
+   - User profile
+   - All campaigns
+   - All images in storage
+   - All notifications
+   - All reports (submitted)
+   - All FCM tokens
+
+---
+
+#### C. Data Export (GDPR) ⏸️
+
+**Export Contents:**
+```json
+{
+  "profile": { /* user data */ },
+  "campaigns": [ /* all campaigns */ ],
+  "notifications": [ /* all notifications */ ],
+  "reports": [ /* submitted reports */ ],
+  "sessions": [ /* active sessions */ ],
+  "settings": { /* all preferences */ }
+}
+```
+
+**Format:** JSON file download
+**Privacy:** Only accessible by account owner
+
+---
+
+### 11.10: Testing Checklist
+
+#### Functional Testing ⏸️
+
+- [ ] Profile settings save correctly
+- [ ] Password change works
+- [ ] Email update with verification
+- [ ] Session management (revoke sessions)
+- [ ] Notification preferences save
+- [ ] Privacy settings apply correctly
+- [ ] Data export generates complete file
+- [ ] Account deletion flow works
+- [ ] All redirects function properly
+- [ ] Mobile navigation works
+
+---
+
+#### Security Testing ⏸️
+
+- [ ] Password requirements enforced
+- [ ] Current password required for changes
+- [ ] Rate limiting on password changes
+- [ ] Email notifications sent correctly
+- [ ] Session revocation works
+- [ ] Data export is private (auth required)
+- [ ] Account deletion requires confirmation
+- [ ] No data leaks in exports
+
+---
+
+#### UX Testing ⏸️
+
+- [ ] Sidebar navigation intuitive
+- [ ] Mobile tabs easy to use
+- [ ] Unsaved changes warning works
+- [ ] Success messages shown
+- [ ] Error messages clear
+- [ ] Loading states smooth
+- [ ] Responsive on all screen sizes
+- [ ] Keyboard navigation works
+- [ ] Screen reader compatible
+
+---
+
+### 11.11: Documentation Updates
+
+**Files to Update:**
+- ✏️ `CODEBASE_STRUCTURE.md` - Add new settings routes
+- ✏️ `replit.md` - Update project architecture section
+- ✏️ `CAMPAIGN_SYSTEM.md` - Document settings integration
+
+**User-Facing Docs:**
+- Create settings guide (how to use each section)
+- Update privacy policy (data export, deletion)
+- FAQ entries for common settings questions
+
+---
+
+### 11.12: Future Enhancements (Post-Launch)
+
+**Nice-to-Have Features:**
+1. **Two-Factor Authentication (2FA)**
+   - SMS-based OTP
+   - Authenticator app support
+   - Backup codes
+
+2. **Advanced Privacy Controls**
+   - Block specific users
+   - Custom visibility rules
+   - Campaign-level privacy settings
+
+3. **Notification Scheduling**
+   - Quiet hours (e.g., 10 PM - 8 AM)
+   - Notification digest mode
+   - Snooze notifications
+
+4. **Theme Customization**
+   - Dark mode
+   - Custom accent colors
+   - Layout density options
+
+5. **Social Connections**
+   - Link social media accounts
+   - Cross-post campaigns
+   - Import followers
+
+---
+
+### 11.13: Success Metrics
+
+**Track After Launch:**
+- Settings page visit rate
+- Time spent in settings
+- Settings save completion rate
+- Password change frequency
+- Data export requests
+- Account deletion rate
+- User satisfaction (surveys)
+
+---
+
+### 11.14: Summary & Next Steps
+
+**Current Issues:**
+- ❌ No unified settings hub
+- ❌ Confusing navigation between profile/settings/notifications
+- ❌ Missing account security features
+- ❌ No privacy controls
+
+**After Implementation:**
+- ✅ Unified `/settings` hub with clear organization
+- ✅ Consistent navigation across all pages
+- ✅ Complete account management
+- ✅ Comprehensive privacy controls
+- ✅ Enhanced notification preferences
+- ✅ Mobile-optimized experience
+
+**Estimated Timeline:**
+- **Week 1:** Core structure + Profile migration
+- **Week 2:** Notifications + Account settings
+- **Week 3:** Privacy settings
+- **Week 4:** Testing + Polish
+
+**Total Effort:** ~4 weeks (1 developer)
+
+---
+
+**End of Section 11: Settings & Navigation Architecture Restructure**
 
 ---
 
