@@ -3,7 +3,17 @@ export async function sendFCMNotification({ userId, title, body, actionUrl, icon
     console.log('[FCM SEND] Preparing to send notification to userId:', userId);
     console.log('[FCM SEND] Notification details:', { title, body, actionUrl });
     
-    const response = await fetch('/api/notifications/send', {
+    const isServer = typeof window === 'undefined';
+    const baseUrl = isServer 
+      ? (process.env.NEXT_PUBLIC_SITE_URL || process.env.VERCEL_URL 
+          ? `https://${process.env.VERCEL_URL}` 
+          : 'http://localhost:3000')
+      : '';
+    
+    const apiUrl = `${baseUrl}/api/notifications/send`;
+    console.log('[FCM SEND] Using API URL:', apiUrl);
+    
+    const response = await fetch(apiUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
