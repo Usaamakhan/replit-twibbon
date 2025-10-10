@@ -3,6 +3,7 @@
 import { Caveat } from "next/font/google";
 import { useState } from "react";
 import Link from "next/link";
+import NotificationBell from "./notifications/NotificationBell";
 
 const caveat = Caveat({ subsets: ["latin"], weight: ["700"] });
 
@@ -45,7 +46,8 @@ export default function Header({ isMenuOpen, setIsMenuOpen }) {
             </svg>
           </button>
         </div>
-        <div className="relative">
+        <div className="flex items-center gap-2">
+          <NotificationBell />
           <button
             onClick={() => setIsMenuOpen(!isMenuOpen)}
             className="btn-base btn-secondary p-2 rounded-full relative z-50"

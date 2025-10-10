@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import adminApp, { adminFirestore } from '@/lib/firebaseAdmin';
 import { getMessaging } from 'firebase-admin/messaging';
+import { FieldValue } from 'firebase-admin/firestore';
 
 export async function POST(request) {
   try {
@@ -73,6 +74,32 @@ export async function POST(request) {
       });
       await batch.commit();
       console.log('[SEND API] Failed tokens removed from database');
+    }
+
+    // Save notification to Firestore history
+    console.log('[SEND API] Saving notification to history...');
+    try {
+      const notificationRef = db
+        .collection('users')
+        .doc(userId)
+        .collection('notifications')
+        .doc(); // Auto-generate ID
+      
+      await notificationRef.set({
+        type: data?.type || 'general',
+        title,
+        body: messageBody,
+        actionUrl: actionUrl || '/',
+        icon: icon || '/icon-192x192.png',
+        read: false,
+        createdAt: FieldValue.serverTimestamp(),
+        metadata: data || {},
+      });
+      
+      console.log('[SEND API] Notification saved to history with ID:', notificationRef.id);
+    } catch (historyError) {
+      console.error('[SEND API] Error saving notification to history:', historyError);
+      // Don't fail the request if history save fails
     }
 
     console.log('[SEND API] ✅ Notification sending complete');

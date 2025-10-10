@@ -3,24 +3,25 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
-import { useFCM } from '@/hooks/useFCM';
-import { collection, query, getDocs, deleteDoc, doc } from 'firebase/firestore';
-import { db } from '@/lib/firebase-optimized';
+import { collection, query, orderBy, onSnapshot, where } from 'firebase/firestore';
+import { db, auth } from '@/lib/firebase-optimized';
+import Link from 'next/link';
 
-export default function NotificationSettingsPage() {
+// Helper function to get Firebase ID token
+const getAuthToken = async () => {
+  if (!auth?.currentUser) {
+    throw new Error('User not authenticated');
+  }
+  return await auth.currentUser.getIdToken();
+};
+
+export default function NotificationsInboxPage() {
   const router = useRouter();
   const { user, loading: authLoading } = useAuth();
-  const { 
-    notificationPermission, 
-    fcmToken, 
-    isSupported,
-    requestPermission, 
-    removeToken 
-  } = useFCM();
-  
-  const [devices, setDevices] = useState([]);
+  const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [isToggling, setIsToggling] = useState(false);
+  const [filter, setFilter] = useState('all'); // all, unread, warnings, removals, restorations
+  const [deletingId, setDeletingId] = useState(null);
   
   // Redirect if not authenticated
   useEffect(() => {
@@ -29,79 +30,160 @@ export default function NotificationSettingsPage() {
     }
   }, [user, authLoading, router]);
   
+  // Fetch notifications with real-time updates
   useEffect(() => {
     if (!user) return;
     
-    const fetchDevices = async () => {
-      try {
-        const tokensRef = collection(db, 'users', user.uid, 'tokens');
-        const snapshot = await getDocs(query(tokensRef));
-        
-        const deviceList = snapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data(),
-          isCurrent: doc.data().token === fcmToken,
-        }));
-        
-        setDevices(deviceList);
-      } catch (error) {
-        console.error('Error fetching devices:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
+    const notificationsRef = collection(db, 'users', user.uid, 'notifications');
+    const q = query(notificationsRef, orderBy('createdAt', 'desc'));
     
-    fetchDevices();
-  }, [user, fcmToken]);
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const notificationsList = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data(),
+        createdAt: doc.data().createdAt?.toDate(),
+      }));
+      
+      setNotifications(notificationsList);
+      setLoading(false);
+    }, (error) => {
+      console.error('Error fetching notifications:', error);
+      setLoading(false);
+    });
+    
+    return () => unsubscribe();
+  }, [user]);
   
-  const handleEnableNotifications = async () => {
-    await requestPermission();
+  // Filter notifications
+  const filteredNotifications = notifications.filter(notification => {
+    if (filter === 'all') return true;
+    if (filter === 'unread') return !notification.read;
+    if (filter === 'warnings') return notification.type === 'warning';
+    if (filter === 'removals') return notification.type === 'campaign-removed' || notification.type === 'account-banned';
+    if (filter === 'restorations') return notification.type === 'campaign-restored' || notification.type === 'profile-restored';
+    return true;
+  });
+  
+  const unreadCount = notifications.filter(n => !n.read).length;
+  
+  const handleNotificationClick = async (notification) => {
+    // Mark as read
+    if (!notification.read) {
+      try {
+        const token = await getAuthToken();
+        await fetch(`/api/notifications/${notification.id}`, {
+          method: 'PATCH',
+          headers: { 
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({ read: true }),
+        });
+      } catch (error) {
+        console.error('Error marking notification as read:', error);
+      }
+    }
+    
+    // Navigate to action URL
+    if (notification.actionUrl) {
+      router.push(notification.actionUrl);
+    }
   };
   
-  const handleToggleNotifications = async () => {
-    setIsToggling(true);
+  const handleDeleteNotification = async (notificationId, event) => {
+    event.stopPropagation();
+    
+    if (!confirm('Are you sure you want to delete this notification?')) {
+      return;
+    }
+    
+    setDeletingId(notificationId);
+    
     try {
-      if (fcmToken) {
-        await removeToken();
-        setDevices([]);
-      } else {
-        await requestPermission();
+      const token = await getAuthToken();
+      const response = await fetch(`/api/notifications/${notificationId}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        },
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to delete notification');
       }
     } catch (error) {
-      console.error('Error toggling notifications:', error);
+      console.error('Error deleting notification:', error);
+      alert('Failed to delete notification. Please try again.');
     } finally {
-      setIsToggling(false);
+      setDeletingId(null);
     }
   };
   
-  const handleRemoveDevice = async (deviceId, token) => {
-    try {
-      await deleteDoc(doc(db, 'users', user.uid, 'tokens', deviceId));
-      
-      setDevices(devices.filter(d => d.id !== deviceId));
-      
-      if (token === fcmToken) {
-        await removeToken();
-      }
-    } catch (error) {
-      console.error('Error removing device:', error);
+  const getNotificationIcon = (type) => {
+    switch (type) {
+      case 'warning':
+        return (
+          <div className="flex-shrink-0 w-10 h-10 bg-yellow-100 rounded-full flex items-center justify-center">
+            <svg className="w-5 h-5 text-yellow-600" fill="currentColor" viewBox="0 0 20 20">
+              <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+            </svg>
+          </div>
+        );
+      case 'campaign-removed':
+      case 'account-banned':
+        return (
+          <div className="flex-shrink-0 w-10 h-10 bg-red-100 rounded-full flex items-center justify-center">
+            <svg className="w-5 h-5 text-red-600" fill="currentColor" viewBox="0 0 20 20">
+              <path fillRule="evenodd" d="M13.477 14.89A6 6 0 015.11 6.524l8.367 8.368zm1.414-1.414L6.524 5.11a6 6 0 018.367 8.367zM18 10a8 8 0 11-16 0 8 8 0 0116 0z" clipRule="evenodd" />
+            </svg>
+          </div>
+        );
+      case 'campaign-restored':
+      case 'profile-restored':
+      case 'appeal-approved':
+        return (
+          <div className="flex-shrink-0 w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
+            <svg className="w-5 h-5 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+            </svg>
+          </div>
+        );
+      case 'campaign-under-review':
+      case 'profile-under-review':
+        return (
+          <div className="flex-shrink-0 w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+            <svg className="w-5 h-5 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+              <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
+              <path fillRule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clipRule="evenodd" />
+            </svg>
+          </div>
+        );
+      default:
+        return (
+          <div className="flex-shrink-0 w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center">
+            <svg className="w-5 h-5 text-gray-600" fill="currentColor" viewBox="0 0 20 20">
+              <path d="M10 2a6 6 0 00-6 6v3.586l-.707.707A1 1 0 004 14h12a1 1 0 00.707-1.707L16 11.586V8a6 6 0 00-6-6zM10 18a3 3 0 01-3-3h6a3 3 0 01-3 3z" />
+            </svg>
+          </div>
+        );
     }
   };
   
-  const getPermissionStatusColor = () => {
-    switch (notificationPermission) {
-      case 'granted': return 'text-green-600';
-      case 'denied': return 'text-red-600';
-      default: return 'text-yellow-600';
-    }
-  };
-  
-  const getPermissionStatusText = () => {
-    switch (notificationPermission) {
-      case 'granted': return 'Enabled';
-      case 'denied': return 'Blocked';
-      default: return 'Not Enabled';
-    }
+  const formatTimestamp = (date) => {
+    if (!date) return '';
+    
+    const now = new Date();
+    const diffMs = now - date;
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMs / 3600000);
+    const diffDays = Math.floor(diffMs / 86400000);
+    
+    if (diffMins < 1) return 'Just now';
+    if (diffMins < 60) return `${diffMins}m ago`;
+    if (diffHours < 24) return `${diffHours}h ago`;
+    if (diffDays < 7) return `${diffDays}d ago`;
+    
+    return date.toLocaleDateString();
   };
   
   // Show loading state while auth is loading
@@ -121,171 +203,163 @@ export default function NotificationSettingsPage() {
     return null;
   }
   
-  if (!isSupported) {
-    return (
-      <div className="min-h-screen bg-white">
-        <div className="min-h-screen flex">
-          <div className="flex-1 w-full flex flex-col justify-center py-8 px-4 sm:px-6 lg:px-16 xl:px-20 pt-20">
-            <div className="mx-auto w-full max-w-4xl">
-              {/* Header */}
-              <div className="text-center mb-8 bg-yellow-400 px-6 py-6 rounded-t-xl">
-                <h1 className="text-2xl sm:text-3xl font-bold text-emerald-700">Notification Settings</h1>
-                <p className="text-base sm:text-lg text-gray-700 mt-2">Manage your notification preferences</p>
-              </div>
-              
-              {/* Content Card */}
-              <div className="bg-white rounded-b-xl border border-t-0 border-gray-200 px-6 py-8 shadow-sm">
-                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-                  <p className="text-yellow-800">
-                    Push notifications are not supported in your browser. Please use Chrome, Firefox, or Edge.
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
-  
   return (
     <div className="min-h-screen bg-white">
       <div className="min-h-screen flex">
         {/* Main Content */}
-        <div className="flex-1 w-full flex flex-col justify-center py-8 px-4 sm:px-6 lg:px-16 xl:px-20 pt-20">
+        <div className="flex-1 w-full flex flex-col py-8 px-4 sm:px-6 lg:px-16 xl:px-20 pt-20">
           <div className="mx-auto w-full max-w-4xl">
             {/* Header */}
-            <div className="text-center mb-8 bg-yellow-400 px-6 py-6 rounded-t-xl">
-              <h1 className="text-2xl sm:text-3xl font-bold text-emerald-700">Notification Settings</h1>
-              <p className="text-base sm:text-lg text-gray-700 mt-2">Manage your notification preferences</p>
+            <div className="mb-8 bg-yellow-400 px-6 py-6 rounded-t-xl">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h1 className="text-2xl sm:text-3xl font-bold text-emerald-700">Notifications</h1>
+                  <p className="text-base sm:text-lg text-gray-700 mt-2">
+                    {unreadCount > 0 ? `${unreadCount} unread notification${unreadCount !== 1 ? 's' : ''}` : 'All caught up!'}
+                  </p>
+                </div>
+                <Link
+                  href="/settings"
+                  className="flex items-center gap-2 px-4 py-2 bg-white text-emerald-700 rounded-lg hover:bg-emerald-50 transition-colors duration-200"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                  </svg>
+                  Settings
+                </Link>
+              </div>
             </div>
             
-            {/* Content Card with Shadow Border */}
-            <div className="bg-white rounded-b-xl border border-t-0 border-gray-200 px-6 py-8 shadow-sm space-y-6">
-              
-              {/* Push Notifications Section */}
-              <div>
-                <h2 className="text-lg font-semibold text-gray-900 mb-4">
-                  Push Notifications
-                </h2>
-                
-                <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                  <div className="flex items-center justify-between">
-                    <div className="flex-1">
-                      <p className="text-xs text-gray-500">
-                        Get notified about moderation updates for your campaigns
-                      </p>
-                    </div>
-                    
-                    {notificationPermission === 'denied' ? (
-                      <div className="text-right">
-                        <p className="text-xs text-red-600 font-medium mb-1">
-                          Blocked in Browser
-                        </p>
+            {/* Filter Tabs */}
+            <div className="bg-white border-x border-gray-200 px-6 py-4 flex gap-2 overflow-x-auto">
+              <button
+                onClick={() => setFilter('all')}
+                className={`px-4 py-2 rounded-full text-sm font-medium transition-colors whitespace-nowrap ${
+                  filter === 'all' 
+                    ? 'bg-emerald-600 text-white' 
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                }`}
+              >
+                All
+              </button>
+              <button
+                onClick={() => setFilter('unread')}
+                className={`px-4 py-2 rounded-full text-sm font-medium transition-colors whitespace-nowrap ${
+                  filter === 'unread' 
+                    ? 'bg-emerald-600 text-white' 
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                }`}
+              >
+                Unread {unreadCount > 0 && `(${unreadCount})`}
+              </button>
+              <button
+                onClick={() => setFilter('warnings')}
+                className={`px-4 py-2 rounded-full text-sm font-medium transition-colors whitespace-nowrap ${
+                  filter === 'warnings' 
+                    ? 'bg-emerald-600 text-white' 
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                }`}
+              >
+                Warnings
+              </button>
+              <button
+                onClick={() => setFilter('removals')}
+                className={`px-4 py-2 rounded-full text-sm font-medium transition-colors whitespace-nowrap ${
+                  filter === 'removals' 
+                    ? 'bg-emerald-600 text-white' 
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                }`}
+              >
+                Removals
+              </button>
+              <button
+                onClick={() => setFilter('restorations')}
+                className={`px-4 py-2 rounded-full text-sm font-medium transition-colors whitespace-nowrap ${
+                  filter === 'restorations' 
+                    ? 'bg-emerald-600 text-white' 
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                }`}
+              >
+                Restorations
+              </button>
+            </div>
+            
+            {/* Notifications List */}
+            <div className="bg-white rounded-b-xl border border-t-0 border-gray-200 shadow-sm">
+              {loading ? (
+                <div className="p-8 text-center">
+                  <div className="w-8 h-8 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+                  <p className="text-gray-600">Loading notifications...</p>
+                </div>
+              ) : filteredNotifications.length === 0 ? (
+                <div className="p-12 text-center">
+                  <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                    </svg>
+                  </div>
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">
+                    {filter === 'all' ? 'No notifications yet' : `No ${filter} notifications`}
+                  </h3>
+                  <p className="text-gray-500">
+                    {filter === 'all' 
+                      ? "You'll receive notifications about moderation updates for your campaigns" 
+                      : `You don't have any ${filter} notifications`}
+                  </p>
+                </div>
+              ) : (
+                <div className="divide-y divide-gray-200">
+                  {filteredNotifications.map((notification) => (
+                    <div
+                      key={notification.id}
+                      onClick={() => handleNotificationClick(notification)}
+                      className={`p-4 hover:bg-gray-50 cursor-pointer transition-colors ${
+                        !notification.read ? 'bg-blue-50 bg-opacity-30' : ''
+                      }`}
+                    >
+                      <div className="flex items-start gap-4">
+                        {getNotificationIcon(notification.type)}
+                        
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-start justify-between gap-4">
+                            <div className="flex-1">
+                              <p className={`text-sm ${!notification.read ? 'font-semibold text-gray-900' : 'font-medium text-gray-800'}`}>
+                                {notification.title}
+                              </p>
+                              <p className="text-sm text-gray-600 mt-1">
+                                {notification.body}
+                              </p>
+                              <p className="text-xs text-gray-500 mt-2">
+                                {formatTimestamp(notification.createdAt)}
+                              </p>
+                            </div>
+                            
+                            {!notification.read && (
+                              <div className="flex-shrink-0 w-2 h-2 bg-emerald-600 rounded-full mt-1"></div>
+                            )}
+                          </div>
+                        </div>
+                        
                         <button
-                          onClick={() => window.open('chrome://settings/content/notifications', '_blank')}
-                          className="text-xs text-emerald-600 hover:text-emerald-700 hover:underline"
+                          onClick={(e) => handleDeleteNotification(notification.id, e)}
+                          disabled={deletingId === notification.id}
+                          className="flex-shrink-0 text-gray-400 hover:text-red-600 transition-colors disabled:opacity-50"
+                          aria-label="Delete notification"
                         >
-                          Open Settings →
+                          {deletingId === notification.id ? (
+                            <div className="w-5 h-5 border-2 border-gray-400 border-t-transparent rounded-full animate-spin"></div>
+                          ) : (
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
+                          )}
                         </button>
                       </div>
-                    ) : (
-                      <button
-                        onClick={handleToggleNotifications}
-                        disabled={isToggling}
-                        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed ${
-                          fcmToken ? 'bg-emerald-600' : 'bg-gray-300'
-                        }`}
-                        aria-label="Toggle notifications"
-                      >
-                        <span
-                          className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                            fcmToken ? 'translate-x-6' : 'translate-x-1'
-                          }`}
-                        />
-                      </button>
-                    )}
-                  </div>
-                  
-                  {fcmToken && (
-                    <div className="flex items-center text-green-600 text-xs mt-3">
-                      <svg className="w-4 h-4 mr-1.5" fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                      </svg>
-                      Notifications enabled on this device
                     </div>
-                  )}
-                  
-                  {!fcmToken && notificationPermission !== 'denied' && (
-                    <p className="text-xs text-gray-500 mt-3">
-                      Enable to receive notifications about your campaigns
-                    </p>
-                  )}
-                </div>
-              </div>
-              
-              {/* Active Devices Section */}
-              {notificationPermission === 'granted' && (
-                <div>
-                  <h2 className="text-lg font-semibold text-gray-900 mb-4">
-                    Active Devices
-                  </h2>
-                  
-                  {loading ? (
-                    <p className="text-sm text-gray-500">Loading devices...</p>
-                  ) : devices.length === 0 ? (
-                    <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                      <p className="text-sm text-gray-500">
-                        No devices registered for notifications
-                      </p>
-                    </div>
-                  ) : (
-                    <div className="space-y-3">
-                      {devices.map((device) => (
-                        <div 
-                          key={device.id}
-                          className="flex items-center justify-between p-4 bg-gray-50 rounded-lg border border-gray-200"
-                        >
-                          <div className="flex items-center">
-                            <div className="flex-shrink-0">
-                              <svg className="h-8 w-8 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                              </svg>
-                            </div>
-                            <div className="ml-3">
-                              <p className="text-sm font-medium text-gray-900">
-                                {device.browser || 'Web Browser'}
-                                {device.isCurrent && (
-                                  <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">
-                                    Current Device
-                                  </span>
-                                )}
-                              </p>
-                              <p className="text-xs text-gray-500">
-                                Added {device.createdAt?.toDate().toLocaleDateString()}
-                              </p>
-                            </div>
-                          </div>
-                          
-                          <button
-                            onClick={() => handleRemoveDevice(device.id, device.token)}
-                            className="text-sm text-red-600 hover:text-red-700 font-medium"
-                          >
-                            Remove
-                          </button>
-                        </div>
-                      ))}
-                    </div>
-                  )}
+                  ))}
                 </div>
               )}
-              
-              {/* Coming Soon Notice */}
-              <div className="bg-gray-50 rounded-lg p-4 border border-dashed border-gray-300">
-                <p className="text-sm text-gray-600">
-                  <span className="font-medium">Coming Soon:</span> Choose which events you want to be notified about (warnings, removals, restorations, etc.)
-                </p>
-              </div>
             </div>
           </div>
         </div>

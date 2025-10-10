@@ -1,0 +1,76 @@
+Perfect! I've completed my analysis. Here's what I found and my implementation plan:
+
+📊 Current Architecture Analysis
+✅ What Exists:
+/profile/notifications - Settings page (toggle on/off, manage devices)
+Mobile menu - Already has link to notifications
+Notification templates - Well-defined in notificationTemplates.js
+Send API - /api/notifications/send sends FCM to devices
+Database pattern - users/{userId}/tokens/{tokenId} for devices
+❌ What's Missing:
+No notification history storage in database
+No history page to view past notifications
+No API to fetch notification history
+No bell icon with unread count
+🎯 Implementation Plan
+Based on your codebase patterns, here's my approach:
+
+1. Database Structure (Following existing patterns)
+users/{userId}/notifications/{notificationId}
+  - type: 'warning' | 'campaign-removed' | 'campaign-restored' | 'account-banned' | etc.
+  - title: "⚠ Warning Issued"
+  - body: "You've received a warning..."
+  - actionUrl: "/profile/settings"
+  - icon: "/icon-192x192.png"
+  - read: false
+  - createdAt: timestamp
+  - metadata: { campaignId, reportId, reason, etc. }
+2. New Files to Create:
+Page: /profile/notifications/inbox
+
+List all notifications (like campaigns page pattern)
+Filter: All, Unread, Warnings, Removals, Restorations
+Empty state with helpful message
+Click to mark as read and navigate to action
+Delete individual notifications
+API Route: /api/notifications/history
+
+GET: Fetch user's notifications with filters
+PATCH: Mark as read/unread
+DELETE: Delete notification
+Component: NotificationBell (Header icon)
+
+Shows unread count badge
+Click opens dropdown or navigates to inbox
+Real-time updates via Firestore listener
+3. Update Existing:
+/api/notifications/send/route.js
+
+After sending FCM, also save to Firestore history
+Store notification details for later viewing
+MobileMenu.js
+
+Change /profile/notifications link to say "Notification Settings"
+Add new link /profile/notifications/inbox for "Inbox" or "History"
+OR simpler: Keep /profile/notifications as history, move settings to /profile/notifications/settings
+
+🤔 Design Decisions for Your Approval:
+Question 1: Page Structure
+
+Option A: /profile/notifications = History (move settings to /settings)
+Option B: /profile/notifications/inbox = History (keep settings as is)
+My recommendation: Option B (less breaking changes)
+Question 2: Bell Icon Location
+
+Option A: Add to Header (next to hamburger menu)
+Option B: Only in mobile menu with badge
+My recommendation: Option A for better visibility
+Question 3: Auto-delete old notifications
+
+Should I auto-delete notifications older than 30/60/90 days?
+My recommendation: Keep 60 days, add cleanup cron job
+Question 4: Real-time updates
+
+Use Firestore listener for real-time unread count?
+My recommendation: Yes, use onSnapshot in useFCM hook
+Would you like me to proceed with this plan? Or do you want to adjust any design decisions first?
