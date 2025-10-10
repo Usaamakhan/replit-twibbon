@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { adminDb } from '@/lib/firebaseAdmin';
+import { adminFirestore } from '@/lib/firebaseAdmin';
 
 export async function DELETE(request) {
   try {
@@ -13,7 +13,7 @@ export async function DELETE(request) {
       );
     }
 
-    const db = adminDb();
+    const db = adminFirestore();
     const tokenRef = db.collection('users').doc(userId).collection('tokens').doc(token);
 
     await tokenRef.delete();

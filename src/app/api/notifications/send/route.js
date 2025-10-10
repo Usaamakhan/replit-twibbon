@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { adminApp, adminDb } from '@/lib/firebaseAdmin';
+import adminApp, { adminFirestore } from '@/lib/firebaseAdmin';
 import { getMessaging } from 'firebase-admin/messaging';
 
 export async function POST(request) {
@@ -14,8 +14,8 @@ export async function POST(request) {
       );
     }
 
-    const db = adminDb();
-    const messaging = getMessaging(adminApp());
+    const db = adminFirestore();
+    const messaging = getMessaging(adminApp);
 
     const tokensSnapshot = await db
       .collection('users')
