@@ -34,15 +34,6 @@ export function useFCM() {
       setNotificationPermission(permission);
 
       if (permission === 'granted') {
-        if ('serviceWorker' in navigator) {
-          const registration = await navigator.serviceWorker.register(
-            '/firebase-messaging-sw',
-            { scope: '/' }
-          );
-          await navigator.serviceWorker.ready;
-          console.log('Service Worker registered:', registration);
-        }
-
         const messagingInstance = messaging;
         
         if (!messagingInstance) {
@@ -55,7 +46,20 @@ export function useFCM() {
           return null;
         }
 
-        const token = await getToken(messagingInstance, { vapidKey: VAPID_KEY });
+        let registration;
+        if ('serviceWorker' in navigator) {
+          registration = await navigator.serviceWorker.register(
+            '/firebase-messaging-sw',
+            { scope: '/' }
+          );
+          await navigator.serviceWorker.ready;
+          console.log('Service Worker registered:', registration);
+        }
+
+        const token = await getToken(messagingInstance, { 
+          vapidKey: VAPID_KEY,
+          serviceWorkerRegistration: registration
+        });
         setFcmToken(token);
 
         const browser = navigator.userAgent.includes('Chrome') ? 'Chrome' :
