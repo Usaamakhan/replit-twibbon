@@ -23,6 +23,47 @@ export function useFCM() {
     setLoading(false);
   }, []);
 
+  useEffect(() => {
+    const retrieveExistingToken = async () => {
+      if (!isSupported || !user || notificationPermission !== 'granted' || fcmToken) {
+        return;
+      }
+
+      try {
+        const messagingInstance = messaging;
+        if (!messagingInstance || !VAPID_KEY) {
+          return;
+        }
+
+        let registration;
+        if ('serviceWorker' in navigator) {
+          registration = await navigator.serviceWorker.getRegistration('/');
+          if (!registration) {
+            registration = await navigator.serviceWorker.register(
+              '/firebase-messaging-sw',
+              { scope: '/' }
+            );
+          }
+          await navigator.serviceWorker.ready;
+        }
+
+        const token = await getToken(messagingInstance, {
+          vapidKey: VAPID_KEY,
+          serviceWorkerRegistration: registration
+        });
+
+        if (token) {
+          setFcmToken(token);
+          console.log('Existing FCM token retrieved:', token);
+        }
+      } catch (error) {
+        console.error('Error retrieving existing FCM token:', error);
+      }
+    };
+
+    retrieveExistingToken();
+  }, [isSupported, user, notificationPermission, fcmToken]);
+
   const requestPermission = useCallback(async () => {
     if (!isSupported || !user) {
       console.log('FCM not supported or user not authenticated');

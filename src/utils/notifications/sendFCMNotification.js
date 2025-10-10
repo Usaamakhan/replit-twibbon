@@ -1,5 +1,8 @@
 export async function sendFCMNotification({ userId, title, body, actionUrl, icon, data = {} }) {
   try {
+    console.log('[FCM SEND] Preparing to send notification to userId:', userId);
+    console.log('[FCM SEND] Notification details:', { title, body, actionUrl });
+    
     const response = await fetch('/api/notifications/send', {
       method: 'POST',
       headers: {
@@ -16,14 +19,18 @@ export async function sendFCMNotification({ userId, title, body, actionUrl, icon
     });
 
     const result = await response.json();
+    console.log('[FCM SEND] API response status:', response.status);
+    console.log('[FCM SEND] API response data:', result);
 
     if (!response.ok) {
+      console.error('[FCM SEND] API returned error:', result.error);
       throw new Error(result.error || 'Failed to send notification');
     }
 
+    console.log('[FCM SEND] ✅ Notification sent successfully');
     return result;
   } catch (error) {
-    console.error('Error sending FCM notification:', error);
+    console.error('[FCM SEND] ❌ Error sending FCM notification:', error);
     throw error;
   }
 }
