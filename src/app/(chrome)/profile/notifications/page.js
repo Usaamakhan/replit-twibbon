@@ -20,6 +20,7 @@ export default function NotificationSettingsPage() {
   
   const [devices, setDevices] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [isToggling, setIsToggling] = useState(false);
   
   // Redirect if not authenticated
   useEffect(() => {
@@ -55,6 +56,22 @@ export default function NotificationSettingsPage() {
   
   const handleEnableNotifications = async () => {
     await requestPermission();
+  };
+  
+  const handleToggleNotifications = async () => {
+    setIsToggling(true);
+    try {
+      if (fcmToken) {
+        await removeToken();
+        setDevices([]);
+      } else {
+        await requestPermission();
+      }
+    } catch (error) {
+      console.error('Error toggling notifications:', error);
+    } finally {
+      setIsToggling(false);
+    }
   };
   
   const handleRemoveDevice = async (deviceId, token) => {
@@ -153,49 +170,56 @@ export default function NotificationSettingsPage() {
                 </h2>
                 
                 <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                  <div className="flex items-center justify-between mb-4">
-                    <div>
-                      <p className="text-sm text-gray-600">
-                        Status: <span className={`font-medium ${getPermissionStatusColor()}`}>
-                          {getPermissionStatusText()}
-                        </span>
-                      </p>
-                      <p className="text-xs text-gray-500 mt-1">
+                  <div className="flex items-center justify-between">
+                    <div className="flex-1">
+                      <p className="text-xs text-gray-500">
                         Get notified about moderation updates for your campaigns
                       </p>
                     </div>
                     
-                    {notificationPermission === 'default' && (
-                      <button
-                        onClick={handleEnableNotifications}
-                        className="btn-base btn-primary px-4 py-2 text-sm font-medium whitespace-nowrap"
-                      >
-                        Enable Notifications
-                      </button>
-                    )}
-                    
-                    {notificationPermission === 'denied' && (
+                    {notificationPermission === 'denied' ? (
                       <div className="text-right">
-                        <p className="text-xs text-gray-500 mb-1">
-                          Enable in browser settings
+                        <p className="text-xs text-red-600 font-medium mb-1">
+                          Blocked in Browser
                         </p>
                         <button
                           onClick={() => window.open('chrome://settings/content/notifications', '_blank')}
-                          className="text-sm text-emerald-600 hover:text-emerald-700 hover:underline"
+                          className="text-xs text-emerald-600 hover:text-emerald-700 hover:underline"
                         >
-                          Open Browser Settings →
+                          Open Settings →
                         </button>
                       </div>
+                    ) : (
+                      <button
+                        onClick={handleToggleNotifications}
+                        disabled={isToggling}
+                        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed ${
+                          fcmToken ? 'bg-emerald-600' : 'bg-gray-300'
+                        }`}
+                        aria-label="Toggle notifications"
+                      >
+                        <span
+                          className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                            fcmToken ? 'translate-x-6' : 'translate-x-1'
+                          }`}
+                        />
+                      </button>
                     )}
                   </div>
                   
-                  {notificationPermission === 'granted' && (
-                    <div className="flex items-center text-green-600 text-sm">
-                      <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                  {fcmToken && (
+                    <div className="flex items-center text-green-600 text-xs mt-3">
+                      <svg className="w-4 h-4 mr-1.5" fill="currentColor" viewBox="0 0 20 20">
                         <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                       </svg>
-                      You're all set! You'll receive notifications for moderation updates.
+                      Notifications enabled on this device
                     </div>
+                  )}
+                  
+                  {!fcmToken && notificationPermission !== 'denied' && (
+                    <p className="text-xs text-gray-500 mt-3">
+                      Enable to receive notifications about your campaigns
+                    </p>
                   )}
                 </div>
               </div>
