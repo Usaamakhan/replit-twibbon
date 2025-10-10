@@ -29,6 +29,11 @@ export function useFCM() {
         return;
       }
 
+      const disabledByUser = localStorage.getItem('fcm_disabled_by_user') === 'true';
+      if (disabledByUser) {
+        return;
+      }
+
       try {
         const messagingInstance = messaging;
         if (!messagingInstance || !VAPID_KEY) {
@@ -75,6 +80,8 @@ export function useFCM() {
       setNotificationPermission(permission);
 
       if (permission === 'granted') {
+        localStorage.removeItem('fcm_disabled_by_user');
+        
         const messagingInstance = messaging;
         
         if (!messagingInstance) {
@@ -132,6 +139,8 @@ export function useFCM() {
     if (!user || !fcmToken) return;
 
     try {
+      localStorage.setItem('fcm_disabled_by_user', 'true');
+      
       await fetch('/api/notifications/remove-token', {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
