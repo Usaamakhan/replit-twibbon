@@ -92,10 +92,10 @@ export default function SettingsSidebar() {
         </div>
       </div>
 
-      {/* Mobile Tabs */}
-      <div className="lg:hidden border-b border-gray-200 bg-white sticky top-16 z-10">
-        <div className="overflow-x-auto">
-          <nav className="flex space-x-2 px-4 py-3" aria-label="Settings navigation">
+      {/* Mobile Tabs - Improved responsive design */}
+      <div className="lg:hidden border-b border-gray-200 bg-white sticky top-0 z-20">
+        <div className="overflow-x-auto scrollbar-hide">
+          <nav className="flex gap-2 px-3 sm:px-4 py-3 min-w-max" aria-label="Settings navigation">
             {navItems.map((item) => {
               const active = isActive(item.href);
               const disabled = item.comingSoon;
@@ -104,12 +104,14 @@ export default function SettingsSidebar() {
                 return (
                   <div
                     key={item.name}
-                    className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-400 whitespace-nowrap cursor-not-allowed opacity-60 border border-gray-200 rounded-full"
+                    className="flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium text-gray-400 whitespace-nowrap cursor-not-allowed opacity-60 border border-gray-200 rounded-full"
                   >
-                    {item.icon}
-                    <span className="hidden sm:inline">{item.name}</span>
-                    <span className="sm:hidden">{item.name.split(' ')[0]}</span>
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <span className="w-4 h-4 sm:w-5 sm:h-5">
+                      {item.icon}
+                    </span>
+                    <span className="hidden xs:inline">{item.name}</span>
+                    <span className="xs:hidden">{item.name.split(' ')[0]}</span>
+                    <svg className="w-3 h-3 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                     </svg>
                   </div>
@@ -120,15 +122,17 @@ export default function SettingsSidebar() {
                 <Link
                   key={item.name}
                   href={item.href}
-                  className={`flex items-center gap-2 px-4 py-2 text-sm font-medium whitespace-nowrap rounded-full transition-colors duration-200 ${
+                  className={`flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium whitespace-nowrap rounded-full transition-colors duration-200 ${
                     active
                       ? 'bg-emerald-600 text-white'
                       : 'text-gray-700 hover:bg-gray-100 border border-gray-200'
                   }`}
                 >
-                  {item.icon}
-                  <span className="hidden sm:inline">{item.name}</span>
-                  <span className="sm:hidden">{item.name.split(' ')[0]}</span>
+                  <span className="w-4 h-4 sm:w-5 sm:h-5">
+                    {item.icon}
+                  </span>
+                  <span className="hidden xs:inline">{item.name}</span>
+                  <span className="xs:hidden">{item.name.split(' ')[0]}</span>
                 </Link>
               );
             })}

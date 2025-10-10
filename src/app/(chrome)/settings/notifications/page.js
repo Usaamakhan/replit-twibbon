@@ -23,7 +23,6 @@ export default function NotificationSettingsPage() {
   const [loading, setLoading] = useState(true);
   const [isToggling, setIsToggling] = useState(false);
   
-  // Notification preferences (using localStorage for now, can be moved to DB later)
   const [preferences, setPreferences] = useState({
     warnings: true,
     removals: true,
@@ -32,7 +31,6 @@ export default function NotificationSettingsPage() {
     adminActions: true,
   });
   
-  // Load preferences from localStorage
   useEffect(() => {
     const saved = localStorage.getItem('notification-preferences');
     if (saved) {
@@ -44,7 +42,6 @@ export default function NotificationSettingsPage() {
     }
   }, []);
   
-  // Save preferences to localStorage
   const handlePreferenceChange = (key) => {
     const newPreferences = {
       ...preferences,
@@ -54,7 +51,6 @@ export default function NotificationSettingsPage() {
     localStorage.setItem('notification-preferences', JSON.stringify(newPreferences));
   };
   
-  // Redirect if not authenticated
   useEffect(() => {
     if (!authLoading && !user) {
       router.push('/signin');
@@ -116,10 +112,9 @@ export default function NotificationSettingsPage() {
     }
   };
   
-  // Show loading state while auth is loading
   if (authLoading) {
     return (
-      <div className="min-h-screen bg-white flex items-center justify-center">
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <div className="w-8 h-8 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
           <p className="text-gray-600">Loading...</p>
@@ -128,29 +123,26 @@ export default function NotificationSettingsPage() {
     );
   }
 
-  // Don't render if user is not authenticated (redirect will handle this)
   if (!user) {
     return null;
   }
   
   if (!isSupported) {
     return (
-      <div className="min-h-screen bg-white">
-        <div className="min-h-screen flex">
+      <div className="min-h-screen bg-gray-50">
+        <div className="flex flex-col lg:flex-row">
           <SettingsSidebar />
           
-          <div className="flex-1 w-full flex flex-col py-8 px-4 sm:px-6 lg:px-16 xl:px-20 pt-20 lg:pt-8">
-            <div className="mx-auto w-full max-w-4xl">
-              {/* Header */}
-              <div className="mb-8 bg-yellow-400 px-6 py-6 rounded-t-xl">
-                <h1 className="text-2xl sm:text-3xl font-bold text-emerald-700">Notification Settings</h1>
-                <p className="text-base sm:text-lg text-gray-700 mt-2">Manage your notification preferences</p>
+          <div className="flex-1 w-full">
+            <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-6 lg:py-8">
+              <div className="bg-yellow-400 px-4 sm:px-6 py-4 sm:py-6 rounded-t-xl">
+                <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-emerald-700">Notification Settings</h1>
+                <p className="text-sm sm:text-base lg:text-lg text-gray-700 mt-1 sm:mt-2">Manage your notification preferences</p>
               </div>
               
-              {/* Content Card */}
-              <div className="bg-white rounded-b-xl border border-t-0 border-gray-200 px-6 py-8 shadow-sm">
+              <div className="bg-white rounded-b-xl border border-t-0 border-gray-200 px-4 sm:px-6 py-6 sm:py-8 shadow-sm">
                 <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-                  <p className="text-yellow-800">
+                  <p className="text-sm sm:text-base text-yellow-800">
                     Push notifications are not supported in your browser. Please use Chrome, Firefox, or Edge.
                   </p>
                 </div>
@@ -163,30 +155,26 @@ export default function NotificationSettingsPage() {
   }
   
   return (
-    <div className="min-h-screen bg-white">
-      <div className="min-h-screen flex">
+    <div className="min-h-screen bg-gray-50">
+      <div className="flex flex-col lg:flex-row">
         <SettingsSidebar />
         
-        {/* Main Content */}
-        <div className="flex-1 w-full flex flex-col py-8 px-4 sm:px-6 lg:px-16 xl:px-20 pt-20 lg:pt-8">
-          <div className="mx-auto w-full max-w-4xl">
-            {/* Header */}
-            <div className="mb-8 bg-yellow-400 px-6 py-6 rounded-t-xl">
-              <h1 className="text-2xl sm:text-3xl font-bold text-emerald-700">Notification Settings</h1>
-              <p className="text-base sm:text-lg text-gray-700 mt-2">Manage your notification preferences</p>
+        <div className="flex-1 w-full">
+          <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-6 lg:py-8">
+            <div className="bg-yellow-400 px-4 sm:px-6 py-4 sm:py-6 rounded-t-xl">
+              <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-emerald-700">Notification Settings</h1>
+              <p className="text-sm sm:text-base lg:text-lg text-gray-700 mt-1 sm:mt-2">Manage your notification preferences</p>
             </div>
             
-            {/* Content Card with Shadow Border */}
-            <div className="bg-white rounded-b-xl border border-t-0 border-gray-200 px-6 py-8 shadow-sm space-y-8">
+            <div className="bg-white rounded-b-xl border border-t-0 border-gray-200 px-4 sm:px-6 py-6 sm:py-8 shadow-sm space-y-6 sm:space-y-8">
               
-              {/* Section 1: Push Notifications */}
               <div>
-                <h2 className="text-lg font-semibold text-gray-900 mb-4">
+                <h2 className="text-base sm:text-lg font-semibold text-gray-900 mb-3 sm:mb-4">
                   Push Notifications
                 </h2>
                 
-                <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                  <div className="flex items-center justify-between">
+                <div className="bg-gray-50 rounded-lg p-3 sm:p-4 border border-gray-200">
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-0">
                     <div className="flex-1">
                       <p className="text-sm font-medium text-gray-900 mb-1">
                         Enable Push Notifications
@@ -197,7 +185,7 @@ export default function NotificationSettingsPage() {
                     </div>
                     
                     {notificationPermission === 'denied' ? (
-                      <div className="text-right">
+                      <div className="text-left sm:text-right">
                         <p className="text-xs text-red-600 font-medium mb-1">
                           Blocked in Browser
                         </p>
@@ -243,19 +231,17 @@ export default function NotificationSettingsPage() {
                 </div>
               </div>
               
-              {/* Section 2: Notification Type Preferences */}
               <div>
-                <h2 className="text-lg font-semibold text-gray-900 mb-4">
+                <h2 className="text-base sm:text-lg font-semibold text-gray-900 mb-3 sm:mb-4">
                   Notification Types
                 </h2>
                 
-                <p className="text-sm text-gray-600 mb-4">
+                <p className="text-xs sm:text-sm text-gray-600 mb-3 sm:mb-4">
                   Choose which types of notifications you want to receive
                 </p>
                 
                 <div className="space-y-3">
-                  {/* Campaign Warnings */}
-                  <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg border border-gray-200">
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-0 p-3 sm:p-4 bg-gray-50 rounded-lg border border-gray-200">
                     <div className="flex-1">
                       <p className="text-sm font-medium text-gray-900 mb-1">
                         Campaign Warnings
@@ -279,8 +265,7 @@ export default function NotificationSettingsPage() {
                     </button>
                   </div>
                   
-                  {/* Campaign Removals */}
-                  <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg border border-gray-200">
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-0 p-3 sm:p-4 bg-gray-50 rounded-lg border border-gray-200">
                     <div className="flex-1">
                       <p className="text-sm font-medium text-gray-900 mb-1">
                         Campaign Removals
@@ -304,8 +289,7 @@ export default function NotificationSettingsPage() {
                     </button>
                   </div>
                   
-                  {/* Campaign Restorations */}
-                  <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg border border-gray-200">
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-0 p-3 sm:p-4 bg-gray-50 rounded-lg border border-gray-200">
                     <div className="flex-1">
                       <p className="text-sm font-medium text-gray-900 mb-1">
                         Campaign Restorations
@@ -329,8 +313,7 @@ export default function NotificationSettingsPage() {
                     </button>
                   </div>
                   
-                  {/* Profile Reports */}
-                  <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg border border-gray-200">
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-0 p-3 sm:p-4 bg-gray-50 rounded-lg border border-gray-200">
                     <div className="flex-1">
                       <p className="text-sm font-medium text-gray-900 mb-1">
                         Profile Reports
@@ -354,8 +337,7 @@ export default function NotificationSettingsPage() {
                     </button>
                   </div>
                   
-                  {/* Admin Actions */}
-                  <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg border border-gray-200">
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-0 p-3 sm:p-4 bg-gray-50 rounded-lg border border-gray-200">
                     <div className="flex-1">
                       <p className="text-sm font-medium text-gray-900 mb-1">
                         Admin Actions
@@ -381,10 +363,9 @@ export default function NotificationSettingsPage() {
                 </div>
               </div>
               
-              {/* Active Devices Section */}
               {notificationPermission === 'granted' && (
                 <div>
-                  <h2 className="text-lg font-semibold text-gray-900 mb-4">
+                  <h2 className="text-base sm:text-lg font-semibold text-gray-900 mb-3 sm:mb-4">
                     Active Devices
                   </h2>
                   
@@ -401,7 +382,7 @@ export default function NotificationSettingsPage() {
                       {devices.map((device) => (
                         <div 
                           key={device.id}
-                          className="flex items-center justify-between p-4 bg-gray-50 rounded-lg border border-gray-200"
+                          className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-0 p-3 sm:p-4 bg-gray-50 rounded-lg border border-gray-200"
                         >
                           <div className="flex items-center">
                             <div className="flex-shrink-0">
@@ -426,7 +407,7 @@ export default function NotificationSettingsPage() {
                           
                           <button
                             onClick={() => handleRemoveDevice(device.id, device.token)}
-                            className="text-sm text-red-600 hover:text-red-700 font-medium"
+                            className="text-sm text-red-600 hover:text-red-700 font-medium self-start sm:self-auto"
                           >
                             Remove
                           </button>

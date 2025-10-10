@@ -175,3 +175,23 @@ body {
 .animate-toast-progress {
   animation: toast-progress 5s linear forwards;
 }
+
+/* Hide scrollbar for horizontal scrolling on mobile tabs */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+/* Tailwind custom breakpoint for extra small screens */
+@media (min-width: 475px) {
+  .xs\:inline {
+    display: inline;
+  }
+  .xs\:hidden {
+    display: none;
+  }
+}
