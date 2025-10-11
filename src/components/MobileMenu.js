@@ -34,7 +34,7 @@ export default function MobileMenu({
 
   const handleModalClose = (navigated) => {
     setIsCreateModalOpen(false);
-    if (!navigated) {
+    if (navigated) {
       setIsMenuOpen(false);
     }
   };
