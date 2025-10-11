@@ -101,7 +101,7 @@ export default function AdminCampaignsPage() {
             >
               <option value="createdAt" className="text-gray-900">Most Recent</option>
               <option value="reports" className="text-gray-900">Most Reports</option>
-              <option value="supporters" className="text-gray-900">Most Supporters</option>
+              <option value="supporters" className="text-gray-900">Most Supports</option>
             </select>
           </div>
         </div>
