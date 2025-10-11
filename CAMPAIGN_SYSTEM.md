@@ -475,13 +475,9 @@ Automatically serves optimized WebP images with appropriate sizes for different 
 **Transformation Presets:**
 
 ```javascript
-// Thumbnails (300px width WebP, quality 75) - ~200 KB
+// Campaign Preview (800px width WebP, quality 80) - ~400 KB
 // Aspect ratio preserved - works with any image size
-getCampaignThumbnail(imagePath)  // Gallery grids
-
-// Previews (800px width WebP, quality 85) - ~400 KB
-// Aspect ratio preserved - works with any image size
-getCampaignPreview(imagePath)    // Campaign view pages
+getCampaignPreview(imagePath)    // Gallery grids, campaign view pages, campaign cards
 
 // Full-size (original PNG) - ~800 KB - 2.5 MB
 getCampaignCanvas(imagePath)     // Canvas operations only
@@ -490,8 +486,8 @@ getCampaignCanvas(imagePath)     // Canvas operations only
 // Square crop from center
 getProfileAvatar(imagePath)      // User profile pictures
 
-// Banners (1200x400 WebP, quality 85) - ~300 KB
-// 3:1 aspect ratio crop
+// Banners (800x200 WebP, quality 85) - ~150 KB
+// Aspect ratio crop
 getProfileBanner(imagePath)      // Profile page headers
 ```
 

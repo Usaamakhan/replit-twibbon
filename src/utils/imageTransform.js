@@ -105,30 +105,15 @@ export function getTransformedImageUrl(imageUrlOrPath, options = {}) {
 }
 
 /**
- * Get campaign thumbnail (400px width WebP, quality 80)
- * Used in: Gallery grid, profile campaign lists
+ * Get campaign preview (800px width WebP, quality 80)
+ * Used in: Gallery grids, campaign view pages, campaign cards
  * 
  * @param {string} imageUrlOrPath - Campaign image URL or path
- * @returns {string} Thumbnail URL (~250 KB)
- */
-export function getCampaignThumbnail(imageUrlOrPath) {
-  return getTransformedImageUrl(imageUrlOrPath, { 
-    width: 400, 
-    format: 'webp', 
-    quality: 80 
-  });
-}
-
-/**
- * Get campaign preview (400px width WebP, quality 80)
- * Used in: Campaign view page (Page 1), campaign cards
- * 
- * @param {string} imageUrlOrPath - Campaign image URL or path
- * @returns {string} Preview URL (~250 KB)
+ * @returns {string} Preview URL (~400 KB)
  */
 export function getCampaignPreview(imageUrlOrPath) {
   return getTransformedImageUrl(imageUrlOrPath, { 
-    width: 400, 
+    width: 800, 
     format: 'webp', 
     quality: 80 
   });
@@ -215,7 +200,6 @@ export function getProfileBanner(imagePath) {
 export function getOptimizedImage(imagePath, size = 'preview') {
   switch (size) {
     case 'thumbnail':
-      return getCampaignThumbnail(imagePath);
     case 'preview':
       return getCampaignPreview(imagePath);
     case 'avatar':

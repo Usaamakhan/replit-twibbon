@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { getAllCampaigns } from '../../../lib/firestore';
-import { getCampaignThumbnail, getProfileAvatar } from '../../../utils/imageTransform';
+import { getCampaignPreview, getProfileAvatar } from '../../../utils/imageTransform';
 import LoadingSpinner from '../../../components/LoadingSpinner';
 import FilterModal from '../../../components/FilterModal';
 
@@ -143,7 +143,7 @@ export default function CampaignsPage() {
                         {campaign.imageUrl ? (
                           <>
                             <Image
-                              src={getCampaignThumbnail(campaign.imageUrl)}
+                              src={getCampaignPreview(campaign.imageUrl)}
                               alt={campaign.title}
                               fill
                               className={`object-cover transition-all duration-300 ${
