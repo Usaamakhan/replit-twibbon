@@ -260,26 +260,27 @@ export default function ProfilePage({ isOwnProfile = false, username = null }) {
         {/* Stats Row */}
         <div className="flex flex-row gap-3 mb-8">
           <div className="bg-white rounded-xl shadow-lg p-3 sm:p-6 flex-1 text-center">
-            <div className="text-2xl sm:text-3xl font-bold text-emerald-600">{userStats.supportsCount}</div>
-            <div className="text-xs sm:text-sm text-gray-600 font-medium mt-1 sm:mt-2">Supporters</div>
+            <div className="text-lg sm:text-3xl font-bold text-emerald-600">{userStats.supportsCount}</div>
+            <div className="text-[10px] sm:text-sm text-gray-600 font-medium mt-0.5 sm:mt-2">Supporters</div>
           </div>
           
           <div className="bg-white rounded-xl shadow-lg p-3 sm:p-6 flex-1 text-center">
-            <div className="text-2xl sm:text-3xl font-bold text-emerald-600">{userStats.campaignsCount}</div>
-            <div className="text-xs sm:text-sm text-gray-600 font-medium mt-1 sm:mt-2">Campaigns</div>
+            <div className="text-lg sm:text-3xl font-bold text-emerald-600">{userStats.campaignsCount}</div>
+            <div className="text-[10px] sm:text-sm text-gray-600 font-medium mt-0.5 sm:mt-2">Campaigns</div>
           </div>
           
           <div className="bg-white rounded-xl shadow-lg p-3 sm:p-6 flex-1 text-center">
-            <div className="text-2xl sm:text-3xl font-bold text-emerald-600 leading-tight">
+            <div className="text-sm sm:text-3xl font-bold text-emerald-600 leading-tight">
               {userData.createdAt ? 
                 new Date(userData.createdAt.seconds ? userData.createdAt.seconds * 1000 : userData.createdAt).toLocaleDateString('en-US', { 
                   month: 'short', 
+                  day: 'numeric',
                   year: 'numeric' 
                 }) : 
                 'Recently'
               }
             </div>
-            <div className="text-xs sm:text-sm text-gray-600 font-medium mt-1 sm:mt-2">Joined</div>
+            <div className="text-[10px] sm:text-sm text-gray-600 font-medium mt-0.5 sm:mt-2">Joined Since</div>
           </div>
         </div>
 
@@ -358,8 +359,8 @@ function ProfileSkeleton() {
         <div className="flex flex-row gap-3 mb-8">
           {[...Array(3)].map((_, i) => (
             <div key={i} className="bg-white rounded-xl shadow-lg p-3 sm:p-6 flex-1 text-center">
-              <div className="h-8 sm:h-9 bg-gray-300 rounded w-16 mx-auto animate-pulse mb-2"></div>
-              <div className="h-3 sm:h-4 bg-gray-300 rounded w-16 mx-auto animate-pulse"></div>
+              <div className="h-6 sm:h-9 bg-gray-300 rounded w-12 sm:w-16 mx-auto animate-pulse mb-1"></div>
+              <div className="h-2.5 sm:h-4 bg-gray-300 rounded w-14 sm:w-16 mx-auto animate-pulse"></div>
             </div>
           ))}
         </div>
