@@ -123,13 +123,7 @@ const nextConfig = {
   
   // Configure redirects to handle 404s faster
   async redirects() {
-    return [
-      {
-        source: '/settings',
-        destination: '/profile/edit',
-        permanent: true, // 308 redirect for better SEO
-      },
-    ];
+    return [];
   },
   
   // Add rewrite rules for better routing
