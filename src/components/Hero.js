@@ -23,16 +23,16 @@ export default function Hero() {
           <p className="mt-3 sm:mt-4 md:mt-6 text-sm sm:text-base md:text-lg opacity-90">
             Create and share frames that amplify your message, celebrate your cause, and inspire others to join in.
           </p>
-          <div className="mt-6 sm:mt-8 flex flex-row items-center justify-center gap-4 sm:gap-5 flex-nowrap">
+          <div className="mt-6 sm:mt-8 flex flex-row items-center justify-center gap-3 sm:gap-5 flex-nowrap">
             <button
               onClick={() => setIsCreateModalOpen(true)}
-              className="btn-base btn-primary px-7 py-4 text-base sm:text-lg font-semibold whitespace-nowrap"
+              className="btn-base btn-primary px-4 py-2.5 sm:px-7 sm:py-4 text-sm sm:text-base md:text-lg font-semibold whitespace-nowrap"
             >
               Create Campaign
             </button>
             <a
               href="/campaigns"
-              className="btn-base btn-secondary border-2 border-emerald-700 px-7 py-4 text-emerald-800 text-base sm:text-lg font-semibold whitespace-nowrap"
+              className="btn-base btn-secondary border-2 border-emerald-700 px-4 py-2.5 sm:px-7 sm:py-4 text-emerald-800 text-sm sm:text-base md:text-lg font-semibold whitespace-nowrap"
             >
               Browse Campaigns
             </a>
