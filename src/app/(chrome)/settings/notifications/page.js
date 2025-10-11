@@ -174,8 +174,8 @@ export default function NotificationSettingsPage() {
                 </h2>
                 
                 <div className="bg-gray-50 rounded-lg p-3 sm:p-4 border border-gray-200">
-                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-0">
-                    <div className="flex-1">
+                  <div className="flex items-center justify-between gap-4">
+                    <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium text-gray-900 mb-1">
                         Enable Push Notifications
                       </p>
@@ -185,7 +185,7 @@ export default function NotificationSettingsPage() {
                     </div>
                     
                     {notificationPermission === 'denied' ? (
-                      <div className="text-left sm:text-right">
+                      <div className="text-right flex-shrink-0">
                         <p className="text-xs text-red-600 font-medium mb-1">
                           Blocked in Browser
                         </p>
@@ -200,7 +200,7 @@ export default function NotificationSettingsPage() {
                       <button
                         onClick={handleToggleNotifications}
                         disabled={isToggling}
-                        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed ${
+                        className={`flex-shrink-0 relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed ${
                           fcmToken ? 'bg-emerald-600' : 'bg-gray-300'
                         }`}
                         aria-label="Toggle notifications"
@@ -241,8 +241,8 @@ export default function NotificationSettingsPage() {
                 </p>
                 
                 <div className="space-y-3">
-                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-0 p-3 sm:p-4 bg-gray-50 rounded-lg border border-gray-200">
-                    <div className="flex-1">
+                  <div className="flex items-center justify-between gap-4 p-3 sm:p-4 bg-gray-50 rounded-lg border border-gray-200">
+                    <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium text-gray-900 mb-1">
                         Campaign Warnings
                       </p>
@@ -252,7 +252,7 @@ export default function NotificationSettingsPage() {
                     </div>
                     <button
                       onClick={() => handlePreferenceChange('warnings')}
-                      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 ${
+                      className={`flex-shrink-0 relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 ${
                         preferences.warnings ? 'bg-emerald-600' : 'bg-gray-300'
                       }`}
                       aria-label="Toggle campaign warnings"
@@ -265,8 +265,8 @@ export default function NotificationSettingsPage() {
                     </button>
                   </div>
                   
-                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-0 p-3 sm:p-4 bg-gray-50 rounded-lg border border-gray-200">
-                    <div className="flex-1">
+                  <div className="flex items-center justify-between gap-4 p-3 sm:p-4 bg-gray-50 rounded-lg border border-gray-200">
+                    <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium text-gray-900 mb-1">
                         Campaign Removals
                       </p>
@@ -276,7 +276,7 @@ export default function NotificationSettingsPage() {
                     </div>
                     <button
                       onClick={() => handlePreferenceChange('removals')}
-                      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 ${
+                      className={`flex-shrink-0 relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 ${
                         preferences.removals ? 'bg-emerald-600' : 'bg-gray-300'
                       }`}
                       aria-label="Toggle campaign removals"
@@ -289,8 +289,8 @@ export default function NotificationSettingsPage() {
                     </button>
                   </div>
                   
-                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-0 p-3 sm:p-4 bg-gray-50 rounded-lg border border-gray-200">
-                    <div className="flex-1">
+                  <div className="flex items-center justify-between gap-4 p-3 sm:p-4 bg-gray-50 rounded-lg border border-gray-200">
+                    <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium text-gray-900 mb-1">
                         Campaign Restorations
                       </p>
@@ -300,7 +300,7 @@ export default function NotificationSettingsPage() {
                     </div>
                     <button
                       onClick={() => handlePreferenceChange('restorations')}
-                      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 ${
+                      className={`flex-shrink-0 relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 ${
                         preferences.restorations ? 'bg-emerald-600' : 'bg-gray-300'
                       }`}
                       aria-label="Toggle campaign restorations"
@@ -313,8 +313,8 @@ export default function NotificationSettingsPage() {
                     </button>
                   </div>
                   
-                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-0 p-3 sm:p-4 bg-gray-50 rounded-lg border border-gray-200">
-                    <div className="flex-1">
+                  <div className="flex items-center justify-between gap-4 p-3 sm:p-4 bg-gray-50 rounded-lg border border-gray-200">
+                    <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium text-gray-900 mb-1">
                         Profile Reports
                       </p>
@@ -324,7 +324,7 @@ export default function NotificationSettingsPage() {
                     </div>
                     <button
                       onClick={() => handlePreferenceChange('profileReports')}
-                      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 ${
+                      className={`flex-shrink-0 relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 ${
                         preferences.profileReports ? 'bg-emerald-600' : 'bg-gray-300'
                       }`}
                       aria-label="Toggle profile reports"
@@ -337,8 +337,8 @@ export default function NotificationSettingsPage() {
                     </button>
                   </div>
                   
-                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-0 p-3 sm:p-4 bg-gray-50 rounded-lg border border-gray-200">
-                    <div className="flex-1">
+                  <div className="flex items-center justify-between gap-4 p-3 sm:p-4 bg-gray-50 rounded-lg border border-gray-200">
+                    <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium text-gray-900 mb-1">
                         Admin Actions
                       </p>
@@ -348,7 +348,7 @@ export default function NotificationSettingsPage() {
                     </div>
                     <button
                       onClick={() => handlePreferenceChange('adminActions')}
-                      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 ${
+                      className={`flex-shrink-0 relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 ${
                         preferences.adminActions ? 'bg-emerald-600' : 'bg-gray-300'
                       }`}
                       aria-label="Toggle admin actions"
@@ -382,16 +382,16 @@ export default function NotificationSettingsPage() {
                       {devices.map((device) => (
                         <div 
                           key={device.id}
-                          className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-0 p-3 sm:p-4 bg-gray-50 rounded-lg border border-gray-200"
+                          className="flex items-center justify-between gap-4 p-3 sm:p-4 bg-gray-50 rounded-lg border border-gray-200"
                         >
-                          <div className="flex items-center">
+                          <div className="flex items-center min-w-0 flex-1">
                             <div className="flex-shrink-0">
                               <svg className="h-8 w-8 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                               </svg>
                             </div>
-                            <div className="ml-3">
-                              <p className="text-sm font-medium text-gray-900">
+                            <div className="ml-3 min-w-0">
+                              <p className="text-sm font-medium text-gray-900 truncate">
                                 {device.browser || 'Web Browser'}
                                 {device.isCurrent && (
                                   <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">
@@ -407,7 +407,7 @@ export default function NotificationSettingsPage() {
                           
                           <button
                             onClick={() => handleRemoveDevice(device.id, device.token)}
-                            className="text-sm text-red-600 hover:text-red-700 font-medium self-start sm:self-auto"
+                            className="flex-shrink-0 text-sm text-red-600 hover:text-red-700 font-medium"
                           >
                             Remove
                           </button>
