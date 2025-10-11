@@ -1,6 +1,6 @@
 # Codebase Structure Documentation
 
-**Last Updated:** October 08, 2025  
+**Last Updated:** October 11, 2025  
 **Project:** Twibbonize - Campaign Photo Frame & Background Platform
 
 This document provides a complete overview of the codebase structure with descriptions of each file and folder's purpose.
@@ -14,7 +14,6 @@ This document provides a complete overview of the codebase structure with descri
 ├── attached_assets/          # Uploaded assets and screenshots (temporary files)
 ├── public/                   # Static assets served directly
 ├── src/                      # Source code directory (main application)
-├── .local/                   # Local state and progress tracking
 ├── *.md                      # Documentation files
 └── Config files              # Project configuration
 ```
@@ -67,8 +66,7 @@ Next.js 15 App Router directory structure. Each folder represents a route.
 
 ### Root Level Files
 
-- **`layout.js`** - Root layout wrapper for entire app
-- **`page.js`** - Homepage with hero section
+- **`layout.js`** - Root layout wrapper for entire app with NotificationProvider
 - **`globals.css`** - Global styles and Tailwind CSS imports
 - **`loading.js`** - Global loading UI component
 - **`not-found.js`** - 404 error page
@@ -154,6 +152,21 @@ Creator workflow for uploading new campaigns.
 #### 📁 **`/edit`**
 - **`page.js`** - Edit profile (avatar, banner, bio, username)
 
+#### 📁 **`/notifications`** ✨ NEW
+- **`page.js`** - User notification preferences and settings
+
+---
+
+### 📁 `/src/app/(chrome)/settings` - Settings Pages ✨ NEW
+
+User settings with sidebar navigation.
+
+#### **`layout.js`** - Settings layout with SettingsSidebar
+#### **`page.js`** - Main settings page (redirects to notifications)
+
+#### 📁 **`/notifications`**
+- **`page.js`** - Notification preferences (enable/disable, manage devices)
+
 ---
 
 ### 📁 `/src/app/(chrome)/u/[username]` - Public Profiles
@@ -184,6 +197,9 @@ Backend API endpoints for data operations.
 
 Server-side admin operations (protected by admin middleware).
 
+#### 📁 **`/analytics`** ✨ NEW
+- **`route.js`** - GET: Fetch platform analytics (total users, campaigns, reports, bans)
+
 #### 📁 **`/campaigns`**
 - **`route.js`** - GET: Fetch all campaigns with creator info (admin view)
 - **`/[campaignId]/route.js`** - PATCH: Update campaign moderation status
@@ -191,7 +207,7 @@ Server-side admin operations (protected by admin middleware).
 
 #### 📁 **`/reports`**
 - **`route.js`** - GET: Fetch all reports with filters
-- **`/[reportId]/route.js`** - PATCH: Update report status and action
+- **`/[reportId]/route.js`** - PATCH: Update report status and perform moderation actions
 
 #### 📁 **`/users`**
 - **`route.js`** - GET: Fetch all users with search/filters
@@ -204,6 +220,34 @@ Server-side admin operations (protected by admin middleware).
 
 #### 📁 **`/track-download`**
 - **`route.js`** - POST: Increment campaign supportersCount on download
+
+---
+
+### 📁 `/src/app/api/notifications` - FCM Push Notifications ✨ NEW
+
+Firebase Cloud Messaging integration for push notifications.
+
+#### 📁 **`/[notificationId]`**
+- **`route.js`** - PATCH: Mark notification as read, DELETE: Delete notification
+
+#### 📁 **`/register-token`**
+- **`route.js`** - POST: Register FCM device token for user
+
+#### 📁 **`/remove-token`**
+- **`route.js`** - DELETE: Remove FCM device token on logout
+
+#### 📁 **`/send`**
+- **`route.js`** - POST: Send FCM notification to user(s) (server-side only)
+
+---
+
+### 📁 `/src/app/api/reports` - Report Submission ✨ NEW
+
+#### 📁 **`/submit`**
+- **`route.js`** - POST: Submit campaign report (anonymous allowed)
+
+#### 📁 **`/user`**
+- **`route.js`** - POST: Submit user/profile report (anonymous allowed)
 
 ---
 
@@ -226,15 +270,22 @@ Server-side admin operations (protected by admin middleware).
 
 ---
 
-### 📁 `/src/app` - Auth Pages (No Chrome Layout)
+### 📁 `/src/app` - Auth & Special Pages (No Chrome Layout)
 
-Authentication pages without header/footer.
+Authentication pages and special pages without header/footer.
 
 #### **`/signin/page.js`** - Sign in page with email/password
 #### **`/signup/page.js`** - Sign up page with email/password
 #### **`/forgot-password/page.js`** - Password reset page
 #### **`/verify-email/page.js`** - Email verification page
 #### **`/onboarding/page.js`** - New user onboarding (username, bio, avatar)
+#### **`/banned/page.js`** ✨ NEW - Banned account notice with appeal option
+
+---
+
+### 📁 `/src/app/firebase-messaging-sw` - Service Worker Route ✨ NEW
+
+#### **`/route.js`** - Dynamic service worker for FCM with environment variables
 
 ---
 
@@ -244,12 +295,13 @@ Reusable UI components organized by feature.
 
 ### Layout Components
 
-- **`Header.js`** - Main navigation header with auth buttons
+- **`Header.js`** - Main navigation header with auth buttons and notification bell
 - **`Footer.js`** - Site footer with links
 - **`MobileMenu.js`** - Mobile hamburger menu
 - **`Hero.js`** - Homepage hero section with CTA
 - **`ConditionalLayout.js`** - Conditionally render header/footer
 - **`AuthenticatedLayout.js`** - Layout wrapper for authenticated users
+- **`SettingsSidebar.js`** ✨ NEW - Settings page sidebar navigation
 
 ### Auth Components
 
@@ -270,8 +322,11 @@ Reusable UI components organized by feature.
 
 - **`ProfilePage.js`** - User profile display component
 - **`ProfilePageWrapper.js`** - Profile page wrapper with loading state
+- **`ReportUserModal.js`** ✨ NEW - Modal for reporting user profiles
 
 ### Admin Components
+
+Located in `/src/components/admin/`:
 
 - **`AdminSidebar.js`** - Admin dashboard sidebar navigation
 - **`AdminHeader.js`** - Admin dashboard header with breadcrumbs
@@ -281,6 +336,16 @@ Reusable UI components organized by feature.
 - **`CampaignModerationCard.js`** - Campaign card with moderation actions (uses adminHelpers)
 - **`UsersTable.js`** - Users data table with search (uses adminHelpers)
 - **`UserDetailsModal.js`** - User details modal with admin actions
+
+### Notification Components ✨ NEW
+
+Located in `/src/components/notifications/`:
+
+- **`NotificationProvider.js`** - Global notification provider with FCM integration
+- **`NotificationBell.js`** - Notification bell icon with unread count badge
+- **`NotificationBanner.js`** - In-app notification banner display
+- **`NotificationToast.js`** - Toast notifications with animations
+- **`NotificationPermissionModal.js`** - Modal to request notification permissions
 
 ### Utility Components
 
@@ -317,6 +382,7 @@ Reusable logic hooks.
 
 - **`useAuth.js`** - Firebase authentication hook (user state, login, logout)
 - **`useBodyScrollLock.js`** - Lock body scroll when modal is open
+- **`useFCM.js`** ✨ NEW - Firebase Cloud Messaging hook (token management, foreground notifications)
 - **`useFocusTrap.js`** - Trap keyboard focus within modal
 - **`useSecureStorage.js`** - Secure localStorage/sessionStorage wrapper with encryption
 
@@ -328,10 +394,10 @@ External service integrations and core utilities.
 
 ### Firebase
 
-- **`firebase-optimized.js`** - Firebase client SDK initialization (auth only)
+- **`firebase-optimized.js`** - Firebase client SDK initialization (auth + messaging)
 - **`firebaseAdmin.js`** - Firebase Admin SDK for server-side operations
 - **`firestore.js`** - Firestore database functions (CRUD operations)
-  - User profiles, campaigns, reports, creators, etc.
+  - User profiles, campaigns, reports, creators, notifications, etc.
 
 ### Supabase
 
@@ -369,13 +435,15 @@ Helper functions and algorithms.
   - Frame: photo under frame
   - Background: photo on top
   - Zoom, position, rotate adjustments
-- **`imageTransform.js`** - ImageKit.io CDN transformations
+- **`imageTransform.js`** - Supabase CDN transformations
   - Thumbnail, preview, avatar, banner presets
   - WebP conversion and quality optimization
 
 ### Admin Utilities
 
-- **`admin/adminHelpers.js`** - Admin dashboard formatting utilities
+Located in `/src/utils/admin/`:
+
+- **`adminHelpers.js`** - Admin dashboard formatting utilities
   - `formatReportReason()` - Human-readable report reasons
   - `getModerationStatusColor()` - Badge colors for moderation status
   - `getReportStatusColor()` - Badge colors for report status
@@ -384,13 +452,30 @@ Helper functions and algorithms.
   - `truncateText()` - Text truncation with ellipsis
   - `formatNumber()` - Number formatting with thousands separator
 
-- **`admin/adminValidation.js`** - Admin input validation
+- **`adminValidation.js`** - Admin input validation
   - `validateReportStatus()` - Validate report status values
   - `validateModerationStatus()` - Validate moderation status values
   - `validateUserRole()` - Validate user role values
   - `validateBanReason()` - Validate ban reason is provided
   - `validateReportAction()` - Validate report action types
   - `getValidationError()` - Get validation error message
+
+### Notification Utilities ✨ NEW
+
+Located in `/src/utils/notifications/`:
+
+- **`notificationTemplates.js`** - FCM notification templates for moderation actions
+  - Campaign under review
+  - Campaign removed
+  - Warning issued
+  - Profile under review
+  - Account banned
+  - Appeal deadline reminders
+
+- **`sendFCMNotification.js`** - Client-side FCM notification sender
+  - Send to single user (all devices)
+  - Send batch notifications
+  - Error handling and retry logic
 
 ### General Utilities
 
@@ -408,12 +493,6 @@ Helper functions and algorithms.
 
 ---
 
-## 📁 `.local/state/replit/agent` - Agent State
-
-- **`progress_tracker.md`** - Import progress tracking (internal agent use)
-
----
-
 ## Key File Relationships
 
 ### Campaign Creation Flow
@@ -428,11 +507,23 @@ Helper functions and algorithms.
 3. Download → `/api/campaigns/track-download` → Increment supportersCount
 4. Navigate `/result` → Share options
 
-### Admin Flow
+### Admin Moderation Flow
 1. Admin visits `/admin` → `adminAuth.js` middleware checks role
 2. View reports → `/api/admin/reports` → `firebaseAdmin.js`
 3. Moderate campaign → `/api/admin/campaigns/[id]` → Update status
-4. All operations logged and authenticated
+4. Send FCM notification → `/api/notifications/send` → `sendFCMNotification.js`
+5. User receives notification → `useFCM.js` → `NotificationToast.js`
+
+### FCM Notification Flow ✨ NEW
+1. User grants permission → `NotificationPermissionModal.js`
+2. Get FCM token → `useFCM.js` → Firebase Messaging SDK
+3. Register token → `/api/notifications/register-token` → Firestore
+4. Admin action triggers notification → `/api/admin/reports/[id]`
+5. Server sends FCM → `/api/notifications/send` → Firebase Admin SDK
+6. User receives:
+   - Background: Service worker (`firebase-messaging-sw/route.js`)
+   - Foreground: `useFCM.js` → `NotificationToast.js`
+7. View history → `NotificationBell.js` → In-app inbox
 
 ---
 
@@ -444,13 +535,13 @@ Helper functions and algorithms.
 - **Tailwind CSS 4** - Utility-first CSS
 
 ### Backend Services
-- **Firebase** - Authentication and Firestore database
-- **Supabase** - Object storage for images
-- **ImageKit.io** - CDN for image optimization
+- **Firebase** - Authentication, Firestore database, and Cloud Messaging (FCM)
+- **Supabase** - Object storage for images with CDN
+- **ImageKit.io** - Image optimization (deprecated in favor of Supabase CDN)
 
 ### Key Libraries
 - **@supabase/supabase-js** - Supabase client
-- **firebase** - Firebase client SDK
+- **firebase** - Firebase client SDK (auth + messaging)
 - **firebase-admin** - Firebase server SDK
 - **zod** - Schema validation
 - **server-only** - Ensure server-side only code
@@ -463,15 +554,20 @@ Helper functions and algorithms.
 
 ### Firebase
 - `NEXT_PUBLIC_FIREBASE_API_KEY`
+- `NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN`
 - `NEXT_PUBLIC_FIREBASE_PROJECT_ID`
+- `NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET`
+- `NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID`
 - `NEXT_PUBLIC_FIREBASE_APP_ID`
+- `NEXT_PUBLIC_FIREBASE_VAPID_KEY` ✨ NEW - For web push notifications
 - `FIREBASE_SERVICE_ACCOUNT_KEY` (JSON string)
 
 ### Supabase
 - `NEXT_PUBLIC_SUPABASE_URL`
+- `NEXT_PUBLIC_SUPABASE_ANON_KEY`
 - `SUPABASE_SERVICE_ROLE_KEY`
 
-### ImageKit.io
+### ImageKit.io (Legacy)
 - `NEXT_PUBLIC_IMAGEKIT_URL_ENDPOINT`
 - `IMAGEKIT_PUBLIC_KEY`
 - `IMAGEKIT_PRIVATE_KEY`
@@ -490,6 +586,47 @@ Helper functions and algorithms.
 
 ---
 
+## Implementation Status Summary
+
+### ✅ Fully Implemented Features
+
+**Core Campaign System:**
+- Campaign creation (frame + background)
+- 3-page visitor flow (upload → adjust → result)
+- Image composition with Canvas API
+- Campaign gallery and discovery
+- Top creators leaderboard
+
+**Admin Dashboard:**
+- Reports management with moderation actions
+- Campaign moderation with status updates
+- User management with role assignment and bans
+- Platform analytics dashboard
+
+**Moderation System:**
+- Report submission (campaigns + profiles)
+- Auto-hide rules (3+ reports for campaigns, 10+ for profiles)
+- Admin actions: Dismiss, Warn, Remove/Ban
+- Warnings collection and tracking
+
+**Push Notifications (FCM):**
+- Backend infrastructure (token management, send API)
+- Notification templates for all moderation actions
+- Service worker for background notifications
+- In-app notification inbox and history
+- Foreground notification toasts
+- NotificationBell with unread count
+- Settings page for notification preferences
+
+### ⏸️ Deferred Features
+
+- Appeals system (user appeals for removed content/banned accounts)
+- Admin warning history view in user details
+- Auto-deletion cron jobs (30-day appeal deadline enforcement)
+- Email notifications for moderation actions
+
+---
+
 ## Notes
 
 - All routes under `/admin` require admin role verification
@@ -497,9 +634,12 @@ Helper functions and algorithms.
 - Campaign images stored in Supabase at `campaigns/{userId}/{campaignId}.png`
 - Profile images stored in Supabase at `profiles/{userId}/{type}.{ext}`
 - Session data persists in sessionStorage with 24h expiry
-- ImageKit.io CDN used for all image transformations (WebP, resizing)
+- Supabase CDN used for all image transformations (WebP, resizing)
 - Download tracking uses Firestore transactions to prevent race conditions
 - Username reservation uses dedicated collection for atomicity
+- FCM tokens stored in user subcollection: `users/{userId}/tokens/{tokenId}`
+- Notifications saved to Firestore: `users/{userId}/notifications/{notificationId}`
+- Service worker served dynamically with environment variables
 
 ---
 
