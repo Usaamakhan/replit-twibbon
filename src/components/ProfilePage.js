@@ -12,6 +12,7 @@ import {
 import { getProfileAvatar, getProfileBanner } from '../utils/imageTransform';
 import CampaignGallery from './CampaignGallery';
 import ReportUserModal from './ReportUserModal';
+import CreateCampaignModal from './CreateCampaignModal';
 
 export default function ProfilePage({ isOwnProfile = false, username = null }) {
   const { user, loading } = useAuth();
@@ -22,6 +23,7 @@ export default function ProfilePage({ isOwnProfile = false, username = null }) {
   const [campaigns, setCampaigns] = useState([]);
   const [error, setError] = useState(null);
   const [showReportModal, setShowReportModal] = useState(false);
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
   useEffect(() => {
     // If viewing own profile, redirect to login if not authenticated
@@ -288,7 +290,7 @@ export default function ProfilePage({ isOwnProfile = false, username = null }) {
             <h2 className="text-xl font-bold text-gray-900">Campaigns</h2>
             {isOwnProfile && (
               <button 
-                onClick={() => router.push('/create')}
+                onClick={() => setIsCreateModalOpen(true)}
                 className="btn-base btn-primary px-4 py-2 text-sm font-medium"
               >
                 Create Campaign
@@ -313,6 +315,12 @@ export default function ProfilePage({ isOwnProfile = false, username = null }) {
           reportedUsername={userData?.username}
         />
       )}
+
+      {/* Create Campaign Modal */}
+      <CreateCampaignModal
+        isOpen={isCreateModalOpen}
+        onClose={() => setIsCreateModalOpen(false)}
+      />
       
     </div>
   );
