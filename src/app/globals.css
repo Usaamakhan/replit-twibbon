@@ -5,6 +5,11 @@
   --foreground: #171717;
 }
 
+/* Fix Tailwind v4 group-hover not working - force higher specificity */
+.group:hover .group-hover\:opacity-100 {
+  opacity: 1 !important;
+}
+
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);

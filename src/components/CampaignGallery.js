@@ -140,8 +140,8 @@ export default function CampaignGallery({ campaigns, loading = false, isOwnProfi
                 )}
                 
                 {campaign.type && (
-                  <div className="absolute top-2 left-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-                    <span className="inline-block px-2 py-1 text-xs font-semibold bg-white/90 text-gray-800 rounded-md shadow-sm">
+                  <div className="absolute top-2 left-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none">
+                    <span className="inline-block px-2 py-1 text-xs font-semibold bg-white/90 text-gray-800 rounded-md shadow-sm backdrop-blur-sm">
                       {campaign.type === 'frame' ? 'Frame' : 'Background'}
                     </span>
                   </div>
@@ -179,7 +179,7 @@ export default function CampaignGallery({ campaigns, loading = false, isOwnProfi
                   e.stopPropagation();
                   setOpenMenuId(openMenuId === campaign.id ? null : campaign.id);
                 }}
-                className="p-1.5 rounded-full bg-white/90 hover:bg-white transition-colors cursor-pointer shadow-sm"
+                className="p-1.5 rounded-full bg-white/90 hover:bg-white transition-colors cursor-pointer shadow-sm backdrop-blur-sm"
                 aria-label="Campaign options"
               >
                 <svg
