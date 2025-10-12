@@ -132,11 +132,11 @@ export default function ShareProfileModal({ isOpen, onClose, profileUrl, display
               type="text"
               value={profileUrl}
               readOnly
-              className="flex-1 px-4 py-3 border border-gray-300 rounded-lg bg-gray-50 text-gray-700 text-sm focus:outline-none"
+              className="flex-1 min-w-0 px-3 py-2.5 border border-gray-300 rounded-lg bg-gray-50 text-gray-700 text-sm focus:outline-none truncate"
             />
             <button
               onClick={handleCopyLink}
-              className={`px-6 py-3 rounded-lg font-medium transition-all ${
+              className={`px-4 sm:px-6 py-2.5 rounded-lg font-medium text-sm whitespace-nowrap transition-all ${
                 copied 
                   ? 'bg-green-600 text-white' 
                   : 'bg-emerald-600 hover:bg-emerald-700 text-white'
