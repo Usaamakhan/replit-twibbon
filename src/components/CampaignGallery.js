@@ -152,6 +152,33 @@ export default function CampaignGallery({ campaigns, loading = false, isOwnProfi
                 <h3 className="text-gray-900 font-semibold text-base truncate mb-2">
                   {campaign.title}
                 </h3>
+                
+                {/* Creator Info - Only show if not own profile and creator data exists */}
+                {!isOwnProfile && campaign.creator && campaign.creator.username && (
+                  <Link
+                    href={`/u/${campaign.creator.username}`}
+                    onClick={(e) => e.stopPropagation()}
+                    className="flex items-center gap-2 mb-2 hover:bg-gray-50 -mx-1 px-1 py-1 rounded-md transition-colors duration-150"
+                  >
+                    <div className="w-5 h-5 rounded-full bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center flex-shrink-0">
+                      {campaign.creator.profileImage ? (
+                        <img
+                          src={campaign.creator.profileImage}
+                          alt={campaign.creator.displayName}
+                          className="w-full h-full rounded-full object-cover"
+                        />
+                      ) : (
+                        <span className="text-white text-xs font-bold">
+                          {campaign.creator.displayName?.charAt(0)?.toUpperCase() || 'U'}
+                        </span>
+                      )}
+                    </div>
+                    <span className="text-xs text-gray-600 truncate hover:text-emerald-600 transition-colors duration-150">
+                      {campaign.creator.displayName}
+                    </span>
+                  </Link>
+                )}
+                
                 <div className="flex items-center gap-2 text-gray-600 text-sm">
                   <svg
                     className="h-4 w-4 text-emerald-600"

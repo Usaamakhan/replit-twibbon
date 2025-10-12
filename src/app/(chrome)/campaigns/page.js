@@ -220,8 +220,12 @@ export default function CampaignsPage() {
                           </h3>
                           
                           {/* Creator Info */}
-                          {campaign.creator && (
-                            <div className="flex items-center gap-2 mb-3">
+                          {campaign.creator && campaign.creator.username && (
+                            <Link
+                              href={`/u/${campaign.creator.username}`}
+                              onClick={(e) => e.stopPropagation()}
+                              className="flex items-center gap-2 mb-3 hover:bg-gray-50 -mx-1 px-1 py-1 rounded-md transition-colors duration-150"
+                            >
                               <div className="w-6 h-6 rounded-full bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center flex-shrink-0">
                                 {campaign.creator.profileImage ? (
                                   <img
@@ -235,10 +239,10 @@ export default function CampaignsPage() {
                                   </span>
                                 )}
                               </div>
-                              <span className="text-sm text-gray-600 truncate">
+                              <span className="text-sm text-gray-600 truncate hover:text-emerald-600 transition-colors duration-150">
                                 {campaign.creator.displayName}
                               </span>
-                            </div>
+                            </Link>
                           )}
                           
                           {/* Supports Count */}
