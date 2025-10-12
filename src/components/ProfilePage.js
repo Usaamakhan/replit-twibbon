@@ -14,6 +14,7 @@ import { abbreviateNumber } from '../utils/validation';
 import CampaignGallery from './CampaignGallery';
 import ReportUserModal from './ReportUserModal';
 import CreateCampaignModal from './CreateCampaignModal';
+import ShareProfileModal from './ShareProfileModal';
 
 export default function ProfilePage({ isOwnProfile = false, username = null }) {
   const { user, loading } = useAuth();
@@ -26,6 +27,7 @@ export default function ProfilePage({ isOwnProfile = false, username = null }) {
   const [showReportModal, setShowReportModal] = useState(false);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
+  const [showShareModal, setShowShareModal] = useState(false);
 
   useEffect(() => {
     // If viewing own profile, redirect to login if not authenticated
@@ -229,7 +231,7 @@ export default function ProfilePage({ isOwnProfile = false, username = null }) {
           <div className="relative flex-shrink-0">
             <button
               onClick={() => setShowMenu(!showMenu)}
-              className="p-2 rounded-full hover:bg-gray-100 transition-colors"
+              className="p-2 rounded-full hover:bg-gray-100 transition-colors cursor-pointer"
               aria-label="Profile options"
             >
               <svg className="w-6 h-6 text-gray-600" fill="currentColor" viewBox="0 0 20 20">
@@ -254,7 +256,7 @@ export default function ProfilePage({ isOwnProfile = false, username = null }) {
                         setShowMenu(false);
                         router.push('/profile/edit');
                       }}
-                      className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
+                      className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2 cursor-pointer"
                     >
                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
@@ -267,7 +269,7 @@ export default function ProfilePage({ isOwnProfile = false, username = null }) {
                         setShowMenu(false);
                         setShowReportModal(true);
                       }}
-                      className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
+                      className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 flex items-center gap-2 cursor-pointer"
                     >
                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16c-.77.833.192 2.5 1.732 2.5z" />
@@ -275,6 +277,20 @@ export default function ProfilePage({ isOwnProfile = false, username = null }) {
                       Report User
                     </button>
                   )}
+                  
+                  {/* Share Button - Always visible */}
+                  <button
+                    onClick={() => {
+                      setShowMenu(false);
+                      setShowShareModal(true);
+                    }}
+                    className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2 cursor-pointer"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+                    </svg>
+                    Share Profile
+                  </button>
                 </div>
               </>
             )}
@@ -351,6 +367,16 @@ export default function ProfilePage({ isOwnProfile = false, username = null }) {
       <CreateCampaignModal
         isOpen={isCreateModalOpen}
         onClose={() => setIsCreateModalOpen(false)}
+      />
+
+      {/* Share Profile Modal */}
+      <ShareProfileModal
+        isOpen={showShareModal}
+        onClose={() => setShowShareModal(false)}
+        profileUrl={`${typeof window !== 'undefined' ? window.location.origin : ''}/u/${userData?.username || ''}`}
+        displayName={userData?.displayName || 'User'}
+        username={userData?.username || 'user'}
+        profileImage={userData?.profileImage ? getProfileAvatar(userData.profileImage) : null}
       />
       
     </div>
