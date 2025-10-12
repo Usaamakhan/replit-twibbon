@@ -12,7 +12,7 @@ import {
 import { getProfileAvatar, getProfileBanner } from "../utils/imageTransform";
 import { abbreviateNumber } from "../utils/validation";
 import CampaignGallery from "./CampaignGallery";
-import ReportUserModal from "./ReportUserModal";
+import ReportModal from "./ReportModal";
 import CreateCampaignModal from "./CreateCampaignModal";
 import ShareModal from "./ShareModal";
 
@@ -443,9 +443,10 @@ export default function ProfilePage({ isOwnProfile = false, username = null }) {
 
       {/* Report User Modal */}
       {!isOwnProfile && (
-        <ReportUserModal
+        <ReportModal
           isOpen={showReportModal}
           onClose={() => setShowReportModal(false)}
+          type="user"
           reportedUserId={userData?.id}
           reportedUsername={userData?.username}
         />
