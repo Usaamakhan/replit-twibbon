@@ -9,6 +9,7 @@ import { getCampaignPreview, getProfileAvatar } from '../../../../utils/imageTra
 import { abbreviateNumber } from '../../../../utils/validation';
 import LoadingSpinner from '../../../../components/LoadingSpinner';
 import CampaignStepIndicator from '../../../../components/CampaignStepIndicator';
+import ReportModal from '../../../../components/ReportModal';
 
 export default function CampaignUploadPage() {
   const params = useParams();
@@ -23,26 +24,10 @@ export default function CampaignUploadPage() {
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [error, setError] = useState('');
   
   // Report modal state
   const [showReportModal, setShowReportModal] = useState(false);
-  const [reportReason, setReportReason] = useState('');
-  const [reportDetails, setReportDetails] = useState('');
-  const [reportSubmitting, setReportSubmitting] = useState(false);
-  const [reportSuccess, setReportSuccess] = useState(false);
-  const [error, setError] = useState('');
-
-  // Lock body scroll when modal is open
-  useEffect(() => {
-    if (showReportModal) {
-      document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = 'unset';
-    }
-    return () => {
-      document.body.style.overflow = 'unset';
-    };
-  }, [showReportModal]);
 
   const fileInputRef = useRef();
 
@@ -122,51 +107,6 @@ export default function CampaignUploadPage() {
     };
     
     reader.readAsDataURL(file);
-  };
-
-  // Report campaign
-  const handleReportSubmit = async (e) => {
-    e.preventDefault();
-    
-    if (!reportReason) {
-      setError('Please select a reason for reporting');
-      return;
-    }
-    
-    setReportSubmitting(true);
-    setError('');
-    
-    try {
-      const reportData = {
-        campaignId: campaign.id,
-        campaignSlug: campaign.slug,
-        reportedBy: user?.uid || 'anonymous',
-        reason: reportReason,
-        details: reportDetails
-      };
-      
-      const response = await fetch('/api/reports/submit', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(reportData),
-      });
-      
-      const result = await response.json();
-      
-      if (result.success) {
-        setReportSuccess(true);
-      } else {
-        setError(result.error || 'Failed to submit report');
-      }
-      
-      setReportSubmitting(false);
-    } catch (error) {
-      console.error('Error submitting report:', error);
-      setError('Failed to submit report. Please try again.');
-      setReportSubmitting(false);
-    }
   };
 
   // Share functionality
@@ -358,122 +298,13 @@ export default function CampaignUploadPage() {
       </div>
 
       {/* Report Modal */}
-      {showReportModal && (
-        <>
-          {/* Backdrop with blur */}
-          <div 
-            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 transition-opacity"
-            onClick={() => {
-              setShowReportModal(false);
-              setReportReason('');
-              setReportDetails('');
-              setError('');
-            }}
-          />
-          
-          {/* Modal */}
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-none">
-            <div 
-              className="bg-white rounded-lg max-w-md w-full p-6 pointer-events-auto"
-              onClick={(e) => e.stopPropagation()}
-            >
-              {reportSuccess ? (
-                // Success State
-                <div className="text-center py-4">
-                  <div className="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-green-100 mb-4">
-                    <svg className="h-8 w-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                    </svg>
-                  </div>
-                  <h3 className="text-xl font-bold text-gray-900 mb-2">Report Submitted</h3>
-                  <p className="text-gray-600 mb-6">
-                    Thank you for your report. We will review it shortly.
-                  </p>
-                  <button
-                    onClick={() => {
-                      setShowReportModal(false);
-                      setReportReason('');
-                      setReportDetails('');
-                      setReportSuccess(false);
-                      setError('');
-                    }}
-                    className="btn-base btn-primary px-8 py-2 font-medium"
-                  >
-                    OK
-                  </button>
-                </div>
-              ) : (
-                // Report Form
-                <>
-                  <h2 className="text-2xl font-bold text-gray-900 mb-4">Report Campaign</h2>
-                  
-                  {error && (
-                    <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-600 text-sm">
-                      {error}
-                    </div>
-                  )}
-                  
-                  <form onSubmit={handleReportSubmit}>
-                    <div className="mb-4">
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Reason <span className="text-red-500">*</span>
-                      </label>
-                      <select
-                        value={reportReason}
-                        onChange={(e) => setReportReason(e.target.value)}
-                        required
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all text-gray-900 bg-white"
-                      >
-                        <option value="" className="text-gray-400">Select a reason</option>
-                        <option value="inappropriate" className="text-gray-900">Inappropriate Content</option>
-                        <option value="spam" className="text-gray-900">Spam</option>
-                        <option value="copyright" className="text-gray-900">Copyright Violation</option>
-                        <option value="other" className="text-gray-900">Other</option>
-                      </select>
-                    </div>
-                    
-                    <div className="mb-6">
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Additional Details (Optional)
-                      </label>
-                      <textarea
-                        value={reportDetails}
-                        onChange={(e) => setReportDetails(e.target.value)}
-                        rows={3}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all resize-none text-gray-900 bg-white"
-                        placeholder="Provide more context about your report..."
-                      />
-                    </div>
-                    
-                    <div className="flex gap-3">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setShowReportModal(false);
-                          setReportReason('');
-                          setReportDetails('');
-                          setError('');
-                        }}
-                        className="btn-base btn-secondary flex-1 py-2 font-medium"
-                        disabled={reportSubmitting}
-                      >
-                        Cancel
-                      </button>
-                      <button
-                        type="submit"
-                        className="btn-base bg-red-500 hover:bg-red-600 text-white flex-1 py-2 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
-                        disabled={reportSubmitting || !reportReason}
-                      >
-                        {reportSubmitting ? 'Submitting...' : 'Submit Report'}
-                      </button>
-                    </div>
-                  </form>
-                </>
-              )}
-            </div>
-          </div>
-        </>
-      )}
+      <ReportModal
+        isOpen={showReportModal}
+        onClose={() => setShowReportModal(false)}
+        type="campaign"
+        campaignId={campaign?.id}
+        campaignSlug={campaign?.slug}
+      />
     </div>
   );
 }
