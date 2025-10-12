@@ -6,11 +6,13 @@ import Image from 'next/image';
 import { getCampaignPreview } from '../utils/imageTransform';
 import { abbreviateNumber } from '../utils/validation';
 import ShareModal from './ShareModal';
+import ReportModal from './ReportModal';
 
-export default function CampaignGallery({ campaigns, loading = false, isOwnProfile = false }) {
+export default function CampaignGallery({ campaigns, loading = false, isOwnProfile = false, showReportOption = false }) {
   const [imageLoading, setImageLoading] = useState({});
   const [openMenuId, setOpenMenuId] = useState(null);
   const [shareModalData, setShareModalData] = useState(null);
+  const [reportModalData, setReportModalData] = useState(null);
 
   console.log('🔍 [CampaignGallery] Render:', {
     campaignsCount: campaigns?.length || 0,
@@ -81,6 +83,16 @@ export default function CampaignGallery({ campaigns, loading = false, isOwnProfi
     setOpenMenuId(null);
   };
 
+  const handleReportClick = (e, campaign) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setReportModalData({
+      campaignId: campaign.id,
+      campaignSlug: campaign.slug,
+    });
+    setOpenMenuId(null);
+  };
+
   return (
     <>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
@@ -128,7 +140,7 @@ export default function CampaignGallery({ campaigns, loading = false, isOwnProfi
                 )}
                 
                 {campaign.type && (
-                  <div className="absolute top-2 left-2">
+                  <div className="absolute top-2 left-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
                     <span className="inline-block px-2 py-1 text-xs font-semibold bg-white/90 text-gray-800 rounded-md shadow-sm">
                       {campaign.type === 'frame' ? 'Frame' : 'Background'}
                     </span>
@@ -160,7 +172,7 @@ export default function CampaignGallery({ campaigns, loading = false, isOwnProfi
             </Link>
 
             {/* 3-Dot Menu Button */}
-            <div className="absolute top-2 right-2 z-10">
+            <div className="absolute top-2 right-2 z-10 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
               <button
                 onClick={(e) => {
                   e.preventDefault();
@@ -213,6 +225,28 @@ export default function CampaignGallery({ campaigns, loading = false, isOwnProfi
                       </svg>
                       Share Campaign
                     </button>
+                    
+                    {showReportOption && (
+                      <button
+                        onClick={(e) => handleReportClick(e, campaign)}
+                        className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 flex items-center gap-2 cursor-pointer"
+                      >
+                        <svg
+                          className="w-4 h-4"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+                          />
+                        </svg>
+                        Report Campaign
+                      </button>
+                    )}
                   </div>
                 </>
               )}
@@ -230,6 +264,15 @@ export default function CampaignGallery({ campaigns, loading = false, isOwnProfi
         title={shareModalData?.title}
         subtitle={shareModalData?.subtitle}
         image={shareModalData?.image}
+      />
+
+      {/* Report Modal */}
+      <ReportModal
+        isOpen={!!reportModalData}
+        onClose={() => setReportModalData(null)}
+        type="campaign"
+        campaignId={reportModalData?.campaignId}
+        campaignSlug={reportModalData?.campaignSlug}
       />
     </>
   );

@@ -3,7 +3,15 @@
 import { useState } from 'react';
 import { useAuth } from '../hooks/useAuth';
 
-export default function ReportCampaignModal({ isOpen, onClose, campaignId, campaignSlug }) {
+export default function ReportModal({ 
+  isOpen, 
+  onClose, 
+  type = 'campaign',
+  campaignId, 
+  campaignSlug,
+  reportedUserId,
+  reportedUsername
+}) {
   const { user } = useAuth();
   const [reportReason, setReportReason] = useState('');
   const [reportDetails, setReportDetails] = useState('');
@@ -12,6 +20,24 @@ export default function ReportCampaignModal({ isOpen, onClose, campaignId, campa
   const [error, setError] = useState('');
 
   if (!isOpen) return null;
+
+  const campaignReasons = [
+    { value: 'inappropriate', label: 'Inappropriate Content' },
+    { value: 'spam', label: 'Spam' },
+    { value: 'copyright', label: 'Copyright Violation' },
+    { value: 'other', label: 'Other' }
+  ];
+
+  const userReasons = [
+    { value: 'inappropriate_avatar', label: 'Inappropriate Profile Picture' },
+    { value: 'offensive_username', label: 'Offensive Username' },
+    { value: 'spam_bio', label: 'Spam in Bio/Description' },
+    { value: 'impersonation', label: 'Impersonation' },
+    { value: 'other', label: 'Other' }
+  ];
+
+  const reasons = type === 'user' ? userReasons : campaignReasons;
+  const title = type === 'user' ? 'Report User' : 'Report Campaign';
 
   const handleReportSubmit = async (e) => {
     e.preventDefault();
@@ -25,15 +51,29 @@ export default function ReportCampaignModal({ isOpen, onClose, campaignId, campa
     setError('');
     
     try {
-      const reportData = {
-        campaignId,
-        campaignSlug,
-        reportedBy: user?.uid || 'anonymous',
-        reason: reportReason,
-        details: reportDetails
-      };
+      let reportData, endpoint;
+
+      if (type === 'user') {
+        reportData = {
+          reportedUserId,
+          reportedUsername,
+          reportedBy: user?.uid || 'anonymous',
+          reason: reportReason,
+          details: reportDetails
+        };
+        endpoint = '/api/reports/user';
+      } else {
+        reportData = {
+          campaignId,
+          campaignSlug,
+          reportedBy: user?.uid || 'anonymous',
+          reason: reportReason,
+          details: reportDetails
+        };
+        endpoint = '/api/reports/submit';
+      }
       
-      const response = await fetch('/api/reports/submit', {
+      const response = await fetch(endpoint, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -51,7 +91,7 @@ export default function ReportCampaignModal({ isOpen, onClose, campaignId, campa
       
       setReportSubmitting(false);
     } catch (error) {
-      console.error('Error submitting campaign report:', error);
+      console.error(`Error submitting ${type} report:`, error);
       setError('Failed to submit report. Please try again.');
       setReportSubmitting(false);
     }
@@ -101,7 +141,7 @@ export default function ReportCampaignModal({ isOpen, onClose, campaignId, campa
           ) : (
             // Report Form
             <>
-              <h2 className="text-2xl font-bold text-gray-900 mb-4">Report Campaign</h2>
+              <h2 className="text-2xl font-bold text-gray-900 mb-4">{title}</h2>
               
               {error && (
                 <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-600 text-sm">
@@ -121,10 +161,11 @@ export default function ReportCampaignModal({ isOpen, onClose, campaignId, campa
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all text-gray-900 bg-white"
                   >
                     <option value="" className="text-gray-400">Select a reason</option>
-                    <option value="inappropriate" className="text-gray-900">Inappropriate Content</option>
-                    <option value="spam" className="text-gray-900">Spam</option>
-                    <option value="copyright" className="text-gray-900">Copyright Violation</option>
-                    <option value="other" className="text-gray-900">Other</option>
+                    {reasons.map((reason) => (
+                      <option key={reason.value} value={reason.value} className="text-gray-900">
+                        {reason.label}
+                      </option>
+                    ))}
                   </select>
                 </div>
                 

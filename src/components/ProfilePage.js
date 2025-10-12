@@ -436,6 +436,7 @@ export default function ProfilePage({ isOwnProfile = false, username = null }) {
             campaigns={campaigns}
             loading={profileLoading}
             isOwnProfile={isOwnProfile}
+            showReportOption={!isOwnProfile}
           />
         </div>
       </div>
