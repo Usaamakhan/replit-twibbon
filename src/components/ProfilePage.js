@@ -294,13 +294,38 @@ export default function ProfilePage({ isOwnProfile = false, username = null }) {
 
                 {/* Menu Items */}
                 <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-20">
+                  {/* Share Button - Always visible first */}
+                  <button
+                    onClick={() => {
+                      setShowMenu(false);
+                      setShowShareModal(true);
+                    }}
+                    className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-200 transition-all duration-200 flex items-center gap-2 cursor-pointer"
+                  >
+                    <svg
+                      className="w-4 h-4"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"
+                      />
+                    </svg>
+                    Share Profile
+                  </button>
+
+                  {/* Edit Profile (own profile) OR Report User (other's profile) */}
                   {isOwnProfile ? (
                     <button
                       onClick={() => {
                         setShowMenu(false);
                         router.push("/profile/edit");
                       }}
-                      className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors duration-150 flex items-center gap-2 cursor-pointer"
+                      className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-200 transition-all duration-200 flex items-center gap-2 cursor-pointer"
                     >
                       <svg
                         className="w-4 h-4"
@@ -323,7 +348,7 @@ export default function ProfilePage({ isOwnProfile = false, username = null }) {
                         setShowMenu(false);
                         setShowReportModal(true);
                       }}
-                      className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors duration-150 flex items-center gap-2 cursor-pointer"
+                      className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-100 transition-all duration-200 flex items-center gap-2 cursor-pointer"
                     >
                       <svg
                         className="w-4 h-4"
@@ -341,30 +366,6 @@ export default function ProfilePage({ isOwnProfile = false, username = null }) {
                       Report User
                     </button>
                   )}
-
-                  {/* Share Button - Always visible */}
-                  <button
-                    onClick={() => {
-                      setShowMenu(false);
-                      setShowShareModal(true);
-                    }}
-                    className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors duration-150 flex items-center gap-2 cursor-pointer"
-                  >
-                    <svg
-                      className="w-4 h-4"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"
-                      />
-                    </svg>
-                    Share Profile
-                  </button>
                 </div>
               </>
             )}
