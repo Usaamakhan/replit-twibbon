@@ -131,3 +131,37 @@ export const getPasswordStrength = (password) => {
     isStrong: score >= 3
   };
 };
+
+/**
+ * Abbreviate large numbers with K, M, B suffixes
+ * @param {number} num - Number to abbreviate
+ * @param {number} decimals - Number of decimal places (default: 1)
+ * @returns {string} Abbreviated number (e.g., "2.5k", "1.2M")
+ */
+export const abbreviateNumber = (num, decimals = 1) => {
+  if (num === null || num === undefined) return '0';
+  
+  const number = Number(num);
+  
+  if (isNaN(number)) return '0';
+  if (number < 1000) return number.toString();
+  
+  const abbreviations = [
+    { value: 1e9, suffix: 'B' },
+    { value: 1e6, suffix: 'M' },
+    { value: 1e3, suffix: 'k' }
+  ];
+  
+  for (const { value, suffix } of abbreviations) {
+    if (number >= value) {
+      const abbreviated = number / value;
+      // Remove unnecessary decimals (e.g., 2.0k -> 2k)
+      const formatted = abbreviated % 1 === 0 
+        ? abbreviated.toFixed(0) 
+        : abbreviated.toFixed(decimals);
+      return formatted + suffix;
+    }
+  }
+  
+  return number.toString();
+};

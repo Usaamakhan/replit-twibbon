@@ -10,6 +10,7 @@ import {
   getUserCampaigns 
 } from '../lib/firestore';
 import { getProfileAvatar, getProfileBanner } from '../utils/imageTransform';
+import { abbreviateNumber } from '../utils/validation';
 import CampaignGallery from './CampaignGallery';
 import ReportUserModal from './ReportUserModal';
 import CreateCampaignModal from './CreateCampaignModal';
@@ -260,12 +261,12 @@ export default function ProfilePage({ isOwnProfile = false, username = null }) {
         {/* Stats Row */}
         <div className="flex flex-row gap-3 mb-8">
           <div className="bg-white rounded-xl shadow-lg p-3 sm:p-6 flex-1 text-center">
-            <div className="text-lg sm:text-3xl font-bold text-emerald-600">{userStats.supportsCount}</div>
+            <div className="text-lg sm:text-3xl font-bold text-emerald-600">{abbreviateNumber(userStats.supportsCount)}</div>
             <div className="text-[10px] sm:text-sm text-gray-600 font-medium mt-0.5 sm:mt-2">Supports</div>
           </div>
           
           <div className="bg-white rounded-xl shadow-lg p-3 sm:p-6 flex-1 text-center">
-            <div className="text-lg sm:text-3xl font-bold text-emerald-600">{userStats.campaignsCount}</div>
+            <div className="text-lg sm:text-3xl font-bold text-emerald-600">{abbreviateNumber(userStats.campaignsCount)}</div>
             <div className="text-[10px] sm:text-sm text-gray-600 font-medium mt-0.5 sm:mt-2">Campaigns</div>
           </div>
           

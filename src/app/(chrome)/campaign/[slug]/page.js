@@ -6,6 +6,7 @@ import { getCampaignBySlug } from '../../../../lib/firestore';
 import { useCampaignSession } from '../../../../contexts/CampaignSessionContext';
 import { useAuth } from '../../../../hooks/useAuth';
 import { getCampaignPreview, getProfileAvatar } from '../../../../utils/imageTransform';
+import { abbreviateNumber } from '../../../../utils/validation';
 import LoadingSpinner from '../../../../components/LoadingSpinner';
 import CampaignStepIndicator from '../../../../components/CampaignStepIndicator';
 
@@ -276,7 +277,7 @@ export default function CampaignUploadPage() {
                           {creator.displayName || creator.username}
                         </button>
                         <p className="text-xs text-gray-600">
-                          {campaign.supportersCount || 0} {campaign.supportersCount === 1 ? 'support' : 'supports'}
+                          {abbreviateNumber(campaign.supportersCount || 0)} {campaign.supportersCount === 1 ? 'support' : 'supports'}
                         </p>
                       </div>
                     </div>
