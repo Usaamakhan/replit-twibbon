@@ -208,7 +208,7 @@ export default function CampaignGallery({ campaigns, loading = false, isOwnProfi
                   <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-20">
                     <button
                       onClick={(e) => handleShareClick(e, campaign)}
-                      className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-200 transition-all duration-200 flex items-center gap-2 cursor-pointer"
+                      className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors duration-150 flex items-center gap-2 cursor-pointer"
                     >
                       <svg
                         className="w-4 h-4"
@@ -229,7 +229,7 @@ export default function CampaignGallery({ campaigns, loading = false, isOwnProfi
                     {showReportOption && (
                       <button
                         onClick={(e) => handleReportClick(e, campaign)}
-                        className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-100 transition-all duration-200 flex items-center gap-2 cursor-pointer"
+                        className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors duration-150 flex items-center gap-2 cursor-pointer"
                       >
                         <svg
                           className="w-4 h-4"

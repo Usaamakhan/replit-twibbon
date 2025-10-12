@@ -1,5 +1,10 @@
 @import "tailwindcss";
 
+/* Fix Tailwind v4 hover variants - restore v3 behavior */
+/* v4 wraps hover in @media (hover: hover) which breaks on touch devices */
+/* This custom variant removes that wrapper and makes hover work everywhere */
+@custom-variant hover (&:hover);
+
 :root {
   --background: #ffffff;
   --foreground: #171717;
