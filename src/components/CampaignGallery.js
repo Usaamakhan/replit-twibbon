@@ -3,12 +3,18 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { getCampaignPreview } from '../utils/imageTransform';
+import { getCampaignPreview, getProfileAvatar } from '../utils/imageTransform';
 import { abbreviateNumber } from '../utils/validation';
 import ShareModal from './ShareModal';
 import ReportModal from './ReportModal';
 
-export default function CampaignGallery({ campaigns, loading = false, isOwnProfile = false, showReportOption = false }) {
+export default function CampaignGallery({ 
+  campaigns, 
+  loading = false, 
+  isOwnProfile = false, 
+  showReportOption = false,
+  showCreatorInfo = false
+}) {
   const [imageLoading, setImageLoading] = useState({});
   const [openMenuId, setOpenMenuId] = useState(null);
   const [shareModalData, setShareModalData] = useState(null);
@@ -18,6 +24,7 @@ export default function CampaignGallery({ campaigns, loading = false, isOwnProfi
     campaignsCount: campaigns?.length || 0,
     loading,
     isOwnProfile,
+    showCreatorInfo,
     campaigns
   });
 
@@ -153,17 +160,17 @@ export default function CampaignGallery({ campaigns, loading = false, isOwnProfi
                   {campaign.title}
                 </h3>
                 
-                {/* Creator Info - Only show if not own profile and creator data exists */}
-                {!isOwnProfile && campaign.creator && campaign.creator.username && (
+                {/* Creator Info - Show based on showCreatorInfo prop */}
+                {showCreatorInfo && campaign.creator && campaign.creator.username && (
                   <Link
                     href={`/u/${campaign.creator.username}`}
                     onClick={(e) => e.stopPropagation()}
                     className="flex items-center gap-2 mb-2 hover:bg-gray-50 -mx-1 px-1 py-1 rounded-md transition-colors duration-150"
                   >
-                    <div className="w-5 h-5 rounded-full bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center flex-shrink-0">
+                    <div className="w-6 h-6 rounded-full bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center flex-shrink-0">
                       {campaign.creator.profileImage ? (
                         <img
-                          src={campaign.creator.profileImage}
+                          src={getProfileAvatar(campaign.creator.profileImage)}
                           alt={campaign.creator.displayName}
                           className="w-full h-full rounded-full object-cover"
                         />
@@ -173,7 +180,7 @@ export default function CampaignGallery({ campaigns, loading = false, isOwnProfi
                         </span>
                       )}
                     </div>
-                    <span className="text-xs text-gray-600 truncate hover:text-emerald-600 transition-colors duration-150">
+                    <span className="text-sm text-gray-600 truncate hover:text-emerald-600 transition-colors duration-150">
                       {campaign.creator.displayName}
                     </span>
                   </Link>
