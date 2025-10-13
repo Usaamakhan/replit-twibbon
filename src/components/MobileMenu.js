@@ -4,6 +4,7 @@ import { useOptionalAuth } from "../hooks/useAuth";
 import { useOptionalUserProfile } from "./UserProfileProvider";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { useBodyScrollLock } from "../hooks/useBodyScrollLock";
 import CreateCampaignModal from "./CreateCampaignModal";
 
 export default function MobileMenu({ 
@@ -13,6 +14,9 @@ export default function MobileMenu({
   const authContext = useOptionalAuth();
   const profileContext = useOptionalUserProfile();
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+
+  // Lock body scroll when mobile menu is open
+  useBodyScrollLock(isMenuOpen);
   
   const { user, loading, mounted, logout } = authContext || {
     user: null,
