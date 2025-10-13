@@ -1,6 +1,6 @@
 # Codebase Structure Documentation
 
-**Last Updated:** October 11, 2025  
+**Last Updated:** October 13, 2025  
 **Project:** Twibbonize - Campaign Photo Frame & Background Platform
 
 This document provides a complete overview of the codebase structure with descriptions of each file and folder's purpose.
@@ -152,12 +152,12 @@ Creator workflow for uploading new campaigns.
 #### 📁 **`/edit`**
 - **`page.js`** - Edit profile (avatar, banner, bio, username)
 
-#### 📁 **`/notifications`** ✨ NEW
-- **`page.js`** - User notification preferences and settings
+#### 📁 **`/notifications`**
+- **`page.js`** - Notification inbox with read/unread status and history
 
 ---
 
-### 📁 `/src/app/(chrome)/settings` - Settings Pages ✨ NEW
+### 📁 `/src/app/(chrome)/settings` - Settings Pages
 
 User settings with sidebar navigation.
 
@@ -165,7 +165,7 @@ User settings with sidebar navigation.
 #### **`page.js`** - Main settings page (redirects to notifications)
 
 #### 📁 **`/notifications`**
-- **`page.js`** - Notification preferences (enable/disable, manage devices)
+- **`page.js`** - Notification preferences (enable/disable, manage devices, per-notification-type toggles)
 
 ---
 
@@ -197,7 +197,7 @@ Backend API endpoints for data operations.
 
 Server-side admin operations (protected by admin middleware).
 
-#### 📁 **`/analytics`** ✨ NEW
+#### 📁 **`/analytics`**
 - **`route.js`** - GET: Fetch platform analytics (total users, campaigns, reports, bans)
 
 #### 📁 **`/campaigns`**
@@ -223,12 +223,12 @@ Server-side admin operations (protected by admin middleware).
 
 ---
 
-### 📁 `/src/app/api/notifications` - FCM Push Notifications ✨ NEW
+### 📁 `/src/app/api/notifications` - FCM Push Notifications
 
 Firebase Cloud Messaging integration for push notifications.
 
 #### 📁 **`/[notificationId]`**
-- **`route.js`** - PATCH: Mark notification as read, DELETE: Delete notification
+- **`route.js`** - PATCH: Mark notification as read/unread, DELETE: Delete notification
 
 #### 📁 **`/register-token`**
 - **`route.js`** - POST: Register FCM device token for user
@@ -241,7 +241,7 @@ Firebase Cloud Messaging integration for push notifications.
 
 ---
 
-### 📁 `/src/app/api/reports` - Report Submission ✨ NEW
+### 📁 `/src/app/api/reports` - Report Submission
 
 #### 📁 **`/submit`**
 - **`route.js`** - POST: Submit campaign report (anonymous allowed)
@@ -279,11 +279,11 @@ Authentication pages and special pages without header/footer.
 #### **`/forgot-password/page.js`** - Password reset page
 #### **`/verify-email/page.js`** - Email verification page
 #### **`/onboarding/page.js`** - New user onboarding (username, bio, avatar)
-#### **`/banned/page.js`** ✨ NEW - Banned account notice with appeal option
+#### **`/banned/page.js`** - Banned account notice with appeal option
 
 ---
 
-### 📁 `/src/app/firebase-messaging-sw` - Service Worker Route ✨ NEW
+### 📁 `/src/app/firebase-messaging-sw` - Service Worker Route
 
 #### **`/route.js`** - Dynamic service worker for FCM with environment variables
 
@@ -301,7 +301,7 @@ Reusable UI components organized by feature.
 - **`Hero.js`** - Homepage hero section with CTA
 - **`ConditionalLayout.js`** - Conditionally render header/footer
 - **`AuthenticatedLayout.js`** - Layout wrapper for authenticated users
-- **`SettingsSidebar.js`** ✨ NEW - Settings page sidebar navigation
+- **`SettingsSidebar.js`** - Settings page sidebar navigation
 
 ### Auth Components
 
@@ -322,7 +322,13 @@ Reusable UI components organized by feature.
 
 - **`ProfilePage.js`** - User profile display component
 - **`ProfilePageWrapper.js`** - Profile page wrapper with loading state
-- **`ReportUserModal.js`** ✨ NEW - Modal for reporting user profiles
+
+### Modal Components
+
+- **`ConfirmationModal.js`** - Reusable confirmation dialog
+- **`ReportModal.js`** - Universal report modal for both campaigns and user profiles
+- **`ShareModal.js`** - Universal share modal for campaigns and profiles
+- **`CreateCampaignModal.js`** - Campaign type selection modal
 
 ### Admin Components
 
@@ -337,7 +343,7 @@ Located in `/src/components/admin/`:
 - **`UsersTable.js`** - Users data table with search (uses adminHelpers)
 - **`UserDetailsModal.js`** - User details modal with admin actions
 
-### Notification Components ✨ NEW
+### Notification Components
 
 Located in `/src/components/notifications/`:
 
@@ -382,7 +388,7 @@ Reusable logic hooks.
 
 - **`useAuth.js`** - Firebase authentication hook (user state, login, logout)
 - **`useBodyScrollLock.js`** - Lock body scroll when modal is open
-- **`useFCM.js`** ✨ NEW - Firebase Cloud Messaging hook (token management, foreground notifications)
+- **`useFCM.js`** - Firebase Cloud Messaging hook (token management, foreground notifications)
 - **`useFocusTrap.js`** - Trap keyboard focus within modal
 - **`useSecureStorage.js`** - Secure localStorage/sessionStorage wrapper with encryption
 
@@ -460,7 +466,7 @@ Located in `/src/utils/admin/`:
   - `validateReportAction()` - Validate report action types
   - `getValidationError()` - Get validation error message
 
-### Notification Utilities ✨ NEW
+### Notification Utilities
 
 Located in `/src/utils/notifications/`:
 
@@ -505,7 +511,7 @@ Located in `/src/utils/notifications/`:
 1. Visit `/campaign/[slug]` → Upload photo → `CampaignSessionContext.js`
 2. Navigate `/adjust` → `imageComposition.js` → Canvas controls
 3. Download → `/api/campaigns/track-download` → Increment supportersCount
-4. Navigate `/result` → Share options
+4. Navigate `/result` → Share options via `ShareModal.js`
 
 ### Admin Moderation Flow
 1. Admin visits `/admin` → `adminAuth.js` middleware checks role
@@ -514,7 +520,7 @@ Located in `/src/utils/notifications/`:
 4. Send FCM notification → `/api/notifications/send` → `sendFCMNotification.js`
 5. User receives notification → `useFCM.js` → `NotificationToast.js`
 
-### FCM Notification Flow ✨ NEW
+### FCM Notification Flow
 1. User grants permission → `NotificationPermissionModal.js`
 2. Get FCM token → `useFCM.js` → Firebase Messaging SDK
 3. Register token → `/api/notifications/register-token` → Firestore
@@ -523,7 +529,7 @@ Located in `/src/utils/notifications/`:
 6. User receives:
    - Background: Service worker (`firebase-messaging-sw/route.js`)
    - Foreground: `useFCM.js` → `NotificationToast.js`
-7. View history → `NotificationBell.js` → In-app inbox
+7. View history → `NotificationBell.js` → `/profile/notifications`
 
 ---
 
@@ -559,7 +565,7 @@ Located in `/src/utils/notifications/`:
 - `NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET`
 - `NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID`
 - `NEXT_PUBLIC_FIREBASE_APP_ID`
-- `NEXT_PUBLIC_FIREBASE_VAPID_KEY` ✨ NEW - For web push notifications
+- `NEXT_PUBLIC_FIREBASE_VAPID_KEY` - For web push notifications
 - `FIREBASE_SERVICE_ACCOUNT_KEY` (JSON string)
 
 ### Supabase
@@ -610,13 +616,20 @@ Located in `/src/utils/notifications/`:
 - Warnings collection and tracking
 
 **Push Notifications (FCM):**
-- Backend infrastructure (token management, send API)
-- Notification templates for all moderation actions
-- Service worker for background notifications
-- In-app notification inbox and history
-- Foreground notification toasts
-- NotificationBell with unread count
-- Settings page for notification preferences
+- ✅ Backend infrastructure (token management, send API)
+- ✅ Notification templates for all moderation actions
+- ✅ Service worker for background notifications
+- ✅ In-app notification inbox at `/profile/notifications` (read/unread, delete)
+- ✅ Notification history saved to Firestore
+- ✅ Foreground notification toasts (`NotificationToast.js`)
+- ✅ NotificationBell with unread count
+- ✅ Settings page at `/settings/notifications` with:
+  - FCM device management
+  - Per-notification-type preferences (localStorage-based)
+  - Enable/disable notifications toggle
+- ✅ NotificationProvider integrated in app layout
+- ✅ NotificationPermissionModal component ready
+- ⏸️ **PENDING:** Automated prompting strategy (when to show permission modal)
 
 ### ⏸️ Deferred Features
 
@@ -624,6 +637,7 @@ Located in `/src/utils/notifications/`:
 - Admin warning history view in user details
 - Auto-deletion cron jobs (30-day appeal deadline enforcement)
 - Email notifications for moderation actions
+- Automated notification permission prompting (modal trigger strategy)
 
 ---
 
@@ -640,6 +654,8 @@ Located in `/src/utils/notifications/`:
 - FCM tokens stored in user subcollection: `users/{userId}/tokens/{tokenId}`
 - Notifications saved to Firestore: `users/{userId}/notifications/{notificationId}`
 - Service worker served dynamically with environment variables
+- `ReportModal.js` handles both campaign and user/profile reports (universal component)
+- `ShareModal.js` handles both campaign and profile sharing (universal component)
 
 ---
 

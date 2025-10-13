@@ -2061,4 +2061,364 @@ UNCHANGED:
 
 ---
 
+## Section 12: Automated Notification Permission Prompting ⏸️
+
+**Status:** ⏸️ Pending Implementation  
+**Priority:** 🔥 High (All components ready, just needs integration)  
+**Last Updated:** October 13, 2025
+
+---
+
+### 12.1: Overview
+
+**Current Status:**
+- ✅ `NotificationPermissionModal.js` component fully implemented
+- ✅ `NotificationBanner.js` component fully implemented
+- ✅ All FCM infrastructure complete (backend + frontend)
+- ✅ Settings page at `/settings/notifications` allows manual enable
+- ✅ `useFCM()` hook handles permission requests
+
+**Problem:**
+- ❌ No automated triggers to show `NotificationPermissionModal`
+- ❌ No automated display of `NotificationBanner` on dashboard
+- ❌ Users must manually discover and enable notifications in settings
+- ❌ Low notification opt-in rate due to lack of prompting
+
+**Goal:**
+- Implement automated prompting strategy to increase notification opt-in
+- Show permission modal at strategic moments in user journey
+- Display banner on dashboard if permission not granted
+- Respect user's "don't ask again" preference
+
+**Estimated Effort:** 2-3 hours (just wiring up existing components)
+
+---
+
+### 12.2: Recommended Prompting Strategy
+
+#### **Trigger Points:**
+
+1. **After First Campaign Creation (Highest Priority)**
+   - Show modal after user successfully creates their first campaign
+   - Context: "Get notified when users interact with your campaigns!"
+   - Perfect moment because user has invested effort and wants engagement
+
+2. **Dashboard Banner (Persistent Reminder)**
+   - Show banner on `/profile` page if permission not granted
+   - Non-intrusive, dismissible
+   - Re-appears after 7 days if dismissed
+
+3. **After First Download (Optional)**
+   - Show modal after user downloads their first campaign result
+   - Context: "Get notified about new campaigns like this!"
+
+#### **User Preference Tracking:**
+
+Store in localStorage:
+```javascript
+{
+  notificationPromptDismissed: boolean,
+  notificationPromptDismissedAt: timestamp,
+  notificationPromptShownCount: number,
+  notificationPromptNeverAskAgain: boolean
+}
+```
+
+**Rules:**
+- Show modal max 3 times per user
+- If dismissed, wait 7 days before showing again
+- If "Don't ask again" clicked, never show modal
+- Banner can still be shown even if modal dismissed
+
+---
+
+### 12.3: Implementation Plan
+
+#### **Step 1: Create Permission Prompt Hook**
+
+**File:** `src/hooks/useNotificationPrompt.js`
+
+**Purpose:** Centralized logic for prompting strategy
+
+**Functions:**
+- `shouldShowModal()` - Check if modal should be shown
+- `recordModalShown()` - Track modal display
+- `recordModalDismissed()` - Track dismissal
+- `recordNeverAskAgain()` - Track "don't ask again"
+- `shouldShowBanner()` - Check if banner should be shown
+- `dismissBanner()` - Dismiss banner with timestamp
+
+**Logic:**
+```javascript
+export function useNotificationPrompt() {
+  const { permission, requestPermission } = useFCM();
+  
+  const shouldShowModal = () => {
+    if (permission === 'granted') return false;
+    
+    const data = JSON.parse(localStorage.getItem('notificationPrompt') || '{}');
+    
+    if (data.neverAskAgain) return false;
+    if ((data.shownCount || 0) >= 3) return false;
+    
+    if (data.dismissedAt) {
+      const daysSinceDismissal = (Date.now() - data.dismissedAt) / (1000 * 60 * 60 * 24);
+      if (daysSinceDismissal < 7) return false;
+    }
+    
+    return true;
+  };
+  
+  // ... other functions
+  
+  return {
+    shouldShowModal,
+    shouldShowBanner,
+    recordModalShown,
+    recordModalDismissed,
+    recordNeverAskAgain,
+    dismissBanner,
+  };
+}
+```
+
+---
+
+#### **Step 2: Integrate Modal in Campaign Creation**
+
+**Files to Edit:**
+- `src/app/(chrome)/create/frame/page.js`
+- `src/app/(chrome)/create/background/page.js`
+
+**Add to both files:**
+```javascript
+import { useState, useEffect } from 'react';
+import NotificationPermissionModal from '@/components/notifications/NotificationPermissionModal';
+import { useNotificationPrompt } from '@/hooks/useNotificationPrompt';
+
+export default function CreatePage() {
+  const [showNotificationModal, setShowNotificationModal] = useState(false);
+  const [campaignCreated, setCampaignCreated] = useState(false);
+  const { shouldShowModal, recordModalShown, recordModalDismissed } = useNotificationPrompt();
+  
+  // Show modal after campaign is published
+  useEffect(() => {
+    if (campaignCreated && shouldShowModal()) {
+      setTimeout(() => {
+        setShowNotificationModal(true);
+        recordModalShown();
+      }, 1000); // Wait 1 second after success
+    }
+  }, [campaignCreated]);
+  
+  const handlePublish = async () => {
+    // ... existing publish logic
+    setCampaignCreated(true);
+  };
+  
+  return (
+    <>
+      {/* Existing UI */}
+      
+      <NotificationPermissionModal
+        isOpen={showNotificationModal}
+        onClose={() => {
+          setShowNotificationModal(false);
+          recordModalDismissed();
+        }}
+        context="campaign_creation"
+        message="Get notified when users interact with your campaigns! We'll send you updates about your content."
+      />
+    </>
+  );
+}
+```
+
+---
+
+#### **Step 3: Add Dashboard Banner**
+
+**File:** `src/app/(chrome)/profile/page.js`
+
+**Add to profile page:**
+```javascript
+import NotificationBanner from '@/components/notifications/NotificationBanner';
+import { useNotificationPrompt } from '@/hooks/useNotificationPrompt';
+
+export default function ProfilePage() {
+  const { shouldShowBanner, dismissBanner } = useNotificationPrompt();
+  const [showBanner, setShowBanner] = useState(false);
+  
+  useEffect(() => {
+    setShowBanner(shouldShowBanner());
+  }, []);
+  
+  const handleDismissBanner = () => {
+    dismissBanner();
+    setShowBanner(false);
+  };
+  
+  return (
+    <div>
+      {showBanner && (
+        <NotificationBanner
+          message="Enable notifications to stay updated on your campaigns!"
+          actionText="Enable Now"
+          onAction={() => {
+            // Open notification permission modal
+          }}
+          onDismiss={handleDismissBanner}
+        />
+      )}
+      
+      {/* Existing profile content */}
+    </div>
+  );
+}
+```
+
+---
+
+#### **Step 4: Update NotificationPermissionModal**
+
+**File:** `src/components/notifications/NotificationPermissionModal.js`
+
+**Add props:**
+```javascript
+export default function NotificationPermissionModal({
+  isOpen,
+  onClose,
+  context = 'general', // 'campaign_creation', 'first_download', 'general'
+  message, // Optional custom message
+}) {
+  const [showNeverAskAgain, setShowNeverAskAgain] = useState(false);
+  
+  const contextMessages = {
+    campaign_creation: "Get notified when users interact with your campaigns!",
+    first_download: "Discover new campaigns like this one!",
+    general: "Stay updated with notifications from Twibbonize!",
+  };
+  
+  const displayMessage = message || contextMessages[context];
+  
+  return (
+    <div>
+      <p>{displayMessage}</p>
+      
+      {/* Existing UI */}
+      
+      {/* Add "Don't ask again" option after 2nd display */}
+      {showNeverAskAgain && (
+        <label>
+          <input type="checkbox" onChange={handleNeverAskAgain} />
+          Don't ask me again
+        </label>
+      )}
+    </div>
+  );
+}
+```
+
+---
+
+### 12.4: Testing Checklist
+
+#### **Functional Testing:**
+
+- [ ] Modal appears after first campaign creation
+- [ ] Modal appears max 3 times per user
+- [ ] Modal respects 7-day dismissal cooldown
+- [ ] "Don't ask again" prevents future modal displays
+- [ ] Banner appears on dashboard if permission not granted
+- [ ] Banner dismissal tracked correctly
+- [ ] Banner re-appears after 7 days if dismissed
+- [ ] Permission grant removes modal and banner
+- [ ] localStorage tracking works correctly
+
+#### **UX Testing:**
+
+- [ ] Modal appears 1 second after campaign creation (smooth timing)
+- [ ] Modal message is relevant to context
+- [ ] Banner is non-intrusive and easy to dismiss
+- [ ] Banner action button opens permission request
+- [ ] "Don't ask again" option shown after 2nd display
+- [ ] Permission flow is intuitive
+- [ ] No annoying spam of permission requests
+
+#### **Edge Cases:**
+
+- [ ] User already granted permission → no prompts shown
+- [ ] User denied permission → respects browser decision
+- [ ] User clears localStorage → prompts reset correctly
+- [ ] Multiple tabs open → prompts don't duplicate
+- [ ] Mobile Safari quirks handled correctly
+
+---
+
+### 12.5: Analytics Tracking (Optional)
+
+**Track these events for optimization:**
+
+- `notification_prompt_shown` - Modal displayed
+- `notification_prompt_granted` - Permission granted from prompt
+- `notification_prompt_denied` - Permission denied
+- `notification_prompt_dismissed` - Modal closed without action
+- `notification_banner_shown` - Banner displayed
+- `notification_banner_clicked` - Banner action clicked
+- `notification_banner_dismissed` - Banner closed
+
+**Use analytics to optimize:**
+- Best timing for modal (after 1st campaign vs 2nd vs 3rd)
+- Effectiveness of banner vs modal
+- Conversion rates by context
+
+---
+
+### 12.6: Future Enhancements
+
+**Phase 2 (Optional):**
+
+1. **Onboarding Integration:**
+   - Add notification prompt to new user onboarding flow
+   - Step after profile setup, before first action
+
+2. **Smart Prompting:**
+   - Show modal after user's campaign gets 10+ supporters
+   - "Your campaign is popular! Enable notifications to stay updated."
+
+3. **Re-engagement:**
+   - Show banner if user hasn't visited in 30+ days
+   - Prompt on return to re-enable notifications
+
+4. **A/B Testing:**
+   - Test different messages
+   - Test different timing strategies
+   - Optimize for highest opt-in rate
+
+---
+
+### 12.7: Summary
+
+**Before Implementation:**
+- ❌ No automated prompting
+- ❌ Users must discover settings manually
+- ❌ Low notification opt-in rate
+
+**After Implementation:**
+- ✅ Strategic prompting after campaign creation
+- ✅ Persistent dashboard banner reminder
+- ✅ Respects user preferences
+- ✅ Tracks dismissals and limits spam
+- ✅ Higher notification opt-in rate
+
+**Estimated Timeline:** 2-3 hours
+
+**Priority:** 🔥 High (quick win, high impact)
+
+---
+
+**End of Section 12: Automated Notification Permission Prompting**
+
+---
+
 **End of TASKS.md**

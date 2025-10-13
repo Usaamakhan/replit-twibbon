@@ -44,3 +44,57 @@ The application is built with Next.js 15.5.2 (App Router), React 19.1.0, and Tai
 - **Next.js:** Web framework (v15.5.2).
 - **React:** UI library (v19.1.0).
 - **Tailwind CSS:** Styling (v4).
+
+## Recent Updates (October 13, 2025)
+
+### Documentation Audit & Corrections
+Conducted comprehensive documentation audit comparing actual codebase against all documentation files:
+
+**Files Analyzed:**
+- CODEBASE_STRUCTURE.md (647 lines)
+- CODE_INCONSISTENCIES.md
+- TASKS.md (2427 lines)
+- README.md
+- CAMPAIGN_SYSTEM.md
+- replit.md
+
+**Key Findings & Fixes:**
+1. **Component Discrepancies Resolved:**
+   - ❌ Removed non-existent `ReportUserModal.js` from docs
+   - ✅ Added missing `ShareModal.js` to docs (universal modal for campaigns and profiles)
+   - ✅ Clarified `ReportModal.js` handles both campaign and user reports
+
+2. **FCM Notification System Status Corrected:**
+   - Previous docs: Marked as "UI Integration Pending"
+   - Actual status: 95% complete (only automated prompting strategy pending)
+   - Updated documentation to reflect:
+     - ✅ Backend 100% complete (token management, send API, history)
+     - ✅ Frontend UI 95% complete (NotificationBell, NotificationToast, NotificationProvider, NotificationBanner, NotificationPermissionModal)
+     - ✅ Notification inbox at `/profile/notifications` (read/unread, delete)
+     - ✅ Settings page at `/settings/notifications` (device management, preferences)
+     - ⏸️ Only pending: Automated prompting strategy (when to show permission modal)
+
+3. **Settings Architecture Documentation Updated:**
+   - Added Section 11 completion status
+   - Documented new `/settings` hub with sidebar/tabs structure
+   - Clarified `/profile/notifications` is inbox (not just preferences)
+   - Documented `/settings/notifications` with full feature list
+
+4. **Added Section 12 to TASKS.md:**
+   - New task: "Automated Notification Permission Prompting"
+   - Priority: 🔥 High (quick win, components ready)
+   - Estimated effort: 2-3 hours
+   - Complete implementation plan with hook, integration points, and testing checklist
+
+**Current Implementation Status:**
+- ✅ Core campaign system fully functional
+- ✅ Admin dashboard with full moderation tools
+- ✅ FCM notification system (95% - only automated prompting pending)
+- ✅ Settings hub with notification preferences
+- ✅ Notification inbox with history
+- ⏸️ Appeals system (deferred)
+- ⏸️ Admin warning history view (deferred)
+- ⏸️ Auto-deletion cron jobs (deferred)
+
+**Recommended Next Task:**
+Section 12: Automated Notification Permission Prompting - Implement triggers to show NotificationPermissionModal after campaign creation and add dashboard banner for users who haven't enabled notifications.
