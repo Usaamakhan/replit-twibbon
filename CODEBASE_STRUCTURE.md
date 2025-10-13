@@ -230,7 +230,11 @@ Firestore-based in-app notification system (no FCM/browser permissions).
 #### 📁 **`/[notificationId]`**
 - **`route.js`** - PATCH: Mark notification as read/unread, DELETE: Delete notification
 
-**Note:** FCM token management routes removed - notifications now use Firestore real-time listeners only.
+**Note:** FCM completely removed (October 13, 2025). System now uses pure Firestore real-time listeners:
+- No browser permissions required
+- No service workers needed
+- Notifications delivered instantly via Firestore snapshots
+- Works on all devices without setup
 
 ---
 
@@ -278,7 +282,7 @@ Authentication pages and special pages without header/footer.
 
 ### 📁 `/src/app/firebase-messaging-sw` - **REMOVED**
 
-**Note:** Service worker removed during FCM to in-app notification migration. No longer needed for notification delivery.
+**Note:** Service worker removed during FCM to in-app notification migration (October 13, 2025). No longer needed - notifications now use Firestore real-time listeners only.
 
 ---
 
@@ -340,11 +344,9 @@ Located in `/src/components/admin/`:
 
 Located in `/src/components/notifications/`:
 
-- **`NotificationProvider.js`** - Global notification provider with FCM integration
+- **`NotificationProvider.js`** - Global notification provider with Firestore real-time listeners
 - **`NotificationBell.js`** - Notification bell icon with unread count badge
-- **`NotificationBanner.js`** - In-app notification banner display
-- **`NotificationToast.js`** - Toast notifications with animations
-- **`NotificationPermissionModal.js`** - Modal to request notification permissions
+- **`NotificationToast.js`** - Toast notifications with animations (displays latest unread notification)
 
 ### Utility Components
 
@@ -381,7 +383,9 @@ Reusable logic hooks.
 
 - **`useAuth.js`** - Firebase authentication hook (user state, login, logout)
 - **`useBodyScrollLock.js`** - Lock body scroll when modal is open
-- **`useNotifications.js`** - In-app notification hook (real-time Firestore listeners, mark read/delete)
+- **`useNotifications.js`** - In-app notification hook with Firestore real-time listeners (replaces FCM)
+  - Provides: notifications list, unread count, latest notification, mark read/delete functions
+  - No browser permissions required
 - **`useFocusTrap.js`** - Trap keyboard focus within modal
 - **`useSecureStorage.js`** - Secure localStorage/sessionStorage wrapper with encryption
 
@@ -464,17 +468,18 @@ Located in `/src/utils/admin/`:
 Located in `/src/utils/notifications/`:
 
 - **`notificationTemplates.js`** - In-app notification templates for moderation actions
-  - Campaign under review
-  - Campaign removed
+  - Campaign under review, removed, restored
   - Warning issued
-  - Profile under review
+  - Profile under review, restored
   - Account banned
   - Appeal deadline reminders
+  - All templates include type field for categorization
 
-- **`sendInAppNotification.js`** - Server-side in-app notification sender
+- **`sendInAppNotification.js`** - Server-side in-app notification sender (replaces FCM)
   - Saves notifications to Firestore (`users/{userId}/notifications`)
-  - No FCM/browser permissions needed
-  - Real-time delivery via Firestore listeners
+  - No browser permissions or service workers needed
+  - Instant delivery via Firestore real-time listeners
+  - Supports metadata for rich notifications
 
 ### General Utilities
 
