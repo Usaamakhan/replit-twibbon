@@ -26,7 +26,7 @@ export const notificationTemplates = {
   warningIssued: (reason) => ({
     title: '⚠️ Warning Issued',
     body: `You've received a warning for: ${reason}. Please review our community guidelines.`,
-    actionUrl: '/profile/settings',
+    actionUrl: '/profile',
     icon: '/icon-192x192.png',
     type: 'warning',
   }),
