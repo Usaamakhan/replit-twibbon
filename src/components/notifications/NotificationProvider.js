@@ -7,7 +7,9 @@ export default function NotificationProvider({ children }) {
   const { latestNotification, clearLatestNotification } = useNotifications();
   
   const handleClose = () => {
-    clearLatestNotification();
+    if (latestNotification) {
+      clearLatestNotification(latestNotification.id);
+    }
   };
   
   return (
