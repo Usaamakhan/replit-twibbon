@@ -3,7 +3,7 @@ import { requireAdmin } from '@/middleware/adminAuth';
 import { adminFirestore } from '@/lib/firebaseAdmin';
 import { FieldValue } from 'firebase-admin/firestore';
 import { getNotificationTemplate } from '@/utils/notifications/notificationTemplates';
-import { sendFCMNotification } from '@/utils/notifications/sendFCMNotification';
+import { sendFCMNotificationServer } from '@/utils/notifications/sendFCMNotificationServer';
 
 export async function PATCH(request, context) {
   try {
@@ -325,7 +325,7 @@ export async function PATCH(request, context) {
     if (targetUserId && notificationData) {
       console.log('[ADMIN REPORT UPDATE] Sending FCM notification to user:', targetUserId);
       try {
-        await sendFCMNotification({
+        await sendFCMNotificationServer({
           userId: targetUserId,
           title: notificationData.title,
           body: notificationData.body,

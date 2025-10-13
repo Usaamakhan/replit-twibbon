@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { adminFirestore } from '@/lib/firebaseAdmin';
-import { sendNotificationToUser } from '@/utils/notifications/sendFCMNotification';
-import { campaignUnderReviewTemplate } from '@/utils/notifications/notificationTemplates';
+import { sendFCMNotificationServer } from '@/utils/notifications/sendFCMNotificationServer';
+import { getNotificationTemplate } from '@/utils/notifications/notificationTemplates';
 
 export async function POST(request) {
   try {
@@ -77,12 +77,17 @@ export async function POST(request) {
       
       // Send notification if campaign is auto-hidden
       if (newReportsCount >= 3 && campaignData.moderationStatus === 'active' && campaignData.creatorId) {
-        const notification = campaignUnderReviewTemplate(
-          campaignData.title || 'Your campaign',
-          `/campaign/${campaignData.slug || campaignId}`
-        );
+        const notification = getNotificationTemplate('campaignUnderReview', {
+          campaignTitle: campaignData.title || 'Your campaign'
+        });
         
-        await sendNotificationToUser(campaignData.creatorId, notification);
+        await sendFCMNotificationServer({
+          userId: campaignData.creatorId,
+          title: notification.title,
+          body: notification.body,
+          actionUrl: notification.actionUrl,
+          icon: notification.icon,
+        }).catch(err => console.error('Failed to send notification:', err));
       }
     });
     
