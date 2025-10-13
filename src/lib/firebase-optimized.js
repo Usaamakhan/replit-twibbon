@@ -4,17 +4,14 @@
 import { initializeApp, getApps, getApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
-import { getMessaging, isSupported } from "firebase/messaging";
 import { useState, useEffect } from 'react';
 
 // Module-level Firebase instances (initialized immediately on client)
 let firebaseApp = null;
 let firebaseAuth = null;
 let firebaseDb = null;
-let firebaseMessaging = null;
 let isInitialized = false;
 let isConfigured = false;
-let messagingSupported = false;
 
 // Initialize Firebase immediately at module load (client-side only)
 const initializeFirebaseModule = () => {
@@ -59,19 +56,7 @@ const initializeFirebaseModule = () => {
     firebaseAuth = getAuth(firebaseApp);
     firebaseDb = getFirestore(firebaseApp);
     
-    // Initialize Firebase Cloud Messaging if supported
-    isSupported().then((supported) => {
-      if (supported) {
-        firebaseMessaging = getMessaging(firebaseApp);
-        messagingSupported = true;
-      } else {
-        console.log('Firebase Messaging not supported in this browser');
-        messagingSupported = false;
-      }
-    }).catch((error) => {
-      console.error('Error checking FCM support:', error);
-      messagingSupported = false;
-    });
+    // FCM removed - using in-app notifications only
     
     isInitialized = true;
     isConfigured = true;
@@ -91,10 +76,8 @@ export const useFirebaseOptimized = () => {
     app: firebaseApp,
     auth: firebaseAuth,
     db: firebaseDb,
-    messaging: firebaseMessaging,
     isLoading: false,
     isConfigured: isConfigured,
-    messagingSupported: messagingSupported
   });
 
   useEffect(() => {
@@ -106,10 +89,8 @@ export const useFirebaseOptimized = () => {
       app: firebaseApp,
       auth: firebaseAuth,
       db: firebaseDb,
-      messaging: firebaseMessaging,
       isLoading: false,
       isConfigured: isConfigured,
-      messagingSupported: messagingSupported
     });
   }, []);
 
@@ -117,5 +98,5 @@ export const useFirebaseOptimized = () => {
 };
 
 // Export Firebase services (now available immediately at module load)
-export { firebaseAuth as auth, firebaseDb as db, firebaseMessaging as messaging };
+export { firebaseAuth as auth, firebaseDb as db };
 export default firebaseApp;

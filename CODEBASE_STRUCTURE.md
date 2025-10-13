@@ -223,21 +223,14 @@ Server-side admin operations (protected by admin middleware).
 
 ---
 
-### 📁 `/src/app/api/notifications` - FCM Push Notifications
+### 📁 `/src/app/api/notifications` - In-App Notifications
 
-Firebase Cloud Messaging integration for push notifications.
+Firestore-based in-app notification system (no FCM/browser permissions).
 
 #### 📁 **`/[notificationId]`**
 - **`route.js`** - PATCH: Mark notification as read/unread, DELETE: Delete notification
 
-#### 📁 **`/register-token`**
-- **`route.js`** - POST: Register FCM device token for user
-
-#### 📁 **`/remove-token`**
-- **`route.js`** - DELETE: Remove FCM device token on logout
-
-#### 📁 **`/send`**
-- **`route.js`** - POST: Send FCM notification to user(s) (server-side only)
+**Note:** FCM token management routes removed - notifications now use Firestore real-time listeners only.
 
 ---
 
@@ -283,9 +276,9 @@ Authentication pages and special pages without header/footer.
 
 ---
 
-### 📁 `/src/app/firebase-messaging-sw` - Service Worker Route
+### 📁 `/src/app/firebase-messaging-sw` - **REMOVED**
 
-#### **`/route.js`** - Dynamic service worker for FCM with environment variables
+**Note:** Service worker removed during FCM to in-app notification migration. No longer needed for notification delivery.
 
 ---
 
@@ -388,7 +381,7 @@ Reusable logic hooks.
 
 - **`useAuth.js`** - Firebase authentication hook (user state, login, logout)
 - **`useBodyScrollLock.js`** - Lock body scroll when modal is open
-- **`useFCM.js`** - Firebase Cloud Messaging hook (token management, foreground notifications)
+- **`useNotifications.js`** - In-app notification hook (real-time Firestore listeners, mark read/delete)
 - **`useFocusTrap.js`** - Trap keyboard focus within modal
 - **`useSecureStorage.js`** - Secure localStorage/sessionStorage wrapper with encryption
 
@@ -400,7 +393,7 @@ External service integrations and core utilities.
 
 ### Firebase
 
-- **`firebase-optimized.js`** - Firebase client SDK initialization (auth + messaging)
+- **`firebase-optimized.js`** - Firebase client SDK initialization (auth + firestore only)
 - **`firebaseAdmin.js`** - Firebase Admin SDK for server-side operations
 - **`firestore.js`** - Firestore database functions (CRUD operations)
   - User profiles, campaigns, reports, creators, notifications, etc.
@@ -470,7 +463,7 @@ Located in `/src/utils/admin/`:
 
 Located in `/src/utils/notifications/`:
 
-- **`notificationTemplates.js`** - FCM notification templates for moderation actions
+- **`notificationTemplates.js`** - In-app notification templates for moderation actions
   - Campaign under review
   - Campaign removed
   - Warning issued
@@ -478,10 +471,10 @@ Located in `/src/utils/notifications/`:
   - Account banned
   - Appeal deadline reminders
 
-- **`sendFCMNotification.js`** - Client-side FCM notification sender
-  - Send to single user (all devices)
-  - Send batch notifications
-  - Error handling and retry logic
+- **`sendInAppNotification.js`** - Server-side in-app notification sender
+  - Saves notifications to Firestore (`users/{userId}/notifications`)
+  - No FCM/browser permissions needed
+  - Real-time delivery via Firestore listeners
 
 ### General Utilities
 
@@ -517,19 +510,15 @@ Located in `/src/utils/notifications/`:
 1. Admin visits `/admin` → `adminAuth.js` middleware checks role
 2. View reports → `/api/admin/reports` → `firebaseAdmin.js`
 3. Moderate campaign → `/api/admin/campaigns/[id]` → Update status
-4. Send FCM notification → `/api/notifications/send` → `sendFCMNotification.js`
-5. User receives notification → `useFCM.js` → `NotificationToast.js`
+4. Send in-app notification → `sendInAppNotification.js` → Firestore
+5. User receives notification → `useNotifications.js` → `NotificationToast.js`
 
-### FCM Notification Flow
-1. User grants permission → `NotificationPermissionModal.js`
-2. Get FCM token → `useFCM.js` → Firebase Messaging SDK
-3. Register token → `/api/notifications/register-token` → Firestore
-4. Admin action triggers notification → `/api/admin/reports/[id]`
-5. Server sends FCM → `/api/notifications/send` → Firebase Admin SDK
-6. User receives:
-   - Background: Service worker (`firebase-messaging-sw/route.js`)
-   - Foreground: `useFCM.js` → `NotificationToast.js`
-7. View history → `NotificationBell.js` → `/profile/notifications`
+### In-App Notification Flow
+1. Server action triggers notification → `sendInAppNotification.js`
+2. Notification saved to `users/{userId}/notifications` → Firestore
+3. Real-time listener detects new notification → `useNotifications.js`
+4. NotificationToast displays latest unread → Auto-dismisses after 5s
+5. User views full inbox at `/profile/notifications`
 
 ---
 
@@ -541,13 +530,13 @@ Located in `/src/utils/notifications/`:
 - **Tailwind CSS 4** - Utility-first CSS
 
 ### Backend Services
-- **Firebase** - Authentication, Firestore database, and Cloud Messaging (FCM)
+- **Firebase** - Authentication and Firestore database (no FCM)
 - **Supabase** - Object storage for images with CDN
 - **ImageKit.io** - Image optimization (deprecated in favor of Supabase CDN)
 
 ### Key Libraries
 - **@supabase/supabase-js** - Supabase client
-- **firebase** - Firebase client SDK (auth + messaging)
+- **firebase** - Firebase client SDK (auth + firestore only)
 - **firebase-admin** - Firebase server SDK
 - **zod** - Schema validation
 - **server-only** - Ensure server-side only code
@@ -565,7 +554,7 @@ Located in `/src/utils/notifications/`:
 - `NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET`
 - `NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID`
 - `NEXT_PUBLIC_FIREBASE_APP_ID`
-- `NEXT_PUBLIC_FIREBASE_VAPID_KEY` - For web push notifications
+- `NEXT_PUBLIC_FIREBASE_VAPID_KEY` - **OBSOLETE** (removed with FCM migration)
 - `FIREBASE_SERVICE_ACCOUNT_KEY` (JSON string)
 
 ### Supabase
@@ -615,21 +604,18 @@ Located in `/src/utils/notifications/`:
 - Admin actions: Dismiss, Warn, Remove/Ban
 - Warnings collection and tracking
 
-**Push Notifications (FCM):**
-- ✅ Backend infrastructure (token management, send API)
+**In-App Notifications:**
+- ✅ Real-time Firestore notifications (no FCM/browser permissions)
 - ✅ Notification templates for all moderation actions
-- ✅ Service worker for background notifications
-- ✅ In-app notification inbox at `/profile/notifications` (read/unread, delete)
-- ✅ Notification history saved to Firestore
+- ✅ In-app notification inbox at `/profile/notifications` (read/unread, filter, delete)
+- ✅ Notification history saved to Firestore (`users/{userId}/notifications`)
 - ✅ Foreground notification toasts (`NotificationToast.js`)
 - ✅ NotificationBell with unread count
 - ✅ Settings page at `/settings/notifications` with:
-  - FCM device management
   - Per-notification-type preferences (localStorage-based)
-  - Enable/disable notifications toggle
+  - In-app notification explainer banner
 - ✅ NotificationProvider integrated in app layout
-- ✅ NotificationPermissionModal component ready
-- ⏸️ **PENDING:** Automated prompting strategy (when to show permission modal)
+- ✅ useNotifications hook for real-time listeners
 
 ### ⏸️ Deferred Features
 
@@ -637,7 +623,6 @@ Located in `/src/utils/notifications/`:
 - Admin warning history view in user details
 - Auto-deletion cron jobs (30-day appeal deadline enforcement)
 - Email notifications for moderation actions
-- Automated notification permission prompting (modal trigger strategy)
 
 ---
 
@@ -651,9 +636,7 @@ Located in `/src/utils/notifications/`:
 - Supabase CDN used for all image transformations (WebP, resizing)
 - Download tracking uses Firestore transactions to prevent race conditions
 - Username reservation uses dedicated collection for atomicity
-- FCM tokens stored in user subcollection: `users/{userId}/tokens/{tokenId}`
 - Notifications saved to Firestore: `users/{userId}/notifications/{notificationId}`
-- Service worker served dynamically with environment variables
 - `ReportModal.js` handles both campaign and user/profile reports (universal component)
 - `ShareModal.js` handles both campaign and profile sharing (universal component)
 

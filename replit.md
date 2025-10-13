@@ -20,7 +20,7 @@ The application is built with Next.js 15.5.2 (App Router), React 19.1.0, and Tai
 - **Public Analytics:** Transparent usage statistics for all campaigns.
 - **Three-Page Campaign Flow:** A guided user experience for photo upload, adjustment, and result download/sharing.
 - **Admin Dashboard:** A comprehensive panel for moderation, including reports management, campaign moderation, user management, and analytics.
-- **FCM Push Notification System:** Real-time push notifications for user updates and moderation events, including an in-app notification inbox.
+- **In-App Notification System:** Real-time Firestore-based notifications for user updates and moderation events, with notification inbox and toast alerts.
 
 **Design Principles:**
 - **Visitor-first experience:** Browsing and using campaigns do not require authentication.
@@ -34,8 +34,8 @@ The application is built with Next.js 15.5.2 (App Router), React 19.1.0, and Tai
 - **Delayed Authentication:** Users can complete forms unauthenticated, with a prompt only at the point of publishing.
 - **Optimized Database Structure:** Firebase/Firestore is optimized to reduce storage costs and prevent document bloat, especially for viral campaigns, by simplifying download tracking and using counters.
 - **Image Optimization:** ImageKit.io CDN is integrated for image transformation (WebP, resizing, quality optimization) across all application images.
-- **Dynamic Service Worker:** For FCM, a dynamic service worker serves Firebase configuration from environment variables.
-- **Notification History/Inbox System:** All push notifications are saved to Firestore for an in-app inbox with real-time updates and authenticated APIs for managing read/delete status.
+- **In-App Notifications Only:** Notifications are delivered through Firestore real-time listeners - no browser permissions or service workers needed.
+- **Notification History/Inbox System:** All notifications are saved to Firestore (`users/{userId}/notifications`) for an in-app inbox with real-time updates and authenticated APIs for managing read/delete status.
 
 ## External Dependencies
 - **Firebase:** Authentication and backend services.
@@ -64,15 +64,16 @@ Conducted comprehensive documentation audit comparing actual codebase against al
    - ✅ Added missing `ShareModal.js` to docs (universal modal for campaigns and profiles)
    - ✅ Clarified `ReportModal.js` handles both campaign and user reports
 
-2. **FCM Notification System Status Corrected:**
-   - Previous docs: Marked as "UI Integration Pending"
-   - Actual status: 95% complete (only automated prompting strategy pending)
-   - Updated documentation to reflect:
-     - ✅ Backend 100% complete (token management, send API, history)
-     - ✅ Frontend UI 95% complete (NotificationBell, NotificationToast, NotificationProvider, NotificationBanner, NotificationPermissionModal)
-     - ✅ Notification inbox at `/profile/notifications` (read/unread, delete)
-     - ✅ Settings page at `/settings/notifications` (device management, preferences)
-     - ⏸️ Only pending: Automated prompting strategy (when to show permission modal)
+2. **In-App Notification System (FCM Removed):**
+   - **Migration Complete:** Removed Firebase Cloud Messaging (FCM) in favor of in-app notifications
+   - Current status: 100% complete (no browser permissions needed)
+   - System features:
+     - ✅ Real-time Firestore listeners for instant notifications
+     - ✅ NotificationBell, NotificationToast, NotificationProvider components
+     - ✅ Notification inbox at `/profile/notifications` (read/unread, filter, delete)
+     - ✅ Settings page at `/settings/notifications` (notification type preferences)
+     - ✅ Server-side sendInAppNotification utility (replaced FCM)
+     - ✅ No browser permissions or service workers required
 
 3. **Settings Architecture Documentation Updated:**
    - Added Section 11 completion status
@@ -80,16 +81,17 @@ Conducted comprehensive documentation audit comparing actual codebase against al
    - Clarified `/profile/notifications` is inbox (not just preferences)
    - Documented `/settings/notifications` with full feature list
 
-4. **Added Section 12 to TASKS.md:**
-   - New task: "Automated Notification Permission Prompting"
-   - Priority: 🔥 High (quick win, components ready)
-   - Estimated effort: 2-3 hours
-   - Complete implementation plan with hook, integration points, and testing checklist
+4. **Added Section 13 to TASKS.md:**
+   - New task: "FCM to In-App Notification Migration"
+   - Priority: 🔥 CRITICAL
+   - Estimated effort: 5-7 hours
+   - Complete 6-phase migration plan with code examples and testing checklist
+   - **Status: COMPLETED** - Migrated from FCM to pure Firestore notifications
 
 **Current Implementation Status:**
 - ✅ Core campaign system fully functional
 - ✅ Admin dashboard with full moderation tools
-- ✅ FCM notification system (95% - only automated prompting pending)
+- ✅ In-app notification system (100% - no browser permissions needed)
 - ✅ Settings hub with notification preferences
 - ✅ Notification inbox with history
 - ⏸️ Appeals system (deferred)
@@ -97,4 +99,6 @@ Conducted comprehensive documentation audit comparing actual codebase against al
 - ⏸️ Auto-deletion cron jobs (deferred)
 
 **Recommended Next Task:**
-Section 12: Automated Notification Permission Prompting - Implement triggers to show NotificationPermissionModal after campaign creation and add dashboard banner for users who haven't enabled notifications.
+Section 12: Automated Notification Permission Prompting - **OBSOLETE** (removed with FCM migration).
+
+Section 13: FCM to In-App Notification Migration - **COMPLETED** - Fully migrated from FCM push notifications to Firestore-based in-app notifications.

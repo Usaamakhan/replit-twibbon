@@ -1,19 +1,26 @@
 "use client";
 
-import { useFCM } from '@/hooks/useFCM';
+import { useNotifications } from '@/hooks/useNotifications';
 import NotificationToast from './NotificationToast';
 
 export default function NotificationProvider({ children }) {
-  const { foregroundNotification, clearNotification } = useFCM();
+  const { latestNotification, clearLatestNotification, markAsRead } = useNotifications();
+  
+  const handleClose = () => {
+    if (latestNotification && !latestNotification.read) {
+      markAsRead(latestNotification.id);
+    }
+    clearLatestNotification();
+  };
   
   return (
     <>
       {children}
       
-      {foregroundNotification && (
+      {latestNotification && (
         <NotificationToast 
-          notification={foregroundNotification}
-          onClose={clearNotification}
+          notification={latestNotification}
+          onClose={handleClose}
         />
       )}
     </>

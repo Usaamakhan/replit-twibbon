@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { adminFirestore } from '@/lib/firebaseAdmin';
-import { sendFCMNotificationServer } from '@/utils/notifications/sendFCMNotificationServer';
+import { sendInAppNotification } from '@/utils/notifications/sendInAppNotification';
 import { getNotificationTemplate } from '@/utils/notifications/notificationTemplates';
 
 export async function POST(request) {
@@ -81,12 +81,17 @@ export async function POST(request) {
           campaignTitle: campaignData.title || 'Your campaign'
         });
         
-        await sendFCMNotificationServer({
+        await sendInAppNotification({
           userId: campaignData.creatorId,
           title: notification.title,
           body: notification.body,
           actionUrl: notification.actionUrl,
           icon: notification.icon,
+          type: notification.type || 'campaign-under-review',
+          metadata: {
+            campaignId,
+            reason,
+          }
         }).catch(err => console.error('Failed to send notification:', err));
       }
     });

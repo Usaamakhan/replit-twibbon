@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { adminFirestore } from '@/lib/firebaseAdmin';
-import { sendFCMNotificationServer } from '@/utils/notifications/sendFCMNotificationServer';
+import { sendInAppNotification } from '@/utils/notifications/sendInAppNotification';
 import { getNotificationTemplate } from '@/utils/notifications/notificationTemplates';
 
 export async function POST(request) {
@@ -95,12 +95,17 @@ export async function POST(request) {
       if (newReportsCount >= 10 && userData.moderationStatus === 'active') {
         const notification = getNotificationTemplate('profileUnderReview');
         
-        await sendFCMNotificationServer({
+        await sendInAppNotification({
           userId: reportedUserId,
           title: notification.title,
           body: notification.body,
           actionUrl: notification.actionUrl,
           icon: notification.icon,
+          type: notification.type || 'profile-under-review',
+          metadata: {
+            reportedUserId,
+            reason,
+          }
         }).catch(err => console.error('Failed to send notification:', err));
       }
     });

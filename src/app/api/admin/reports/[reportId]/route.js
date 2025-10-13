@@ -3,7 +3,7 @@ import { requireAdmin } from '@/middleware/adminAuth';
 import { adminFirestore } from '@/lib/firebaseAdmin';
 import { FieldValue } from 'firebase-admin/firestore';
 import { getNotificationTemplate } from '@/utils/notifications/notificationTemplates';
-import { sendFCMNotificationServer } from '@/utils/notifications/sendFCMNotificationServer';
+import { sendInAppNotification } from '@/utils/notifications/sendInAppNotification';
 
 export async function PATCH(request, context) {
   try {
@@ -324,18 +324,25 @@ export async function PATCH(request, context) {
     }
     
     if (targetUserId && notificationData) {
-      console.log('[ADMIN REPORT UPDATE] Sending FCM notification to user:', targetUserId);
+      console.log('[ADMIN REPORT UPDATE] Sending in-app notification to user:', targetUserId);
       try {
-        await sendFCMNotificationServer({
+        await sendInAppNotification({
           userId: targetUserId,
           title: notificationData.title,
           body: notificationData.body,
           actionUrl: notificationData.actionUrl,
           icon: notificationData.icon,
+          type: notificationData.type || 'general',
+          metadata: {
+            reportId: reportData.id,
+            campaignId: reportData.campaignId,
+            action,
+            status,
+          }
         });
-        console.log('[ADMIN REPORT UPDATE] FCM notification sent successfully');
+        console.log('[ADMIN REPORT UPDATE] In-app notification sent successfully');
       } catch (notificationError) {
-        console.error('[ADMIN REPORT UPDATE] Failed to send FCM notification:', notificationError);
+        console.error('[ADMIN REPORT UPDATE] Failed to send in-app notification:', notificationError);
       }
     } else {
       console.log('[ADMIN REPORT UPDATE] No notification to send (targetUserId:', targetUserId, ', notificationData:', !!notificationData, ')');

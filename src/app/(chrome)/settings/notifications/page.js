@@ -3,25 +3,12 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
-import { useFCM } from '@/hooks/useFCM';
-import { collection, query, getDocs, deleteDoc, doc } from 'firebase/firestore';
-import { db } from '@/lib/firebase-optimized';
 import SettingsSidebar from '@/components/SettingsSidebar';
+import Link from 'next/link';
 
 export default function NotificationSettingsPage() {
   const router = useRouter();
   const { user, loading: authLoading } = useAuth();
-  const { 
-    notificationPermission, 
-    fcmToken, 
-    isSupported,
-    requestPermission, 
-    removeToken 
-  } = useFCM();
-  
-  const [devices, setDevices] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [isToggling, setIsToggling] = useState(false);
   
   const [preferences, setPreferences] = useState({
     warnings: true,
@@ -57,61 +44,6 @@ export default function NotificationSettingsPage() {
     }
   }, [user, authLoading, router]);
   
-  useEffect(() => {
-    if (!user) return;
-    
-    const fetchDevices = async () => {
-      try {
-        const tokensRef = collection(db, 'users', user.uid, 'tokens');
-        const snapshot = await getDocs(query(tokensRef));
-        
-        const deviceList = snapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data(),
-          isCurrent: doc.data().token === fcmToken,
-        }));
-        
-        setDevices(deviceList);
-      } catch (error) {
-        console.error('Error fetching devices:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-    
-    fetchDevices();
-  }, [user, fcmToken]);
-  
-  const handleToggleNotifications = async () => {
-    setIsToggling(true);
-    try {
-      if (fcmToken) {
-        await removeToken();
-        setDevices([]);
-      } else {
-        await requestPermission();
-      }
-    } catch (error) {
-      console.error('Error toggling notifications:', error);
-    } finally {
-      setIsToggling(false);
-    }
-  };
-  
-  const handleRemoveDevice = async (deviceId, token) => {
-    try {
-      await deleteDoc(doc(db, 'users', user.uid, 'tokens', deviceId));
-      
-      setDevices(devices.filter(d => d.id !== deviceId));
-      
-      if (token === fcmToken) {
-        await removeToken();
-      }
-    } catch (error) {
-      console.error('Error removing device:', error);
-    }
-  };
-  
   if (authLoading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -125,33 +57,6 @@ export default function NotificationSettingsPage() {
 
   if (!user) {
     return null;
-  }
-  
-  if (!isSupported) {
-    return (
-      <div className="min-h-screen bg-gray-50">
-        <div className="flex flex-col lg:flex-row">
-          <SettingsSidebar />
-          
-          <div className="flex-1 w-full">
-            <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-6 lg:py-8">
-              <div className="bg-yellow-400 px-4 sm:px-6 py-4 sm:py-6 rounded-t-xl">
-                <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-emerald-700">Notification Settings</h1>
-                <p className="text-sm sm:text-base lg:text-lg text-gray-700 mt-1 sm:mt-2">Manage your notification preferences</p>
-              </div>
-              
-              <div className="bg-white rounded-b-xl border border-t-0 border-gray-200 px-4 sm:px-6 py-6 sm:py-8 shadow-sm">
-                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-                  <p className="text-sm sm:text-base text-yellow-800">
-                    Push notifications are not supported in your browser. Please use Chrome, Firefox, or Edge.
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
   }
   
   return (
@@ -168,66 +73,21 @@ export default function NotificationSettingsPage() {
             
             <div className="bg-white rounded-b-xl border border-t-0 border-gray-200 px-4 sm:px-6 py-6 sm:py-8 shadow-sm space-y-6 sm:space-y-8">
               
-              <div>
-                <h2 className="text-base sm:text-lg font-semibold text-gray-900 mb-3 sm:mb-4">
-                  Push Notifications
-                </h2>
-                
-                <div className="bg-gray-50 rounded-lg p-3 sm:p-4 border border-gray-200">
-                  <div className="flex items-center justify-between gap-4">
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-gray-900 mb-1">
-                        Enable Push Notifications
-                      </p>
-                      <p className="text-xs text-gray-500">
-                        Get notified about moderation updates for your campaigns
-                      </p>
-                    </div>
-                    
-                    {notificationPermission === 'denied' ? (
-                      <div className="text-right flex-shrink-0">
-                        <p className="text-xs text-red-600 font-medium mb-1">
-                          Blocked in Browser
-                        </p>
-                        <button
-                          onClick={() => window.open('chrome://settings/content/notifications', '_blank')}
-                          className="text-xs text-emerald-600 hover:text-emerald-700 hover:underline"
-                        >
-                          Open Settings →
-                        </button>
-                      </div>
-                    ) : (
-                      <button
-                        onClick={handleToggleNotifications}
-                        disabled={isToggling}
-                        className={`flex-shrink-0 relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed ${
-                          fcmToken ? 'bg-emerald-600' : 'bg-gray-300'
-                        }`}
-                        aria-label="Toggle notifications"
-                      >
-                        <span
-                          className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                            fcmToken ? 'translate-x-6' : 'translate-x-1'
-                          }`}
-                        />
-                      </button>
-                    )}
-                  </div>
-                  
-                  {fcmToken && (
-                    <div className="flex items-center text-green-600 text-xs mt-3">
-                      <svg className="w-4 h-4 mr-1.5" fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                      </svg>
-                      Notifications enabled on this device
-                    </div>
-                  )}
-                  
-                  {!fcmToken && notificationPermission !== 'denied' && (
-                    <p className="text-xs text-gray-500 mt-3">
-                      Enable to receive notifications about your campaigns
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <div className="flex items-start gap-3">
+                  <svg className="w-5 h-5 text-blue-600 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                  </svg>
+                  <div className="flex-1">
+                    <h3 className="text-sm font-medium text-blue-900 mb-1">In-App Notifications Only</h3>
+                    <p className="text-sm text-blue-700">
+                      Notifications now appear inside the app - no browser permissions needed! Check the{' '}
+                      <Link href="/profile/notifications" className="font-medium underline hover:text-blue-800">
+                        notification inbox
+                      </Link>
+                      {' '}for all your updates.
                     </p>
-                  )}
+                  </div>
                 </div>
               </div>
               
@@ -362,61 +222,6 @@ export default function NotificationSettingsPage() {
                   </div>
                 </div>
               </div>
-              
-              {notificationPermission === 'granted' && (
-                <div>
-                  <h2 className="text-base sm:text-lg font-semibold text-gray-900 mb-3 sm:mb-4">
-                    Active Devices
-                  </h2>
-                  
-                  {loading ? (
-                    <p className="text-sm text-gray-500">Loading devices...</p>
-                  ) : devices.length === 0 ? (
-                    <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                      <p className="text-sm text-gray-500">
-                        No devices registered for notifications
-                      </p>
-                    </div>
-                  ) : (
-                    <div className="space-y-3">
-                      {devices.map((device) => (
-                        <div 
-                          key={device.id}
-                          className="flex items-center justify-between gap-4 p-3 sm:p-4 bg-gray-50 rounded-lg border border-gray-200"
-                        >
-                          <div className="flex items-center min-w-0 flex-1">
-                            <div className="flex-shrink-0">
-                              <svg className="h-8 w-8 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                              </svg>
-                            </div>
-                            <div className="ml-3 min-w-0">
-                              <p className="text-sm font-medium text-gray-900 truncate">
-                                {device.browser || 'Web Browser'}
-                                {device.isCurrent && (
-                                  <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">
-                                    Current Device
-                                  </span>
-                                )}
-                              </p>
-                              <p className="text-xs text-gray-500">
-                                Added {device.createdAt?.toDate().toLocaleDateString()}
-                              </p>
-                            </div>
-                          </div>
-                          
-                          <button
-                            onClick={() => handleRemoveDevice(device.id, device.token)}
-                            className="flex-shrink-0 text-sm text-red-600 hover:text-red-700 font-medium"
-                          >
-                            Remove
-                          </button>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              )}
             </div>
           </div>
         </div>

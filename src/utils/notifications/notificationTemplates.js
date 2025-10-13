@@ -4,6 +4,7 @@ export const notificationTemplates = {
     body: `Your campaign "${campaignTitle}" has been flagged by users and is now under review. We'll notify you of the outcome.`,
     actionUrl: '/profile',
     icon: '/icon-192x192.png',
+    type: 'campaign-under-review',
   }),
 
   campaignRemoved: (campaignTitle, appealDeadline) => ({
@@ -11,6 +12,7 @@ export const notificationTemplates = {
     body: `Your campaign "${campaignTitle}" has been removed. You can appeal this decision until ${appealDeadline}.`,
     actionUrl: '/profile',
     icon: '/icon-192x192.png',
+    type: 'campaign-removed',
   }),
 
   campaignRestored: (campaignTitle) => ({
@@ -18,6 +20,7 @@ export const notificationTemplates = {
     body: `Good news! Your campaign "${campaignTitle}" has been reviewed and restored.`,
     actionUrl: '/profile',
     icon: '/icon-192x192.png',
+    type: 'campaign-restored',
   }),
 
   warningIssued: (reason) => ({
@@ -25,6 +28,7 @@ export const notificationTemplates = {
     body: `You've received a warning for: ${reason}. Please review our community guidelines.`,
     actionUrl: '/profile/settings',
     icon: '/icon-192x192.png',
+    type: 'warning',
   }),
 
   profileUnderReview: () => ({
@@ -32,6 +36,7 @@ export const notificationTemplates = {
     body: 'Your profile has been flagged by users and is now under review. We\'ll notify you of the outcome.',
     actionUrl: '/profile',
     icon: '/icon-192x192.png',
+    type: 'profile-under-review',
   }),
 
   accountBanned: (banReason, appealDeadline) => ({
@@ -39,6 +44,7 @@ export const notificationTemplates = {
     body: `Your account has been banned for: ${banReason}. You can appeal until ${appealDeadline}.`,
     actionUrl: '/profile',
     icon: '/icon-192x192.png',
+    type: 'account-banned',
   }),
 
   profileRestored: () => ({
@@ -46,6 +52,7 @@ export const notificationTemplates = {
     body: 'Good news! Your profile has been reviewed and restored.',
     actionUrl: '/profile',
     icon: '/icon-192x192.png',
+    type: 'profile-restored',
   }),
 
   appealDeadlineReminder: (daysLeft, type) => ({
@@ -53,6 +60,7 @@ export const notificationTemplates = {
     body: `You have ${daysLeft} days left to appeal your ${type} removal. Don't miss the deadline!`,
     actionUrl: '/profile',
     icon: '/icon-192x192.png',
+    type: 'appeal-deadline-reminder',
   }),
 
   appealApproved: (type) => ({
@@ -60,6 +68,7 @@ export const notificationTemplates = {
     body: `Your appeal for ${type} removal has been approved and restored.`,
     actionUrl: '/profile',
     icon: '/icon-192x192.png',
+    type: 'appeal-approved',
   }),
 
   appealRejected: (type) => ({
@@ -67,6 +76,7 @@ export const notificationTemplates = {
     body: `Your appeal for ${type} removal has been reviewed and rejected.`,
     actionUrl: '/profile',
     icon: '/icon-192x192.png',
+    type: 'appeal-rejected',
   }),
 };
 
