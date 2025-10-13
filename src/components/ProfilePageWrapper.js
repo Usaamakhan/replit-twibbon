@@ -1,29 +1,13 @@
 'use client';
 
-import { useState, useEffect } from 'react';
 import { useAuth } from '../hooks/useAuth';
 import { useRouter } from 'next/navigation';
-import { useFCM } from '../hooks/useFCM';
 import ProfilePage from './ProfilePage';
-import NotificationBanner from './notifications/NotificationBanner';
 
 function ProfilePageWrapper({ isOwnProfile = false }) {
   const { user, loading } = useAuth();
   const router = useRouter();
-  const { notificationPermission } = useFCM();
-  const [bannerDismissed, setBannerDismissed] = useState(false);
   
-  useEffect(() => {
-    const dismissed = localStorage.getItem('notification-banner-dismissed');
-    setBannerDismissed(!!dismissed);
-  }, []);
-  
-  const handleDismissBanner = () => {
-    localStorage.setItem('notification-banner-dismissed', 'true');
-    setBannerDismissed(true);
-  };
-  
-
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -67,14 +51,7 @@ function ProfilePageWrapper({ isOwnProfile = false }) {
   }
 
   // User is authenticated or viewing someone else's profile
-  return (
-    <>
-      {isOwnProfile && user && notificationPermission === 'default' && !bannerDismissed && (
-        <NotificationBanner onDismiss={handleDismissBanner} />
-      )}
-      <ProfilePage isOwnProfile={isOwnProfile} />
-    </>
-  );
+  return <ProfilePage isOwnProfile={isOwnProfile} />;
 }
 
 ProfilePageWrapper.displayName = 'ProfilePageWrapper';
