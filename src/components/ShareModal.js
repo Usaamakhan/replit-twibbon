@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { getCampaignPreview, getProfileAvatar } from "../utils/imageTransform";
 
 export default function ShareModal({
   isOpen,
@@ -24,8 +25,13 @@ export default function ShareModal({
   const shareUrl = url || profileUrl;
   const shareTitle = title || displayName;
   const shareSubtitle = subtitle || (username ? `@${username}` : "");
-  const shareImage = image || profileImage;
+  const rawImage = image || profileImage;
   const isProfile = type === "profile";
+  
+  // Apply ImageKit optimization based on type
+  const shareImage = rawImage 
+    ? (isProfile ? getProfileAvatar(rawImage) : getCampaignPreview(rawImage))
+    : null;
 
   const handleCopyLink = async () => {
     try {
