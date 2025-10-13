@@ -230,9 +230,8 @@ Firestore-based in-app notification system (no FCM/browser permissions).
 #### 📁 **`/[notificationId]`**
 - **`route.js`** - PATCH: Mark notification as read/unread, DELETE: Delete notification
 
-**Note:** FCM completely removed (October 13, 2025). System now uses pure Firestore real-time listeners:
+**System:** In-app notifications delivered via Firestore real-time listeners:
 - No browser permissions required
-- No service workers needed
 - Notifications delivered instantly via Firestore snapshots
 - Works on all devices without setup
 
@@ -280,9 +279,6 @@ Authentication pages and special pages without header/footer.
 
 ---
 
-### 📁 `/src/app/firebase-messaging-sw` - **REMOVED**
-
-**Note:** Service worker removed during FCM to in-app notification migration (October 13, 2025). No longer needed - notifications now use Firestore real-time listeners only.
 
 ---
 
@@ -383,7 +379,7 @@ Reusable logic hooks.
 
 - **`useAuth.js`** - Firebase authentication hook (user state, login, logout)
 - **`useBodyScrollLock.js`** - Lock body scroll when modal is open
-- **`useNotifications.js`** - In-app notification hook with Firestore real-time listeners (replaces FCM)
+- **`useNotifications.js`** - In-app notification hook with Firestore real-time listeners
   - Provides: notifications list, unread count, latest notification, mark read/delete functions
   - No browser permissions required
 - **`useFocusTrap.js`** - Trap keyboard focus within modal
@@ -475,9 +471,8 @@ Located in `/src/utils/notifications/`:
   - Appeal deadline reminders
   - All templates include type field for categorization
 
-- **`sendInAppNotification.js`** - Server-side in-app notification sender (replaces FCM)
+- **`sendInAppNotification.js`** - Server-side in-app notification sender
   - Saves notifications to Firestore (`users/{userId}/notifications`)
-  - No browser permissions or service workers needed
   - Instant delivery via Firestore real-time listeners
   - Supports metadata for rich notifications
 

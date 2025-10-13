@@ -64,16 +64,15 @@ Conducted comprehensive documentation audit comparing actual codebase against al
    - ✅ Added missing `ShareModal.js` to docs (universal modal for campaigns and profiles)
    - ✅ Clarified `ReportModal.js` handles both campaign and user reports
 
-2. **In-App Notification System (FCM Removed):**
-   - **Migration Complete:** Removed Firebase Cloud Messaging (FCM) in favor of in-app notifications
-   - Current status: 100% complete (no browser permissions needed)
+2. **In-App Notification System:**
+   - Firestore-based real-time notification system
+   - No browser permissions required
    - System features:
      - ✅ Real-time Firestore listeners for instant notifications
      - ✅ NotificationBell, NotificationToast, NotificationProvider components
      - ✅ Notification inbox at `/profile/notifications` (read/unread, filter, delete)
      - ✅ Settings page at `/settings/notifications` (notification type preferences)
-     - ✅ Server-side sendInAppNotification utility (replaced FCM)
-     - ✅ No browser permissions or service workers required
+     - ✅ Server-side sendInAppNotification utility for sending notifications
 
 3. **Settings Architecture Documentation Updated:**
    - Added Section 11 completion status
@@ -81,28 +80,18 @@ Conducted comprehensive documentation audit comparing actual codebase against al
    - Clarified `/profile/notifications` is inbox (not just preferences)
    - Documented `/settings/notifications` with full feature list
 
-4. **Added Section 13 to TASKS.md:**
-   - New task: "FCM to In-App Notification Migration"
-   - Priority: 🔥 CRITICAL
-   - Estimated effort: 5-7 hours
-   - Complete 6-phase migration plan with code examples and testing checklist
-   - **Status: COMPLETED** - Migrated from FCM to pure Firestore notifications
+4. **Documentation Updates:**
+   - Updated TASKS.md with notification system documentation
+   - Documented in-app notification architecture and components
+   - Added notification system integration with moderation features
 
 **Current Implementation Status:**
 - ✅ Core campaign system fully functional
 - ✅ Admin dashboard with full moderation tools
-- ✅ In-app notification system (100% - no browser permissions needed)
+- ✅ In-app notification system with Firestore real-time listeners
 - ✅ Settings hub with notification preferences
 - ✅ Notification inbox with history
 - ⏸️ Appeals system (deferred)
 - ⏸️ Admin warning history view (deferred)
 - ⏸️ Auto-deletion cron jobs (deferred)
 
-**Recommended Next Task:**
-Section 12: Automated Notification Permission Prompting - **OBSOLETE** (removed with FCM migration).
-
-Section 13: FCM to In-App Notification Migration - **✅ FULLY COMPLETED** (October 13, 2025)
-- Migrated from FCM push notifications to Firestore-based in-app notifications
-- Removed all FCM dependencies, service workers, and browser permission requirements
-- System now uses pure Firestore real-time listeners for instant notifications
-- No browser permissions needed - notifications appear inside the app only
