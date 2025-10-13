@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from 'react';
+import { useBodyScrollLock } from '../hooks/useBodyScrollLock';
 
 export default function ConfirmationModal({ 
   isOpen, 
@@ -12,6 +13,9 @@ export default function ConfirmationModal({
   cancelText = "Cancel",
   type = "danger" // "danger" or "warning"
 }) {
+  // Lock body scroll when modal is open
+  useBodyScrollLock(isOpen);
+
   // Close modal on Escape key
   useEffect(() => {
     const handleEscape = (e) => {
@@ -22,13 +26,10 @@ export default function ConfirmationModal({
 
     if (isOpen) {
       document.addEventListener('keydown', handleEscape);
-      // Prevent body scroll when modal is open
-      document.body.style.overflow = 'hidden';
     }
 
     return () => {
       document.removeEventListener('keydown', handleEscape);
-      document.body.style.overflow = 'unset';
     };
   }, [isOpen, onClose]);
 

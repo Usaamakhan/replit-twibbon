@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
+import { useBodyScrollLock } from "@/hooks/useBodyScrollLock";
 
 export default function UserDetailsModal({ user, onClose, onUpdate }) {
   const { user: currentUser } = useAuth();
@@ -9,6 +10,9 @@ export default function UserDetailsModal({ user, onClose, onUpdate }) {
   const [updateError, setUpdateError] = useState(null);
   const [showBanModal, setShowBanModal] = useState(false);
   const [banReason, setBanReason] = useState('');
+
+  // Lock body scroll when modal is open
+  useBodyScrollLock(true);
 
   const getRoleBadgeColor = (role) => {
     return role === 'admin' 

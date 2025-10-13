@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from 'react';
+import { useBodyScrollLock } from '../hooks/useBodyScrollLock';
 
 export default function FilterModal({ 
   isOpen, 
@@ -11,6 +12,9 @@ export default function FilterModal({
 }) {
   const [tempFilters, setTempFilters] = useState(initialFilters);
   const [hasChanges, setHasChanges] = useState(false);
+
+  // Lock body scroll when modal is open
+  useBodyScrollLock(isOpen);
 
   useEffect(() => {
     if (isOpen) {
@@ -28,12 +32,10 @@ export default function FilterModal({
 
     if (isOpen) {
       document.addEventListener('keydown', handleEscape);
-      document.body.style.overflow = 'hidden';
     }
 
     return () => {
       document.removeEventListener('keydown', handleEscape);
-      document.body.style.overflow = 'unset';
     };
   }, [isOpen, onClose]);
 

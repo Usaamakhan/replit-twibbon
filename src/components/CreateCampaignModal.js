@@ -2,9 +2,13 @@
 
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
+import { useBodyScrollLock } from '../hooks/useBodyScrollLock';
 
 export default function CreateCampaignModal({ isOpen, onClose }) {
   const router = useRouter();
+
+  // Lock body scroll when modal is open
+  useBodyScrollLock(isOpen);
 
   // Close modal on escape key
   useEffect(() => {
@@ -13,11 +17,9 @@ export default function CreateCampaignModal({ isOpen, onClose }) {
     };
     if (isOpen) {
       document.addEventListener('keydown', handleEscape);
-      document.body.style.overflow = 'hidden';
     }
     return () => {
       document.removeEventListener('keydown', handleEscape);
-      document.body.style.overflow = 'unset';
     };
   }, [isOpen, onClose]);
 

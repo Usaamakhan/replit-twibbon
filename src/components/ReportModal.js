@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useAuth } from '../hooks/useAuth';
+import { useBodyScrollLock } from '../hooks/useBodyScrollLock';
 
 export default function ReportModal({ 
   isOpen, 
@@ -18,6 +19,9 @@ export default function ReportModal({
   const [reportSubmitting, setReportSubmitting] = useState(false);
   const [reportSuccess, setReportSuccess] = useState(false);
   const [error, setError] = useState('');
+
+  // Lock body scroll when modal is open
+  useBodyScrollLock(isOpen);
 
   if (!isOpen) return null;
 

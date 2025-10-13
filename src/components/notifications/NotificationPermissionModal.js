@@ -2,11 +2,15 @@
 
 import { useState, useEffect } from 'react';
 import { useFCM } from '@/hooks/useFCM';
+import { useBodyScrollLock } from '@/hooks/useBodyScrollLock';
 
 export default function NotificationPermissionModal({ onClose }) {
   const { requestPermission, notificationPermission } = useFCM();
   const [dontAskAgain, setDontAskAgain] = useState(false);
   const [isRequesting, setIsRequesting] = useState(false);
+
+  // Lock body scroll when modal is open
+  useBodyScrollLock(true);
 
   useEffect(() => {
     const hasDeclined = localStorage.getItem('fcm-permission-declined');

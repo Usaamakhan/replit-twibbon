@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { getCampaignPreview, getProfileAvatar } from "../utils/imageTransform";
+import { useBodyScrollLock } from "../hooks/useBodyScrollLock";
 
 export default function ShareModal({
   isOpen,
@@ -18,6 +19,9 @@ export default function ShareModal({
   profileImage,
 }) {
   const [copied, setCopied] = useState(false);
+
+  // Lock body scroll when modal is open
+  useBodyScrollLock(isOpen);
 
   if (!isOpen) return null;
 
