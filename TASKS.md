@@ -2421,4 +2421,667 @@ export default function NotificationPermissionModal({
 
 ---
 
+## 📬 Section 13: FCM to In-App Notification Migration
+
+**Priority:** 🔥 CRITICAL  
+**Status:** ⏸️ PENDING  
+**Last Updated:** October 13, 2025
+
+### 13.1: Overview
+
+**Goal:** Remove Firebase Cloud Messaging (FCM) push notifications and use only in-app Firestore-based notifications that appear inside the website.
+
+**Current System Analysis:**
+- ✅ Notifications already saved to Firestore: `users/{userId}/notifications/{notificationId}`
+- ✅ Notification inbox exists at `/profile/notifications`
+- ✅ NotificationBell component shows unread count
+- ✅ Real-time listeners already implemented
+- ❌ FCM push notifications (browser permission required)
+- ❌ Service worker for background notifications
+- ❌ Token management system
+
+**Benefits of Migration:**
+- 🎯 No browser permission requests (better UX)
+- 🎯 Simpler architecture (one notification system)
+- 🎯 Reduced dependencies (no FCM SDK needed)
+- 🎯 Consistent notification experience
+- 🎯 Lower maintenance overhead
+
+---
+
+### 13.2: Phase 1 - Remove FCM Infrastructure ✅
+
+**Estimated Time:** 1 hour
+
+#### 13.2.1: Delete FCM Files
+Remove the following files completely:
+
+```bash
+# Service Worker
+src/app/firebase-messaging-sw/route.js
+
+# FCM Hook
+src/hooks/useFCM.js
+
+# FCM Token APIs
+src/app/api/notifications/register-token/route.js
+src/app/api/notifications/remove-token/route.js
+
+# FCM Sending Utility (server-side)
+src/utils/notifications/sendFCMNotificationServer.js
+
+# FCM Permission Components
+src/components/notifications/NotificationPermissionModal.js
+src/components/notifications/NotificationBanner.js
+```
+
+#### 13.2.2: Remove FCM from Firebase Config
+Update `src/lib/firebase-optimized.js`:
+
+**Before:**
+```javascript
+import { getAuth } from 'firebase/auth';
+import { getMessaging, isSupported } from 'firebase/messaging';
+
+export const auth = getAuth(app);
+export const messaging = isSupported() ? getMessaging(app) : null;
+```
+
+**After:**
+```javascript
+import { getAuth } from 'firebase/auth';
+
+export const auth = getAuth(app);
+// FCM removed - using in-app notifications only
+```
+
+#### 13.2.3: Remove FCM from Package Dependencies
+```bash
+# No need to uninstall - firebase/messaging is part of firebase package
+# Just remove imports
+```
+
+---
+
+### 13.3: Phase 2 - Create In-App Notification System ✅
+
+**Estimated Time:** 2-3 hours
+
+#### 13.3.1: Create Real-Time Notification Hook
+
+**New File:** `src/hooks/useNotifications.js`
+
+```javascript
+"use client";
+
+import { useState, useEffect, useCallback } from 'react';
+import { useAuth } from '@/hooks/useAuth';
+import { collection, query, orderBy, onSnapshot, where, limit } from 'firebase/firestore';
+import { db } from '@/lib/firebase-optimized';
+
+export function useNotifications() {
+  const { user } = useAuth();
+  const [notifications, setNotifications] = useState([]);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [latestNotification, setLatestNotification] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  // Listen for all notifications
+  useEffect(() => {
+    if (!user) {
+      setNotifications([]);
+      setUnreadCount(0);
+      setLoading(false);
+      return;
+    }
+
+    const notificationsRef = collection(db, 'users', user.uid, 'notifications');
+    const q = query(notificationsRef, orderBy('createdAt', 'desc'), limit(50));
+
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const notificationsList = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data(),
+        createdAt: doc.data().createdAt?.toDate(),
+      }));
+
+      setNotifications(notificationsList);
+      setUnreadCount(notificationsList.filter(n => !n.read).length);
+      
+      // Get latest unread notification for toast
+      const latestUnread = notificationsList.find(n => !n.read);
+      if (latestUnread && latestUnread.id !== latestNotification?.id) {
+        setLatestNotification(latestUnread);
+      }
+      
+      setLoading(false);
+    }, (error) => {
+      console.error('Error fetching notifications:', error);
+      setLoading(false);
+    });
+
+    return () => unsubscribe();
+  }, [user]);
+
+  const markAsRead = useCallback(async (notificationId) => {
+    if (!user) return;
+    
+    try {
+      const token = await user.getIdToken();
+      await fetch(`/api/notifications/${notificationId}`, {
+        method: 'PATCH',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ read: true }),
+      });
+    } catch (error) {
+      console.error('Error marking notification as read:', error);
+    }
+  }, [user]);
+
+  const deleteNotification = useCallback(async (notificationId) => {
+    if (!user) return;
+    
+    try {
+      const token = await user.getIdToken();
+      await fetch(`/api/notifications/${notificationId}`, {
+        method: 'DELETE',
+        headers: { 
+          'Authorization': `Bearer ${token}`
+        },
+      });
+    } catch (error) {
+      console.error('Error deleting notification:', error);
+      throw error;
+    }
+  }, [user]);
+
+  const clearLatestNotification = useCallback(() => {
+    setLatestNotification(null);
+  }, []);
+
+  return {
+    notifications,
+    unreadCount,
+    latestNotification,
+    loading,
+    markAsRead,
+    deleteNotification,
+    clearLatestNotification,
+  };
+}
+```
+
+#### 13.3.2: Update NotificationProvider
+
+**File:** `src/components/notifications/NotificationProvider.js`
+
+**Before:**
+```javascript
+import { useFCM } from '@/hooks/useFCM';
+import NotificationToast from './NotificationToast';
+
+export default function NotificationProvider({ children }) {
+  const { foregroundNotification, clearNotification } = useFCM();
+  
+  return (
+    <>
+      {children}
+      {foregroundNotification && (
+        <NotificationToast 
+          notification={foregroundNotification}
+          onClose={clearNotification}
+        />
+      )}
+    </>
+  );
+}
+```
+
+**After:**
+```javascript
+import { useNotifications } from '@/hooks/useNotifications';
+import NotificationToast from './NotificationToast';
+
+export default function NotificationProvider({ children }) {
+  const { latestNotification, clearLatestNotification, markAsRead } = useNotifications();
+  
+  const handleClose = () => {
+    if (latestNotification && !latestNotification.read) {
+      markAsRead(latestNotification.id);
+    }
+    clearLatestNotification();
+  };
+  
+  return (
+    <>
+      {children}
+      {latestNotification && (
+        <NotificationToast 
+          notification={latestNotification}
+          onClose={handleClose}
+        />
+      )}
+    </>
+  );
+}
+```
+
+#### 13.3.3: Update NotificationToast Component
+
+**File:** `src/components/notifications/NotificationToast.js`
+
+**Changes Required:**
+- Remove FCM-specific data structure (`notification.notification`)
+- Use direct notification properties (`notification.title`, `notification.body`)
+- Update actionUrl handling
+
+**Before:**
+```javascript
+<p className="text-sm font-medium text-gray-900 dark:text-white">
+  {notification.notification?.title}
+</p>
+<p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+  {notification.notification?.body}
+</p>
+```
+
+**After:**
+```javascript
+<p className="text-sm font-medium text-gray-900 dark:text-white">
+  {notification.title}
+</p>
+<p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+  {notification.body}
+</p>
+```
+
+#### 13.3.4: Update NotificationBell Component
+
+**File:** `src/components/notifications/NotificationBell.js`
+
+**Option 1: Use existing implementation (already works with Firestore)**
+- ✅ Already listens to Firestore real-time
+- ✅ Already shows unread count
+- ✅ No changes needed
+
+**Option 2: Use shared hook for consistency**
+```javascript
+import { useNotifications } from '@/hooks/useNotifications';
+
+export default function NotificationBell() {
+  const { unreadCount } = useNotifications();
+  
+  // ... rest of component (simplified, no separate listener)
+}
+```
+
+---
+
+### 13.4: Phase 3 - Update Server-Side Notification Sending ✅
+
+**Estimated Time:** 1-2 hours
+
+#### 13.4.1: Create New Server-Side Notification Utility
+
+**New File:** `src/utils/notifications/sendInAppNotification.js`
+
+```javascript
+import 'server-only';
+import { adminFirestore } from '@/lib/firebaseAdmin';
+import { FieldValue } from 'firebase-admin/firestore';
+
+/**
+ * Send in-app notification (Firestore only, no FCM)
+ * Saves notification to user's notifications subcollection
+ */
+export async function sendInAppNotification({ 
+  userId, 
+  title, 
+  body, 
+  actionUrl, 
+  icon, 
+  type,
+  metadata = {} 
+}) {
+  try {
+    console.log('[IN-APP NOTIFICATION] Sending to userId:', userId);
+    console.log('[IN-APP NOTIFICATION] Details:', { title, body, actionUrl, type });
+
+    if (!userId || !title || !body) {
+      throw new Error('Missing required fields: userId, title, and body');
+    }
+
+    const db = adminFirestore();
+    
+    // Create notification document
+    const notificationRef = db
+      .collection('users')
+      .doc(userId)
+      .collection('notifications')
+      .doc(); // Auto-generate ID
+
+    const notificationData = {
+      title,
+      body,
+      actionUrl: actionUrl || '/profile',
+      icon: icon || '/icon-192x192.png',
+      type: type || 'general',
+      read: false,
+      createdAt: FieldValue.serverTimestamp(),
+      metadata: metadata || {},
+    };
+
+    await notificationRef.set(notificationData);
+
+    console.log('[IN-APP NOTIFICATION] Notification saved successfully:', notificationRef.id);
+
+    return {
+      success: true,
+      notificationId: notificationRef.id,
+      message: 'In-app notification sent successfully'
+    };
+
+  } catch (error) {
+    console.error('[IN-APP NOTIFICATION] Error:', error);
+    return {
+      success: false,
+      error: error.message
+    };
+  }
+}
+```
+
+#### 13.4.2: Update Admin Report Actions
+
+**File:** `src/app/api/admin/reports/[reportId]/route.js`
+
+**Find and replace all instances:**
+
+**Before:**
+```javascript
+import { sendFCMNotificationServer } from '@/utils/notifications/sendFCMNotificationServer';
+
+// ... later in code
+await sendFCMNotificationServer({
+  userId: targetUserId,
+  title: notificationData.title,
+  body: notificationData.body,
+  actionUrl: notificationData.actionUrl,
+  icon: notificationData.icon,
+});
+```
+
+**After:**
+```javascript
+import { sendInAppNotification } from '@/utils/notifications/sendInAppNotification';
+
+// ... later in code
+await sendInAppNotification({
+  userId: targetUserId,
+  title: notificationData.title,
+  body: notificationData.body,
+  actionUrl: notificationData.actionUrl,
+  icon: notificationData.icon,
+  type: action === 'warned' ? 'warning' : 
+        action === 'removed' ? 'campaign-removed' : 
+        'campaign-restored',
+  metadata: {
+    reportId: reportData.id,
+    campaignId: reportData.campaignId,
+  }
+});
+```
+
+#### 13.4.3: Update Auto-Moderation Notifications
+
+**Files to Update:**
+- `src/app/api/reports/submit/route.js` (campaign reports auto-hide)
+- `src/app/api/reports/user/route.js` (profile reports auto-hide)
+
+**Replace:**
+```javascript
+import { sendFCMNotificationServer } from '@/utils/notifications/sendFCMNotificationServer';
+```
+
+**With:**
+```javascript
+import { sendInAppNotification } from '@/utils/notifications/sendInAppNotification';
+```
+
+**Update function calls accordingly.**
+
+---
+
+### 13.5: Phase 4 - Update Notification Templates ✅
+
+**File:** `src/utils/notifications/notificationTemplates.js`
+
+**Add Type Field to Templates:**
+
+```javascript
+export const notificationTemplates = {
+  campaignUnderReview: (campaignTitle) => ({
+    title: '⚠️ Campaign Under Review',
+    body: `Your campaign "${campaignTitle}" has been flagged by users and is now under review. We'll notify you of the outcome.`,
+    actionUrl: '/profile',
+    icon: '/icon-192x192.png',
+    type: 'campaign-under-review', // ✅ ADD THIS
+  }),
+
+  campaignRemoved: (campaignTitle, appealDeadline) => ({
+    title: '🚫 Campaign Removed',
+    body: `Your campaign "${campaignTitle}" has been removed. You can appeal this decision until ${appealDeadline}.`,
+    actionUrl: '/profile',
+    icon: '/icon-192x192.png',
+    type: 'campaign-removed', // ✅ ADD THIS
+  }),
+
+  // ... add type to ALL templates
+};
+```
+
+---
+
+### 13.6: Phase 5 - Clean Up Settings Page ✅
+
+**Estimated Time:** 30 minutes
+
+#### 13.6.1: Update Notification Settings
+
+**File:** `src/app/(chrome)/settings/notifications/page.js`
+
+**Remove FCM-specific features:**
+- ❌ Device token management
+- ❌ FCM enable/disable toggle
+- ❌ Browser permission request
+
+**Keep/Add:**
+- ✅ Per-notification-type preferences (localStorage-based)
+- ✅ Email notification preferences (future)
+- ✅ Notification frequency settings
+
+**Simplified Settings:**
+```javascript
+// Remove FCM device list
+// Remove permission request button
+// Keep notification type toggles:
+- Moderation updates
+- Campaign activity
+- Account security
+```
+
+---
+
+### 13.7: Phase 6 - Environment & Configuration Cleanup ✅
+
+**Estimated Time:** 15 minutes
+
+#### 13.7.1: Remove FCM Environment Variables
+
+**From Vercel Environment Variables (User Action Required):**
+```bash
+# Can optionally remove (but won't break if kept):
+NEXT_PUBLIC_FIREBASE_VAPID_KEY
+```
+
+#### 13.7.2: Update Documentation
+
+**Files to Update:**
+- `CODEBASE_STRUCTURE.md` - Remove FCM references
+- `NOTIFICATION_SYSTEM_FIXES.md` - Mark as deprecated/replaced
+- `replit.md` - Update notification system description
+- `CAMPAIGN_SYSTEM.md` - Update notification section
+
+---
+
+### 13.8: Testing Checklist ✅
+
+**Manual Testing Required:**
+
+#### 13.8.1: Basic Functionality
+- [ ] Create campaign → No permission popup appears
+- [ ] Report a campaign (3+ reports) → Creator gets in-app notification
+- [ ] Admin dismisses report → Creator gets "Restored" notification
+- [ ] Admin issues warning → Creator gets "Warning" notification
+- [ ] Admin removes campaign → Creator gets "Removed" notification
+
+#### 13.8.2: Notification Display
+- [ ] NotificationBell shows correct unread count
+- [ ] NotificationToast appears for new notifications
+- [ ] Toast auto-dismisses after 5 seconds
+- [ ] Clicking toast navigates to actionUrl
+- [ ] Notification marked as read after viewing
+
+#### 13.8.3: Notification Inbox
+- [ ] `/profile/notifications` shows all notifications
+- [ ] Real-time updates work (send notification, appears instantly)
+- [ ] Filter by type works correctly
+- [ ] Mark as read works
+- [ ] Delete notification works
+- [ ] Empty state displays correctly
+
+#### 13.8.4: Error Scenarios
+- [ ] No JavaScript errors in console
+- [ ] No FCM-related warnings
+- [ ] Works without internet (after initial load)
+- [ ] Works in incognito mode (no permission issues)
+
+---
+
+### 13.9: Migration Rollout Plan ✅
+
+**Recommended Strategy:**
+
+#### Step 1: Deploy New System Alongside FCM
+- Deploy in-app notification system
+- Keep FCM running (dual notifications)
+- Monitor for 48 hours
+
+#### Step 2: Disable FCM Sending
+- Comment out FCM sending code
+- Keep FCM infrastructure
+- Monitor in-app notifications only for 48 hours
+
+#### Step 3: Full FCM Removal
+- Delete all FCM files
+- Remove imports
+- Update documentation
+- Deploy final version
+
+#### Step 4: Announcement
+- Notify users via dashboard banner
+- "We've simplified notifications - no browser permissions needed!"
+- Link to `/profile/notifications` inbox
+
+---
+
+### 13.10: File Changes Summary
+
+#### Files to DELETE (9 files):
+```
+src/app/firebase-messaging-sw/route.js
+src/hooks/useFCM.js
+src/app/api/notifications/register-token/route.js
+src/app/api/notifications/remove-token/route.js
+src/utils/notifications/sendFCMNotificationServer.js
+src/components/notifications/NotificationPermissionModal.js
+src/components/notifications/NotificationBanner.js
+```
+
+#### Files to CREATE (1 file):
+```
+src/hooks/useNotifications.js
+src/utils/notifications/sendInAppNotification.js
+```
+
+#### Files to MODIFY (8+ files):
+```
+src/lib/firebase-optimized.js                          # Remove messaging import
+src/components/notifications/NotificationProvider.js   # Use useNotifications hook
+src/components/notifications/NotificationToast.js      # Update data structure
+src/components/notifications/NotificationBell.js       # Optional: use shared hook
+src/app/api/admin/reports/[reportId]/route.js         # Use sendInAppNotification
+src/app/api/reports/submit/route.js                   # Use sendInAppNotification
+src/app/api/reports/user/route.js                     # Use sendInAppNotification
+src/utils/notifications/notificationTemplates.js      # Add type field
+src/app/(chrome)/settings/notifications/page.js       # Remove FCM features
+CODEBASE_STRUCTURE.md                                 # Update docs
+NOTIFICATION_SYSTEM_FIXES.md                          # Mark deprecated
+replit.md                                             # Update system description
+CAMPAIGN_SYSTEM.md                                    # Update notification docs
+```
+
+---
+
+### 13.11: Risk Assessment & Mitigation
+
+#### Risks:
+1. **User Notification Loss During Migration**
+   - Mitigation: Run dual system initially
+   - Keep FCM database for 30 days
+
+2. **Real-time Updates Not Working**
+   - Mitigation: Extensive testing before deployment
+   - Fallback to polling if needed
+
+3. **Performance Impact (Real-time Listeners)**
+   - Mitigation: Limit query to 50 most recent notifications
+   - Add pagination if needed
+
+4. **Browser Compatibility**
+   - Mitigation: Firestore works on all modern browsers
+   - No service worker = better compatibility
+
+---
+
+### 13.12: Success Metrics
+
+**After Migration:**
+- ✅ Zero FCM dependencies in codebase
+- ✅ Zero browser permission requests
+- ✅ 100% notification delivery to active users
+- ✅ <100ms notification display latency (real-time)
+- ✅ Reduced bundle size (~50KB smaller without FCM SDK)
+- ✅ Simpler codebase (fewer files, clearer logic)
+
+---
+
+### 13.13: Post-Migration Enhancements (Optional)
+
+**Future Improvements:**
+1. **Sound Notifications** (optional in-app sound)
+2. **Notification Grouping** (group by campaign/type)
+3. **Notification Preferences** (granular control)
+4. **Email Notifications** (backup for critical alerts)
+5. **Notification History Export** (download as JSON)
+
+---
+
+**End of Section 13: FCM to In-App Notification Migration**
+
+---
+
 **End of TASKS.md**
