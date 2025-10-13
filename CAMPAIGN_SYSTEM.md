@@ -146,45 +146,37 @@ Twibbonize supports two campaign types:
 
 ---
 
-### Notifications System (FCM - Firebase Cloud Messaging)
-✅ **Status: Backend Infrastructure Implemented** (October 09, 2025) | ⏸️ **UI Integration Pending**
+### In-App Notifications System
+✅ **Status: Fully Implemented** (October 2025)
 
-**Push Notification Data Payload:**
+**Notification Document (Firestore: `users/{userId}/notifications/{notificationId}`):**
 ```javascript
 {
-  notification: {
-    title: string,                       // Notification title
-    body: string,                        // Notification message
-    image?: string,                      // Optional image URL
-  },
-  data: {
-    type: "warning" | "campaign_removed" | "campaign_under_review" | "profile_under_review" | "account_banned" | "appeal_deadline",
-    actionUrl: string,                   // Deep link to take action
-    actionLabel: string,                 // "Appeal Removal", "View Campaign", etc.
-    campaignId?: string,
-    reportId?: string,
-    appealDeadline?: string,             // ISO timestamp
-  },
-  token: string,                         // User's FCM device token
-}
-```
-
-**FCM Device Tokens (Firestore: `users/{userId}/tokens`):**
-```javascript
-{
-  token: string,                         // FCM device token
-  device: string,                        // "web" | "android" | "ios"
-  createdAt: timestamp,
-  lastUsed: timestamp,
+  id: string,                            // Auto-generated notification ID
+  type: "warning" | "campaign_removed" | "campaign_under_review" | "profile_under_review" | "account_banned" | "appeal_deadline",
+  title: string,                         // Notification title
+  message: string,                       // Notification message
+  actionUrl: string,                     // Deep link to take action
+  actionLabel: string,                   // "Appeal Removal", "View Campaign", etc.
+  
+  // Optional metadata
+  campaignId?: string,
+  reportId?: string,
+  appealDeadline?: timestamp,            // ISO timestamp
+  
+  // Status tracking
+  read: boolean,                         // User has read the notification
+  createdAt: timestamp,                  // When notification was sent
 }
 ```
 
 **Purpose:**
-- Push notifications using Firebase Cloud Messaging (FCM)
-- Notify users about moderation actions in real-time
-- Support web push, Android, and iOS notifications
-- Include action buttons (appeal, view details) via deep links
-- Tokens stored in user subcollection for multi-device support
+- In-app notifications delivered via Firestore real-time listeners
+- Notify users about moderation actions instantly
+- No browser permissions required
+- Notifications appear in NotificationBell and inbox at `/profile/notifications`
+- Users can mark as read, delete, and filter by type
+- Toast notifications show latest unread notification automatically
 
 ---
 
