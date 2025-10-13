@@ -39,7 +39,7 @@ export function useNotifications() {
   const [latestNotification, setLatestNotification] = useState(null);
   const [loading, setLoading] = useState(true);
   const lastNotificationIdRef = useRef(null);
-  const hasShownToastRef = useRef(false);
+  const isInitialLoadRef = useRef(true);
 
   useEffect(() => {
     if (!user) {
@@ -47,7 +47,7 @@ export function useNotifications() {
       setUnreadCount(0);
       setLoading(false);
       lastNotificationIdRef.current = null;
-      hasShownToastRef.current = false;
+      isInitialLoadRef.current = true;
       return;
     }
 
@@ -70,20 +70,16 @@ export function useNotifications() {
       // Find the latest unread notification that hasn't been dismissed
       const latestUnread = notificationsList.find(n => !n.read && !dismissedIds.includes(n.id));
       
-      // Only show toast if:
-      // 1. There's an unread notification
-      // 2. It's different from the last one we showed
-      // 3. We haven't shown a toast yet in this session (prevents duplicate on initial load)
-      if (latestUnread && latestUnread.id !== lastNotificationIdRef.current) {
-        // On first load, don't show toast immediately (prevents showing old notifications on refresh)
-        if (!hasShownToastRef.current && !loading) {
-          hasShownToastRef.current = true;
+      // On the very first load, just record the latest notification ID without showing toast
+      if (isInitialLoadRef.current) {
+        if (latestUnread) {
           lastNotificationIdRef.current = latestUnread.id;
-        } else if (hasShownToastRef.current) {
-          // This is a NEW notification (created after page load)
-          lastNotificationIdRef.current = latestUnread.id;
-          setLatestNotification(latestUnread);
         }
+        isInitialLoadRef.current = false;
+      } else if (latestUnread && latestUnread.id !== lastNotificationIdRef.current) {
+        // This is a truly NEW notification (arrived after initial load)
+        lastNotificationIdRef.current = latestUnread.id;
+        setLatestNotification(latestUnread);
       }
       
       setLoading(false);
