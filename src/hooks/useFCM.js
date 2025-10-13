@@ -60,6 +60,30 @@ export function useFCM() {
         if (token) {
           setFcmToken(token);
           console.log('Existing FCM token retrieved:', token);
+          
+          // Re-register the token to ensure it exists in Firestore
+          // This handles cases where token was deleted server-side but still exists client-side
+          const browser = navigator.userAgent.includes('Chrome') ? 'Chrome' :
+                         navigator.userAgent.includes('Firefox') ? 'Firefox' :
+                         navigator.userAgent.includes('Safari') ? 'Safari' : 'Unknown';
+          
+          try {
+            console.log('Re-registering existing token with server...');
+            await fetch('/api/notifications/register-token', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                userId: user.uid,
+                token,
+                device: 'web',
+                browser
+              }),
+            });
+            console.log('Existing token re-registered successfully');
+          } catch (regError) {
+            console.error('Error re-registering existing token:', regError);
+            // Don't throw - token is still usable locally
+          }
         }
       } catch (error) {
         console.error('Error retrieving existing FCM token:', error);
