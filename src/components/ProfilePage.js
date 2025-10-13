@@ -466,11 +466,7 @@ export default function ProfilePage({ isOwnProfile = false, username = null }) {
         profileUrl={`${typeof window !== "undefined" ? window.location.origin : ""}/u/${userData?.username || ""}`}
         displayName={userData?.displayName || "User"}
         username={userData?.username || "user"}
-        profileImage={
-          userData?.profileImage
-            ? getProfileAvatar(userData.profileImage)
-            : null
-        }
+        profileImage={userData?.profileImage || null}
       />
     </div>
   );
