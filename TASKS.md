@@ -682,7 +682,7 @@ await sendInAppNotification(userId, {
      - Set `banReason` from report reason
      - Calculate `appealDeadline` (30 days from ban)
      - Hide all user's campaigns from public
-     - Send FCM notification with appeal link
+     - Send in-app notification with appeal link
      - User can appeal within 30 days
      - After 30 days with no appeal → Permanent ban (requires cron job - see Phase 5)
 
@@ -832,8 +832,8 @@ UNCHANGED:
 
 **Content:**
 
-**Section 1: Push Notifications (Migrated from current `/settings`)**
-- ✅ Master push notification toggle
+**Section 1: In-App Notifications (from current `/settings`)**
+- ✅ Master notification toggle
 - ✅ Browser permission status display
 - ✅ Active devices list
 - ✅ Device management (remove devices)
@@ -964,7 +964,7 @@ UNCHANGED:
 **Step 2: Create Notification Settings Page**
 - [ ] Create `/app/(chrome)/settings/notifications/page.js`
 - [ ] Migrate notification preferences from current `/settings`
-- [ ] Add Section 1: Push Notifications (master toggle, devices, permissions)
+- [ ] Add Section 1: In-App Notifications (master toggle, notification preferences)
 - [ ] Add Section 2: Notification Type Preferences (per-type toggles)
 - [ ] Add API route for saving notification preferences
 
@@ -1040,7 +1040,7 @@ UNCHANGED:
 │ 🔔 Notif...   │  [Notification Settings │
 │              │   Content Area]         │
 │ 🔒 Account    │                          │
-│   (grayed)   │  Push notifications,    │
+│   (grayed)   │  In-app notifications,   │
 │              │  Preferences, Devices   │
 │ 🔐 Privacy    │                          │
 │   (grayed)   │  [Save Button]          │
@@ -1057,7 +1057,7 @@ UNCHANGED:
 │                                         │
 │  [Notification Settings Content]        │
 │                                         │
-│  Push notifications, devices, prefs     │
+│  In-app notifications, preferences      │
 │                                         │
 │  [Save Button]                          │
 └─────────────────────────────────────────┘

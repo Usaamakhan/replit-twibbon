@@ -225,7 +225,7 @@ Server-side admin operations (protected by admin middleware).
 
 ### 📁 `/src/app/api/notifications` - In-App Notifications
 
-Firestore-based in-app notification system (no FCM/browser permissions).
+Firestore-based in-app notification system (no browser permissions required).
 
 #### 📁 **`/[notificationId]`**
 - **`route.js`** - PATCH: Mark notification as read/unread, DELETE: Delete notification
@@ -530,7 +530,7 @@ Located in `/src/utils/notifications/`:
 - **Tailwind CSS 4** - Utility-first CSS
 
 ### Backend Services
-- **Firebase** - Authentication and Firestore database (no FCM)
+- **Firebase** - Authentication and Firestore database
 - **Supabase** - Object storage for images with CDN
 - **ImageKit.io** - Image optimization (deprecated in favor of Supabase CDN)
 
@@ -554,7 +554,6 @@ Located in `/src/utils/notifications/`:
 - `NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET`
 - `NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID`
 - `NEXT_PUBLIC_FIREBASE_APP_ID`
-- `NEXT_PUBLIC_FIREBASE_VAPID_KEY` - **OBSOLETE** (removed with FCM migration)
 - `FIREBASE_SERVICE_ACCOUNT_KEY` (JSON string)
 
 ### Supabase
@@ -605,7 +604,7 @@ Located in `/src/utils/notifications/`:
 - Warnings collection and tracking
 
 **In-App Notifications:**
-- ✅ Real-time Firestore notifications (no FCM/browser permissions)
+- ✅ Real-time Firestore notifications (no browser permissions required)
 - ✅ Notification templates for all moderation actions
 - ✅ In-app notification inbox at `/profile/notifications` (read/unread, filter, delete)
 - ✅ Notification history saved to Firestore (`users/{userId}/notifications`)
