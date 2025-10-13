@@ -246,6 +246,7 @@ export async function PATCH(request, context) {
             
             userUpdates.banned = true;
             userUpdates.bannedAt = new Date();
+            userUpdates.bannedBy = adminUser.uid;
             userUpdates.banReason = reportData.reason;
             userUpdates.appealDeadline = appealDeadline;
           }
