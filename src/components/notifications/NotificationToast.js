@@ -10,7 +10,7 @@ export default function NotificationToast({ notification, onClose }) {
   useEffect(() => {
     const timer = setTimeout(() => {
       handleClose();
-    }, 5000);
+    }, 10000);
     
     return () => clearTimeout(timer);
   }, []);

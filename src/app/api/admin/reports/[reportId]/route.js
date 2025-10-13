@@ -334,7 +334,7 @@ export async function PATCH(request, context) {
           icon: notificationData.icon,
           type: notificationData.type || 'general',
           metadata: {
-            reportId: reportData.id,
+            reportId: reportId,
             campaignId: reportData.campaignId,
             action,
             status,

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { collection, query, orderBy, onSnapshot, limit } from 'firebase/firestore';
 import { db } from '@/lib/firebase-optimized';
@@ -11,12 +11,14 @@ export function useNotifications() {
   const [unreadCount, setUnreadCount] = useState(0);
   const [latestNotification, setLatestNotification] = useState(null);
   const [loading, setLoading] = useState(true);
+  const lastNotificationIdRef = useRef(null);
 
   useEffect(() => {
     if (!user) {
       setNotifications([]);
       setUnreadCount(0);
       setLoading(false);
+      lastNotificationIdRef.current = null;
       return;
     }
 
@@ -34,7 +36,8 @@ export function useNotifications() {
       setUnreadCount(notificationsList.filter(n => !n.read).length);
       
       const latestUnread = notificationsList.find(n => !n.read);
-      if (latestUnread && latestUnread.id !== latestNotification?.id) {
+      if (latestUnread && latestUnread.id !== lastNotificationIdRef.current) {
+        lastNotificationIdRef.current = latestUnread.id;
         setLatestNotification(latestUnread);
       }
       
@@ -45,7 +48,7 @@ export function useNotifications() {
     });
 
     return () => unsubscribe();
-  }, [user, latestNotification?.id]);
+  }, [user]);
 
   const markAsRead = useCallback(async (notificationId) => {
     if (!user) return;
