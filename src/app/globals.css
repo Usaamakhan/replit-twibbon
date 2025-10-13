@@ -183,7 +183,7 @@ body {
 }
 
 .animate-toast-progress {
-  animation: toast-progress 5s linear forwards;
+  animation: toast-progress 10s linear forwards;
 }
 
 /* Hide scrollbar for horizontal scrolling on mobile tabs */

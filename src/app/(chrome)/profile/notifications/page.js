@@ -58,9 +58,6 @@ export default function NotificationsInboxPage() {
   const filteredNotifications = notifications.filter(notification => {
     if (filter === 'all') return true;
     if (filter === 'unread') return !notification.read;
-    if (filter === 'warnings') return notification.type === 'warning';
-    if (filter === 'removals') return notification.type === 'campaign-removed' || notification.type === 'account-banned';
-    if (filter === 'restorations') return notification.type === 'campaign-restored' || notification.type === 'profile-restored';
     return true;
   });
   
@@ -240,36 +237,6 @@ export default function NotificationsInboxPage() {
                 }`}
               >
                 Unread {unreadCount > 0 && `(${unreadCount})`}
-              </button>
-              <button
-                onClick={() => setFilter('warnings')}
-                className={`px-4 py-2 rounded-full text-sm font-medium transition-colors whitespace-nowrap ${
-                  filter === 'warnings' 
-                    ? 'bg-emerald-600 text-white' 
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                }`}
-              >
-                Warnings
-              </button>
-              <button
-                onClick={() => setFilter('removals')}
-                className={`px-4 py-2 rounded-full text-sm font-medium transition-colors whitespace-nowrap ${
-                  filter === 'removals' 
-                    ? 'bg-emerald-600 text-white' 
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                }`}
-              >
-                Removals
-              </button>
-              <button
-                onClick={() => setFilter('restorations')}
-                className={`px-4 py-2 rounded-full text-sm font-medium transition-colors whitespace-nowrap ${
-                  filter === 'restorations' 
-                    ? 'bg-emerald-600 text-white' 
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                }`}
-              >
-                Restorations
               </button>
             </div>
             
