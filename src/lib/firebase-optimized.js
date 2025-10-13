@@ -4,7 +4,7 @@
 import { initializeApp, getApps, getApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
-import { useState, useEffect } from 'react';
+import { useState, useEffect } from "react";
 
 // Module-level Firebase instances (initialized immediately on client)
 let firebaseApp = null;
@@ -16,7 +16,7 @@ let isConfigured = false;
 // Initialize Firebase immediately at module load (client-side only)
 const initializeFirebaseModule = () => {
   // Only run on client
-  if (typeof window === 'undefined') {
+  if (typeof window === "undefined") {
     return;
   }
 
@@ -30,13 +30,22 @@ const initializeFirebaseModule = () => {
     const apiKey = process.env.NEXT_PUBLIC_FIREBASE_API_KEY;
     const projectId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
     const appId = process.env.NEXT_PUBLIC_FIREBASE_APP_ID;
-    const messagingSenderId = process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID;
+    const messagingSenderId =
+      process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID;
 
     // Check if Firebase should be disabled
-    if (!apiKey || !projectId || !appId || 
-        apiKey === 'not needed' || projectId === 'not needed' || appId === 'not needed' ||
-        apiKey === '' || projectId === '' || appId === '') {
-      console.log('Firebase disabled - no valid configuration found');
+    if (
+      !apiKey ||
+      !projectId ||
+      !appId ||
+      apiKey === "not needed" ||
+      projectId === "not needed" ||
+      appId === "not needed" ||
+      apiKey === "" ||
+      projectId === "" ||
+      appId === ""
+    ) {
+      console.log("Firebase disabled - no valid configuration found");
       isInitialized = true;
       isConfigured = false;
       return;
@@ -55,13 +64,13 @@ const initializeFirebaseModule = () => {
     firebaseApp = getApps().length ? getApp() : initializeApp(firebaseConfig);
     firebaseAuth = getAuth(firebaseApp);
     firebaseDb = getFirestore(firebaseApp);
-    
-    // FCM removed - using in-app notifications only
-    
+
+    // using in-app notifications only
+
     isInitialized = true;
     isConfigured = true;
   } catch (error) {
-    console.error('Firebase initialization failed:', error);
+    console.error("Firebase initialization failed:", error);
     isInitialized = true;
     isConfigured = false;
   }
@@ -83,7 +92,7 @@ export const useFirebaseOptimized = () => {
   useEffect(() => {
     // Ensure Firebase is initialized (should already be done at module load)
     initializeFirebaseModule();
-    
+
     // Update state with initialized instances
     setFirebase({
       app: firebaseApp,

@@ -1,42 +1,47 @@
-import 'server-only';
-import { adminFirestore } from '@/lib/firebaseAdmin';
-import { FieldValue } from 'firebase-admin/firestore';
+import "server-only";
+import { adminFirestore } from "@/lib/firebaseAdmin";
+import { FieldValue } from "firebase-admin/firestore";
 
 /**
- * Send in-app notification (Firestore only, no FCM)
+ * Send in-app notification (Firestore only)
  * Saves notification to user's notifications subcollection
  */
-export async function sendInAppNotification({ 
-  userId, 
-  title, 
-  body, 
-  actionUrl, 
-  icon, 
+export async function sendInAppNotification({
+  userId,
+  title,
+  body,
+  actionUrl,
+  icon,
   type,
-  metadata = {} 
+  metadata = {},
 }) {
   try {
-    console.log('[IN-APP NOTIFICATION] Sending to userId:', userId);
-    console.log('[IN-APP NOTIFICATION] Details:', { title, body, actionUrl, type });
+    console.log("[IN-APP NOTIFICATION] Sending to userId:", userId);
+    console.log("[IN-APP NOTIFICATION] Details:", {
+      title,
+      body,
+      actionUrl,
+      type,
+    });
 
     if (!userId || !title || !body) {
-      throw new Error('Missing required fields: userId, title, and body');
+      throw new Error("Missing required fields: userId, title, and body");
     }
 
     const db = adminFirestore();
-    
+
     const notificationRef = db
-      .collection('users')
+      .collection("users")
       .doc(userId)
-      .collection('notifications')
+      .collection("notifications")
       .doc();
 
     const notificationData = {
       title,
       body,
-      actionUrl: actionUrl || '/profile',
-      icon: icon || '/icon-192x192.png',
-      type: type || 'general',
+      actionUrl: actionUrl || "/profile",
+      icon: icon || "/icon-192x192.png",
+      type: type || "general",
       read: false,
       createdAt: FieldValue.serverTimestamp(),
       metadata: metadata || {},
@@ -44,19 +49,21 @@ export async function sendInAppNotification({
 
     await notificationRef.set(notificationData);
 
-    console.log('[IN-APP NOTIFICATION] Notification saved successfully:', notificationRef.id);
+    console.log(
+      "[IN-APP NOTIFICATION] Notification saved successfully:",
+      notificationRef.id,
+    );
 
     return {
       success: true,
       notificationId: notificationRef.id,
-      message: 'In-app notification sent successfully'
+      message: "In-app notification sent successfully",
     };
-
   } catch (error) {
-    console.error('[IN-APP NOTIFICATION] Error:', error);
+    console.error("[IN-APP NOTIFICATION] Error:", error);
     return {
       success: false,
-      error: error.message
+      error: error.message,
     };
   }
 }
