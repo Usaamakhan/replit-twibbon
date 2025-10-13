@@ -106,10 +106,10 @@ export default function ShareModal({
               <img
                 src={shareImage}
                 alt={shareTitle}
-                className={`mx-auto mb-3 object-cover border-4 border-gray-100 ${
+                className={`mx-auto mb-3 border-4 border-gray-100 ${
                   isProfile 
-                    ? "w-20 h-20 rounded-full" 
-                    : "w-32 h-32 rounded-lg"
+                    ? "w-20 h-20 rounded-full object-cover" 
+                    : "max-w-32 max-h-32 rounded-lg object-contain"
                 }`}
               />
             ) : (
