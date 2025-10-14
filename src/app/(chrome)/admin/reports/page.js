@@ -13,7 +13,7 @@ export default function AdminReportsPage() {
   const [filters, setFilters] = useState({
     targetType: 'all',
     status: 'pending',
-    sortBy: 'lastReportedAt',
+    sortBy: 'reportCount',
   });
 
   const fetchGroupedReports = async () => {
