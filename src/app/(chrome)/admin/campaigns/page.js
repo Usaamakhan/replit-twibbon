@@ -11,7 +11,7 @@ export default function AdminCampaignsPage() {
   const [filters, setFilters] = useState({
     moderationStatus: 'all',
     sortBy: 'createdAt',
-    limit: 50,
+    limit: 10,
   });
 
   const fetchCampaigns = async () => {
@@ -111,9 +111,9 @@ export default function AdminCampaignsPage() {
               min="1"
               max="500"
               value={filters.limit}
-              onChange={(e) => setFilters({ ...filters, limit: parseInt(e.target.value) || 50 })}
+              onChange={(e) => setFilters({ ...filters, limit: parseInt(e.target.value) || 10 })}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-500 text-gray-900 bg-white"
-              placeholder="50"
+              placeholder="10"
             />
           </div>
 

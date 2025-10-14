@@ -12,7 +12,7 @@ export default function AdminUsersPage() {
   const [selectedUser, setSelectedUser] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [roleFilter, setRoleFilter] = useState('admin');
-  const [limit, setLimit] = useState(50);
+  const [limit, setLimit] = useState(10);
 
   const fetchUsers = async () => {
     if (!user) return;
@@ -103,9 +103,9 @@ export default function AdminUsersPage() {
               min="1"
               max="500"
               value={limit}
-              onChange={(e) => setLimit(parseInt(e.target.value) || 50)}
+              onChange={(e) => setLimit(parseInt(e.target.value) || 10)}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-500 text-gray-900 bg-white"
-              placeholder="50"
+              placeholder="10"
             />
           </div>
 
