@@ -78,30 +78,47 @@ Twibbonize supports two campaign types:
 
 ---
 
-### Reports Collection (Firestore: `reports`)
-✅ **Status: Implemented** | 🔄 **Updated: Profile Reports (Oct 2025)**
+### Report Summary Collection (Firestore: `reportSummary`)
+✅ **Status: Implemented** | 🔄 **Updated: Reason Counts Optimization (Oct 14, 2025)**
 
 ```javascript
 {
-  type: "campaign" | "profile",          // NEW: Report type
+  targetId: string,                      // campaignId or userId
+  targetType: "campaign" | "user",
+  reportCount: number,                   // Total active reports
   
-  // Campaign reports (when type = "campaign")
-  campaignId: string,                    // Optional (campaign reports only)
-  campaignSlug: string,                  // Optional (campaign reports only)
+  // NEW: Reason breakdown with counts
+  reasonCounts: {
+    spam: 8,                             // Example: 8 spam reports
+    inappropriate: 5,                    // 5 inappropriate reports
+    copyright: 2,                        // 2 copyright reports
+    ...                                  // Other reasons with counts
+  },
   
-  // Profile reports (when type = "profile")
-  reportedUserId: string,                // Optional (profile reports only)
-  reportedUsername: string,              // Optional (profile reports only)
-  
-  // Common fields
-  reportedBy: "user-id" | "anonymous",   // Anonymous allowed
-  reason: string,                        // Varies by type
-  details: "Optional explanation",
-  status: "pending" | "reviewed" | "resolved" | "dismissed",
+  // Timestamps
+  firstReportedAt: timestamp,            // First report time
+  lastReportedAt: timestamp,             // Most recent report time
   createdAt: timestamp,
-  reviewedAt: timestamp,                 // Optional
-  reviewedBy: "admin-user-id",           // Optional
-  action: "warned" | "removed" | "no-action"  // Optional
+  updatedAt: timestamp,
+  resolvedAt: timestamp,                 // When admin took action
+  
+  // Status
+  status: "pending" | "resolved" | "dismissed",
+  
+  // Cached display data (for quick access)
+  // For campaigns:
+  campaignTitle?: string,
+  campaignImage?: string,
+  campaignSlug?: string,
+  campaignType?: string,
+  creatorId?: string,
+  moderationStatus?: string,
+  
+  // For users:
+  username?: string,
+  displayName?: string,
+  profileImage?: string,
+  accountStatus?: string,
 }
 ```
 
@@ -119,6 +136,13 @@ Twibbonize supports two campaign types:
 - `spam_bio` - Spam in Bio/Description
 - `impersonation` - Impersonation
 - `other` - Other
+
+**Key Features:**
+- No individual report documents - all tracked in aggregated summary
+- Reason counts show breakdown of why content was reported
+- Admin sees percentage distribution (e.g., "80% spam, 20% inappropriate")
+- Resets to 0 when admin takes action (dismiss/warn/remove)
+- 95% reduction in Firestore reads/writes for admin actions
 
 ---
 

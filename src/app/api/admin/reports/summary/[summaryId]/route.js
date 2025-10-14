@@ -34,17 +34,6 @@ export async function PATCH(request, { params }) {
     const summaryData = summaryDoc.data();
     const { targetId, targetType } = summaryData;
     
-    // Get all pending reports for this target
-    let reportsQuery = db.collection('reports').where('status', '==', 'pending');
-    
-    if (targetType === 'campaign') {
-      reportsQuery = reportsQuery.where('campaignId', '==', targetId);
-    } else if (targetType === 'user') {
-      reportsQuery = reportsQuery.where('reportedUserId', '==', targetId);
-    }
-    
-    const reportsSnapshot = await reportsQuery.get();
-    
     // Use transaction to update everything atomically
     await db.runTransaction(async (transaction) => {
       const targetRef = targetType === 'campaign' 
@@ -59,16 +48,6 @@ export async function PATCH(request, { params }) {
       
       const targetData = targetDoc.data();
       const now = new Date();
-      
-      // Update all reports
-      reportsSnapshot.docs.forEach(reportDoc => {
-        transaction.update(reportDoc.ref, {
-          status,
-          action,
-          reviewedAt: now,
-          reviewedBy: request.headers.get('x-user-id') || 'admin',
-        });
-      });
       
       // Update the target based on action - ALWAYS reset reportsCount to 0
       const targetUpdates = {
@@ -117,10 +96,11 @@ export async function PATCH(request, { params }) {
       
       transaction.update(targetRef, targetUpdates);
       
-      // Update summary - reset reportCount to 0
+      // Update summary - reset reportCount and reasonCounts to 0
       transaction.update(summaryRef, {
         status: action === 'no-action' ? 'dismissed' : 'resolved',
         reportCount: 0,
+        reasonCounts: {},
         updatedAt: now,
       });
     });

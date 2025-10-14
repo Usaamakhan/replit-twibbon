@@ -15,7 +15,6 @@ export default function ReportModal({
 }) {
   const { user } = useAuth();
   const [reportReason, setReportReason] = useState('');
-  const [reportDetails, setReportDetails] = useState('');
   const [reportSubmitting, setReportSubmitting] = useState(false);
   const [reportSuccess, setReportSuccess] = useState(false);
   const [error, setError] = useState('');
@@ -62,8 +61,7 @@ export default function ReportModal({
           reportedUserId,
           reportedUsername,
           reportedBy: user?.uid || 'anonymous',
-          reason: reportReason,
-          details: reportDetails
+          reason: reportReason
         };
         endpoint = '/api/reports/user';
       } else {
@@ -71,8 +69,7 @@ export default function ReportModal({
           campaignId,
           campaignSlug,
           reportedBy: user?.uid || 'anonymous',
-          reason: reportReason,
-          details: reportDetails
+          reason: reportReason
         };
         endpoint = '/api/reports/submit';
       }
@@ -103,7 +100,6 @@ export default function ReportModal({
 
   const handleClose = () => {
     setReportReason('');
-    setReportDetails('');
     setError('');
     setReportSuccess(false);
     onClose();
@@ -173,20 +169,7 @@ export default function ReportModal({
                   </select>
                 </div>
                 
-                <div className="mb-6">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Additional Details (Optional)
-                  </label>
-                  <textarea
-                    value={reportDetails}
-                    onChange={(e) => setReportDetails(e.target.value)}
-                    rows={3}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all resize-none text-gray-900 bg-white"
-                    placeholder="Provide more context about your report..."
-                  />
-                </div>
-                
-                <div className="flex gap-3">
+                <div className="flex gap-3 mt-6">
                   <button
                     type="button"
                     onClick={handleClose}

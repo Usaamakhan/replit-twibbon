@@ -98,51 +98,56 @@ Conducted comprehensive documentation audit comparing actual codebase against al
 
 ## Recent Updates (October 14, 2025)
 
-### Grouped Reporting System Optimization
-Implemented a highly optimized grouped reporting system that reduces Firestore reads by ~95% (from 1000+ reads to 10-30 reads per page load).
+### Reporting System with Reason Counts Optimization
+Implemented an optimized reporting system using reason counts instead of individual report documents, reducing Firestore operations by ~95%.
 
 **Implementation Details:**
-1. **reportSummary Aggregated Collection:**
-   - New Firestore collection that aggregates reports by target (campaign or user)
-   - Schema includes: `targetId`, `targetType`, `reportCount`, `status`, `firstReportedAt`, `lastReportedAt`
+1. **reportSummary with Reason Counts:**
+   - Single aggregated collection that tracks reports by target (campaign or user)
+   - Schema includes: `targetId`, `targetType`, `reportCount`, `reasonCounts`, `status`, `firstReportedAt`, `lastReportedAt`
+   - `reasonCounts` object stores breakdown (e.g., `{spam: 8, inappropriate: 5, copyright: 2}`)
    - Display data cached in summary for quick access (title, image, creator info)
-   - `reportCount` resets to 0 when admin takes any action (dismiss/warn/remove)
+   - All counts reset to 0 when admin takes action (dismiss/warn/remove)
 
-2. **Report Submission Updates:**
-   - Both `/api/reports/submit` and `/api/reports/user` maintain reportSummary collection
-   - Atomic transactions ensure consistency between individual reports and summaries
+2. **No Individual Reports:**
+   - Removed individual report documents entirely
+   - Report submission only increments reason counts in reportSummary
+   - Atomic transactions ensure consistency
    - Status automatically resets to 'pending' when new reports filed against resolved entities
 
-3. **Admin API Endpoints:**
-   - `/api/admin/reports/grouped`: Fetches paginated summaries (max 10) with filters (type, status, sort)
-   - `/api/admin/reports/details`: Lazy-loads individual report details on demand
-   - Support for sorting by top reported, most recent, or oldest pending
+3. **Report Submission:**
+   - User selects reason from dropdown (required field)
+   - No details/text field - just reason selection
+   - Backend increments specific reason count in reportSummary
+   - 2 writes per report instead of 3 (33% reduction)
 
-4. **GroupedReportsTable Component:**
-   - Displays aggregated report summaries with expand/collapse functionality
-   - Individual reports loaded only when admin expands a row (lazy loading)
-   - Shows report count, pending count, and moderation status at a glance
+4. **Admin API Endpoints:**
+   - `/api/admin/reports/grouped`: Fetches paginated summaries (max 10) with filters
+   - `/api/admin/reports/summary/[summaryId]`: Admin actions (dismiss/warn/remove)
+   - Removed: `/api/admin/reports/details` (no longer needed)
+   - Removed: `/api/admin/reports/[reportId]` (no individual reports)
 
-5. **Admin Reports Page Updates:**
-   - Replaced individual report listing with grouped summaries
-   - Filters: Report type (campaign/user), status (pending/resolved/dismissed), sort options
-   - Pagination limited to 10 grouped items per page
-   - Auto-refresh after admin actions to show next batch
+5. **GroupedReportsTable Component:**
+   - Displays aggregated report summaries with reason breakdown
+   - Expand shows percentage distribution (e.g., "Spam: 8 (53%)")
+   - Visual progress bars for each reason
+   - Shows first/last report timestamps
+   - No individual report fetching needed
 
-6. **Admin Action Handler Updates:**
-   - Updates reportSummary status to 'resolved' or 'dismissed' when actions taken
-   - Resets reportCount to 0 on any admin action (dismiss/warn/remove)
-   - Resets campaign/user reportsCount to 0 on any admin action
-   - Maintains atomicity with Firestore transactions
-   - Next report after action starts fresh at count=1
+6. **Admin Action Performance:**
+   - Before: 50 reads + 53 writes for 50 reports
+   - After: 2 reads + 3 writes regardless of report count
+   - 96% reduction in reads, 94% reduction in writes
+   - Instant admin actions with no query overhead
 
-7. **UI Cleanup:**
-   - Removed "Top Reported Campaigns" section from main admin dashboard
-   - Consolidated all reporting functionality in `/admin/reports` page
+7. **Frontend Updates:**
+   - ReportModal simplified - removed details textarea
+   - Admin sees reason breakdown instead of individual reports
+   - Better insight into why content was reported
 
 **Performance Impact:**
-- Initial page load: 1000 reads → 10-30 reads (~95% reduction)
-- Grouped view shows exactly 10 summaries instead of loading all individual reports
-- Individual report details loaded on-demand only when needed
-- Significant cost savings on Firestore usage for high-volume reporting scenarios
+- Report submission: 3 writes → 2 writes (33% reduction)
+- Admin dismiss (100 reports): 102 reads + 103 writes → 2 reads + 3 writes (98% reduction)
+- Better admin UX with instant reason distribution visibility
+- Significant cost savings on Firestore usage for high-volume scenarios
 

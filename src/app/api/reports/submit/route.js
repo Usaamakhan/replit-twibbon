@@ -7,7 +7,7 @@ export async function POST(request) {
   try {
     const body = await request.json();
     
-    const { campaignId, campaignSlug, reportedBy, reason, details } = body;
+    const { campaignId, campaignSlug, reportedBy, reason } = body;
     
     // Validate required fields
     if (!campaignId || !reason) {
@@ -30,10 +30,12 @@ export async function POST(request) {
     const db = adminFirestore();
     
     // Use Firestore transaction for atomic operations
-    const reportRef = db.collection('reports').doc();
     const campaignRef = db.collection('campaigns').doc(campaignId);
     const summaryId = `campaign-${campaignId}`;
     const summaryRef = db.collection('reportSummary').doc(summaryId);
+    
+    let shouldNotify = false;
+    let notificationData = null;
     
     await db.runTransaction(async (transaction) => {
       // ALL READS MUST COME FIRST (Firestore requirement)
@@ -48,23 +50,6 @@ export async function POST(request) {
       const currentReportsCount = campaignData.reportsCount || 0;
       const newReportsCount = currentReportsCount + 1;
       
-      // Create the report
-      const reportData = {
-        type: 'campaign',
-        campaignId,
-        campaignSlug: campaignSlug || '',
-        reportedBy: reportedBy || 'anonymous',
-        reason,
-        details: details || '',
-        status: 'pending',
-        createdAt: new Date(),
-        reviewedAt: null,
-        reviewedBy: null,
-        action: null,
-      };
-      
-      transaction.set(reportRef, reportData);
-      
       // Update campaign
       const campaignUpdates = {
         reportsCount: newReportsCount,
@@ -75,11 +60,20 @@ export async function POST(request) {
       if (newReportsCount >= 3 && campaignData.moderationStatus === 'active') {
         campaignUpdates.moderationStatus = 'under-review-hidden';
         campaignUpdates.hiddenAt = new Date();
+        
+        // Flag for notification after transaction
+        shouldNotify = true;
+        notificationData = {
+          userId: campaignData.creatorId,
+          campaignTitle: campaignData.title || 'Your campaign',
+          campaignId,
+          reason
+        };
       }
       
       transaction.update(campaignRef, campaignUpdates);
       
-      // Update or create report summary
+      // Update or create report summary with reason counts
       const now = new Date();
       
       if (summaryDoc.exists) {
@@ -95,9 +89,17 @@ export async function POST(request) {
           summaryUpdates.status = 'pending';
           summaryUpdates.reportCount = 1;
           summaryUpdates.firstReportedAt = now;
+          summaryUpdates.reasonCounts = { [reason]: 1 };
         } else {
-          // Still pending, increment counter
+          // Still pending, increment counter and reason count
           summaryUpdates.reportCount = (currentSummary.reportCount || 0) + 1;
+          
+          // Increment reason count
+          const currentReasonCounts = currentSummary.reasonCounts || {};
+          summaryUpdates.reasonCounts = {
+            ...currentReasonCounts,
+            [reason]: (currentReasonCounts[reason] || 0) + 1
+          };
         }
         
         transaction.update(summaryRef, summaryUpdates);
@@ -107,6 +109,7 @@ export async function POST(request) {
           targetId: campaignId,
           targetType: 'campaign',
           reportCount: 1,
+          reasonCounts: { [reason]: 1 },
           firstReportedAt: now,
           lastReportedAt: now,
           status: 'pending',
@@ -121,30 +124,30 @@ export async function POST(request) {
           moderationStatus: campaignData.moderationStatus || 'active',
         });
       }
-      
-      // Send notification if campaign is auto-hidden
-      if (newReportsCount >= 3 && campaignData.moderationStatus === 'active' && campaignData.creatorId) {
-        const notification = getNotificationTemplate('campaignUnderReview', {
-          campaignTitle: campaignData.title || 'Your campaign'
-        });
-        
-        await sendInAppNotification({
-          userId: campaignData.creatorId,
-          title: notification.title,
-          body: notification.body,
-          actionUrl: notification.actionUrl,
-          icon: notification.icon,
-          type: notification.type || 'campaign-under-review',
-          metadata: {
-            campaignId,
-            reason,
-          }
-        }).catch(err => console.error('Failed to send notification:', err));
-      }
     });
     
+    // Send notification AFTER transaction completes
+    if (shouldNotify && notificationData) {
+      const notification = getNotificationTemplate('campaignUnderReview', {
+        campaignTitle: notificationData.campaignTitle
+      });
+      
+      await sendInAppNotification({
+        userId: notificationData.userId,
+        title: notification.title,
+        body: notification.body,
+        actionUrl: notification.actionUrl,
+        icon: notification.icon,
+        type: notification.type || 'campaign-under-review',
+        metadata: {
+          campaignId: notificationData.campaignId,
+          reason: notificationData.reason,
+        }
+      }).catch(err => console.error('Failed to send notification:', err));
+    }
+    
     return NextResponse.json(
-      { success: true, reportId: reportRef.id },
+      { success: true, message: 'Report submitted successfully' },
       { status: 200 }
     );
     

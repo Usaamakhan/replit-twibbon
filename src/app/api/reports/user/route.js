@@ -7,7 +7,7 @@ export async function POST(request) {
   try {
     const body = await request.json();
     
-    const { reportedUserId, reportedUsername, reportedBy, reason, details } = body;
+    const { reportedUserId, reportedUsername, reportedBy, reason } = body;
     
     // Validate required fields
     if (!reportedUserId || !reason) {
@@ -37,10 +37,12 @@ export async function POST(request) {
     const db = adminFirestore();
     
     // Use Firestore transaction for atomic operations
-    const reportRef = db.collection('reports').doc();
     const userRef = db.collection('users').doc(reportedUserId);
     const summaryId = `user-${reportedUserId}`;
     const summaryRef = db.collection('reportSummary').doc(summaryId);
+    
+    let shouldNotify = false;
+    let notificationData = null;
     
     await db.runTransaction(async (transaction) => {
       // ALL READS MUST COME FIRST (Firestore requirement)
@@ -54,23 +56,6 @@ export async function POST(request) {
       const userData = userDoc.data();
       const currentReportsCount = userData.reportsCount || 0;
       const newReportsCount = currentReportsCount + 1;
-      
-      // Create the report with type = 'profile'
-      const reportData = {
-        type: 'profile',
-        reportedUserId,
-        reportedUsername: reportedUsername || userData.username || '',
-        reportedBy: reportedBy || 'anonymous',
-        reason,
-        details: details || '',
-        status: 'pending',
-        createdAt: new Date(),
-        reviewedAt: null,
-        reviewedBy: null,
-        action: null,
-      };
-      
-      transaction.set(reportRef, reportData);
       
       // Update user moderation fields
       const userUpdates = {
@@ -90,11 +75,18 @@ export async function POST(request) {
       if (newReportsCount >= 10 && userData.moderationStatus === 'active') {
         userUpdates.moderationStatus = 'under-review-hidden';
         userUpdates.hiddenAt = new Date();
+        
+        // Flag for notification after transaction
+        shouldNotify = true;
+        notificationData = {
+          userId: reportedUserId,
+          reason
+        };
       }
       
       transaction.update(userRef, userUpdates);
       
-      // Update or create report summary
+      // Update or create report summary with reason counts
       const now = new Date();
       
       if (summaryDoc.exists) {
@@ -110,9 +102,17 @@ export async function POST(request) {
           summaryUpdates.status = 'pending';
           summaryUpdates.reportCount = 1;
           summaryUpdates.firstReportedAt = now;
+          summaryUpdates.reasonCounts = { [reason]: 1 };
         } else {
-          // Still pending, increment counter
+          // Still pending, increment counter and reason count
           summaryUpdates.reportCount = (currentSummary.reportCount || 0) + 1;
+          
+          // Increment reason count
+          const currentReasonCounts = currentSummary.reasonCounts || {};
+          summaryUpdates.reasonCounts = {
+            ...currentReasonCounts,
+            [reason]: (currentReasonCounts[reason] || 0) + 1
+          };
         }
         
         transaction.update(summaryRef, summaryUpdates);
@@ -122,6 +122,7 @@ export async function POST(request) {
           targetId: reportedUserId,
           targetType: 'user',
           reportCount: 1,
+          reasonCounts: { [reason]: 1 },
           firstReportedAt: now,
           lastReportedAt: now,
           status: 'pending',
@@ -135,28 +136,28 @@ export async function POST(request) {
           accountStatus: userData.accountStatus || 'active',
         });
       }
-      
-      // Send notification if profile is auto-hidden
-      if (newReportsCount >= 10 && userData.moderationStatus === 'active') {
-        const notification = getNotificationTemplate('profileUnderReview');
-        
-        await sendInAppNotification({
-          userId: reportedUserId,
-          title: notification.title,
-          body: notification.body,
-          actionUrl: notification.actionUrl,
-          icon: notification.icon,
-          type: notification.type || 'profile-under-review',
-          metadata: {
-            reportedUserId,
-            reason,
-          }
-        }).catch(err => console.error('Failed to send notification:', err));
-      }
     });
     
+    // Send notification AFTER transaction completes
+    if (shouldNotify && notificationData) {
+      const notification = getNotificationTemplate('profileUnderReview');
+      
+      await sendInAppNotification({
+        userId: notificationData.userId,
+        title: notification.title,
+        body: notification.body,
+        actionUrl: notification.actionUrl,
+        icon: notification.icon,
+        type: notification.type || 'profile-under-review',
+        metadata: {
+          reportedUserId: notificationData.userId,
+          reason: notificationData.reason,
+        }
+      }).catch(err => console.error('Failed to send notification:', err));
+    }
+    
     return NextResponse.json(
-      { success: true, reportId: reportRef.id },
+      { success: true, message: 'Report submitted successfully' },
       { status: 200 }
     );
     

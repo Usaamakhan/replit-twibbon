@@ -10,45 +10,15 @@ import {
 } from "@/utils/admin/adminHelpers";
 
 export default function GroupedReportsTable({ summaries, loading, onSelectSummary, onRefresh }) {
-  const { user } = useAuth();
   const [expandedId, setExpandedId] = useState(null);
-  const [individualReports, setIndividualReports] = useState({});
-  const [loadingReports, setLoadingReports] = useState({});
 
-  const fetchIndividualReports = async (summary) => {
-    if (individualReports[summary.id]) {
-      // Toggle collapse
-      setExpandedId(expandedId === summary.id ? null : summary.id);
-      return;
-    }
+  const toggleExpand = (summaryId) => {
+    setExpandedId(expandedId === summaryId ? null : summaryId);
+  };
 
-    setLoadingReports({ ...loadingReports, [summary.id]: true });
-    try {
-      const token = await user.getIdToken();
-      const response = await fetch(
-        `/api/admin/reports/details?targetId=${summary.targetId}&targetType=${summary.targetType}`,
-        {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-          },
-        }
-      );
-
-      if (!response.ok) {
-        throw new Error('Failed to fetch report details');
-      }
-
-      const data = await response.json();
-      setIndividualReports({
-        ...individualReports,
-        [summary.id]: data.data || [],
-      });
-      setExpandedId(summary.id);
-    } catch (error) {
-      console.error('Error fetching report details:', error);
-    } finally {
-      setLoadingReports({ ...loadingReports, [summary.id]: false });
-    }
+  const getReasonPercentage = (count, total) => {
+    if (total === 0) return 0;
+    return Math.round((count / total) * 100);
   };
 
   if (loading) {
@@ -176,10 +146,10 @@ export default function GroupedReportsTable({ summaries, loading, onSelectSummar
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-3">
                     <button
-                      onClick={() => fetchIndividualReports(summary)}
+                      onClick={() => toggleExpand(summary.id)}
                       className="text-blue-600 hover:text-blue-900"
                     >
-                      {expandedId === summary.id ? 'Hide Reports' : 'View Reports'}
+                      {expandedId === summary.id ? 'Hide Breakdown' : 'View Breakdown'}
                     </button>
                     <button
                       onClick={() => onSelectSummary(summary)}
@@ -193,38 +163,44 @@ export default function GroupedReportsTable({ summaries, loading, onSelectSummar
                 {expandedId === summary.id && (
                   <tr>
                     <td colSpan="5" className="px-6 py-4 bg-gray-50">
-                      {loadingReports[summary.id] ? (
-                        <div className="text-center py-4">
-                          <div className="inline-block animate-spin rounded-full h-6 w-6 border-b-2 border-emerald-600"></div>
-                          <p className="mt-2 text-sm text-gray-600">Loading individual reports...</p>
-                        </div>
-                      ) : (
-                        <div className="space-y-2">
-                          <h4 className="font-semibold text-gray-900 mb-3">Individual Reports ({individualReports[summary.id]?.length || 0})</h4>
-                          {individualReports[summary.id]?.map((report) => (
-                            <div key={report.id} className="bg-white p-3 rounded border border-gray-200">
-                              <div className="flex justify-between items-start">
-                                <div className="flex-1">
-                                  <div className="flex items-center space-x-2">
-                                    <span className="text-sm font-medium text-gray-900">
-                                      {formatReportReason(report.reason)}
-                                    </span>
-                                    <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getReportStatusColor(report.status)}`}>
-                                      {report.status}
-                                    </span>
+                      <div className="space-y-3">
+                        <h4 className="font-semibold text-gray-900">Report Breakdown</h4>
+                        
+                        {summary.reasonCounts && Object.keys(summary.reasonCounts).length > 0 ? (
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                            {Object.entries(summary.reasonCounts)
+                              .sort(([, a], [, b]) => b - a)
+                              .map(([reason, count]) => {
+                                const percentage = getReasonPercentage(count, summary.reportCount);
+                                return (
+                                  <div key={reason} className="bg-white p-3 rounded border border-gray-200">
+                                    <div className="flex justify-between items-center mb-1">
+                                      <span className="text-sm font-medium text-gray-900">
+                                        {formatReportReason(reason)}
+                                      </span>
+                                      <span className="text-sm font-bold text-gray-700">
+                                        {count} ({percentage}%)
+                                      </span>
+                                    </div>
+                                    <div className="w-full bg-gray-200 rounded-full h-2">
+                                      <div 
+                                        className="bg-red-500 h-2 rounded-full transition-all"
+                                        style={{ width: `${percentage}%` }}
+                                      />
+                                    </div>
                                   </div>
-                                  {report.details && (
-                                    <p className="text-sm text-gray-600 mt-1">{report.details}</p>
-                                  )}
-                                  <div className="text-xs text-gray-500 mt-1">
-                                    Reported by {report.reporter?.displayName || 'Anonymous'} • {formatTimestamp(report.createdAt, true)}
-                                  </div>
-                                </div>
-                              </div>
-                            </div>
-                          ))}
+                                );
+                              })}
+                          </div>
+                        ) : (
+                          <p className="text-sm text-gray-500">No reason breakdown available</p>
+                        )}
+                        
+                        <div className="text-xs text-gray-500 mt-3 pt-3 border-t border-gray-200">
+                          <div>First Report: {formatTimestamp(summary.firstReportedAt, true)}</div>
+                          <div>Latest Report: {formatTimestamp(summary.lastReportedAt, true)}</div>
                         </div>
-                      )}
+                      </div>
                     </td>
                   </tr>
                 )}
