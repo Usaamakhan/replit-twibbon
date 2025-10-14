@@ -1,16 +1,17 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import CampaignModerationCard from "@/components/admin/CampaignModerationCard";
 
 export default function AdminCampaignsPage() {
   const { user } = useAuth();
   const [campaigns, setCampaigns] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [filters, setFilters] = useState({
     moderationStatus: 'all',
     sortBy: 'createdAt',
+    limit: 50,
   });
 
   const fetchCampaigns = async () => {
@@ -25,6 +26,7 @@ export default function AdminCampaignsPage() {
         params.append('moderationStatus', filters.moderationStatus);
       }
       params.append('sortBy', filters.sortBy);
+      params.append('limit', filters.limit.toString());
       
       const response = await fetch(`/api/admin/campaigns?${params.toString()}`, {
         headers: {
@@ -45,12 +47,6 @@ export default function AdminCampaignsPage() {
     }
   };
 
-  useEffect(() => {
-    if (user) {
-      fetchCampaigns();
-    }
-  }, [user, filters]);
-
   const handleCampaignUpdate = (updatedCampaign, deleted = false) => {
     if (deleted) {
       setCampaigns(prevCampaigns =>
@@ -70,8 +66,8 @@ export default function AdminCampaignsPage() {
   return (
     <div className="space-y-6">
       <div className="bg-white rounded-lg shadow p-6">
-        <h2 className="text-lg font-semibold text-gray-900 mb-4">Filter Campaigns</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <h2 className="text-lg font-semibold text-gray-900 mb-4">Load Campaigns</h2>
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <div>
             <label htmlFor="status-filter" className="block text-sm font-medium text-gray-700 mb-2">
               Moderation Status
@@ -104,7 +100,48 @@ export default function AdminCampaignsPage() {
               <option value="supporters" className="text-gray-900">Most Supports</option>
             </select>
           </div>
+
+          <div>
+            <label htmlFor="limit-input" className="block text-sm font-medium text-gray-700 mb-2">
+              Number of Campaigns
+            </label>
+            <input
+              id="limit-input"
+              type="number"
+              min="1"
+              max="500"
+              value={filters.limit}
+              onChange={(e) => setFilters({ ...filters, limit: parseInt(e.target.value) || 50 })}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-500 text-gray-900 bg-white"
+              placeholder="50"
+            />
+          </div>
+
+          <div className="flex items-end">
+            <button
+              onClick={fetchCampaigns}
+              disabled={loading || !user}
+              className="w-full px-6 py-2 bg-emerald-600 text-white font-medium rounded-md hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
+            >
+              {loading ? (
+                <span className="flex items-center justify-center">
+                  <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  Loading...
+                </span>
+              ) : (
+                'Load Campaigns'
+              )}
+            </button>
+          </div>
         </div>
+        {campaigns.length > 0 && (
+          <div className="mt-4 text-sm text-gray-600">
+            Showing <span className="font-semibold">{campaigns.length}</span> campaign{campaigns.length !== 1 ? 's' : ''}
+          </div>
+        )}
       </div>
 
       {loading ? (
