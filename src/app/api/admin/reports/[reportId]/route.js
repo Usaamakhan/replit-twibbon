@@ -127,6 +127,25 @@ export async function PATCH(request, context) {
       transaction.update(reportRef, reportUpdateData);
       console.log('[ADMIN REPORT UPDATE] Report update queued successfully');
       
+      // Update reportSummary when action is taken
+      const summaryId = reportType === 'campaign' 
+        ? `campaign-${reportData.campaignId}` 
+        : `user-${reportData.reportedUserId}`;
+      
+      if (summaryId && (action === 'no-action' || action === 'warned' || action === 'removed')) {
+        console.log('[ADMIN REPORT UPDATE] Updating report summary:', summaryId);
+        const summaryRef = db.collection('reportSummary').doc(summaryId);
+        const summaryStatus = action === 'no-action' && status === 'dismissed' ? 'dismissed' : 'resolved';
+        
+        transaction.update(summaryRef, {
+          status: summaryStatus,
+          resolvedAt: new Date(),
+          pendingReportCount: 0,
+          updatedAt: new Date(),
+        });
+        console.log('[ADMIN REPORT UPDATE] Report summary update queued');
+      }
+      
       // Process campaign report (using pre-fetched data)
       if (reportType === 'campaign' && reportData.campaignId && targetDoc && targetDoc.exists) {
         console.log('[ADMIN REPORT UPDATE] Processing campaign report...');
