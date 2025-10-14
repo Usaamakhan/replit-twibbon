@@ -162,11 +162,8 @@ export default function GroupedReportsTable({ summaries, loading, onSelectSummar
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center">
-                      <span className="text-2xl font-bold text-red-600">{summary.reportCount}</span>
+                      <span className="text-2xl font-bold text-red-600">{summary.reportCount || 0}</span>
                       <span className="ml-2 text-sm text-gray-500">reports</span>
-                    </div>
-                    <div className="text-xs text-gray-400 mt-1">
-                      {summary.pendingReportCount} pending
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">

@@ -98,18 +98,21 @@ export async function POST(request) {
       const now = new Date();
       
       if (summaryDoc.exists) {
-        // Update existing summary - reset status to pending if it was resolved/dismissed
+        // Update existing summary
         const currentSummary = summaryDoc.data();
         const summaryUpdates = {
-          reportCount: (currentSummary.reportCount || 0) + 1,
-          pendingReportCount: (currentSummary.pendingReportCount || 0) + 1,
           lastReportedAt: now,
           updatedAt: now,
         };
         
-        // Reset to pending if previously resolved/dismissed
+        // If previously resolved/dismissed, reset counter and status to start fresh
         if (currentSummary.status === 'resolved' || currentSummary.status === 'dismissed') {
           summaryUpdates.status = 'pending';
+          summaryUpdates.reportCount = 1;
+          summaryUpdates.firstReportedAt = now;
+        } else {
+          // Still pending, increment counter
+          summaryUpdates.reportCount = (currentSummary.reportCount || 0) + 1;
         }
         
         transaction.update(summaryRef, summaryUpdates);
@@ -119,7 +122,6 @@ export async function POST(request) {
           targetId: reportedUserId,
           targetType: 'user',
           reportCount: 1,
-          pendingReportCount: 1,
           firstReportedAt: now,
           lastReportedAt: now,
           status: 'pending',

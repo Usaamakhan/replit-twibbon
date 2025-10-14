@@ -70,14 +70,14 @@ export async function PATCH(request, { params }) {
         });
       });
       
-      // Update the target based on action
+      // Update the target based on action - ALWAYS reset reportsCount to 0
       const targetUpdates = {
+        reportsCount: 0,
         updatedAt: now,
       };
       
       if (action === 'no-action') {
         // Dismiss - restore to active
-        targetUpdates.reportsCount = 0;
         if (targetType === 'campaign') {
           targetUpdates.moderationStatus = 'active';
           targetUpdates.hiddenAt = null;
@@ -86,7 +86,7 @@ export async function PATCH(request, { params }) {
           targetUpdates.hiddenAt = null;
         }
       } else if (action === 'warned') {
-        // Warning issued - create warning record (keep current status)
+        // Warning issued - create warning record, reset reports
         const warningRef = db.collection('warnings').doc();
         transaction.set(warningRef, {
           userId: targetType === 'campaign' ? targetData.creatorId : targetId,
@@ -98,8 +98,9 @@ export async function PATCH(request, { params }) {
           issuedAt: now,
           acknowledged: false,
         });
+        // Keep current moderation status (might be hidden)
       } else if (action === 'removed') {
-        // Remove/Ban
+        // Remove/Ban - reset reports
         if (targetType === 'campaign') {
           targetUpdates.moderationStatus = 'removed-temporary';
           targetUpdates.removedAt = now;
@@ -116,10 +117,10 @@ export async function PATCH(request, { params }) {
       
       transaction.update(targetRef, targetUpdates);
       
-      // Update summary
+      // Update summary - reset reportCount to 0
       transaction.update(summaryRef, {
         status: action === 'no-action' ? 'dismissed' : 'resolved',
-        pendingReportCount: 0,
+        reportCount: 0,
         updatedAt: now,
       });
     });

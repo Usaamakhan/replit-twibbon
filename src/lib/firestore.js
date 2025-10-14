@@ -956,11 +956,19 @@ export const upsertReportSummary = async (summaryData) => {
         // Update existing summary
         const currentData = summaryDoc.data();
         const updates = {
-          reportCount: (currentData.reportCount || 0) + 1,
-          pendingReportCount: currentData.status === 'pending' ? (currentData.pendingReportCount || 0) + 1 : currentData.pendingReportCount,
           lastReportedAt: now,
           updatedAt: now,
         };
+        
+        // If previously resolved/dismissed, reset counter to start fresh
+        if (currentData.status === 'resolved' || currentData.status === 'dismissed') {
+          updates.status = 'pending';
+          updates.reportCount = 1;
+          updates.firstReportedAt = now;
+        } else {
+          // Still pending, increment counter
+          updates.reportCount = (currentData.reportCount || 0) + 1;
+        }
         
         transaction.update(summaryRef, updates);
       } else {
@@ -969,7 +977,6 @@ export const upsertReportSummary = async (summaryData) => {
           targetId,
           targetType,
           reportCount: 1,
-          pendingReportCount: 1,
           firstReportedAt: now,
           lastReportedAt: now,
           status: 'pending',
@@ -1071,7 +1078,7 @@ export const updateReportSummaryStatus = async (summaryId, newStatus) => {
     await updateDoc(summaryRef, {
       status: newStatus,
       resolvedAt: newStatus === 'resolved' || newStatus === 'dismissed' ? new Date() : null,
-      pendingReportCount: 0,
+      reportCount: 0,
       updatedAt: new Date(),
     });
     

@@ -104,8 +104,9 @@ Implemented a highly optimized grouped reporting system that reduces Firestore r
 **Implementation Details:**
 1. **reportSummary Aggregated Collection:**
    - New Firestore collection that aggregates reports by target (campaign or user)
-   - Schema includes: `targetId`, `targetType`, `reportCount`, `pendingReportCount`, `status`, `firstReportedAt`, `lastReportedAt`
+   - Schema includes: `targetId`, `targetType`, `reportCount`, `status`, `firstReportedAt`, `lastReportedAt`
    - Display data cached in summary for quick access (title, image, creator info)
+   - `reportCount` resets to 0 when admin takes any action (dismiss/warn/remove)
 
 2. **Report Submission Updates:**
    - Both `/api/reports/submit` and `/api/reports/user` maintain reportSummary collection
@@ -130,8 +131,10 @@ Implemented a highly optimized grouped reporting system that reduces Firestore r
 
 6. **Admin Action Handler Updates:**
    - Updates reportSummary status to 'resolved' or 'dismissed' when actions taken
-   - Resets pendingReportCount to 0 on resolution
+   - Resets reportCount to 0 on any admin action (dismiss/warn/remove)
+   - Resets campaign/user reportsCount to 0 on any admin action
    - Maintains atomicity with Firestore transactions
+   - Next report after action starts fresh at count=1
 
 7. **UI Cleanup:**
    - Removed "Top Reported Campaigns" section from main admin dashboard

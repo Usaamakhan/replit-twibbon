@@ -174,14 +174,9 @@ export default function ReportDetailsPanel({ report, onClose, onUpdate, isGroupe
                       Status: <span className="capitalize">{isGrouped ? report.moderationStatus : (report.reportedUser?.moderationStatus || 'Unknown')}</span>
                     </p>
                     {isGrouped && (
-                      <>
-                        <p className="text-sm text-gray-600">
-                          Total Reports: {report.reportCount || 0}
-                        </p>
-                        <p className="text-sm text-gray-600">
-                          Pending Reports: {report.pendingReportCount || 0}
-                        </p>
-                      </>
+                      <p className="text-sm text-gray-600">
+                        Reports: {report.reportCount || 0}
+                      </p>
                     )}
                     {!isGrouped && report.reportedUser?.reportsCount > 0 && (
                       <p className="text-sm text-gray-600">
@@ -221,14 +216,9 @@ export default function ReportDetailsPanel({ report, onClose, onUpdate, isGroupe
                       Status: <span className="capitalize">{isGrouped ? report.moderationStatus : (report.campaign?.moderationStatus || 'Unknown')}</span>
                     </p>
                     {isGrouped && (
-                      <>
-                        <p className="text-sm text-gray-600">
-                          Total Reports: {report.reportCount || 0}
-                        </p>
-                        <p className="text-sm text-gray-600">
-                          Pending Reports: {report.pendingReportCount || 0}
-                        </p>
-                      </>
+                      <p className="text-sm text-gray-600">
+                        Reports: {report.reportCount || 0}
+                      </p>
                     )}
                     {!isGrouped && report.campaign?.creator && (
                       <p className="text-sm text-gray-600">
@@ -294,12 +284,8 @@ export default function ReportDetailsPanel({ report, onClose, onUpdate, isGroupe
                   {isGrouped && (
                     <>
                       <div>
-                        <dt className="text-xs text-gray-500">Total Reports</dt>
+                        <dt className="text-xs text-gray-500">Reports Count</dt>
                         <dd className="text-sm text-gray-900">{report.reportCount || 0}</dd>
-                      </div>
-                      <div>
-                        <dt className="text-xs text-gray-500">Pending Reports</dt>
-                        <dd className="text-sm text-gray-900">{report.pendingReportCount || 0}</dd>
                       </div>
                       <div>
                         <dt className="text-xs text-gray-500">First Reported</dt>

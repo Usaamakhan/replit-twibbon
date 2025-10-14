@@ -140,7 +140,7 @@ export async function PATCH(request, context) {
         transaction.update(summaryRef, {
           status: summaryStatus,
           resolvedAt: new Date(),
-          pendingReportCount: 0,
+          reportCount: 0,
           updatedAt: new Date(),
         });
         console.log('[ADMIN REPORT UPDATE] Report summary update queued');
