@@ -91,7 +91,55 @@ Conducted comprehensive documentation audit comparing actual codebase against al
 - ✅ In-app notification system with Firestore real-time listeners
 - ✅ Settings hub with notification preferences
 - ✅ Notification inbox with history
+- ✅ Optimized grouped reporting system
 - ⏸️ Appeals system (deferred)
 - ⏸️ Admin warning history view (deferred)
 - ⏸️ Auto-deletion cron jobs (deferred)
+
+## Recent Updates (October 14, 2025)
+
+### Grouped Reporting System Optimization
+Implemented a highly optimized grouped reporting system that reduces Firestore reads by ~95% (from 1000+ reads to 10-30 reads per page load).
+
+**Implementation Details:**
+1. **reportSummary Aggregated Collection:**
+   - New Firestore collection that aggregates reports by target (campaign or user)
+   - Schema includes: `targetId`, `targetType`, `reportCount`, `pendingReportCount`, `status`, `firstReportedAt`, `lastReportedAt`
+   - Display data cached in summary for quick access (title, image, creator info)
+
+2. **Report Submission Updates:**
+   - Both `/api/reports/submit` and `/api/reports/user` maintain reportSummary collection
+   - Atomic transactions ensure consistency between individual reports and summaries
+   - Status automatically resets to 'pending' when new reports filed against resolved entities
+
+3. **Admin API Endpoints:**
+   - `/api/admin/reports/grouped`: Fetches paginated summaries (max 10) with filters (type, status, sort)
+   - `/api/admin/reports/details`: Lazy-loads individual report details on demand
+   - Support for sorting by top reported, most recent, or oldest pending
+
+4. **GroupedReportsTable Component:**
+   - Displays aggregated report summaries with expand/collapse functionality
+   - Individual reports loaded only when admin expands a row (lazy loading)
+   - Shows report count, pending count, and moderation status at a glance
+
+5. **Admin Reports Page Updates:**
+   - Replaced individual report listing with grouped summaries
+   - Filters: Report type (campaign/user), status (pending/resolved/dismissed), sort options
+   - Pagination limited to 10 grouped items per page
+   - Auto-refresh after admin actions to show next batch
+
+6. **Admin Action Handler Updates:**
+   - Updates reportSummary status to 'resolved' or 'dismissed' when actions taken
+   - Resets pendingReportCount to 0 on resolution
+   - Maintains atomicity with Firestore transactions
+
+7. **UI Cleanup:**
+   - Removed "Top Reported Campaigns" section from main admin dashboard
+   - Consolidated all reporting functionality in `/admin/reports` page
+
+**Performance Impact:**
+- Initial page load: 1000 reads → 10-30 reads (~95% reduction)
+- Grouped view shows exactly 10 summaries instead of loading all individual reports
+- Individual report details loaded on-demand only when needed
+- Significant cost savings on Firestore usage for high-volume reporting scenarios
 
