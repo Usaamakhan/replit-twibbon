@@ -1,0 +1,87 @@
+page-bb6a6c6ca9efb1fc.js:1 
+ PATCH https://replit-twibbon.vercel.app/api/admin/reports/campaign-HS6KbolGekdnlTsBbKyo 404 (Not Found)
+S	@	page-bb6a6c6ca9efb1fc.js:1
+await in S		
+onClick	@	page-bb6a6c6ca9efb1fc.js:1
+i8	@	4bd1b696-f785427dddbba9fb.js:1
+(anonymous)	@	4bd1b696-f785427dddbba9fb.js:1
+nz	@	4bd1b696-f785427dddbba9fb.js:1
+sn	@	4bd1b696-f785427dddbba9fb.js:1
+cc	@	4bd1b696-f785427dddbba9fb.js:1
+ci	@	4bd1b696-f785427dddbba9fb.js:1
+
+page-bb6a6c6ca9efb1fc.js:1 [CLIENT] Response status: 404
+page-bb6a6c6ca9efb1fc.js:1 [CLIENT] Response data: 
+{success: false, error: 'Report not found'}
+error
+: 
+"Report not found"
+success
+: 
+false
+[[Prototype]]
+: 
+Object
+constructor
+: 
+ƒ Object()
+hasOwnProperty
+: 
+ƒ hasOwnProperty()
+isPrototypeOf
+: 
+ƒ isPrototypeOf()
+propertyIsEnumerable
+: 
+ƒ propertyIsEnumerable()
+toLocaleString
+: 
+ƒ toLocaleString()
+toString
+: 
+ƒ toString()
+valueOf
+: 
+ƒ valueOf()
+__defineGetter__
+: 
+ƒ __defineGetter__()
+__defineSetter__
+: 
+ƒ __defineSetter__()
+__lookupGetter__
+: 
+ƒ __lookupGetter__()
+__lookupSetter__
+: 
+ƒ __lookupSetter__()
+__proto__
+: 
+(...)
+get __proto__
+: 
+ƒ __proto__()
+set __proto__
+: 
+ƒ __proto__()
+page-bb6a6c6ca9efb1fc.js:1 [CLIENT] ❌ Error updating report: Error: Report not found
+    at S (page-bb6a6c6ca9efb1fc.js:1:13529)
+S	@	page-bb6a6c6ca9efb1fc.js:1
+await in S		
+onClick	@	page-bb6a6c6ca9efb1fc.js:1
+i8	@	4bd1b696-f785427dddbba9fb.js:1
+(anonymous)	@	4bd1b696-f785427dddbba9fb.js:1
+nz	@	4bd1b696-f785427dddbba9fb.js:1
+sn	@	4bd1b696-f785427dddbba9fb.js:1
+cc	@	4bd1b696-f785427dddbba9fb.js:1
+ci	@	4bd1b696-f785427dddbba9fb.js:1
+page-bb6a6c6ca9efb1fc.js:1 [CLIENT] Error details: Report not found
+S	@	page-bb6a6c6ca9efb1fc.js:1
+await in S		
+onClick	@	page-bb6a6c6ca9efb1fc.js:1
+i8	@	4bd1b696-f785427dddbba9fb.js:1
+(anonymous)	@	4bd1b696-f785427dddbba9fb.js:1
+nz	@	4bd1b696-f785427dddbba9fb.js:1
+sn	@	4bd1b696-f785427dddbba9fb.js:1
+cc	@	4bd1b696-f785427dddbba9fb.js:1
+ci	@	4bd1b696-f785427dddbba9fb.js:1

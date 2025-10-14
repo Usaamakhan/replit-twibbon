@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 
-export default function ReportDetailsPanel({ report, onClose, onUpdate }) {
+export default function ReportDetailsPanel({ report, onClose, onUpdate, isGrouped = false }) {
   const { user } = useAuth();
   const [isUpdating, setIsUpdating] = useState(false);
   const [updateError, setUpdateError] = useState(null);
@@ -64,7 +64,7 @@ export default function ReportDetailsPanel({ report, onClose, onUpdate }) {
   const handleAction = async (status, action) => {
     if (!user) return;
 
-    console.log('[CLIENT] Action button clicked:', { status, action, reportId: report.id });
+    console.log('[CLIENT] Action button clicked:', { status, action, reportId: report.id, isGrouped });
     setIsUpdating(true);
     setUpdateError(null);
 
@@ -72,7 +72,12 @@ export default function ReportDetailsPanel({ report, onClose, onUpdate }) {
       const token = await user.getIdToken();
       console.log('[CLIENT] Token obtained, sending request...');
       
-      const response = await fetch(`/api/admin/reports/${report.id}`, {
+      // Use different endpoint for grouped summaries
+      const endpoint = isGrouped 
+        ? `/api/admin/reports/summary/${report.id}`
+        : `/api/admin/reports/${report.id}`;
+      
+      const response = await fetch(endpoint, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
@@ -143,34 +148,49 @@ export default function ReportDetailsPanel({ report, onClose, onUpdate }) {
                 </span>
               </div>
 
-              {report.type === 'profile' ? (
+              {(isGrouped ? report.targetType === 'user' : report.type === 'profile') ? (
                 <div>
                   <h3 className="text-sm font-medium text-gray-500 mb-2">Reported User</h3>
                   <div className="bg-gray-50 rounded-lg p-4">
-                    {report.reportedUser?.avatarUrl && (
+                    {(isGrouped ? report.profileImage : report.reportedUser?.avatarUrl) && (
                       <img
-                        src={report.reportedUser.avatarUrl}
-                        alt={report.reportedUser.displayName}
+                        src={isGrouped ? report.profileImage : report.reportedUser.avatarUrl}
+                        alt={isGrouped ? report.displayName : report.reportedUser.displayName}
                         className="w-20 h-20 rounded-full mb-3 object-cover"
                       />
                     )}
-                    <h4 className="font-medium text-gray-900">{report.reportedUser?.displayName || report.reportedUsername || 'Unknown User'}</h4>
-                    {report.reportedUser?.username && (
+                    <h4 className="font-medium text-gray-900">
+                      {isGrouped 
+                        ? (report.displayName || report.username || 'Unknown User')
+                        : (report.reportedUser?.displayName || report.reportedUsername || 'Unknown User')
+                      }
+                    </h4>
+                    {(isGrouped ? report.username : report.reportedUser?.username) && (
                       <p className="text-sm text-gray-600 mt-1">
-                        @{report.reportedUser.username}
+                        @{isGrouped ? report.username : report.reportedUser.username}
                       </p>
                     )}
                     <p className="text-sm text-gray-600 mt-1">
-                      Status: <span className="capitalize">{report.reportedUser?.moderationStatus || 'Unknown'}</span>
+                      Status: <span className="capitalize">{isGrouped ? report.moderationStatus : (report.reportedUser?.moderationStatus || 'Unknown')}</span>
                     </p>
-                    {report.reportedUser?.reportsCount > 0 && (
+                    {isGrouped && (
+                      <>
+                        <p className="text-sm text-gray-600">
+                          Total Reports: {report.reportCount || 0}
+                        </p>
+                        <p className="text-sm text-gray-600">
+                          Pending Reports: {report.pendingReportCount || 0}
+                        </p>
+                      </>
+                    )}
+                    {!isGrouped && report.reportedUser?.reportsCount > 0 && (
                       <p className="text-sm text-gray-600">
                         Total Reports: {report.reportedUser.reportsCount}
                       </p>
                     )}
-                    {report.reportedUsername && (
+                    {(isGrouped ? report.username : report.reportedUsername) && (
                       <a
-                        href={`/u/${report.reportedUsername}`}
+                        href={`/u/${isGrouped ? report.username : report.reportedUsername}`}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="text-sm text-emerald-600 hover:text-emerald-700 mt-2 inline-block"
@@ -184,28 +204,40 @@ export default function ReportDetailsPanel({ report, onClose, onUpdate }) {
                 <div>
                   <h3 className="text-sm font-medium text-gray-500 mb-2">Campaign</h3>
                   <div className="bg-gray-50 rounded-lg p-4">
-                    {report.campaign?.imageUrl && (
+                    {(isGrouped ? report.campaignImage : report.campaign?.imageUrl) && (
                       <img
-                        src={report.campaign.imageUrl}
-                        alt={report.campaign.title}
+                        src={isGrouped ? report.campaignImage : report.campaign.imageUrl}
+                        alt={isGrouped ? report.campaignTitle : report.campaign.title}
                         className="w-full h-48 object-cover rounded-lg mb-3"
                       />
                     )}
-                    <h4 className="font-medium text-gray-900">{report.campaign?.title || 'Unknown Campaign'}</h4>
+                    <h4 className="font-medium text-gray-900">
+                      {isGrouped ? (report.campaignTitle || 'Unknown Campaign') : (report.campaign?.title || 'Unknown Campaign')}
+                    </h4>
                     <p className="text-sm text-gray-600 mt-1">
-                      Type: <span className="capitalize">{report.campaign?.type || 'Unknown'}</span>
+                      Type: <span className="capitalize">{isGrouped ? report.campaignType : (report.campaign?.type || 'Unknown')}</span>
                     </p>
                     <p className="text-sm text-gray-600">
-                      Status: <span className="capitalize">{report.campaign?.moderationStatus || 'Unknown'}</span>
+                      Status: <span className="capitalize">{isGrouped ? report.moderationStatus : (report.campaign?.moderationStatus || 'Unknown')}</span>
                     </p>
-                    {report.campaign?.creator && (
+                    {isGrouped && (
+                      <>
+                        <p className="text-sm text-gray-600">
+                          Total Reports: {report.reportCount || 0}
+                        </p>
+                        <p className="text-sm text-gray-600">
+                          Pending Reports: {report.pendingReportCount || 0}
+                        </p>
+                      </>
+                    )}
+                    {!isGrouped && report.campaign?.creator && (
                       <p className="text-sm text-gray-600">
                         Creator: {report.campaign.creator.displayName}
                       </p>
                     )}
-                    {report.campaign?.slug && (
+                    {(isGrouped ? report.campaignSlug : report.campaign?.slug) && (
                       <a
-                        href={`/campaign/${report.campaign.slug}`}
+                        href={`/campaign/${isGrouped ? report.campaignSlug : report.campaign.slug}`}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="text-sm text-emerald-600 hover:text-emerald-700 mt-2 inline-block"
@@ -220,40 +252,68 @@ export default function ReportDetailsPanel({ report, onClose, onUpdate }) {
               <div>
                 <h3 className="text-sm font-medium text-gray-500 mb-2">Report Details</h3>
                 <dl className="space-y-2">
-                  <div>
-                    <dt className="text-xs text-gray-500">Reason</dt>
-                    <dd className="text-sm text-gray-900">{getReasonText(report.reason)}</dd>
-                  </div>
-                  {report.details && (
-                    <div>
-                      <dt className="text-xs text-gray-500">Additional Details</dt>
-                      <dd className="text-sm text-gray-900">{report.details}</dd>
-                    </div>
-                  )}
-                  <div>
-                    <dt className="text-xs text-gray-500">Reported By</dt>
-                    <dd className="text-sm text-gray-900">
-                      {report.reporter?.displayName || 'Anonymous'}
-                      {report.reporter?.username && (
-                        <span className="text-gray-500"> (@{report.reporter.username})</span>
+                  {!isGrouped && (
+                    <>
+                      <div>
+                        <dt className="text-xs text-gray-500">Reason</dt>
+                        <dd className="text-sm text-gray-900">{getReasonText(report.reason)}</dd>
+                      </div>
+                      {report.details && (
+                        <div>
+                          <dt className="text-xs text-gray-500">Additional Details</dt>
+                          <dd className="text-sm text-gray-900">{report.details}</dd>
+                        </div>
                       )}
-                    </dd>
-                  </div>
-                  <div>
-                    <dt className="text-xs text-gray-500">Reported At</dt>
-                    <dd className="text-sm text-gray-900">{formatDate(report.createdAt)}</dd>
-                  </div>
-                  {report.reviewedAt && (
-                    <div>
-                      <dt className="text-xs text-gray-500">Reviewed At</dt>
-                      <dd className="text-sm text-gray-900">{formatDate(report.reviewedAt)}</dd>
-                    </div>
+                      <div>
+                        <dt className="text-xs text-gray-500">Reported By</dt>
+                        <dd className="text-sm text-gray-900">
+                          {report.reporter?.displayName || 'Anonymous'}
+                          {report.reporter?.username && (
+                            <span className="text-gray-500"> (@{report.reporter.username})</span>
+                          )}
+                        </dd>
+                      </div>
+                      <div>
+                        <dt className="text-xs text-gray-500">Reported At</dt>
+                        <dd className="text-sm text-gray-900">{formatDate(report.createdAt)}</dd>
+                      </div>
+                      {report.reviewedAt && (
+                        <div>
+                          <dt className="text-xs text-gray-500">Reviewed At</dt>
+                          <dd className="text-sm text-gray-900">{formatDate(report.reviewedAt)}</dd>
+                        </div>
+                      )}
+                      {report.action && (
+                        <div>
+                          <dt className="text-xs text-gray-500">Action Taken</dt>
+                          <dd className="text-sm text-gray-900 capitalize">{report.action.replace('-', ' ')}</dd>
+                        </div>
+                      )}
+                    </>
                   )}
-                  {report.action && (
-                    <div>
-                      <dt className="text-xs text-gray-500">Action Taken</dt>
-                      <dd className="text-sm text-gray-900 capitalize">{report.action.replace('-', ' ')}</dd>
-                    </div>
+                  {isGrouped && (
+                    <>
+                      <div>
+                        <dt className="text-xs text-gray-500">Total Reports</dt>
+                        <dd className="text-sm text-gray-900">{report.reportCount || 0}</dd>
+                      </div>
+                      <div>
+                        <dt className="text-xs text-gray-500">Pending Reports</dt>
+                        <dd className="text-sm text-gray-900">{report.pendingReportCount || 0}</dd>
+                      </div>
+                      <div>
+                        <dt className="text-xs text-gray-500">First Reported</dt>
+                        <dd className="text-sm text-gray-900">{formatDate(report.firstReportedAt)}</dd>
+                      </div>
+                      <div>
+                        <dt className="text-xs text-gray-500">Last Reported</dt>
+                        <dd className="text-sm text-gray-900">{formatDate(report.lastReportedAt)}</dd>
+                      </div>
+                      <div>
+                        <dt className="text-xs text-gray-500">Summary Status</dt>
+                        <dd className="text-sm text-gray-900 capitalize">{report.status}</dd>
+                      </div>
+                    </>
                   )}
                 </dl>
               </div>
@@ -271,18 +331,18 @@ export default function ReportDetailsPanel({ report, onClose, onUpdate }) {
                   
                   <button
                     onClick={() => handleAction('resolved', 'warned')}
-                    disabled={isUpdating || report.status === 'resolved'}
+                    disabled={isUpdating || report.status === 'resolved' || report.status === 'dismissed'}
                     className="w-full btn-base bg-yellow-600 text-white hover:bg-yellow-700 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    {isUpdating ? 'Processing...' : (report.type === 'profile' ? 'Warn User' : 'Warn Creator')}
+                    {isUpdating ? 'Processing...' : ((isGrouped ? report.targetType === 'user' : report.type === 'profile') ? 'Warn User' : 'Warn Creator')}
                   </button>
                   
                   <button
                     onClick={() => handleAction('resolved', 'removed')}
-                    disabled={isUpdating || report.status === 'resolved'}
+                    disabled={isUpdating || report.status === 'resolved' || report.status === 'dismissed'}
                     className="w-full btn-base bg-red-600 text-white hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    {isUpdating ? 'Processing...' : (report.type === 'profile' ? 'Ban User' : 'Remove Campaign')}
+                    {isUpdating ? 'Processing...' : ((isGrouped ? report.targetType === 'user' : report.type === 'profile') ? 'Ban User' : 'Remove Campaign')}
                   </button>
                 </div>
               </div>
