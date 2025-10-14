@@ -198,40 +198,6 @@ export default function AdminDashboard() {
           </div>
         </div>
       </div>
-
-      {stats.insights.topReportedCampaigns.length > 0 && (
-        <div className="bg-white rounded-lg shadow p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Top Reported Campaigns</h3>
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead>
-                <tr>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Campaign</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Reports</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-200">
-                {stats.insights.topReportedCampaigns.map((campaign) => (
-                  <tr key={campaign.id}>
-                    <td className="px-4 py-3 text-sm text-gray-900">{campaign.title}</td>
-                    <td className="px-4 py-3 text-sm text-gray-900">{campaign.reportsCount}</td>
-                    <td className="px-4 py-3 text-sm">
-                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                        campaign.moderationStatus === 'active' ? 'bg-green-100 text-green-800' :
-                        campaign.moderationStatus === 'under-review' ? 'bg-yellow-100 text-yellow-800' :
-                        'bg-red-100 text-red-800'
-                      }`}>
-                        {campaign.moderationStatus}
-                      </span>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
