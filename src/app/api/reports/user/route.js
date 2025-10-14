@@ -43,8 +43,9 @@ export async function POST(request) {
     const summaryRef = db.collection('reportSummary').doc(summaryId);
     
     await db.runTransaction(async (transaction) => {
-      // Get the user
+      // ALL READS MUST COME FIRST (Firestore requirement)
       const userDoc = await transaction.get(userRef);
+      const summaryDoc = await transaction.get(summaryRef);
       
       if (!userDoc.exists) {
         throw new Error('User not found');
@@ -94,7 +95,6 @@ export async function POST(request) {
       transaction.update(userRef, userUpdates);
       
       // Update or create report summary
-      const summaryDoc = await transaction.get(summaryRef);
       const now = new Date();
       
       if (summaryDoc.exists) {

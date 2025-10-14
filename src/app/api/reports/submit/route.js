@@ -36,8 +36,9 @@ export async function POST(request) {
     const summaryRef = db.collection('reportSummary').doc(summaryId);
     
     await db.runTransaction(async (transaction) => {
-      // Get the campaign
+      // ALL READS MUST COME FIRST (Firestore requirement)
       const campaignDoc = await transaction.get(campaignRef);
+      const summaryDoc = await transaction.get(summaryRef);
       
       if (!campaignDoc.exists) {
         throw new Error('Campaign not found');
@@ -79,7 +80,6 @@ export async function POST(request) {
       transaction.update(campaignRef, campaignUpdates);
       
       // Update or create report summary
-      const summaryDoc = await transaction.get(summaryRef);
       const now = new Date();
       
       if (summaryDoc.exists) {
