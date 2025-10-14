@@ -98,14 +98,21 @@ export async function POST(request) {
       const now = new Date();
       
       if (summaryDoc.exists) {
-        // Update existing summary
+        // Update existing summary - reset status to pending if it was resolved/dismissed
         const currentSummary = summaryDoc.data();
-        transaction.update(summaryRef, {
+        const summaryUpdates = {
           reportCount: (currentSummary.reportCount || 0) + 1,
-          pendingReportCount: currentSummary.status === 'pending' ? (currentSummary.pendingReportCount || 0) + 1 : (currentSummary.pendingReportCount || 0) + 1,
+          pendingReportCount: (currentSummary.pendingReportCount || 0) + 1,
           lastReportedAt: now,
           updatedAt: now,
-        });
+        };
+        
+        // Reset to pending if previously resolved/dismissed
+        if (currentSummary.status === 'resolved' || currentSummary.status === 'dismissed') {
+          summaryUpdates.status = 'pending';
+        }
+        
+        transaction.update(summaryRef, summaryUpdates);
       } else {
         // Create new summary
         transaction.set(summaryRef, {
