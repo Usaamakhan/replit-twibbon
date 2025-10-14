@@ -32,6 +32,8 @@ export async function POST(request) {
     // Use Firestore transaction for atomic operations
     const reportRef = db.collection('reports').doc();
     const campaignRef = db.collection('campaigns').doc(campaignId);
+    const summaryId = `campaign-${campaignId}`;
+    const summaryRef = db.collection('reportSummary').doc(summaryId);
     
     await db.runTransaction(async (transaction) => {
       // Get the campaign
@@ -47,6 +49,7 @@ export async function POST(request) {
       
       // Create the report
       const reportData = {
+        type: 'campaign',
         campaignId,
         campaignSlug: campaignSlug || '',
         reportedBy: reportedBy || 'anonymous',
@@ -74,6 +77,41 @@ export async function POST(request) {
       }
       
       transaction.update(campaignRef, campaignUpdates);
+      
+      // Update or create report summary
+      const summaryDoc = await transaction.get(summaryRef);
+      const now = new Date();
+      
+      if (summaryDoc.exists) {
+        // Update existing summary
+        const currentSummary = summaryDoc.data();
+        transaction.update(summaryRef, {
+          reportCount: (currentSummary.reportCount || 0) + 1,
+          pendingReportCount: currentSummary.status === 'pending' ? (currentSummary.pendingReportCount || 0) + 1 : (currentSummary.pendingReportCount || 0) + 1,
+          lastReportedAt: now,
+          updatedAt: now,
+        });
+      } else {
+        // Create new summary
+        transaction.set(summaryRef, {
+          targetId: campaignId,
+          targetType: 'campaign',
+          reportCount: 1,
+          pendingReportCount: 1,
+          firstReportedAt: now,
+          lastReportedAt: now,
+          status: 'pending',
+          createdAt: now,
+          updatedAt: now,
+          // Display data for quick access
+          campaignTitle: campaignData.title || 'Untitled Campaign',
+          campaignImage: campaignData.imageUrl || '',
+          campaignSlug: campaignData.slug || '',
+          campaignType: campaignData.type || '',
+          creatorId: campaignData.creatorId || '',
+          moderationStatus: campaignData.moderationStatus || 'active',
+        });
+      }
       
       // Send notification if campaign is auto-hidden
       if (newReportsCount >= 3 && campaignData.moderationStatus === 'active' && campaignData.creatorId) {

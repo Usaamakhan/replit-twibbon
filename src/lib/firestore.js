@@ -923,6 +923,168 @@ export const updateReportStatus = async (reportId, statusData) => {
   }
 };
 
+// ============================================================================
+// REPORT SUMMARY FUNCTIONS (for grouped reporting)
+// ============================================================================
+
+/**
+ * Create or update report summary for grouped reporting
+ * This aggregates reports by campaign or user for efficient admin display
+ * @param {object} summaryData - Summary data
+ * @returns {Promise<object>} Success response
+ */
+export const upsertReportSummary = async (summaryData) => {
+  if (!db) {
+    return { success: false, error: 'Database not initialized' };
+  }
+  
+  try {
+    const { targetId, targetType, reportData } = summaryData;
+    
+    if (!targetId || !targetType) {
+      return { success: false, error: 'Target ID and type are required' };
+    }
+    
+    const summaryId = `${targetType}-${targetId}`;
+    const summaryRef = doc(db, 'reportSummary', summaryId);
+    
+    await runTransaction(db, async (transaction) => {
+      const summaryDoc = await transaction.get(summaryRef);
+      const now = new Date();
+      
+      if (summaryDoc.exists()) {
+        // Update existing summary
+        const currentData = summaryDoc.data();
+        const updates = {
+          reportCount: (currentData.reportCount || 0) + 1,
+          pendingReportCount: currentData.status === 'pending' ? (currentData.pendingReportCount || 0) + 1 : currentData.pendingReportCount,
+          lastReportedAt: now,
+          updatedAt: now,
+        };
+        
+        transaction.update(summaryRef, updates);
+      } else {
+        // Create new summary
+        const newSummary = {
+          targetId,
+          targetType,
+          reportCount: 1,
+          pendingReportCount: 1,
+          firstReportedAt: now,
+          lastReportedAt: now,
+          status: 'pending',
+          createdAt: now,
+          updatedAt: now,
+          // Include display data for quick access
+          ...reportData,
+        };
+        
+        transaction.set(summaryRef, newSummary);
+      }
+    });
+    
+    return { success: true };
+  } catch (error) {
+    if (process.env.NODE_ENV === 'development') {
+      console.error('Error upserting report summary:', error);
+    }
+    const errorResponse = await handleFirebaseError(error, 'firestore', { returnType: 'string' });
+    return { success: false, error: errorResponse || 'Failed to update report summary' };
+  }
+};
+
+/**
+ * Get grouped report summaries with filters and sorting
+ * @param {object} options - Query options
+ * @returns {Promise<Array>} Array of report summaries
+ */
+export const getReportSummaries = async (options = {}) => {
+  if (!db) {
+    return [];
+  }
+  
+  const {
+    targetType = 'all',
+    status = 'pending',
+    sortBy = 'lastReportedAt',
+    sortOrder = 'desc',
+    limitCount = 10,
+  } = options;
+  
+  try {
+    let q = collection(db, 'reportSummary');
+    const constraints = [];
+    
+    // Filter by target type
+    if (targetType !== 'all') {
+      constraints.push(where('targetType', '==', targetType));
+    }
+    
+    // Filter by status
+    if (status !== 'all') {
+      constraints.push(where('status', '==', status));
+    }
+    
+    // Add sorting
+    constraints.push(orderBy(sortBy, sortOrder));
+    constraints.push(limit(limitCount));
+    
+    if (constraints.length > 0) {
+      q = query(q, ...constraints);
+    }
+    
+    const querySnapshot = await getDocs(q);
+    const summaries = [];
+    
+    querySnapshot.forEach((doc) => {
+      summaries.push({ id: doc.id, ...doc.data() });
+    });
+    
+    return summaries;
+  } catch (error) {
+    if (process.env.NODE_ENV === 'development') {
+      console.error('Error getting report summaries:', error);
+    }
+    return [];
+  }
+};
+
+/**
+ * Update report summary status (when admin takes action)
+ * @param {string} summaryId - Summary document ID
+ * @param {string} newStatus - New status ('resolved', 'dismissed')
+ * @returns {Promise<object>} Success response
+ */
+export const updateReportSummaryStatus = async (summaryId, newStatus) => {
+  if (!db) {
+    return { success: false, error: 'Database not initialized' };
+  }
+  
+  try {
+    const summaryRef = doc(db, 'reportSummary', summaryId);
+    const summaryDoc = await getDoc(summaryRef);
+    
+    if (!summaryDoc.exists()) {
+      return { success: false, error: 'Report summary not found' };
+    }
+    
+    await updateDoc(summaryRef, {
+      status: newStatus,
+      resolvedAt: newStatus === 'resolved' || newStatus === 'dismissed' ? new Date() : null,
+      pendingReportCount: 0,
+      updatedAt: new Date(),
+    });
+    
+    return { success: true };
+  } catch (error) {
+    if (process.env.NODE_ENV === 'development') {
+      console.error('Error updating report summary status:', error);
+    }
+    const errorResponse = await handleFirebaseError(error, 'firestore', { returnType: 'string' });
+    return { success: false, error: errorResponse || 'Failed to update report summary status' };
+  }
+};
+
 /**
  * Get all campaigns with optional filters
  * @param {object} filters - Filter options

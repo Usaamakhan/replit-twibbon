@@ -39,6 +39,8 @@ export async function POST(request) {
     // Use Firestore transaction for atomic operations
     const reportRef = db.collection('reports').doc();
     const userRef = db.collection('users').doc(reportedUserId);
+    const summaryId = `user-${reportedUserId}`;
+    const summaryRef = db.collection('reportSummary').doc(summaryId);
     
     await db.runTransaction(async (transaction) => {
       // Get the user
@@ -90,6 +92,40 @@ export async function POST(request) {
       }
       
       transaction.update(userRef, userUpdates);
+      
+      // Update or create report summary
+      const summaryDoc = await transaction.get(summaryRef);
+      const now = new Date();
+      
+      if (summaryDoc.exists) {
+        // Update existing summary
+        const currentSummary = summaryDoc.data();
+        transaction.update(summaryRef, {
+          reportCount: (currentSummary.reportCount || 0) + 1,
+          pendingReportCount: currentSummary.status === 'pending' ? (currentSummary.pendingReportCount || 0) + 1 : (currentSummary.pendingReportCount || 0) + 1,
+          lastReportedAt: now,
+          updatedAt: now,
+        });
+      } else {
+        // Create new summary
+        transaction.set(summaryRef, {
+          targetId: reportedUserId,
+          targetType: 'user',
+          reportCount: 1,
+          pendingReportCount: 1,
+          firstReportedAt: now,
+          lastReportedAt: now,
+          status: 'pending',
+          createdAt: now,
+          updatedAt: now,
+          // Display data for quick access
+          username: userData.username || '',
+          displayName: userData.displayName || '',
+          profileImage: userData.profileImage || '',
+          moderationStatus: userData.moderationStatus || 'active',
+          accountStatus: userData.accountStatus || 'active',
+        });
+      }
       
       // Send notification if profile is auto-hidden
       if (newReportsCount >= 10 && userData.moderationStatus === 'active') {
