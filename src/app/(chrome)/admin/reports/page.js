@@ -12,6 +12,7 @@ export default function AdminReportsPage() {
   const [selectedSummary, setSelectedSummary] = useState(null);
   const [filters, setFilters] = useState({
     targetType: 'all',
+    status: 'pending',
     sortBy: 'reportCount',
     limit: 10,
   });
@@ -25,7 +26,7 @@ export default function AdminReportsPage() {
       
       const params = new URLSearchParams();
       if (filters.targetType !== 'all') params.append('targetType', filters.targetType);
-      params.append('status', 'pending');
+      if (filters.status !== 'all') params.append('status', filters.status);
       params.append('sortBy', filters.sortBy);
       params.append('sortOrder', 'desc');
       params.append('limit', filters.limit.toString());
@@ -65,8 +66,8 @@ export default function AdminReportsPage() {
   return (
     <div className="space-y-6">
       <div className="bg-white rounded-lg shadow p-6">
-        <h2 className="text-lg font-semibold text-gray-900 mb-4">Load Pending Reports</h2>
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <h2 className="text-lg font-semibold text-gray-900 mb-4">Load Reports</h2>
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
           <div>
             <label htmlFor="type-filter" className="block text-sm font-medium text-gray-700 mb-2">
               Report Type
@@ -80,6 +81,23 @@ export default function AdminReportsPage() {
               <option value="all" className="text-gray-900">All Types</option>
               <option value="campaign" className="text-gray-900">Campaigns</option>
               <option value="user" className="text-gray-900">Users</option>
+            </select>
+          </div>
+
+          <div>
+            <label htmlFor="status-filter" className="block text-sm font-medium text-gray-700 mb-2">
+              Status
+            </label>
+            <select
+              id="status-filter"
+              value={filters.status}
+              onChange={(e) => setFilters({ ...filters, status: e.target.value })}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-500 text-gray-900 bg-white"
+            >
+              <option value="all" className="text-gray-900">All</option>
+              <option value="pending" className="text-gray-900">Pending</option>
+              <option value="resolved" className="text-gray-900">Resolved</option>
+              <option value="dismissed" className="text-gray-900">Dismissed</option>
             </select>
           </div>
 
@@ -137,7 +155,7 @@ export default function AdminReportsPage() {
         </div>
         {summaries.length > 0 && (
           <div className="mt-4 text-sm text-gray-600">
-            Showing <span className="font-semibold">{summaries.length}</span> pending report{summaries.length !== 1 ? 's' : ''}
+            Showing <span className="font-semibold">{summaries.length}</span> report{summaries.length !== 1 ? 's' : ''}
           </div>
         )}
       </div>
