@@ -115,6 +115,18 @@ export async function POST(request) {
           };
         }
         
+        // Sync moderation status when user profile is auto-hidden
+        if (newReportsCount >= 10 && userData.moderationStatus === 'active') {
+          summaryUpdates.moderationStatus = 'under-review-hidden';
+          summaryUpdates.hiddenAt = now;
+        }
+        
+        // Always refresh cached display data
+        summaryUpdates.displayName = userData.displayName || currentSummary.displayName;
+        summaryUpdates.username = userData.username || currentSummary.username;
+        summaryUpdates.profileImage = userData.profileImage || currentSummary.profileImage;
+        summaryUpdates.accountStatus = userData.accountStatus || currentSummary.accountStatus || 'active';
+        
         transaction.update(summaryRef, summaryUpdates);
       } else {
         // Create new summary

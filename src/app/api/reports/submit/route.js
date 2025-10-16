@@ -102,6 +102,16 @@ export async function POST(request) {
           };
         }
         
+        // Sync moderation status when campaign is auto-hidden
+        if (newReportsCount >= 3 && campaignData.moderationStatus === 'active') {
+          summaryUpdates.moderationStatus = 'under-review-hidden';
+          summaryUpdates.hiddenAt = now;
+        }
+        
+        // Always refresh cached display data
+        summaryUpdates.campaignTitle = campaignData.title || currentSummary.campaignTitle;
+        summaryUpdates.campaignImage = campaignData.imageUrl || currentSummary.campaignImage;
+        
         transaction.update(summaryRef, summaryUpdates);
       } else {
         // Create new summary

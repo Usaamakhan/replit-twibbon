@@ -37,6 +37,32 @@ export async function GET(request) {
     for (const doc of summariesSnapshot.docs) {
       const summaryData = { id: doc.id, ...doc.data() };
       
+      // Fetch LIVE status from actual target document (campaign or user)
+      if (summaryData.targetId) {
+        const targetCollection = summaryData.targetType === 'campaign' ? 'campaigns' : 'users';
+        const targetDoc = await db.collection(targetCollection).doc(summaryData.targetId).get();
+        
+        if (targetDoc.exists) {
+          const targetData = targetDoc.data();
+          
+          // Update with LIVE moderation status
+          if (summaryData.targetType === 'campaign') {
+            summaryData.moderationStatus = targetData.moderationStatus || 'active';
+            // Also update cached display data if changed
+            summaryData.campaignTitle = targetData.title || summaryData.campaignTitle;
+            summaryData.campaignImage = targetData.imageUrl || summaryData.campaignImage;
+          } else {
+            // For users, show both moderationStatus and accountStatus
+            summaryData.moderationStatus = targetData.moderationStatus || 'active';
+            summaryData.accountStatus = targetData.accountStatus || 'active';
+            // Update cached display data
+            summaryData.displayName = targetData.displayName || summaryData.displayName;
+            summaryData.username = targetData.username || summaryData.username;
+            summaryData.profileImage = targetData.profileImage || summaryData.profileImage;
+          }
+        }
+      }
+      
       // Add creator info for campaign reports
       if (summaryData.targetType === 'campaign' && summaryData.creatorId) {
         const creatorDoc = await db.collection('users').doc(summaryData.creatorId).get();

@@ -97,12 +97,31 @@ export async function PATCH(request, { params }) {
       transaction.update(targetRef, targetUpdates);
       
       // Update summary - reset reportCount and reasonCounts to 0
-      transaction.update(summaryRef, {
+      // Also update cached status and display fields to keep them fresh
+      const summaryUpdates = {
         status: action === 'no-action' ? 'dismissed' : 'resolved',
         reportCount: 0,
         reasonCounts: {},
         updatedAt: now,
-      });
+      };
+      
+      // Sync cached moderation status fields
+      if (targetType === 'campaign') {
+        summaryUpdates.moderationStatus = targetUpdates.moderationStatus || targetData.moderationStatus;
+        // Update cached display data
+        summaryUpdates.campaignTitle = targetData.title || summaryData.campaignTitle;
+        summaryUpdates.campaignImage = targetData.imageUrl || summaryData.campaignImage;
+      } else {
+        // For users
+        summaryUpdates.moderationStatus = targetUpdates.moderationStatus || targetData.moderationStatus;
+        summaryUpdates.accountStatus = targetUpdates.accountStatus || targetData.accountStatus;
+        // Update cached display data
+        summaryUpdates.displayName = targetData.displayName || summaryData.displayName;
+        summaryUpdates.username = targetData.username || summaryData.username;
+        summaryUpdates.profileImage = targetData.profileImage || summaryData.profileImage;
+      }
+      
+      transaction.update(summaryRef, summaryUpdates);
     });
     
     // Send notification after transaction completes

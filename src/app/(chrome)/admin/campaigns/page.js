@@ -80,8 +80,9 @@ export default function AdminCampaignsPage() {
             >
               <option value="all" className="text-gray-900">All Statuses</option>
               <option value="active" className="text-gray-900">Active</option>
-              <option value="under-review" className="text-gray-900">Under Review</option>
-              <option value="removed" className="text-gray-900">Removed</option>
+              <option value="under-review-hidden" className="text-gray-900">Under Review (Hidden)</option>
+              <option value="removed-temporary" className="text-gray-900">Removed (Temporary)</option>
+              <option value="removed-permanent" className="text-gray-900">Removed (Permanent)</option>
             </select>
           </div>
 

@@ -13,23 +13,25 @@ export async function GET(request) {
       totalCampaignsSnap,
       activeCampaignsSnap,
       underReviewCampaignsSnap,
-      removedCampaignsSnap,
+      removedTempCampaignsSnap,
+      removedPermCampaignsSnap,
       frameCampaignsSnap,
       backgroundCampaignsSnap,
       totalUsersSnap,
       adminUsersSnap,
-      bannedUsersSnap,
+      bannedTempUsersSnap,
+      bannedPermUsersSnap,
       totalReportsSnap,
       pendingReportsSnap,
-      reviewedReportsSnap,
       resolvedReportsSnap,
       dismissedReportsSnap,
     ] = await Promise.all([
       // Campaign counts by status
       db.collection('campaigns').count().get(),
       db.collection('campaigns').where('moderationStatus', '==', 'active').count().get(),
-      db.collection('campaigns').where('moderationStatus', '==', 'under-review').count().get(),
-      db.collection('campaigns').where('moderationStatus', '==', 'removed').count().get(),
+      db.collection('campaigns').where('moderationStatus', '==', 'under-review-hidden').count().get(),
+      db.collection('campaigns').where('moderationStatus', '==', 'removed-temporary').count().get(),
+      db.collection('campaigns').where('moderationStatus', '==', 'removed-permanent').count().get(),
       
       // Campaign counts by type
       db.collection('campaigns').where('type', '==', 'frame').count().get(),
@@ -38,32 +40,31 @@ export async function GET(request) {
       // User counts
       db.collection('users').count().get(),
       db.collection('users').where('role', '==', 'admin').count().get(),
-      db.collection('users').where('banned', '==', true).count().get(),
+      db.collection('users').where('accountStatus', '==', 'banned-temporary').count().get(),
+      db.collection('users').where('accountStatus', '==', 'banned-permanent').count().get(),
       
-      // Report counts by status
-      db.collection('reports').count().get(),
-      db.collection('reports').where('status', '==', 'pending').count().get(),
-      db.collection('reports').where('status', '==', 'reviewed').count().get(),
-      db.collection('reports').where('status', '==', 'resolved').count().get(),
-      db.collection('reports').where('status', '==', 'dismissed').count().get(),
+      // Report counts by status (using reportSummary collection)
+      db.collection('reportSummary').count().get(),
+      db.collection('reportSummary').where('status', '==', 'pending').count().get(),
+      db.collection('reportSummary').where('status', '==', 'resolved').count().get(),
+      db.collection('reportSummary').where('status', '==', 'dismissed').count().get(),
     ]);
     
     // Extract counts from aggregation results
     const totalCampaigns = totalCampaignsSnap.data().count;
     const activeCampaigns = activeCampaignsSnap.data().count;
     const underReviewCampaigns = underReviewCampaignsSnap.data().count;
-    const removedCampaigns = removedCampaignsSnap.data().count;
+    const removedCampaigns = removedTempCampaignsSnap.data().count + removedPermCampaignsSnap.data().count;
     const frameCampaigns = frameCampaignsSnap.data().count;
     const backgroundCampaigns = backgroundCampaignsSnap.data().count;
     
     const totalUsers = totalUsersSnap.data().count;
     const adminUsers = adminUsersSnap.data().count;
-    const bannedUsers = bannedUsersSnap.data().count;
+    const bannedUsers = bannedTempUsersSnap.data().count + bannedPermUsersSnap.data().count;
     const regularUsers = totalUsers - adminUsers;
     
     const totalReports = totalReportsSnap.data().count;
     const pendingReports = pendingReportsSnap.data().count;
-    const reviewedReports = reviewedReportsSnap.data().count;
     const resolvedReports = resolvedReportsSnap.data().count;
     const dismissedReports = dismissedReportsSnap.data().count;
     
