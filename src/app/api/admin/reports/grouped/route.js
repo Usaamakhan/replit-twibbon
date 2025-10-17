@@ -74,6 +74,13 @@ export async function GET(request) {
             username: creatorData.username,
             profileImage: creatorData.profileImage,
           };
+        } else {
+          summaryData.creator = {
+            uid: summaryData.creatorId,
+            displayName: '[Deleted User]',
+            username: null,
+            profileImage: null,
+          };
         }
       }
       

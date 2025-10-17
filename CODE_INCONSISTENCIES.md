@@ -18,11 +18,11 @@ The Firestore security rules are missing critical collections that are actively 
 1. **`reportSummary` collection** - No security rules defined
    - Currently allows NO ACCESS by default (fails to `/{document=**}` rule requiring auth)
    - Should allow admins to read/write, but currently blocks all access
-   
+
 2. **`warnings` collection** - No security rules defined
    - Currently allows NO ACCESS by default
    - Should allow admins to create/read, users to read their own warnings
-   
+
 3. **`users/{userId}/notifications/{notificationId}` subcollection** - No security rules defined
    - Currently allows NO ACCESS by default
    - Should allow users to read/update/delete their own notifications
@@ -42,7 +42,7 @@ match /reportSummary/{summaryId} {
   // Only admins can read report summaries
   allow read: if request.auth != null && 
               get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
-  
+
   // No client-side writes (server-only via Admin SDK)
   allow write: if false;
 }
@@ -52,11 +52,11 @@ match /warnings/{warningId} {
   // Users can read their own warnings
   allow read: if request.auth != null && 
               resource.data.userId == request.auth.uid;
-  
+
   // Only admins can read all warnings
   allow read: if request.auth != null && 
               get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
-  
+
   // No client-side writes (server-only via Admin SDK)
   allow write: if false;
 }
@@ -65,10 +65,10 @@ match /warnings/{warningId} {
 match /users/{userId}/notifications/{notificationId} {
   // Users can read their own notifications
   allow read: if request.auth != null && request.auth.uid == userId;
-  
+
   // Users can update (mark as read) or delete their own notifications
   allow update, delete: if request.auth != null && request.auth.uid == userId;
-  
+
   // No direct creation (server-only via Admin SDK)
   allow create: if false;
 }

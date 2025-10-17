@@ -142,6 +142,42 @@ service cloud.firestore {
       // No deletion of reports
     }
     
+    // Report Summary - Admin read only, server-side writes via Admin SDK
+    match /reportSummary/{summaryId} {
+      // Only admins can read report summaries
+      allow read: if request.auth != null && 
+                  get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+      
+      // No client-side writes (server-only via Admin SDK)
+      allow write: if false;
+    }
+    
+    // Warnings - Admin creates, users read own warnings
+    match /warnings/{warningId} {
+      // Users can read their own warnings
+      allow read: if request.auth != null && 
+                  resource.data.userId == request.auth.uid;
+      
+      // Admins can read all warnings
+      allow read: if request.auth != null && 
+                  get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+      
+      // No client-side writes (server-only via Admin SDK)
+      allow write: if false;
+    }
+    
+    // User Notifications - Users manage their own notifications
+    match /users/{userId}/notifications/{notificationId} {
+      // Users can read their own notifications
+      allow read: if request.auth != null && request.auth.uid == userId;
+      
+      // Users can update (mark as read) or delete their own notifications
+      allow update, delete: if request.auth != null && request.auth.uid == userId;
+      
+      // No direct creation (server-only via Admin SDK)
+      allow create: if false;
+    }
+    
     // All other documents require authentication
     match /{document=**} {
       allow read: if request.auth != null;

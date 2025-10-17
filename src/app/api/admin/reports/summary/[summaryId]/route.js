@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { requireAdmin } from '@/middleware/adminAuth';
 import { adminFirestore } from '@/lib/firebaseAdmin';
+import { FieldValue } from 'firebase-admin/firestore';
 import { sendInAppNotification } from '@/utils/notifications/sendInAppNotification';
 import { getNotificationTemplate } from '@/utils/notifications/notificationTemplates';
 
@@ -59,10 +60,10 @@ export async function PATCH(request, { params }) {
         // Dismiss - restore to active
         if (targetType === 'campaign') {
           targetUpdates.moderationStatus = 'active';
-          targetUpdates.hiddenAt = null;
+          targetUpdates.hiddenAt = FieldValue.delete();
         } else {
           targetUpdates.moderationStatus = 'active';
-          targetUpdates.hiddenAt = null;
+          targetUpdates.hiddenAt = FieldValue.delete();
         }
       } else if (action === 'warned') {
         // Warning issued - create warning record, reset reports

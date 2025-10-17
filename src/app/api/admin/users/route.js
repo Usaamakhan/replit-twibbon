@@ -24,7 +24,7 @@ export async function GET(request) {
       
       let hasMore = true;
       let lastDoc = null;
-      const batchSize = 500;
+      const batchSize = 100;
       const searchLower = search.toLowerCase();
       
       while (hasMore && users.length < limitValue) {
@@ -48,36 +48,19 @@ export async function GET(request) {
             (userData.email && userData.email.toLowerCase().includes(searchLower)) ||
             (userData.username && userData.username.toLowerCase().includes(searchLower));
           
-          if (!matchesSearch) {
-            continue;
+          if (matchesSearch) {
+            if (userData.createdAt && userData.createdAt.toDate) {
+              userData.createdAt = userData.createdAt.toDate().toISOString();
+            }
+            if (userData.updatedAt && userData.updatedAt.toDate) {
+              userData.updatedAt = userData.updatedAt.toDate().toISOString();
+            }
+            if (userData.bannedAt && userData.bannedAt.toDate) {
+              userData.bannedAt = userData.bannedAt.toDate().toISOString();
+            }
+            
+            users.push(userData);
           }
-          
-          const campaignsQuery = db.collection('campaigns')
-            .where('creatorId', '==', doc.id)
-            .where('moderationStatus', '==', 'active');
-          const campaignsSnapshot = await campaignsQuery.get();
-          const campaignsCount = campaignsSnapshot.size;
-          
-          let totalSupports = 0;
-          campaignsSnapshot.docs.forEach(campaignDoc => {
-            const campaignData = campaignDoc.data();
-            totalSupports += campaignData.supportersCount || 0;
-          });
-          
-          userData.campaignsCount = campaignsCount;
-          userData.totalSupports = totalSupports;
-          
-          if (userData.createdAt && userData.createdAt.toDate) {
-            userData.createdAt = userData.createdAt.toDate().toISOString();
-          }
-          if (userData.updatedAt && userData.updatedAt.toDate) {
-            userData.updatedAt = userData.updatedAt.toDate().toISOString();
-          }
-          if (userData.bannedAt && userData.bannedAt.toDate) {
-            userData.bannedAt = userData.bannedAt.toDate().toISOString();
-          }
-          
-          users.push(userData);
         }
         
         lastDoc = snapshot.docs[snapshot.docs.length - 1];
@@ -85,6 +68,47 @@ export async function GET(request) {
         if (snapshot.docs.length < batchSize) {
           hasMore = false;
         }
+      }
+      
+      const userIds = users.map(u => u.id);
+      
+      if (userIds.length > 0) {
+        const campaignsByCreator = {};
+        
+        const chunkSize = 10;
+        for (let i = 0; i < userIds.length; i += chunkSize) {
+          const chunk = userIds.slice(i, i + chunkSize);
+          const campaignsSnapshot = await db.collection('campaigns')
+            .where('creatorId', 'in', chunk)
+            .where('moderationStatus', '==', 'active')
+            .get();
+          
+          campaignsSnapshot.docs.forEach(campaignDoc => {
+            const campaignData = campaignDoc.data();
+            const creatorId = campaignData.creatorId;
+            
+            if (!campaignsByCreator[creatorId]) {
+              campaignsByCreator[creatorId] = {
+                count: 0,
+                totalSupports: 0
+              };
+            }
+            
+            campaignsByCreator[creatorId].count++;
+            campaignsByCreator[creatorId].totalSupports += campaignData.supportersCount || 0;
+          });
+        }
+        
+        users.forEach(user => {
+          const stats = campaignsByCreator[user.id] || { count: 0, totalSupports: 0 };
+          user.campaignsCount = stats.count;
+          user.totalSupports = stats.totalSupports;
+        });
+      } else {
+        users.forEach(user => {
+          user.campaignsCount = 0;
+          user.totalSupports = 0;
+        });
       }
     } else {
       let query = db.collection('users');
@@ -95,23 +119,8 @@ export async function GET(request) {
       
       const snapshot = await query.get();
       
-      for (const doc of snapshot.docs) {
+      snapshot.docs.forEach(doc => {
         const userData = { id: doc.id, ...doc.data() };
-        
-        const campaignsQuery = db.collection('campaigns')
-          .where('creatorId', '==', doc.id)
-          .where('moderationStatus', '==', 'active');
-        const campaignsSnapshot = await campaignsQuery.get();
-        const campaignsCount = campaignsSnapshot.size;
-        
-        let totalSupports = 0;
-        campaignsSnapshot.docs.forEach(campaignDoc => {
-          const campaignData = campaignDoc.data();
-          totalSupports += campaignData.supportersCount || 0;
-        });
-        
-        userData.campaignsCount = campaignsCount;
-        userData.totalSupports = totalSupports;
         
         if (userData.createdAt && userData.createdAt.toDate) {
           userData.createdAt = userData.createdAt.toDate().toISOString();
@@ -124,6 +133,47 @@ export async function GET(request) {
         }
         
         users.push(userData);
+      });
+      
+      const userIds = users.map(u => u.id);
+      
+      if (userIds.length > 0) {
+        const campaignsByCreator = {};
+        
+        const chunkSize = 10;
+        for (let i = 0; i < userIds.length; i += chunkSize) {
+          const chunk = userIds.slice(i, i + chunkSize);
+          const campaignsSnapshot = await db.collection('campaigns')
+            .where('creatorId', 'in', chunk)
+            .where('moderationStatus', '==', 'active')
+            .get();
+          
+          campaignsSnapshot.docs.forEach(campaignDoc => {
+            const campaignData = campaignDoc.data();
+            const creatorId = campaignData.creatorId;
+            
+            if (!campaignsByCreator[creatorId]) {
+              campaignsByCreator[creatorId] = {
+                count: 0,
+                totalSupports: 0
+              };
+            }
+            
+            campaignsByCreator[creatorId].count++;
+            campaignsByCreator[creatorId].totalSupports += campaignData.supportersCount || 0;
+          });
+        }
+        
+        users.forEach(user => {
+          const stats = campaignsByCreator[user.id] || { count: 0, totalSupports: 0 };
+          user.campaignsCount = stats.count;
+          user.totalSupports = stats.totalSupports;
+        });
+      } else {
+        users.forEach(user => {
+          user.campaignsCount = 0;
+          user.totalSupports = 0;
+        });
       }
     }
     
