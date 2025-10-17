@@ -13,7 +13,7 @@ export default function AdminReportsPage() {
   const [filters, setFilters] = useState({
     targetType: 'all',
     status: 'pending',
-    sortBy: 'reportCount',
+    sortBy: 'reportsCount',
     limit: 10,
   });
 
@@ -112,7 +112,7 @@ export default function AdminReportsPage() {
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-500 text-gray-900 bg-white"
             >
               <option value="lastReportedAt" className="text-gray-900">Most Recent</option>
-              <option value="reportCount" className="text-gray-900">Top Reported</option>
+              <option value="reportsCount" className="text-gray-900">Top Reported</option>
               <option value="firstReportedAt" className="text-gray-900">Oldest Pending</option>
             </select>
           </div>

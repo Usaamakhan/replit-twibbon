@@ -96,11 +96,11 @@ export async function PATCH(request, { params }) {
       
       transaction.update(targetRef, targetUpdates);
       
-      // Update summary - reset reportCount and reasonCounts to 0
+      // Update summary - reset reportsCount and reasonCounts to 0
       // Also update cached status and display fields to keep them fresh
       const summaryUpdates = {
         status: action === 'no-action' ? 'dismissed' : 'resolved',
-        reportCount: 0,
+        reportsCount: 0,
         reasonCounts: {},
         updatedAt: now,
       };

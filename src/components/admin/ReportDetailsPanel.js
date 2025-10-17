@@ -175,7 +175,7 @@ export default function ReportDetailsPanel({ report, onClose, onUpdate, isGroupe
                     </p>
                     {isGrouped && (
                       <p className="text-sm text-gray-600">
-                        Reports: {report.reportCount || 0}
+                        Reports: {report.reportsCount || 0}
                       </p>
                     )}
                     {!isGrouped && report.reportedUser?.reportsCount > 0 && (
@@ -217,7 +217,7 @@ export default function ReportDetailsPanel({ report, onClose, onUpdate, isGroupe
                     </p>
                     {isGrouped && (
                       <p className="text-sm text-gray-600">
-                        Reports: {report.reportCount || 0}
+                        Reports: {report.reportsCount || 0}
                       </p>
                     )}
                     {!isGrouped && report.campaign?.creator && (
@@ -285,7 +285,7 @@ export default function ReportDetailsPanel({ report, onClose, onUpdate, isGroupe
                     <>
                       <div>
                         <dt className="text-xs text-gray-500">Reports Count</dt>
-                        <dd className="text-sm text-gray-900">{report.reportCount || 0}</dd>
+                        <dd className="text-sm text-gray-900">{report.reportsCount || 0}</dd>
                       </div>
                       <div>
                         <dt className="text-xs text-gray-500">First Reported</dt>

@@ -161,7 +161,7 @@ export default function GroupedReportsTable({
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center justify-center">
                       <span className="text-2xl font-bold text-red-600">
-                        {summary.reportCount || 0}
+                        {summary.reportsCount || 0}
                       </span>
                     </div>
                   </td>
@@ -211,7 +211,7 @@ export default function GroupedReportsTable({
                               .map(([reason, count]) => {
                                 const percentage = getReasonPercentage(
                                   count,
-                                  summary.reportCount,
+                                  summary.reportsCount,
                                 );
                                 return (
                                   <div

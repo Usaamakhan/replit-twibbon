@@ -100,12 +100,12 @@ export async function POST(request) {
         // If previously resolved/dismissed, reset counter and status to start fresh
         if (currentSummary.status === 'resolved' || currentSummary.status === 'dismissed') {
           summaryUpdates.status = 'pending';
-          summaryUpdates.reportCount = 1;
+          summaryUpdates.reportsCount = 1;
           summaryUpdates.firstReportedAt = now;
           summaryUpdates.reasonCounts = { [reason]: 1 };
         } else {
           // Still pending, increment counter and reason count
-          summaryUpdates.reportCount = (currentSummary.reportCount || 0) + 1;
+          summaryUpdates.reportsCount = (currentSummary.reportsCount || 0) + 1;
           
           // Increment reason count
           const currentReasonCounts = currentSummary.reasonCounts || {};
@@ -133,7 +133,7 @@ export async function POST(request) {
         transaction.set(summaryRef, {
           targetId: reportedUserId,
           targetType: 'user',
-          reportCount: 1,
+          reportsCount: 1,
           reasonCounts: { [reason]: 1 },
           firstReportedAt: now,
           lastReportedAt: now,
