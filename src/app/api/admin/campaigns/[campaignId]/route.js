@@ -11,10 +11,10 @@ export async function PATCH(request, { params }) {
     const body = await request.json();
     const { moderationStatus, removeReason } = body;
     
-    const validStatuses = ['active', 'under-review', 'removed'];
+    const validStatuses = ['active', 'under-review-hidden', 'removed-temporary', 'removed-permanent'];
     if (moderationStatus && !validStatuses.includes(moderationStatus)) {
       return NextResponse.json(
-        { success: false, error: 'Invalid moderation status. Must be: active, under-review, or removed' },
+        { success: false, error: 'Invalid moderation status. Must be: active, under-review-hidden, removed-temporary, or removed-permanent' },
         { status: 400 }
       );
     }
@@ -44,13 +44,33 @@ export async function PATCH(request, { params }) {
     if (moderationStatus) {
       updateData.moderationStatus = moderationStatus;
       
-      if (moderationStatus === 'removed') {
+      if (moderationStatus === 'removed-temporary' || moderationStatus === 'removed-permanent') {
         updateData.removedBy = adminUser.uid;
         updateData.removedAt = FieldValue.serverTimestamp();
         
         if (removeReason) {
-          updateData.removeReason = removeReason;
+          updateData.removalReason = removeReason;
         }
+        
+        if (moderationStatus === 'removed-temporary') {
+          const appealDeadline = new Date();
+          appealDeadline.setDate(appealDeadline.getDate() + 30);
+          updateData.appealDeadline = appealDeadline;
+          updateData.appealCount = 0;
+        } else if (moderationStatus === 'removed-permanent') {
+          // Clear temporary-only fields when setting to permanent
+          updateData.appealDeadline = FieldValue.delete();
+          updateData.appealCount = FieldValue.delete();
+        }
+      }
+      
+      if (moderationStatus === 'active') {
+        updateData.hiddenAt = FieldValue.delete();
+        updateData.removedAt = FieldValue.delete();
+        updateData.removalReason = FieldValue.delete();
+        updateData.appealDeadline = FieldValue.delete();
+        updateData.appealCount = FieldValue.delete();
+        updateData.removedBy = FieldValue.delete();
       }
     }
     

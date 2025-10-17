@@ -10,6 +10,7 @@ export default function UserDetailsModal({ user, onClose, onUpdate }) {
   const [updateError, setUpdateError] = useState(null);
   const [showBanModal, setShowBanModal] = useState(false);
   const [banReason, setBanReason] = useState('');
+  const [banType, setBanType] = useState('temporary');
 
   // Lock body scroll when modal is open
   useBodyScrollLock(true);
@@ -73,7 +74,9 @@ export default function UserDetailsModal({ user, onClose, onUpdate }) {
   const handleBanToggle = async () => {
     if (!currentUser) return;
 
-    if (!user.banned && !banReason.trim()) {
+    const isBanned = user.accountStatus?.includes('banned') || user.banned;
+    
+    if (!isBanned && !banReason.trim()) {
       setUpdateError('Please provide a reason for banning this user');
       return;
     }
@@ -84,6 +87,10 @@ export default function UserDetailsModal({ user, onClose, onUpdate }) {
     try {
       const token = await currentUser.getIdToken();
       
+      const newAccountStatus = isBanned 
+        ? 'active' 
+        : (banType === 'permanent' ? 'banned-permanent' : 'banned-temporary');
+      
       const response = await fetch(`/api/admin/users/${user.id}/ban`, {
         method: 'PATCH',
         headers: {
@@ -91,7 +98,7 @@ export default function UserDetailsModal({ user, onClose, onUpdate }) {
           'Authorization': `Bearer ${token}`,
         },
         body: JSON.stringify({ 
-          banned: !user.banned,
+          accountStatus: newAccountStatus,
           banReason: banReason || undefined,
         }),
       });
@@ -104,6 +111,7 @@ export default function UserDetailsModal({ user, onClose, onUpdate }) {
 
       setShowBanModal(false);
       setBanReason('');
+      setBanType('temporary');
       
       if (onUpdate) {
         onUpdate();
@@ -172,19 +180,24 @@ export default function UserDetailsModal({ user, onClose, onUpdate }) {
                   </div>
                 </div>
 
-                {user.banned && (
+                {(user.accountStatus?.includes('banned') || user.banned) && (
                   <div className="bg-red-50 border border-red-200 rounded-lg p-4">
                     <div className="flex items-center">
                       <svg className="h-5 w-5 text-red-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                       </svg>
-                      <h4 className="text-sm font-medium text-red-800">User is Banned</h4>
+                      <h4 className="text-sm font-medium text-red-800">
+                        User is {user.accountStatus === 'banned-permanent' ? 'Permanently Banned' : 'Temporarily Banned'}
+                      </h4>
                     </div>
                     {user.banReason && (
                       <p className="mt-2 text-sm text-red-700">Reason: {user.banReason}</p>
                     )}
                     {user.bannedAt && (
                       <p className="mt-1 text-xs text-red-600">Banned on: {formatDate(user.bannedAt)}</p>
+                    )}
+                    {user.accountStatus === 'banned-temporary' && user.appealDeadline && (
+                      <p className="mt-1 text-xs text-red-600">Appeal deadline: {formatDate(user.appealDeadline)}</p>
                     )}
                   </div>
                 )}
@@ -249,9 +262,9 @@ export default function UserDetailsModal({ user, onClose, onUpdate }) {
                     <button
                       onClick={() => setShowBanModal(true)}
                       disabled={isUpdating}
-                      className={`w-full btn-base ${user.banned ? 'bg-green-600 hover:bg-green-700' : 'bg-red-600 hover:bg-red-700'} text-white disabled:opacity-50 disabled:cursor-not-allowed`}
+                      className={`w-full btn-base ${(user.accountStatus?.includes('banned') || user.banned) ? 'bg-green-600 hover:bg-green-700' : 'bg-red-600 hover:bg-red-700'} text-white disabled:opacity-50 disabled:cursor-not-allowed`}
                     >
-                      {isUpdating ? 'Processing...' : user.banned ? 'Unban User' : 'Ban User'}
+                      {isUpdating ? 'Processing...' : (user.accountStatus?.includes('banned') || user.banned) ? 'Unban User' : 'Ban User'}
                     </button>
 
                     {user.username && (
@@ -279,26 +292,56 @@ export default function UserDetailsModal({ user, onClose, onUpdate }) {
             
             <div className="relative bg-white rounded-lg max-w-md w-full p-6 z-[70]">
               <h3 className="text-lg font-medium text-gray-900 mb-4">
-                {user.banned ? 'Unban User' : 'Ban User'}
+                {(user.accountStatus?.includes('banned') || user.banned) ? 'Unban User' : 'Ban User'}
               </h3>
               
-              {!user.banned && (
-                <div className="mb-4">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Reason for ban
-                  </label>
-                  <textarea
-                    value={banReason}
-                    onChange={(e) => setBanReason(e.target.value)}
-                    rows={3}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                    placeholder="Enter reason for banning this user..."
-                  />
-                </div>
+              {!(user.accountStatus?.includes('banned') || user.banned) && (
+                <>
+                  <div className="mb-4">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Ban Type
+                    </label>
+                    <div className="space-y-2">
+                      <label className="flex items-center">
+                        <input
+                          type="radio"
+                          value="temporary"
+                          checked={banType === 'temporary'}
+                          onChange={(e) => setBanType(e.target.value)}
+                          className="mr-2"
+                        />
+                        <span className="text-sm text-gray-900">Temporary (30-day appeal window)</span>
+                      </label>
+                      <label className="flex items-center">
+                        <input
+                          type="radio"
+                          value="permanent"
+                          checked={banType === 'permanent'}
+                          onChange={(e) => setBanType(e.target.value)}
+                          className="mr-2"
+                        />
+                        <span className="text-sm text-gray-900">Permanent (no appeal)</span>
+                      </label>
+                    </div>
+                  </div>
+                  
+                  <div className="mb-4">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Reason for ban
+                    </label>
+                    <textarea
+                      value={banReason}
+                      onChange={(e) => setBanReason(e.target.value)}
+                      rows={3}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                      placeholder="Enter reason for banning this user..."
+                    />
+                  </div>
+                </>
               )}
               
               <p className="text-sm text-gray-600 mb-4">
-                {user.banned 
+                {(user.accountStatus?.includes('banned') || user.banned)
                   ? 'This will unban the user and restore their access.' 
                   : 'This will prevent the user from accessing the platform.'}
               </p>
@@ -315,8 +358,8 @@ export default function UserDetailsModal({ user, onClose, onUpdate }) {
                 </button>
                 <button
                   onClick={handleBanToggle}
-                  disabled={!user.banned && !banReason.trim()}
-                  className={`flex-1 btn-base ${user.banned ? 'bg-green-600 hover:bg-green-700' : 'bg-red-600 hover:bg-red-700'} text-white disabled:opacity-50 disabled:cursor-not-allowed`}
+                  disabled={!(user.accountStatus?.includes('banned') || user.banned) && !banReason.trim()}
+                  className={`flex-1 btn-base ${(user.accountStatus?.includes('banned') || user.banned) ? 'bg-green-600 hover:bg-green-700' : 'bg-red-600 hover:bg-red-700'} text-white disabled:opacity-50 disabled:cursor-not-allowed`}
                 >
                   Confirm
                 </button>

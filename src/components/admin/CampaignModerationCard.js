@@ -176,21 +176,30 @@ export default function CampaignModerationCard({ campaign, onUpdate }) {
                     </button>
                   )}
                   
-                  {campaign.moderationStatus !== 'under-review' && (
+                  {campaign.moderationStatus !== 'under-review-hidden' && (
                     <button
-                      onClick={() => handleModerationChange('under-review')}
+                      onClick={() => handleModerationChange('under-review-hidden')}
                       className="w-full text-left px-4 py-2 text-sm text-yellow-700 hover:bg-yellow-50"
                     >
-                      Mark Under Review
+                      Mark Under Review (Hide)
                     </button>
                   )}
                   
-                  {campaign.moderationStatus !== 'removed' && (
+                  {campaign.moderationStatus !== 'removed-temporary' && (
                     <button
-                      onClick={() => handleModerationChange('removed', 'Removed by admin')}
+                      onClick={() => handleModerationChange('removed-temporary', 'Removed by admin')}
                       className="w-full text-left px-4 py-2 text-sm text-orange-700 hover:bg-orange-50"
                     >
-                      Remove Campaign
+                      Remove Campaign (Temporary)
+                    </button>
+                  )}
+                  
+                  {campaign.moderationStatus !== 'removed-permanent' && (
+                    <button
+                      onClick={() => handleModerationChange('removed-permanent', 'Permanently removed by admin')}
+                      className="w-full text-left px-4 py-2 text-sm text-red-700 hover:bg-red-50"
+                    >
+                      Remove Campaign (Permanent)
                     </button>
                   )}
                   

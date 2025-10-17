@@ -9,16 +9,33 @@ export async function PATCH(request, { params }) {
     
     const { userId } = params;
     const body = await request.json();
-    const { banned, banReason } = body;
+    let { accountStatus, banReason, permanent = false, banned } = body;
     
-    if (typeof banned !== 'boolean') {
+    // Legacy support: map old `banned` boolean to new `accountStatus` enum
+    if (accountStatus === undefined && banned !== undefined) {
+      if (typeof banned !== 'boolean') {
+        return NextResponse.json(
+          { success: false, error: 'Banned status must be a boolean' },
+          { status: 400 }
+        );
+      }
+      // Map banned boolean + permanent flag to new accountStatus
+      if (banned) {
+        accountStatus = permanent ? 'banned-permanent' : 'banned-temporary';
+      } else {
+        accountStatus = 'active';
+      }
+    }
+    
+    const validStatuses = ['active', 'banned-temporary', 'banned-permanent'];
+    if (accountStatus && !validStatuses.includes(accountStatus)) {
       return NextResponse.json(
-        { success: false, error: 'Banned status must be a boolean' },
+        { success: false, error: 'Account status must be: active, banned-temporary, or banned-permanent' },
         { status: 400 }
       );
     }
     
-    if (banned && !banReason) {
+    if ((accountStatus === 'banned-temporary' || accountStatus === 'banned-permanent') && !banReason) {
       return NextResponse.json(
         { success: false, error: 'Ban reason is required when banning a user' },
         { status: 400 }
@@ -44,18 +61,31 @@ export async function PATCH(request, { params }) {
     }
     
     const updateData = {
-      banned: banned,
+      accountStatus: accountStatus,
       updatedAt: FieldValue.serverTimestamp(),
     };
     
-    if (banned) {
+    if (accountStatus === 'banned-temporary' || accountStatus === 'banned-permanent') {
       updateData.banReason = banReason;
       updateData.bannedBy = adminUser.uid;
       updateData.bannedAt = FieldValue.serverTimestamp();
+      
+      if (accountStatus === 'banned-temporary') {
+        const appealDeadline = new Date();
+        appealDeadline.setDate(appealDeadline.getDate() + 30);
+        updateData.appealDeadline = appealDeadline;
+      } else if (accountStatus === 'banned-permanent') {
+        // Clear temporary-only fields when setting to permanent
+        updateData.appealDeadline = FieldValue.delete();
+      }
+      
+      updateData.banned = true;
     } else {
       updateData.banReason = FieldValue.delete();
       updateData.bannedBy = FieldValue.delete();
       updateData.bannedAt = FieldValue.delete();
+      updateData.appealDeadline = FieldValue.delete();
+      updateData.banned = false;
     }
     
     await userRef.update(updateData);
@@ -75,7 +105,7 @@ export async function PATCH(request, { params }) {
     
     return NextResponse.json({
       success: true,
-      message: banned ? 'User banned successfully' : 'User unbanned successfully',
+      message: accountStatus === 'active' ? 'User unbanned successfully' : `User ${accountStatus.replace('-', ' ')} successfully`,
       data: updatedData,
     });
   } catch (error) {
