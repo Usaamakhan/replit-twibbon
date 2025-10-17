@@ -119,7 +119,6 @@ export async function GET(request) {
       reports: {
         total: totalReports,
         pending: pendingReports,
-        reviewed: reviewedReports,
         resolved: resolvedReports,
         dismissed: dismissedReports,
         resolutionRate: resolutionRate,
