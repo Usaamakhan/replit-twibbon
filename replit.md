@@ -104,7 +104,7 @@ Implemented an optimized reporting system using reason counts instead of individ
 **Implementation Details:**
 1. **reportSummary with Reason Counts:**
    - Single aggregated collection that tracks reports by target (campaign or user)
-   - Schema includes: `targetId`, `targetType`, `reportCount`, `reasonCounts`, `status`, `firstReportedAt`, `lastReportedAt`
+   - Schema includes: `targetId`, `targetType`, `reportsCount`, `reasonCounts`, `status`, `firstReportedAt`, `lastReportedAt`
    - `reasonCounts` object stores breakdown (e.g., `{spam: 8, inappropriate: 5, copyright: 2}`)
    - Display data cached in summary for quick access (title, image, creator info)
    - All counts reset to 0 when admin takes action (dismiss/warn/remove)

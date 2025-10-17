@@ -85,7 +85,7 @@ Twibbonize supports two campaign types:
 {
   targetId: string,                      // campaignId or userId
   targetType: "campaign" | "user",
-  reportCount: number,                   // Total active reports
+  reportsCount: number,                  // Total active reports
   
   // NEW: Reason breakdown with counts
   reasonCounts: {
