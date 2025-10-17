@@ -1078,7 +1078,7 @@ export const updateReportSummaryStatus = async (summaryId, newStatus) => {
     await updateDoc(summaryRef, {
       status: newStatus,
       resolvedAt: newStatus === 'resolved' || newStatus === 'dismissed' ? new Date() : null,
-      reportCount: 0,
+      reportsCount: 0,
       updatedAt: new Date(),
     });
     
