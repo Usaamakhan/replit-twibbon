@@ -177,21 +177,23 @@ export default function GroupedReportsTable({
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                     {formatTimestamp(summary.lastReportedAt, true)}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-3">
-                    <button
-                      onClick={() => toggleExpand(summary.id)}
-                      className="text-blue-600 hover:text-blue-900"
-                    >
-                      {expandedId === summary.id
-                        ? "Hide Breakdown"
-                        : "View Breakdown"}
-                    </button>
-                    <button
-                      onClick={() => onSelectSummary(summary)}
-                      className="text-emerald-600 hover:text-emerald-900"
-                    >
-                      Take Action
-                    </button>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => toggleExpand(summary.id)}
+                        className="px-3 py-1.5 text-sm font-medium text-blue-700 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors cursor-pointer"
+                      >
+                        {expandedId === summary.id
+                          ? "Hide Breakdown"
+                          : "View Breakdown"}
+                      </button>
+                      <button
+                        onClick={() => onSelectSummary(summary)}
+                        className="px-3 py-1.5 text-sm font-medium text-emerald-700 bg-emerald-50 hover:bg-emerald-100 rounded-lg transition-colors cursor-pointer"
+                      >
+                        Take Action
+                      </button>
+                    </div>
                   </td>
                 </tr>
 

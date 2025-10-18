@@ -2,11 +2,13 @@
 
 import { useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
+import ConfirmationModal from "@/components/ConfirmationModal";
 
 export default function ReportDetailsPanel({ report, onClose, onUpdate, isGrouped = false }) {
   const { user } = useAuth();
   const [isUpdating, setIsUpdating] = useState(false);
   const [updateError, setUpdateError] = useState(null);
+  const [confirmAction, setConfirmAction] = useState(null);
 
   const getStatusColor = (status) => {
     switch (status) {
@@ -61,8 +63,14 @@ export default function ReportDetailsPanel({ report, onClose, onUpdate, isGroupe
     }
   };
 
-  const handleAction = async (status, action) => {
-    if (!user) return;
+  const openConfirmation = (status, action, actionLabel) => {
+    setConfirmAction({ status, action, actionLabel });
+  };
+
+  const handleConfirmedAction = async () => {
+    if (!user || !confirmAction) return;
+
+    const { status, action } = confirmAction;
 
     console.log('[CLIENT] Action button clicked:', { status, action, reportId: report.id, isGrouped });
     setIsUpdating(true);
@@ -111,6 +119,23 @@ export default function ReportDetailsPanel({ report, onClose, onUpdate, isGroupe
     }
   };
 
+  const getConfirmationMessage = (action) => {
+    const targetName = (isGrouped ? report.targetType === 'user' : report.type === 'profile')
+      ? (isGrouped ? report.displayName || report.username : report.reportedUser?.displayName)
+      : (isGrouped ? report.campaignTitle : report.campaign?.title);
+
+    switch (action) {
+      case 'no-action':
+        return `Are you sure you want to dismiss this report? The ${isGrouped ? report.targetType : (report.type === 'profile' ? 'user' : 'campaign')} will be restored to active status.`;
+      case 'warned':
+        return `Are you sure you want to issue a warning to this ${(isGrouped ? report.targetType === 'user' : report.type === 'profile') ? 'user' : 'creator'}? They will receive a notification.`;
+      case 'removed':
+        return `Are you sure you want to ${(isGrouped ? report.targetType === 'user' : report.type === 'profile') ? 'ban this user' : 'remove this campaign'}? This action will hide the content and notify the ${(isGrouped ? report.targetType === 'user' : report.type === 'profile') ? 'user' : 'creator'}.`;
+      default:
+        return 'Are you sure you want to proceed with this action?';
+    }
+  };
+
   if (!report) return null;
 
   return (
@@ -118,7 +143,7 @@ export default function ReportDetailsPanel({ report, onClose, onUpdate, isGroupe
       <div className="absolute inset-0 bg-gray-500 bg-opacity-75 transition-opacity" onClick={onClose}></div>
       
       <div className="fixed inset-y-0 right-0 max-w-full flex">
-        <div className="w-screen max-w-md">
+        <div className="w-screen max-w-2xl">
           <div className="h-full flex flex-col bg-white shadow-xl overflow-y-scroll">
             <div className="px-6 py-4 bg-emerald-700">
               <div className="flex items-center justify-between">
@@ -306,27 +331,27 @@ export default function ReportDetailsPanel({ report, onClose, onUpdate, isGroupe
 
               <div>
                 <h3 className="text-sm font-medium text-gray-500 mb-3">Actions</h3>
-                <div className="space-y-2">
+                <div className="space-y-3">
                   <button
-                    onClick={() => handleAction('dismissed', 'no-action')}
+                    onClick={() => openConfirmation('dismissed', 'no-action', 'Dismiss Report')}
                     disabled={isUpdating || report.status === 'dismissed'}
-                    className="w-full btn-base bg-gray-600 text-white hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="w-full btn-base btn-secondary px-5 py-3 text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {isUpdating ? 'Processing...' : 'Dismiss Report'}
                   </button>
                   
                   <button
-                    onClick={() => handleAction('resolved', 'warned')}
+                    onClick={() => openConfirmation('resolved', 'warned', (isGrouped ? report.targetType === 'user' : report.type === 'profile') ? 'Warn User' : 'Warn Creator')}
                     disabled={isUpdating || report.status === 'resolved' || report.status === 'dismissed'}
-                    className="w-full btn-base bg-yellow-600 text-white hover:bg-yellow-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="w-full btn-base btn-warning px-5 py-3 text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {isUpdating ? 'Processing...' : ((isGrouped ? report.targetType === 'user' : report.type === 'profile') ? 'Warn User' : 'Warn Creator')}
                   </button>
                   
                   <button
-                    onClick={() => handleAction('resolved', 'removed')}
+                    onClick={() => openConfirmation('resolved', 'removed', (isGrouped ? report.targetType === 'user' : report.type === 'profile') ? 'Ban User' : 'Remove Campaign')}
                     disabled={isUpdating || report.status === 'resolved' || report.status === 'dismissed'}
-                    className="w-full btn-base bg-red-600 text-white hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="w-full btn-base btn-danger px-5 py-3 text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {isUpdating ? 'Processing...' : ((isGrouped ? report.targetType === 'user' : report.type === 'profile') ? 'Ban User' : 'Remove Campaign')}
                   </button>
@@ -336,6 +361,18 @@ export default function ReportDetailsPanel({ report, onClose, onUpdate, isGroupe
           </div>
         </div>
       </div>
+
+      {/* Confirmation Modal */}
+      <ConfirmationModal
+        isOpen={confirmAction !== null}
+        onClose={() => setConfirmAction(null)}
+        onConfirm={handleConfirmedAction}
+        title={confirmAction?.actionLabel || 'Confirm Action'}
+        message={confirmAction ? getConfirmationMessage(confirmAction.action) : ''}
+        confirmText={confirmAction?.actionLabel || 'Confirm'}
+        cancelText="Cancel"
+        type={confirmAction?.action === 'removed' ? 'danger' : confirmAction?.action === 'warned' ? 'warning' : 'danger'}
+      />
     </div>
   );
 }
