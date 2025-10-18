@@ -180,6 +180,22 @@ The following issues have been fixed and are working correctly:
 **Frontend Note:**
 The backend API now supports reason parameters for admin actions. The frontend admin UI components will need to be updated to include dropdown selects for reason selection when taking actions (warn/ban/remove).
 
+📋Steps Needed
+Frontend UI Update Required:
+The admin UI components will need to be updated to include dropdown selects for reason selection. The backend API is ready and expects these parameters:
+
+Add reason dropdown to "Warn" action modal
+Add reason dropdown to "Ban/Remove" action modal
+Suggested reason options:
+
+Inappropriate content
+Spam
+Harassment
+Misinformation
+Copyright violation
+Other
+
+
 **Testing recommendations:**
 - Test report spam scenarios to verify current vulnerability
 - Test notification content includes selected reason and appeal deadline
