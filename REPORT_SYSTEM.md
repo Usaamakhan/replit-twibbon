@@ -199,16 +199,22 @@ When admin clicks "Take Action", they see **3 action buttons** with confirmation
 ### 2. Warn User/Creator (Warning Button - Yellow)
 **What it does:**
 - Creates a warning record in database
-- Keeps content in current state (might still be hidden)
+- **Restores content to active status** (unhides if was auto-hidden)
 - Resets report count to 0
+- Tracks warning for admin visibility
+
+**Rationale:**
+- Warning is a "slap on the wrist" - admin reviewed and decided content is not severe enough for removal
+- If content deserves to stay hidden, admin should use "Ban User/Remove Campaign" instead
+- Users should be able to see their content after being warned
 
 **Notification sent:** ✅ **ALWAYS**
 - **Message**: "⚠️ Warning Issued - You've received a warning. Please review our community guidelines."
 
 **Confirmation popup:**
-> "Are you sure you want to issue a warning to this user/creator? They will receive a notification."
+> "Are you sure you want to issue a warning to this user/creator? They will be notified and their content will be restored."
 
-**Use when:** Content is borderline/minor issue, but you want to warn the creator
+**Use when:** Content is borderline/minor issue - you want to warn the creator but allow content to remain visible
 
 ---
 
@@ -358,12 +364,13 @@ All notifications are **in-app only** (Firestore-based, no browser permissions n
 
 ### Scenario 3: Minor Issue / Warning
 1. Review reported content
-2. Content is borderline but not severe
+2. Content is borderline but not severe enough for removal
 3. Click "Warn Creator/User"
 4. Confirm action
 5. Warning saved to database
 6. User receives warning notification
-7. Content may stay visible or hidden depending on current state
+7. **Content restored to active** (unhidden if was auto-hidden)
+8. User can continue but warning is tracked for future reference
 
 ---
 

@@ -53,14 +53,13 @@ export async function PATCH(request, { params }) {
       const targetData = targetDoc.data();
       const now = new Date();
       
-      // Check if it was previously hidden (auto-hidden at 3+ reports)
-      // For campaigns: check moderationStatus === 'hidden'
-      // For users: check accountStatus === 'suspended' or moderationStatus === 'hidden'
+      // Check if it was previously hidden (auto-hidden at 3+ reports for campaigns, 10+ for users)
+      // For campaigns: check moderationStatus === 'under-review-hidden'
+      // For users: check moderationStatus === 'under-review-hidden'
       if (targetType === 'campaign') {
-        wasHidden = targetData.moderationStatus === 'hidden';
+        wasHidden = targetData.moderationStatus === 'under-review-hidden';
       } else {
-        wasHidden = targetData.accountStatus === 'suspended' || 
-                    targetData.moderationStatus === 'hidden';
+        wasHidden = targetData.moderationStatus === 'under-review-hidden';
       }
       
       // Update the target based on action - ALWAYS reset reportsCount to 0
@@ -70,16 +69,21 @@ export async function PATCH(request, { params }) {
       };
       
       if (action === 'no-action') {
-        // Dismiss - restore to active
+        // Dismiss - restore to active and clear all moderation/ban fields
         if (targetType === 'campaign') {
           targetUpdates.moderationStatus = 'active';
           targetUpdates.hiddenAt = FieldValue.delete();
         } else {
+          // For users - restore both moderationStatus and accountStatus
           targetUpdates.moderationStatus = 'active';
+          targetUpdates.accountStatus = 'active';
           targetUpdates.hiddenAt = FieldValue.delete();
+          targetUpdates.bannedAt = FieldValue.delete();
         }
       } else if (action === 'warned') {
-        // Warning issued - create warning record, reset reports
+        // Warning issued - create warning record and restore to active
+        // Rationale: Warning is a "slap on the wrist" - content reviewed but not severe enough for removal
+        // If content deserves to be hidden, admin should use "Remove/Ban" instead
         const warningRef = db.collection('warnings').doc();
         transaction.set(warningRef, {
           userId: targetType === 'campaign' ? targetData.creatorId : targetId,
@@ -91,7 +95,16 @@ export async function PATCH(request, { params }) {
           issuedAt: now,
           acknowledged: false,
         });
-        // Keep current moderation status (might be hidden)
+        
+        // Restore to active after warning (admin reviewed and decided it's not severe enough)
+        if (targetType === 'campaign') {
+          targetUpdates.moderationStatus = 'active';
+          targetUpdates.hiddenAt = FieldValue.delete();
+        } else {
+          targetUpdates.moderationStatus = 'active';
+          targetUpdates.accountStatus = 'active';
+          targetUpdates.hiddenAt = FieldValue.delete();
+        }
       } else if (action === 'removed') {
         // Remove/Ban - reset reports
         if (targetType === 'campaign') {
