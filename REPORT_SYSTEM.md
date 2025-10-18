@@ -198,7 +198,8 @@ When admin clicks "Take Action", they see **3 action buttons** with confirmation
 
 ### 2. Warn User/Creator (Warning Button - Yellow)
 **What it does:**
-- Creates a warning record in database
+- Admin selects a reason from dropdown (e.g., "Inappropriate content", "Misleading information", "Spam", etc.)
+- Creates a warning record in database with selected reason
 - **Restores content to active status** (unhides if was auto-hidden)
 - Resets report count to 0
 - Tracks warning for admin visibility
@@ -209,10 +210,11 @@ When admin clicks "Take Action", they see **3 action buttons** with confirmation
 - Users should be able to see their content after being warned
 
 **Notification sent:** ✅ **ALWAYS**
-- **Message**: "⚠️ Warning Issued - You've received a warning. Please review our community guidelines."
+- **Message**: "⚠️ Warning Issued - You've received a warning for: [selected reason]. Please review our community guidelines."
+- The notification now includes the specific reason the admin selected
 
 **Confirmation popup:**
-> "Are you sure you want to issue a warning to this user/creator? They will be notified and their content will be restored."
+> "Select a reason for the warning from the dropdown, then confirm. The user/creator will be notified and their content will be restored."
 
 **Use when:** Content is borderline/minor issue - you want to warn the creator but allow content to remain visible
 
@@ -221,26 +223,32 @@ When admin clicks "Take Action", they see **3 action buttons** with confirmation
 ### 3. Ban User / Remove Campaign (Danger Button - Red)
 **What it does:**
 
+**Admin first selects a reason from dropdown:**
+- Options: "Inappropriate content", "Spam", "Harassment", "Misinformation", "Copyright violation", etc.
+
 **For Campaigns:**
-- Sets status to `removed-temporary`
+- Sets `moderationStatus` to `removed-temporary`
 - Content stays hidden
 - Sets 30-day appeal deadline
+- Stores selected reason in `banReason` field
 - Resets report count to 0
 - After 30 days: Auto-deletes permanently if no appeal
 - Second removal: `removed-permanent` (no recovery)
 
 **For Users:**
-- Sets account status to `banned-temporary`
+- Sets `moderationStatus` to `banned-temporary`
 - Hides all their campaigns
 - Sets 30-day appeal deadline
+- Stores selected reason in `banReason` field
 - Resets report count to 0
 
 **Notification sent:** ✅ **ALWAYS**
-- **Campaign**: "🚫 Campaign Removed - Your campaign has been removed. You can appeal this decision until [date]"
-- **User**: "🚫 Account Banned - Your account has been banned. You can appeal until [date]"
+- **Campaign**: "🚫 Campaign Removed - Your campaign has been removed for: [reason]. You can appeal this decision until [date]."
+- **User**: "🚫 Account Banned - Your account has been banned for: [reason]. You can appeal until [date]."
+- Notifications now include both the specific reason and the exact appeal deadline date
 
 **Confirmation popup:**
-> "Are you sure you want to ban this user/remove this campaign? This action will hide the content and notify the user/creator."
+> "Select a reason for removal/ban from the dropdown. The user will be notified with the reason and appeal deadline (30 days from now)."
 
 **Use when:** Content clearly violates rules and needs removal
 
@@ -253,18 +261,15 @@ When admin clicks "Take Action", they see **3 action buttons** with confirmation
 - **resolved** - Admin took action (warned or removed)
 - **dismissed** - Admin found no issue
 
-### Campaign Moderation Statuses:
-- **active** - Visible to public, no issues
-- **under-review-hidden** - Hidden due to 3+ reports, awaiting admin review
-- **removed-temporary** - Admin removed, 30-day appeal window
-- **removed-permanent** - Permanently deleted (second offense)
+### Moderation Statuses (Used for both Campaigns and Users):
+- **active** - Visible/accessible, no issues
+- **under-review-hidden** - Hidden due to multiple reports (3+ for campaigns, 10+ for users), awaiting admin review
+- **removed-temporary** - Campaign removed by admin, 30-day appeal window
+- **banned-temporary** - User banned by admin, 30-day appeal window
+- **removed-permanent** - Campaign permanently deleted (second offense)
+- **banned-permanent** - User permanently banned (severe violations)
 
-### User Account/Moderation Statuses:
-- **active** - Normal account, no issues
-- **under-review-hidden** - Profile hidden due to 10+ reports
-- **suspended** - Temporarily restricted
-- **banned-temporary** - Banned with 30-day appeal window
-- **banned-permanent** - Permanently banned
+**Note:** The reporting system now uses only `moderationStatus` for consistent tracking across both campaigns and users. The separate ban endpoint (`/api/admin/users/[userId]/ban`) may still use `accountStatus` for direct manual bans outside the reporting flow.
 
 ---
 

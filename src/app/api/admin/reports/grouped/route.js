@@ -46,16 +46,13 @@ export async function GET(request) {
           const targetData = targetDoc.data();
           
           // Update with LIVE moderation status
+          summaryData.moderationStatus = targetData.moderationStatus || 'active';
+          
+          // Also update cached display data if changed
           if (summaryData.targetType === 'campaign') {
-            summaryData.moderationStatus = targetData.moderationStatus || 'active';
-            // Also update cached display data if changed
             summaryData.campaignTitle = targetData.title || summaryData.campaignTitle;
             summaryData.campaignImage = targetData.imageUrl || summaryData.campaignImage;
           } else {
-            // For users, show both moderationStatus and accountStatus
-            summaryData.moderationStatus = targetData.moderationStatus || 'active';
-            summaryData.accountStatus = targetData.accountStatus || 'active';
-            // Update cached display data
             summaryData.displayName = targetData.displayName || summaryData.displayName;
             summaryData.username = targetData.username || summaryData.username;
             summaryData.profileImage = targetData.profileImage || summaryData.profileImage;

@@ -10,11 +10,19 @@ export async function PATCH(request, { params }) {
     await requireAdmin(request);
     
     const { summaryId } = params;
-    const { status, action } = await request.json();
+    const { status, action, reason } = await request.json();
     
     if (!summaryId || !status || !action) {
       return NextResponse.json(
         { success: false, error: 'Summary ID, status, and action are required' },
+        { status: 400 }
+      );
+    }
+    
+    // Validate reason is provided for warned and removed actions
+    if ((action === 'warned' || action === 'removed') && !reason) {
+      return NextResponse.json(
+        { success: false, error: 'Reason is required for warnings and removals' },
         { status: 400 }
       );
     }
@@ -45,6 +53,7 @@ export async function PATCH(request, { params }) {
     
     // Track if campaign/user was previously hidden (for notification logic)
     let wasHidden = false;
+    let targetNotFound = false;
     
     // Use transaction to update everything atomically
     await db.runTransaction(async (transaction) => {
@@ -55,7 +64,8 @@ export async function PATCH(request, { params }) {
       const targetDoc = await transaction.get(targetRef);
       
       if (!targetDoc.exists) {
-        throw new Error(`${targetType} not found`);
+        targetNotFound = true;
+        throw new Error(`TARGET_NOT_FOUND:${targetType}`);
       }
       
       const targetData = targetDoc.data();
@@ -77,15 +87,10 @@ export async function PATCH(request, { params }) {
       };
       
       if (action === 'no-action') {
-        // Dismiss - restore to active and clear all moderation/ban fields
-        if (targetType === 'campaign') {
-          targetUpdates.moderationStatus = 'active';
-          targetUpdates.hiddenAt = FieldValue.delete();
-        } else {
-          // For users - restore both moderationStatus and accountStatus
-          targetUpdates.moderationStatus = 'active';
-          targetUpdates.accountStatus = 'active';
-          targetUpdates.hiddenAt = FieldValue.delete();
+        // Dismiss - restore to active and clear all moderation fields
+        targetUpdates.moderationStatus = 'active';
+        targetUpdates.hiddenAt = FieldValue.delete();
+        if (targetType === 'user') {
           targetUpdates.bannedAt = FieldValue.delete();
         }
       } else if (action === 'warned') {
@@ -98,34 +103,26 @@ export async function PATCH(request, { params }) {
           targetType,
           targetId,
           reportId: summaryId,
-          reason: 'Multiple reports received',
+          reason: reason, // Use admin-selected reason
           issuedBy: request.headers.get('x-user-id') || 'admin',
           issuedAt: now,
           acknowledged: false,
         });
         
         // Restore to active after warning (admin reviewed and decided it's not severe enough)
-        if (targetType === 'campaign') {
-          targetUpdates.moderationStatus = 'active';
-          targetUpdates.hiddenAt = FieldValue.delete();
-        } else {
-          targetUpdates.moderationStatus = 'active';
-          targetUpdates.accountStatus = 'active';
-          targetUpdates.hiddenAt = FieldValue.delete();
-        }
+        targetUpdates.moderationStatus = 'active';
+        targetUpdates.hiddenAt = FieldValue.delete();
+        targetUpdates.bannedAt = FieldValue.delete();
+        targetUpdates.banReason = FieldValue.delete();
       } else if (action === 'removed') {
-        // Remove/Ban - reset reports
+        // Remove/Ban - use moderationStatus for both campaigns and users
+        targetUpdates.moderationStatus = targetType === 'campaign' ? 'removed-temporary' : 'banned-temporary';
+        targetUpdates.bannedAt = now;
+        targetUpdates.banReason = reason; // Use admin-selected reason
+        targetUpdates.appealDeadline = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000); // 30 days
+        
         if (targetType === 'campaign') {
-          targetUpdates.moderationStatus = 'removed-temporary';
-          targetUpdates.removedAt = now;
-          targetUpdates.removalReason = 'Multiple reports received';
-          targetUpdates.appealDeadline = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000); // 30 days
           targetUpdates.appealCount = 0;
-        } else {
-          targetUpdates.accountStatus = 'banned-temporary';
-          targetUpdates.bannedAt = now;
-          targetUpdates.banReason = 'Multiple reports received';
-          targetUpdates.appealDeadline = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000); // 30 days
         }
       }
       
@@ -141,16 +138,13 @@ export async function PATCH(request, { params }) {
       };
       
       // Sync cached moderation status fields
+      summaryUpdates.moderationStatus = targetUpdates.moderationStatus || targetData.moderationStatus;
+      
+      // Update cached display data
       if (targetType === 'campaign') {
-        summaryUpdates.moderationStatus = targetUpdates.moderationStatus || targetData.moderationStatus;
-        // Update cached display data
         summaryUpdates.campaignTitle = targetData.title || summaryData.campaignTitle;
         summaryUpdates.campaignImage = targetData.imageUrl || summaryData.campaignImage;
       } else {
-        // For users
-        summaryUpdates.moderationStatus = targetUpdates.moderationStatus || targetData.moderationStatus;
-        summaryUpdates.accountStatus = targetUpdates.accountStatus || targetData.accountStatus;
-        // Update cached display data
         summaryUpdates.displayName = targetData.displayName || summaryData.displayName;
         summaryUpdates.username = targetData.username || summaryData.username;
         summaryUpdates.profileImage = targetData.profileImage || summaryData.profileImage;
@@ -182,7 +176,9 @@ export async function PATCH(request, { params }) {
           });
         }
       } else if (action === 'warned') {
-        const notification = getNotificationTemplate('warningIssued');
+        const notification = getNotificationTemplate('warningIssued', { 
+          reason: reason
+        });
         
         await sendInAppNotification({
           userId,
@@ -193,10 +189,13 @@ export async function PATCH(request, { params }) {
           type: notification.type,
         });
       } else if (action === 'removed') {
-        const notification = getNotificationTemplate(
-          targetType === 'campaign' ? 'campaignRemoved' : 'accountBanned',
-          { campaignTitle: summaryData.campaignTitle }
-        );
+        const appealDeadline = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+        const formattedDeadline = appealDeadline.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+        
+        // Note: Template functions take positional parameters, not named object
+        const notification = targetType === 'campaign' 
+          ? getNotificationTemplate('campaignRemoved', { campaignTitle: summaryData.campaignTitle, appealDeadline: formattedDeadline, removalReason: reason })
+          : getNotificationTemplate('accountBanned', { banReason: reason, appealDeadline: formattedDeadline });
         
         await sendInAppNotification({
           userId,
@@ -222,6 +221,14 @@ export async function PATCH(request, { params }) {
       return NextResponse.json(
         { success: false, error: error.message },
         { status: 403 }
+      );
+    }
+    
+    if (error.message.startsWith('TARGET_NOT_FOUND:')) {
+      const targetType = error.message.split(':')[1];
+      return NextResponse.json(
+        { success: false, error: `${targetType} not found - may have been deleted` },
+        { status: 404 }
       );
     }
     

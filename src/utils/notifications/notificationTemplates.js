@@ -7,9 +7,9 @@ export const notificationTemplates = {
     type: 'campaign-under-review',
   }),
 
-  campaignRemoved: (campaignTitle, appealDeadline) => ({
+  campaignRemoved: (campaignTitle, appealDeadline, removalReason) => ({
     title: '🚫 Campaign Removed',
-    body: `Your campaign "${campaignTitle}" has been removed. You can appeal this decision until ${appealDeadline}.`,
+    body: `Your campaign "${campaignTitle}" has been removed for: ${removalReason}. You can appeal this decision until ${appealDeadline}.`,
     actionUrl: '/profile',
     icon: '/icon-192x192.png',
     type: 'campaign-removed',

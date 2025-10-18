@@ -67,9 +67,6 @@ export async function POST(request) {
       if (!userData.moderationStatus) {
         userUpdates.moderationStatus = 'active';
       }
-      if (!userData.accountStatus) {
-        userUpdates.accountStatus = 'active';
-      }
       
       // Auto-hide profile at 10+ reports (as per spec)
       if (newReportsCount >= 10 && userData.moderationStatus === 'active') {
@@ -125,7 +122,6 @@ export async function POST(request) {
         summaryUpdates.displayName = userData.displayName || currentSummary.displayName;
         summaryUpdates.username = userData.username || currentSummary.username;
         summaryUpdates.profileImage = userData.profileImage || currentSummary.profileImage;
-        summaryUpdates.accountStatus = userData.accountStatus || currentSummary.accountStatus || 'active';
         
         transaction.update(summaryRef, summaryUpdates);
       } else {
@@ -145,7 +141,6 @@ export async function POST(request) {
           displayName: userData.displayName || '',
           profileImage: userData.profileImage || '',
           moderationStatus: userData.moderationStatus || 'active',
-          accountStatus: userData.accountStatus || 'active',
         });
       }
     });
