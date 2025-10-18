@@ -35,6 +35,14 @@ export async function PATCH(request, { params }) {
     const summaryData = summaryDoc.data();
     const { targetId, targetType } = summaryData;
     
+    // Validate targetType
+    if (targetType !== 'campaign' && targetType !== 'user') {
+      return NextResponse.json(
+        { success: false, error: `Invalid target type: ${targetType}. Must be 'campaign' or 'user'` },
+        { status: 400 }
+      );
+    }
+    
     // Track if campaign/user was previously hidden (for notification logic)
     let wasHidden = false;
     
