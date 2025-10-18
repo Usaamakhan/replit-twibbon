@@ -35,6 +35,9 @@ export async function PATCH(request, { params }) {
     const summaryData = summaryDoc.data();
     const { targetId, targetType } = summaryData;
     
+    // Track if campaign/user was previously hidden (for notification logic)
+    let wasHidden = false;
+    
     // Use transaction to update everything atomically
     await db.runTransaction(async (transaction) => {
       const targetRef = targetType === 'campaign' 
@@ -49,6 +52,16 @@ export async function PATCH(request, { params }) {
       
       const targetData = targetDoc.data();
       const now = new Date();
+      
+      // Check if it was previously hidden (auto-hidden at 3+ reports)
+      // For campaigns: check moderationStatus === 'hidden'
+      // For users: check accountStatus === 'suspended' or moderationStatus === 'hidden'
+      if (targetType === 'campaign') {
+        wasHidden = targetData.moderationStatus === 'hidden';
+      } else {
+        wasHidden = targetData.accountStatus === 'suspended' || 
+                    targetData.moderationStatus === 'hidden';
+      }
       
       // Update the target based on action - ALWAYS reset reportsCount to 0
       const targetUpdates = {
@@ -130,19 +143,23 @@ export async function PATCH(request, { params }) {
       const userId = targetType === 'campaign' ? summaryData.creatorId : targetId;
       
       if (action === 'no-action') {
-        const notification = getNotificationTemplate(
-          targetType === 'campaign' ? 'campaignRestored' : 'profileRestored',
-          { campaignTitle: summaryData.campaignTitle }
-        );
-        
-        await sendInAppNotification({
-          userId,
-          title: notification.title,
-          body: notification.body,
-          actionUrl: notification.actionUrl,
-          icon: notification.icon,
-          type: notification.type,
-        });
+        // Only send "restored" notification if it was previously hidden (at 3+ reports)
+        // No notification needed if campaign was never auto-hidden
+        if (wasHidden) {
+          const notification = getNotificationTemplate(
+            targetType === 'campaign' ? 'campaignRestored' : 'profileRestored',
+            { campaignTitle: summaryData.campaignTitle }
+          );
+          
+          await sendInAppNotification({
+            userId,
+            title: notification.title,
+            body: notification.body,
+            actionUrl: notification.actionUrl,
+            icon: notification.icon,
+            type: notification.type,
+          });
+        }
       } else if (action === 'warned') {
         const notification = getNotificationTemplate('warningIssued');
         
