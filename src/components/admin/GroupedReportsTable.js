@@ -167,9 +167,9 @@ export default function GroupedReportsTable({
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <span
-                      className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getModerationStatusColor(summary.moderationStatus)}`}
+                      className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getModerationStatusColor(summary.targetType === 'user' ? summary.accountStatus : summary.moderationStatus)}`}
                     >
-                      {summary.moderationStatus || "active"}
+                      {summary.targetType === 'user' ? (summary.accountStatus || "active") : (summary.moderationStatus || "active")}
                     </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">

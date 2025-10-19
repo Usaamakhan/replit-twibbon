@@ -69,12 +69,8 @@ Instead of storing each individual report, the system groups all reports for the
 - Faster for admins to review
 - Cheaper to run at scale
 
-**⚠️ Implementation Note:**
-The codebase currently maintains BOTH:
-1. **reportSummary collection** (optimized, primary system)
-2. **reports collection** (legacy, individual reports)
-
-The legacy `reports` collection is still queried by `/api/admin/reports` and updated during campaign deletion for backward compatibility.
+**✅ Optimized System:**
+The system uses the **reportSummary collection** exclusively for all report tracking and admin operations. All legacy `reports` collection code has been removed, achieving the full 95% performance improvement.
 
 ---
 
@@ -277,14 +273,14 @@ When admin clicks "Take Action", they see **3 action buttons** with confirmation
 - **banned-permanent** - User permanently banned (severe violations)
 - **deleted** - Campaign deleted by creator (only appears in reportSummary for tracking)
 
-**⚠️ Implementation Note - Dual Status Fields for Users:**
-The codebase uses TWO different status fields for users:
-1. **`moderationStatus`** - Used by the reporting system (`/api/admin/reports/summary/[summaryId]`)
-   - Values: `active`, `under-review-hidden`, `banned-temporary`, `banned-permanent`
-2. **`accountStatus`** - Used by the direct ban endpoint (`/api/admin/users/[userId]/ban`)
-   - Values: `active`, `banned-temporary`, `banned-permanent`
+**✅ Unified Status Fields:**
+The system now uses distinct, semantic status fields for different entity types:
+- **Campaigns** use `moderationStatus` - Controls content visibility and moderation state
+  - Values: `active`, `under-review-hidden`, `removed-temporary`, `removed-permanent`, `deleted`
+- **Users** use `accountStatus` - Controls account access and ban state
+  - Values: `active`, `under-review-hidden`, `banned-temporary`, `banned-permanent`
 
-This creates potential inconsistency where a user can have both `moderationStatus` and `accountStatus` with different values. The reporting flow should be the primary source of truth for moderation statuses.
+This clear distinction prevents field conflicts and ensures consistent enforcement across all systems (reporting, direct admin actions, and UI displays).
 
 ---
 

@@ -229,7 +229,7 @@ export default function ReportDetailsPanel({ report, onClose, onUpdate, isGroupe
                       </p>
                     )}
                     <p className="text-sm text-gray-600 mt-1">
-                      Status: <span className="capitalize">{isGrouped ? report.moderationStatus : (report.reportedUser?.moderationStatus || 'Unknown')}</span>
+                      Status: <span className="capitalize">{isGrouped ? report.accountStatus : (report.reportedUser?.accountStatus || 'Unknown')}</span>
                     </p>
                     {isGrouped && (
                       <p className="text-sm text-gray-600">

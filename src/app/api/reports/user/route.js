@@ -77,14 +77,14 @@ export async function POST(request) {
         updatedAt: new Date(),
       };
       
-      // Initialize moderation fields if they don't exist
-      if (!userData.moderationStatus) {
-        userUpdates.moderationStatus = 'active';
+      // Initialize account status fields if they don't exist
+      if (!userData.accountStatus) {
+        userUpdates.accountStatus = 'active';
       }
       
       // Auto-hide profile at 10+ reports (as per spec)
-      if (newReportsCount >= 10 && userData.moderationStatus === 'active') {
-        userUpdates.moderationStatus = 'under-review-hidden';
+      if (newReportsCount >= 10 && userData.accountStatus === 'active') {
+        userUpdates.accountStatus = 'under-review-hidden';
         userUpdates.hiddenAt = new Date();
         
         // Flag for notification after transaction
@@ -126,9 +126,9 @@ export async function POST(request) {
           };
         }
         
-        // Sync moderation status when user profile is auto-hidden
-        if (newReportsCount >= 10 && userData.moderationStatus === 'active') {
-          summaryUpdates.moderationStatus = 'under-review-hidden';
+        // Sync account status when user profile is auto-hidden
+        if (newReportsCount >= 10 && userData.accountStatus === 'active') {
+          summaryUpdates.accountStatus = 'under-review-hidden';
           summaryUpdates.hiddenAt = now;
         }
         
@@ -154,7 +154,7 @@ export async function POST(request) {
           username: userData.username || '',
           displayName: userData.displayName || '',
           profileImage: userData.profileImage || '',
-          moderationStatus: userData.moderationStatus || 'active',
+          accountStatus: userData.accountStatus || 'active',
         });
       }
     });

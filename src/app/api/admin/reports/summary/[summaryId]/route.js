@@ -73,11 +73,11 @@ export async function PATCH(request, { params }) {
       
       // Check if it was previously hidden (auto-hidden at 3+ reports for campaigns, 10+ for users)
       // For campaigns: check moderationStatus === 'under-review-hidden'
-      // For users: check moderationStatus === 'under-review-hidden'
+      // For users: check accountStatus === 'under-review-hidden'
       if (targetType === 'campaign') {
         wasHidden = targetData.moderationStatus === 'under-review-hidden';
       } else {
-        wasHidden = targetData.moderationStatus === 'under-review-hidden';
+        wasHidden = targetData.accountStatus === 'under-review-hidden';
       }
       
       // Update the target based on action - ALWAYS reset reportsCount to 0
@@ -88,11 +88,13 @@ export async function PATCH(request, { params }) {
       
       if (action === 'no-action') {
         // Dismiss - restore to active and clear all moderation fields
-        targetUpdates.moderationStatus = 'active';
-        targetUpdates.hiddenAt = FieldValue.delete();
-        if (targetType === 'user') {
-          targetUpdates.bannedAt = FieldValue.delete();
+        if (targetType === 'campaign') {
+          targetUpdates.moderationStatus = 'active';
+        } else {
+          targetUpdates.accountStatus = 'active';
         }
+        targetUpdates.hiddenAt = FieldValue.delete();
+        targetUpdates.bannedAt = FieldValue.delete();
       } else if (action === 'warned') {
         // Warning issued - create warning record and restore to active
         // Rationale: Warning is a "slap on the wrist" - content reviewed but not severe enough for removal
@@ -110,20 +112,25 @@ export async function PATCH(request, { params }) {
         });
         
         // Restore to active after warning (admin reviewed and decided it's not severe enough)
-        targetUpdates.moderationStatus = 'active';
+        if (targetType === 'campaign') {
+          targetUpdates.moderationStatus = 'active';
+        } else {
+          targetUpdates.accountStatus = 'active';
+        }
         targetUpdates.hiddenAt = FieldValue.delete();
         targetUpdates.bannedAt = FieldValue.delete();
         targetUpdates.banReason = FieldValue.delete();
       } else if (action === 'removed') {
-        // Remove/Ban - use moderationStatus for both campaigns and users
-        targetUpdates.moderationStatus = targetType === 'campaign' ? 'removed-temporary' : 'banned-temporary';
+        // Remove/Ban - use moderationStatus for campaigns, accountStatus for users
+        if (targetType === 'campaign') {
+          targetUpdates.moderationStatus = 'removed-temporary';
+          targetUpdates.appealCount = 0;
+        } else {
+          targetUpdates.accountStatus = 'banned-temporary';
+        }
         targetUpdates.bannedAt = now;
         targetUpdates.banReason = reason; // Use admin-selected reason
         targetUpdates.appealDeadline = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000); // 30 days
-        
-        if (targetType === 'campaign') {
-          targetUpdates.appealCount = 0;
-        }
       }
       
       transaction.update(targetRef, targetUpdates);
@@ -137,8 +144,12 @@ export async function PATCH(request, { params }) {
         updatedAt: now,
       };
       
-      // Sync cached moderation status fields
-      summaryUpdates.moderationStatus = targetUpdates.moderationStatus || targetData.moderationStatus;
+      // Sync cached status fields (moderationStatus for campaigns, accountStatus for users)
+      if (targetType === 'campaign') {
+        summaryUpdates.moderationStatus = targetUpdates.moderationStatus || targetData.moderationStatus;
+      } else {
+        summaryUpdates.accountStatus = targetUpdates.accountStatus || targetData.accountStatus;
+      }
       
       // Update cached display data
       if (targetType === 'campaign') {

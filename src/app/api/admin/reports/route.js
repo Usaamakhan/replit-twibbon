@@ -8,114 +8,100 @@ export async function GET(request) {
     
     const { searchParams } = new URL(request.url);
     const status = searchParams.get('status');
-    const reason = searchParams.get('reason');
-    const type = searchParams.get('type');
+    const targetType = searchParams.get('type');
     const campaignId = searchParams.get('campaignId');
     const limitParam = searchParams.get('limit') || '50';
     const limitValue = parseInt(limitParam, 10);
     
     const db = adminFirestore();
-    let reportsQuery = db.collection('reports');
+    let summariesQuery = db.collection('reportSummary');
     
     if (status && status !== 'all') {
-      reportsQuery = reportsQuery.where('status', '==', status);
+      summariesQuery = summariesQuery.where('status', '==', status);
     }
     
-    if (reason && reason !== 'all') {
-      reportsQuery = reportsQuery.where('reason', '==', reason);
-    }
-    
-    if (type && type !== 'all') {
-      reportsQuery = reportsQuery.where('type', '==', type);
+    if (targetType && targetType !== 'all') {
+      summariesQuery = summariesQuery.where('targetType', '==', targetType);
     }
     
     if (campaignId) {
-      reportsQuery = reportsQuery.where('campaignId', '==', campaignId);
+      const summaryId = `campaign-${campaignId}`;
+      summariesQuery = summariesQuery.where('__name__', '==', summaryId);
     }
     
-    reportsQuery = reportsQuery.orderBy('createdAt', 'desc').limit(limitValue);
+    summariesQuery = summariesQuery.orderBy('lastReportedAt', 'desc').limit(limitValue);
     
-    const reportsSnapshot = await reportsQuery.get();
+    const summariesSnapshot = await summariesQuery.get();
     
-    const reports = [];
+    const summaries = [];
     
-    for (const doc of reportsSnapshot.docs) {
-      const reportData = { id: doc.id, ...doc.data() };
+    for (const doc of summariesSnapshot.docs) {
+      const summaryData = { id: doc.id, ...doc.data() };
       
-      if (reportData.campaignId) {
-        const campaignDoc = await db.collection('campaigns').doc(reportData.campaignId).get();
-        if (campaignDoc.exists) {
-          const campaignData = campaignDoc.data();
-          reportData.campaign = {
-            id: campaignDoc.id,
-            title: campaignData.title,
-            imageUrl: campaignData.imageUrl,
-            type: campaignData.type,
-            moderationStatus: campaignData.moderationStatus,
-            slug: campaignData.slug,
-          };
+      if (summaryData.targetId) {
+        const targetCollection = summaryData.targetType === 'campaign' ? 'campaigns' : 'users';
+        const targetDoc = await db.collection(targetCollection).doc(summaryData.targetId).get();
+        
+        if (targetDoc.exists) {
+          const targetData = targetDoc.data();
           
-          if (campaignData.creatorId) {
-            const creatorDoc = await db.collection('users').doc(campaignData.creatorId).get();
-            if (creatorDoc.exists) {
-              const creatorData = creatorDoc.data();
-              reportData.campaign.creator = {
-                uid: creatorDoc.id,
-                displayName: creatorData.displayName,
-                username: creatorData.username,
-                profileImage: creatorData.profileImage,
-              };
+          if (summaryData.targetType === 'campaign') {
+            summaryData.moderationStatus = targetData.moderationStatus || 'active';
+            summaryData.campaignTitle = targetData.title || summaryData.campaignTitle;
+            summaryData.campaignImage = targetData.imageUrl || summaryData.campaignImage;
+            summaryData.campaignSlug = targetData.slug || summaryData.campaignSlug;
+            
+            if (summaryData.creatorId) {
+              const creatorDoc = await db.collection('users').doc(summaryData.creatorId).get();
+              if (creatorDoc.exists) {
+                const creatorData = creatorDoc.data();
+                summaryData.creator = {
+                  uid: creatorDoc.id,
+                  displayName: creatorData.displayName,
+                  username: creatorData.username,
+                  profileImage: creatorData.profileImage,
+                };
+              }
             }
+          } else {
+            summaryData.accountStatus = targetData.accountStatus || 'active';
+            summaryData.displayName = targetData.displayName || summaryData.displayName;
+            summaryData.username = targetData.username || summaryData.username;
+            summaryData.profileImage = targetData.profileImage || summaryData.profileImage;
           }
         } else {
-          reportData.campaignDeleted = true;
+          summaryData.targetDeleted = true;
+          if (summaryData.targetType === 'campaign') {
+            summaryData.moderationStatus = 'deleted';
+          } else {
+            summaryData.accountStatus = 'deleted';
+          }
         }
       }
       
-      if (reportData.reportedUserId) {
-        const userDoc = await db.collection('users').doc(reportData.reportedUserId).get();
-        if (userDoc.exists) {
-          const userData = userDoc.data();
-          reportData.reportedUser = {
-            uid: userDoc.id,
-            displayName: userData.displayName,
-            username: userData.username,
-            profileImage: userData.profileImage,
-            moderationStatus: userData.moderationStatus || 'active',
-            reportsCount: userData.reportsCount || 0,
-          };
-        }
+      if (summaryData.firstReportedAt && summaryData.firstReportedAt.toDate) {
+        summaryData.firstReportedAt = summaryData.firstReportedAt.toDate().toISOString();
+      }
+      if (summaryData.lastReportedAt && summaryData.lastReportedAt.toDate) {
+        summaryData.lastReportedAt = summaryData.lastReportedAt.toDate().toISOString();
+      }
+      if (summaryData.createdAt && summaryData.createdAt.toDate) {
+        summaryData.createdAt = summaryData.createdAt.toDate().toISOString();
+      }
+      if (summaryData.updatedAt && summaryData.updatedAt.toDate) {
+        summaryData.updatedAt = summaryData.updatedAt.toDate().toISOString();
       }
       
-      if (reportData.reportedBy && reportData.reportedBy !== 'anonymous') {
-        const reporterDoc = await db.collection('users').doc(reportData.reportedBy).get();
-        if (reporterDoc.exists) {
-          const reporterData = reporterDoc.data();
-          reportData.reporter = {
-            uid: reporterDoc.id,
-            displayName: reporterData.displayName,
-            username: reporterData.username,
-          };
-        }
-      }
-      
-      if (reportData.createdAt && reportData.createdAt.toDate) {
-        reportData.createdAt = reportData.createdAt.toDate().toISOString();
-      }
-      if (reportData.reviewedAt && reportData.reviewedAt.toDate) {
-        reportData.reviewedAt = reportData.reviewedAt.toDate().toISOString();
-      }
-      
-      reports.push(reportData);
+      summaries.push(summaryData);
     }
     
     return NextResponse.json({
       success: true,
-      data: reports,
-      count: reports.length,
+      data: summaries,
+      count: summaries.length,
     });
   } catch (error) {
-    console.error('Error fetching reports:', error);
+    console.error('Error fetching report summaries:', error);
     
     if (error.message.includes('Unauthorized') || error.message.includes('Admin access required')) {
       return NextResponse.json(
@@ -125,7 +111,7 @@ export async function GET(request) {
     }
     
     return NextResponse.json(
-      { success: false, error: 'Failed to fetch reports' },
+      { success: false, error: 'Failed to fetch report summaries' },
       { status: 500 }
     );
   }

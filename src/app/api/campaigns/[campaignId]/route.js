@@ -76,12 +76,17 @@ export async function DELETE(request, { params }) {
     const summaryId = `campaign-${campaignId}`;
     const summaryRef = db.collection('reportSummary').doc(summaryId);
 
+    let reportsDismissed = 0;
+
     await db.runTransaction(async (transaction) => {
       const summaryDoc = await transaction.get(summaryRef);
       
       transaction.delete(campaignRef);
 
       if (summaryDoc.exists) {
+        const summaryData = summaryDoc.data();
+        reportsDismissed = summaryData.reportsCount || 0;
+        
         transaction.update(summaryRef, {
           status: 'dismissed',
           reportsCount: 0,
@@ -99,27 +104,8 @@ export async function DELETE(request, { params }) {
       });
     });
 
-    const reportsQuery = db.collection('reports')
-      .where('campaignId', '==', campaignId)
-      .where('status', 'in', ['pending', 'reviewed', 'resolved']);
-    
-    const reportsSnapshot = await reportsQuery.get();
-    
-    if (!reportsSnapshot.empty) {
-      const batch = db.batch();
-      
-      reportsSnapshot.docs.forEach((doc) => {
-        batch.update(doc.ref, {
-          status: 'dismissed',
-          action: 'no-action',
-          reviewedAt: new Date(),
-          dismissalNote: 'Campaign deleted by creator',
-          updatedAt: new Date(),
-        });
-      });
-      
-      await batch.commit();
-      console.log(`Auto-dismissed ${reportsSnapshot.size} reports for deleted campaign ${campaignId}`);
+    if (reportsDismissed > 0) {
+      console.log(`Auto-dismissed ${reportsDismissed} reports for deleted campaign ${campaignId}`);
     }
 
     return NextResponse.json({
@@ -128,7 +114,7 @@ export async function DELETE(request, { params }) {
       data: {
         campaignId,
         title: campaignData.title,
-        reportsDismissed: reportsSnapshot.size || 0,
+        reportsDismissed,
       },
     });
   } catch (error) {

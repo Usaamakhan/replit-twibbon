@@ -45,21 +45,24 @@ export async function GET(request) {
         if (targetDoc.exists) {
           const targetData = targetDoc.data();
           
-          // Update with LIVE moderation status
-          summaryData.moderationStatus = targetData.moderationStatus || 'active';
-          
-          // Also update cached display data if changed
+          // Update with LIVE status (moderationStatus for campaigns, accountStatus for users)
           if (summaryData.targetType === 'campaign') {
+            summaryData.moderationStatus = targetData.moderationStatus || 'active';
             summaryData.campaignTitle = targetData.title || summaryData.campaignTitle;
             summaryData.campaignImage = targetData.imageUrl || summaryData.campaignImage;
           } else {
+            summaryData.accountStatus = targetData.accountStatus || 'active';
             summaryData.displayName = targetData.displayName || summaryData.displayName;
             summaryData.username = targetData.username || summaryData.username;
             summaryData.profileImage = targetData.profileImage || summaryData.profileImage;
           }
         } else {
           summaryData.targetDeleted = true;
-          summaryData.moderationStatus = 'deleted';
+          if (summaryData.targetType === 'campaign') {
+            summaryData.moderationStatus = 'deleted';
+          } else {
+            summaryData.accountStatus = 'deleted';
+          }
         }
       }
       
