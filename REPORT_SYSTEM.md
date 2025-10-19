@@ -295,6 +295,42 @@ When admin clicks "Take Action", they see **3 action buttons** with confirmation
   - Historical patterns
   - Audit trail for moderation decisions
 
+### Campaign Deletion by Creator:
+When a campaign creator deletes their own campaign:
+
+1. **All related reports are auto-dismissed:**
+   - All pending and reviewed reports for that campaign are marked as `dismissed`
+   - Report status changed to `dismissed` with action `no-action`
+   - `dismissalNote` field added: "Campaign deleted by creator"
+
+2. **Report Summary updated:**
+   - Status changed to `dismissed`
+   - `reportsCount` reset to 0
+   - `reasonCounts` reset to empty object `{}`
+   - `moderationStatus` set to `deleted`
+   - `deletionNote` added: "Campaign deleted by creator"
+
+3. **Campaign document deleted:**
+   - Removed from Firestore `campaigns` collection
+   - Associated image deleted from Supabase storage
+   - Creator's `campaignsCount` decreased by 1
+
+4. **Admin dashboard behavior:**
+   - Deleted campaign reports don't appear in pending queue (status is `dismissed`)
+   - If admin views "all" or "dismissed" reports, they may see historical data
+   - Report summaries show `targetDeleted: true` flag
+   - Individual reports show `campaignDeleted: true` flag
+   - Prevents admins from wasting time on non-existent content
+
+5. **Notifications:**
+   - No notification sent to creator (they initiated the deletion)
+   - Success message shows count of auto-dismissed reports
+
+**API Endpoint:** `DELETE /api/campaigns/[campaignId]`
+**Authorization:** Only campaign owner (creatorId match required)
+**UI Location:** Profile page > Campaign menu (3-dot button) > "Delete Campaign"
+**Confirmation:** Required before deletion proceeds
+
 ---
 
 ## Notification System

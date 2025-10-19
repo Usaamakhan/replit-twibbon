@@ -6,25 +6,6 @@ This document tracks known issues and suggested improvements for the Twibbonize 
 
 ---
 
-## 💡 Remaining Improvements
-
-### 1. **Deleted Campaigns Still Show in Reports**
-
-**What's the problem?**
-If a campaign gets reported and auto-hidden, then the creator just deletes it entirely, the report still shows up in the admin queue.
-
-**What does this mean?**
-Admins waste time reviewing reports for content that no longer exists.
-
-**Impact:**
-- Admin time wasted on non-existent content
-- Reports queue gets cluttered
-- Can't take action on deleted content anyway
-
-**Best solution:**
-When a campaign is deleted, automatically dismiss all related pending reports with a note "Target was deleted by creator."
-
----
 
 ### 2. **No Way to Undo Accidental Admin Actions**
 
@@ -151,6 +132,26 @@ The following issues have been fixed and are working correctly:
    - Two-step confirmation process: Select reason → Confirm action
    - File: `src/components/admin/ReportDetailsPanel.js`
 
+3. ✅ **Campaign Deletion Feature** - Users can now delete their own campaigns
+   - Delete button appears in campaign menu on /profile page (only for campaign owners)
+   - DELETE API endpoint at `/api/campaigns/[campaignId]`
+   - Confirmation modal prevents accidental deletions
+   - Deletes campaign from Firestore and Supabase storage
+   - Automatically dismisses all related reports
+   - Updates user's campaign count
+   - Shows success message with count of auto-dismissed reports
+   - Files: `src/app/api/campaigns/[campaignId]/route.js`, `src/components/CampaignGallery.js`, `src/components/ProfilePage.js`
+
+4. ✅ **Issue #1 RESOLVED: Deleted Campaigns No Longer Show in Reports**
+   - Campaign deletion now auto-dismisses all pending/reviewed reports
+   - Report summary status updated to 'dismissed' with moderationStatus: 'deleted'
+   - Admin dashboard filters properly exclude dismissed reports
+   - Added safety checks to detect deleted campaigns in report queries
+   - Reports for deleted campaigns show `campaignDeleted: true` flag
+   - Report summaries for deleted targets show `targetDeleted: true` flag
+   - Admins no longer waste time on non-existent content
+   - Files: `src/app/api/campaigns/[campaignId]/route.js`, `src/app/api/admin/reports/route.js`, `src/app/api/admin/reports/grouped/route.js`
+
 ### October 18, 2025:
 1. ✅ **Notifications for restored content** - Now correctly sent when admins dismiss reports
 2. ✅ **User account restoration** - Users fully restored when reports are dismissed
@@ -174,6 +175,11 @@ The following issues have been fixed and are working correctly:
 - Test that "Continue" button is disabled until a reason is selected
 - Test notification content includes the admin-selected reason and appeal deadline
 - Test that warning and ban actions fail if reason is not provided
+- Test campaign deletion: Delete button only visible on own profile
+- Test campaign deletion: Confirmation modal appears before deletion
+- Test campaign deletion: Related reports are auto-dismissed
+- Test campaign deletion: User's campaign count decreases
+- Test admin dashboard: Deleted campaign reports don't appear in pending queue
 - Review admin logs to confirm action tracking works
 
 **Future considerations:**

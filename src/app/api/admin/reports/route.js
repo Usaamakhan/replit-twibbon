@@ -67,6 +67,8 @@ export async function GET(request) {
               };
             }
           }
+        } else {
+          reportData.campaignDeleted = true;
         }
       }
       

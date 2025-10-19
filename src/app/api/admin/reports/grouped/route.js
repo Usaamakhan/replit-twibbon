@@ -57,6 +57,9 @@ export async function GET(request) {
             summaryData.username = targetData.username || summaryData.username;
             summaryData.profileImage = targetData.profileImage || summaryData.profileImage;
           }
+        } else {
+          summaryData.targetDeleted = true;
+          summaryData.moderationStatus = 'deleted';
         }
       }
       

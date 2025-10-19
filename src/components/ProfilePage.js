@@ -469,6 +469,10 @@ export default function ProfilePage({ isOwnProfile = false, username = null }) {
             loading={profileLoading}
             isOwnProfile={isOwnProfile}
             showReportOption={!isOwnProfile}
+            onCampaignDeleted={(campaignId) => {
+              setCampaigns(campaigns.filter(c => c.id !== campaignId));
+              setUserStats(prev => ({ ...prev, campaignsCount: Math.max(0, prev.campaignsCount - 1) }));
+            }}
           />
         </div>
       </div>

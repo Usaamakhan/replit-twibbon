@@ -5,20 +5,26 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { getCampaignPreview, getProfileAvatar } from '../utils/imageTransform';
 import { abbreviateNumber } from '../utils/validation';
+import { useAuth } from '@/hooks/useAuth';
 import ShareModal from './ShareModal';
 import ReportModal from './ReportModal';
+import ConfirmationModal from './ConfirmationModal';
 
 export default function CampaignGallery({ 
   campaigns, 
   loading = false, 
   isOwnProfile = false, 
   showReportOption = false,
-  showCreatorInfo = false
+  showCreatorInfo = false,
+  onCampaignDeleted
 }) {
+  const { user } = useAuth();
   const [imageLoading, setImageLoading] = useState({});
   const [openMenuId, setOpenMenuId] = useState(null);
   const [shareModalData, setShareModalData] = useState(null);
   const [reportModalData, setReportModalData] = useState(null);
+  const [deleteConfirmation, setDeleteConfirmation] = useState(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   console.log('🔍 [CampaignGallery] Render:', {
     campaignsCount: campaigns?.length || 0,
@@ -98,6 +104,48 @@ export default function CampaignGallery({
       campaignSlug: campaign.slug,
     });
     setOpenMenuId(null);
+  };
+
+  const handleDeleteClick = (e, campaign) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDeleteConfirmation(campaign);
+    setOpenMenuId(null);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!deleteConfirmation || !user) return;
+
+    setIsDeleting(true);
+
+    try {
+      const token = await user.getIdToken();
+      const response = await fetch(`/api/campaigns/${deleteConfirmation.id}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to delete campaign');
+      }
+
+      alert(`✅ Campaign "${deleteConfirmation.title}" deleted successfully!${data.data.reportsDismissed > 0 ? `\n${data.data.reportsDismissed} related report(s) were auto-dismissed.` : ''}`);
+
+      if (onCampaignDeleted) {
+        onCampaignDeleted(deleteConfirmation.id);
+      }
+    } catch (error) {
+      console.error('Error deleting campaign:', error);
+      alert(`❌ Error: ${error.message}`);
+    } finally {
+      setIsDeleting(false);
+      setDeleteConfirmation(null);
+    }
   };
 
   return (
@@ -260,6 +308,28 @@ export default function CampaignGallery({
                       Share Campaign
                     </button>
                     
+                    {isOwnProfile && (
+                      <button
+                        onClick={(e) => handleDeleteClick(e, campaign)}
+                        className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors duration-150 flex items-center gap-2 cursor-pointer"
+                      >
+                        <svg
+                          className="w-4 h-4"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                          />
+                        </svg>
+                        Delete Campaign
+                      </button>
+                    )}
+                    
                     {showReportOption && (
                       <button
                         onClick={(e) => handleReportClick(e, campaign)}
@@ -307,6 +377,18 @@ export default function CampaignGallery({
         type="campaign"
         campaignId={reportModalData?.campaignId}
         campaignSlug={reportModalData?.campaignSlug}
+      />
+
+      {/* Delete Confirmation Modal */}
+      <ConfirmationModal
+        isOpen={!!deleteConfirmation}
+        onClose={() => !isDeleting && setDeleteConfirmation(null)}
+        onConfirm={handleConfirmDelete}
+        title="Delete Campaign"
+        message={`Are you sure you want to delete "${deleteConfirmation?.title}"? This action cannot be undone. All related images and data will be permanently removed.`}
+        confirmText={isDeleting ? "Deleting..." : "Delete Campaign"}
+        cancelText="Cancel"
+        type="danger"
       />
     </>
   );
