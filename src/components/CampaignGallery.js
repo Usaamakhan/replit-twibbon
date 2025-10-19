@@ -25,6 +25,7 @@ export default function CampaignGallery({
   const [reportModalData, setReportModalData] = useState(null);
   const [deleteConfirmation, setDeleteConfirmation] = useState(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [deleteSuccess, setDeleteSuccess] = useState(false);
 
   console.log('🔍 [CampaignGallery] Render:', {
     campaignsCount: campaigns?.length || 0,
@@ -134,7 +135,8 @@ export default function CampaignGallery({
         throw new Error(data.error || 'Failed to delete campaign');
       }
 
-      alert(`✅ Campaign "${deleteConfirmation.title}" deleted successfully!${data.data.reportsDismissed > 0 ? `\n${data.data.reportsDismissed} related report(s) were auto-dismissed.` : ''}`);
+      // Show success state
+      setDeleteSuccess(true);
 
       if (onCampaignDeleted) {
         onCampaignDeleted(deleteConfirmation.id);
@@ -144,8 +146,12 @@ export default function CampaignGallery({
       alert(`❌ Error: ${error.message}`);
     } finally {
       setIsDeleting(false);
-      setDeleteConfirmation(null);
     }
+  };
+
+  const handleSuccessClose = () => {
+    setDeleteSuccess(false);
+    setDeleteConfirmation(null);
   };
 
   return (
@@ -381,7 +387,7 @@ export default function CampaignGallery({
 
       {/* Delete Confirmation Modal */}
       <ConfirmationModal
-        isOpen={!!deleteConfirmation}
+        isOpen={!!deleteConfirmation && !deleteSuccess}
         onClose={() => !isDeleting && setDeleteConfirmation(null)}
         onConfirm={handleConfirmDelete}
         title="Delete Campaign"
@@ -390,6 +396,43 @@ export default function CampaignGallery({
         cancelText="Cancel"
         type="danger"
       />
+
+      {/* Delete Success Modal */}
+      {deleteSuccess && (
+        <>
+          {/* Backdrop with blur */}
+          <div 
+            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 transition-opacity"
+            onClick={handleSuccessClose}
+          />
+          
+          {/* Modal */}
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-none">
+            <div 
+              className="bg-white rounded-lg max-w-md w-full p-6 pointer-events-auto"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="text-center py-4">
+                <div className="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-green-100 mb-4">
+                  <svg className="h-8 w-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                </div>
+                <h3 className="text-xl font-bold text-gray-900 mb-2">Campaign Deleted</h3>
+                <p className="text-gray-600 mb-6">
+                  Your campaign has been successfully deleted.
+                </p>
+                <button
+                  onClick={handleSuccessClose}
+                  className="btn-base btn-primary px-8 py-2 font-medium"
+                >
+                  OK
+                </button>
+              </div>
+            </div>
+          </div>
+        </>
+      )}
     </>
   );
 }
