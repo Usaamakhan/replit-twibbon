@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { adminFirestore } from '@/lib/firebaseAdmin';
 import { sendInAppNotification } from '@/utils/notifications/sendInAppNotification';
 import { getNotificationTemplate } from '@/utils/notifications/notificationTemplates';
+import { checkReportRateLimit } from '@/utils/reportRateLimit';
 
 export async function POST(request) {
   try {
@@ -30,6 +31,19 @@ export async function POST(request) {
       return NextResponse.json(
         { success: false, error: 'Invalid report reason' },
         { status: 400 }
+      );
+    }
+    
+    // Check rate limit and duplicate reports
+    const rateLimitCheck = await checkReportRateLimit(request, reportedUserId, 'user');
+    if (!rateLimitCheck.allowed) {
+      return NextResponse.json(
+        { 
+          success: false, 
+          error: rateLimitCheck.message,
+          reason: rateLimitCheck.reason
+        },
+        { status: 429 }
       );
     }
     

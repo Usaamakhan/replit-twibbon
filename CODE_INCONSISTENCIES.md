@@ -1,6 +1,6 @@
 # Code Issues & Improvements - Twibbonize Reporting System
 
-**Last Updated:** October 18, 2025
+**Last Updated:** October 19, 2025
 
 This document tracks known issues and suggested improvements for the Twibbonize reporting system.
 
@@ -8,37 +8,7 @@ This document tracks known issues and suggested improvements for the Twibbonize 
 
 ## 💡 Remaining Improvements
 
-### 1. **No Protection Against Report Spam**
-
-**What's the problem?**
-Anyone can submit unlimited reports. There's no limit on how many reports one person can send.
-
-**What does this mean?**
-- A malicious user could create 3 fake accounts and report a competitor's campaign to auto-hide it
-- Someone could spam hundreds of reports to overload the system
-- Bad actors can abuse the auto-hide feature (campaigns hide at 3 reports, users at 10)
-
-**Impact:**
-- Innocent campaigns can be hidden unfairly
-- Competitors can abuse the system to sabotage each other
-- System could be overwhelmed with fake reports
-- Admins waste time reviewing spam reports
-
-**Best solution:**
-Add rate limiting:
-- Maximum 5 reports per hour per user
-- Users can't report the same campaign/user multiple times
-- Track suspicious patterns (same user reporting many different campaigns)
-
-**Note for unauthenticated users:**
-Since users can report even without being authenticated, use IP-based rate limiting:
-- Track reports per IP address (limit: 5 reports per hour per IP)
-- Require CAPTCHA after 2-3 reports from same IP within 24 hours
-- Browser fingerprinting for advanced protection
-
----
-
-### 2. **Deleted Campaigns Still Show in Reports**
+### 1. **Deleted Campaigns Still Show in Reports**
 
 **What's the problem?**
 If a campaign gets reported and auto-hidden, then the creator just deletes it entirely, the report still shows up in the admin queue.
@@ -56,7 +26,7 @@ When a campaign is deleted, automatically dismiss all related pending reports wi
 
 ---
 
-### 3. **No Way to Undo Accidental Admin Actions**
+### 2. **No Way to Undo Accidental Admin Actions**
 
 **What's the problem?**
 If an admin accidentally clicks "Ban User" instead of "Warn User," there's no undo button. They have to manually find the user and reverse the action.
@@ -79,7 +49,7 @@ Recommendation: Combine Options 2 and 3 for maximum safety.
 
 ---
 
-### 4. **Performance: Too Many Database Reads**
+### 3. **Performance: Too Many Database Reads**
 
 **What's the problem?**
 When loading the reports table, the system fetches the current campaign/user data for every single report to show the latest information.
@@ -102,7 +72,7 @@ Recommendation: Option 1 for balance of speed and accuracy.
 
 ---
 
-### 5. **Can't Track Which Admin Did What**
+### 4. **Can't Track Which Admin Did What**
 
 **What's the problem?**
 When an admin takes action (ban, warning, dismiss), the system tries to save who did it, but falls back to the generic word "admin" if the user ID isn't available.
@@ -122,7 +92,7 @@ If multiple admins work on reports, you can't tell who made which decision.
 
 ---
 
-### 6. **No Reminder for Appeal Deadlines**
+### 5. **No Reminder for Appeal Deadlines**
 
 **What's the problem?**
 When a campaign is removed or user is banned, they have 30 days to appeal. But the system doesn't remind them as the deadline approaches.
@@ -145,24 +115,34 @@ Send automatic reminders:
 ## 🎯 Priority Recommendations
 
 **Fix These First:**
-1. **Issue #1** - Add rate limiting to prevent report spam (security issue)
-2. **Issue #5** - Track which admin took which action (accountability)
+1. **Issue #4** - Track which admin took which action (accountability)
 
 **Fix These Soon:**
-3. **Issue #3** - Add undo functionality for admin actions (prevents mistakes)
-4. **Issue #2** - Auto-dismiss reports for deleted content (saves admin time)
+2. **Issue #2** - Add undo functionality for admin actions (prevents mistakes)
+3. **Issue #1** - Auto-dismiss reports for deleted content (saves admin time)
 
 **Nice to Have Later:**
-5. **Issue #4** - Optimize database reads for better performance
-6. **Issue #6** - Add appeal deadline reminders (better user experience)
+4. **Issue #3** - Optimize database reads for better performance
+5. **Issue #5** - Add appeal deadline reminders (better user experience)
 
 ---
 
-## ✅ Recently Fixed Issues (October 18, 2025)
+## ✅ Recently Fixed Issues
 
 The following issues have been fixed and are working correctly:
 
-### Backend Fixes:
+### October 19, 2025:
+1. ✅ **IP-Based Rate Limiting for Reports** - Prevents report spam and abuse
+   - Maximum 5 reports per hour per IP address
+   - Duplicate prevention: Same IP cannot report the same target multiple times
+   - IP addresses are hashed (SHA-256) for privacy
+   - Rate limit data stored in Firestore `reportRateLimits` collection
+   - Automatic cleanup of reports older than 1 hour
+   - Returns HTTP 429 status code with clear error messages
+   - Applies to both campaign and user profile reports
+   - File: `src/utils/reportRateLimit.js`
+
+### October 18, 2025:
 1. ✅ **Notifications for restored content** - Now correctly sent when admins dismiss reports
 2. ✅ **User account restoration** - Users fully restored when reports are dismissed
 3. ✅ **Warning behavior** - Content is now visible again after warnings (warnings are "slap on the wrist," not removal)
@@ -197,10 +177,10 @@ Other
 
 
 **Testing recommendations:**
-- Test report spam scenarios to verify current vulnerability
+- Test IP-based rate limiting by submitting multiple reports from same IP
+- Test duplicate report prevention
 - Test notification content includes selected reason and appeal deadline
 - Review admin logs to confirm action tracking works
-- Test with unauthenticated users to verify IP-based rate limiting (when implemented)
 
 **Future considerations:**
 - Add automated tests for all admin actions
