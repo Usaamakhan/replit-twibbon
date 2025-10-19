@@ -69,6 +69,13 @@ Instead of storing each individual report, the system groups all reports for the
 - Faster for admins to review
 - Cheaper to run at scale
 
+**⚠️ Implementation Note:**
+The codebase currently maintains BOTH:
+1. **reportSummary collection** (optimized, primary system)
+2. **reports collection** (legacy, individual reports)
+
+The legacy `reports` collection is still queried by `/api/admin/reports` and updated during campaign deletion for backward compatibility.
+
 ---
 
 ## Admin Dashboard (/admin/reports)
@@ -268,8 +275,16 @@ When admin clicks "Take Action", they see **3 action buttons** with confirmation
 - **banned-temporary** - User banned by admin, 30-day appeal window
 - **removed-permanent** - Campaign permanently deleted (second offense)
 - **banned-permanent** - User permanently banned (severe violations)
+- **deleted** - Campaign deleted by creator (only appears in reportSummary for tracking)
 
-**Note:** The reporting system now uses only `moderationStatus` for consistent tracking across both campaigns and users. The separate ban endpoint (`/api/admin/users/[userId]/ban`) may still use `accountStatus` for direct manual bans outside the reporting flow.
+**⚠️ Implementation Note - Dual Status Fields for Users:**
+The codebase uses TWO different status fields for users:
+1. **`moderationStatus`** - Used by the reporting system (`/api/admin/reports/summary/[summaryId]`)
+   - Values: `active`, `under-review-hidden`, `banned-temporary`, `banned-permanent`
+2. **`accountStatus`** - Used by the direct ban endpoint (`/api/admin/users/[userId]/ban`)
+   - Values: `active`, `banned-temporary`, `banned-permanent`
+
+This creates potential inconsistency where a user can have both `moderationStatus` and `accountStatus` with different values. The reporting flow should be the primary source of truth for moderation statuses.
 
 ---
 

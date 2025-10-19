@@ -108,6 +108,259 @@ Send automatic reminders:
 
 ---
 
+## 🔴 Critical Issues - Reporting System Architecture
+
+### October 19, 2025:
+
+### 1. **Dual Database Collections for Reports (Legacy System Still Active)**
+
+**What's the problem?**
+The codebase maintains TWO separate systems for tracking reports:
+1. **reportSummary collection** (optimized, aggregated) - Primary system
+2. **reports collection** (legacy, individual reports) - Still being used
+
+**Where is this happening?**
+- `src/app/api/admin/reports/route.js` - Fetches individual reports from legacy `reports` collection
+- `src/app/api/campaigns/[campaignId]/route.js` (lines 102-123) - Auto-dismisses individual reports when campaign deleted
+- New reports are NOT being added to the legacy `reports` collection anymore (only to reportSummary)
+
+**What does this mean?**
+- Inconsistent data between the two collections
+- Campaign deletion tries to update reports that don't exist
+- Admin dashboard at `/api/admin/reports` queries legacy collection but new reports aren't there
+- Performance benefits of reportSummary are not fully realized
+- Confusion about which is the source of truth
+
+**Impact:**
+- High confusion for future developers
+- Wasted database operations
+- Potential bugs when admins use legacy report endpoint
+- Documentation claims 95% performance improvement but legacy code contradicts this
+
+**Best solution:**
+Three options:
+- **Option 1 (Recommended):** Remove all legacy `reports` collection code and use only `reportSummary`
+- **Option 2:** Fully migrate to dual-write system (update BOTH collections when new reports submitted)
+- **Option 3:** Add migration script to move old individual reports to reportSummary, then remove legacy code
+
+**Affected files:**
+- `src/app/api/admin/reports/route.js` - Legacy reports endpoint
+- `src/app/api/campaigns/[campaignId]/route.js` - Campaign deletion
+- Any admin UI components querying `/api/admin/reports`
+
+---
+
+### 2. **Dual Status Fields for Users (moderationStatus vs accountStatus)**
+
+**What's the problem?**
+User documents can have TWO different status fields that serve the same purpose:
+1. **`moderationStatus`** - Set by reporting system at `/api/admin/reports/summary/[summaryId]`
+   - Values: `active`, `under-review-hidden`, `banned-temporary`, `banned-permanent`
+2. **`accountStatus`** - Set by direct ban endpoint at `/api/admin/users/[userId]/ban`
+   - Values: `active`, `banned-temporary`, `banned-permanent`
+
+**Where is this happening?**
+- Reporting flow: Uses `moderationStatus` (src/app/api/admin/reports/summary/[summaryId]/route.js)
+- Direct ban: Uses `accountStatus` (src/app/api/admin/users/[userId]/ban/route.js)
+
+**What does this mean?**
+A user can simultaneously have:
+- `moderationStatus: 'banned-temporary'` (from report system)
+- `accountStatus: 'active'` (from direct ban endpoint)
+- OR vice versa
+
+**Impact:**
+- Which status should the app check to determine if user is banned?
+- Frontend checks might look at wrong field
+- Inconsistent enforcement of bans across the app
+- Confusion about which system has authority
+
+**Best solution:**
+- **Option 1 (Recommended):** Deprecate `accountStatus` and use only `moderationStatus` everywhere
+- **Option 2:** Use `accountStatus` as master field and have reporting system update it
+- **Option 3:** Create a computed `effectiveBanStatus` that checks both and returns the more restrictive status
+
+**Affected files:**
+- `src/app/api/admin/reports/summary/[summaryId]/route.js`
+- `src/app/api/admin/users/[userId]/ban/route.js`
+- Any frontend code checking user ban status
+- Authentication middleware that enforces bans
+
+---
+
+## 💡 Suggestions for Improvements
+
+### October 19, 2025:
+
+### 3. **Missing Status Transition Validation**
+
+**What's the problem?**
+Admin actions can change moderation statuses in any way without validation of valid state transitions.
+
+**Example problematic scenarios:**
+- A campaign with `removed-permanent` status could be restored to `active` by dismissing reports
+- A `banned-permanent` user could be warned and become `active` again
+- No check prevents invalid state transitions
+
+**What does this mean?**
+- "Permanent" removals/bans aren't actually permanent
+- Business logic about what states can transition to what is not enforced
+- Potential for data integrity issues
+
+**Best solution:**
+Add status transition validation in `/api/admin/reports/summary/[summaryId]/route.js`:
+```javascript
+// Define valid transitions
+const VALID_TRANSITIONS = {
+  'active': ['under-review-hidden', 'removed-temporary', 'banned-temporary'],
+  'under-review-hidden': ['active', 'removed-temporary', 'banned-temporary'],
+  'removed-temporary': ['active', 'removed-permanent'],
+  'banned-temporary': ['active', 'banned-permanent'],
+  'removed-permanent': [], // Cannot transition out
+  'banned-permanent': [], // Cannot transition out
+};
+
+// Check before updating
+if (!VALID_TRANSITIONS[currentStatus].includes(newStatus)) {
+  throw new Error('Invalid status transition');
+}
+```
+
+---
+
+### 4. **Appeal System Fields Are Set But Not Used**
+
+**What's the problem?**
+The code sets `appealDeadline` and `appealCount` fields when removing campaigns or banning users, but there's no actual appeal system implemented.
+
+**Where is this happening?**
+- `src/app/api/admin/reports/summary/[summaryId]/route.js` (lines 122, 125)
+- Sets 30-day appealDeadline
+- Sets appealCount to 0
+
+**What does this mean?**
+- Users are told they can appeal but there's no way to do it
+- Database fields are populated but never read or used
+- Notification promises functionality that doesn't exist
+
+**Impact:**
+- User frustration (promised appeal system doesn't exist)
+- Misleading notifications
+- Unused database fields
+
+**Best solution:**
+Either:
+- **Option 1:** Implement the appeals system (see TASKS.md Section 9.2)
+- **Option 2:** Remove appeal references from notifications and stop setting appealDeadline/appealCount
+- **Option 3:** Add a placeholder appeal page that says "Coming soon"
+
+---
+
+### 5. **Notification Template Parameter Handling Could Be Clearer**
+
+**What's the problem?**
+Notification templates expect positional parameters, but they're called with named object parameters. While this works via `Object.values()`, it's fragile and unclear.
+
+**Where is this happening?**
+- `src/utils/notifications/notificationTemplates.js` (line 96)
+- Templates defined with positional parameters: `(campaignTitle, appealDeadline, removalReason)`
+- Called with objects: `{ campaignTitle, appealDeadline, removalReason }`
+
+**What does this mean?**
+- Parameter order in object must match template parameter order exactly
+- If someone adds a new parameter to the object, order might break
+- Not immediately clear from code that order matters
+
+**Impact:**
+- Future developer might reorder object properties and break notifications
+- Hard to debug when parameters appear in wrong places
+
+**Best solution:**
+Change templates to accept named parameters instead:
+```javascript
+// Before
+campaignRemoved: (campaignTitle, appealDeadline, removalReason) => ({...})
+
+// After
+campaignRemoved: ({ campaignTitle, appealDeadline, removalReason }) => ({...})
+```
+
+Then update getNotificationTemplate:
+```javascript
+// Before
+return typeof template === 'function' ? template(...Object.values(params)) : template;
+
+// After
+return typeof template === 'function' ? template(params) : template;
+```
+
+---
+
+### 6. **Auto-Hide Threshold Check Only Happens on 'active' Status**
+
+**What's the problem?**
+The auto-hide logic only triggers when `moderationStatus === 'active'`.
+
+**Where is this happening?**
+- `src/app/api/reports/submit/route.js` (line 74)
+- `src/app/api/reports/user/route.js` (line 86)
+
+**What does this mean?**
+If a campaign/user is:
+- Previously dismissed and reports start coming in again
+- Already in `under-review-hidden` state
+- In any state other than `active`
+
+The auto-hide won't trigger even if reportsCount >= threshold.
+
+**Impact:**
+- Content that was reviewed and dismissed won't auto-hide again even with many new reports
+- Admins must manually check everything again
+
+**Is this intentional?**
+Looking at code comments, this seems intentional - but worth documenting clearly.
+
+**Suggestion:**
+Add clear comment explaining why this check exists:
+```javascript
+// Only auto-hide if currently active. If previously reviewed (dismissed/resolved),
+// admin must review again manually to avoid auto-hiding false positive reports.
+if (newReportsCount >= 3 && campaignData.moderationStatus === 'active') {
+```
+
+---
+
+### 7. **Campaign Deletion Success Modal Doesn't Show Dismissed Report Count**
+
+**What's the problem?**
+After campaign deletion, the backend returns `reportsDismissed` count, but the new custom success modal doesn't display this information.
+
+**Where is this happening?**
+- `src/components/CampaignGallery.js` (lines 425-426)
+- Success modal shows generic "Campaign deleted successfully"
+- Backend returns `data.reportsDismissed` but it's not used
+
+**What does this mean?**
+- Admin/creator doesn't know how many reports were auto-dismissed
+- Less transparency about what happened during deletion
+
+**Impact:**
+- Minor - informational only
+- But could be useful for creators to know their deleted campaign had reports
+
+**Best solution:**
+Update success modal message to include report count if > 0:
+```javascript
+<p className="text-gray-600 mb-6">
+  Your campaign has been successfully deleted.
+  {reportsDismissedCount > 0 && (
+    <> {reportsDismissedCount} related report(s) were also dismissed.</>
+  )}
+</p>
+```
+
+---
+
 ## ✅ Recently Fixed Issues
 
 The following issues have been fixed and are working correctly:
@@ -186,3 +439,31 @@ The following issues have been fixed and are working correctly:
 - Add automated tests for all admin actions
 - Create admin troubleshooting guide
 - Consider adding API documentation for developers
+
+---
+
+## 📊 Documentation Update Summary (October 19, 2025)
+
+**Files Updated:**
+1. **REPORT_SYSTEM.md** - Added implementation notes about legacy system and dual status fields
+2. **CODE_INCONSISTENCIES.md** - Added 7 new critical issues and suggestions
+
+**Key Findings:**
+1. 🔴 **CRITICAL:** Legacy `reports` collection still exists alongside optimized `reportSummary` system
+2. 🔴 **CRITICAL:** Users can have both `moderationStatus` and `accountStatus` with conflicting values
+3. 💡 Missing validation for status state transitions (permanent bans can be undone)
+4. 💡 Appeal system fields are set but appeals feature is not implemented
+5. 💡 Notification template parameter handling could be more explicit
+6. 💡 Auto-hide threshold only applies to 'active' status (may be intentional)
+7. 💡 Campaign deletion success modal doesn't show dismissed report count
+
+**Recommendations:**
+- **Priority 1:** Decide whether to remove legacy `reports` collection or maintain dual-write system
+- **Priority 2:** Unify user status fields - use either `moderationStatus` OR `accountStatus`, not both
+- **Priority 3:** Add status transition validation to prevent invalid state changes
+- **Priority 4:** Either implement appeals system or remove appeal-related fields and notifications
+
+**Next Steps:**
+- User/team should review these findings and decide on approach
+- Create implementation tasks for chosen solutions
+- Update affected code and documentation accordingly
