@@ -9,6 +9,18 @@ export default function ReportDetailsPanel({ report, onClose, onUpdate, isGroupe
   const [isUpdating, setIsUpdating] = useState(false);
   const [updateError, setUpdateError] = useState(null);
   const [confirmAction, setConfirmAction] = useState(null);
+  const [selectedReason, setSelectedReason] = useState('');
+  const [showReasonDropdown, setShowReasonDropdown] = useState(false);
+  const [pendingAction, setPendingAction] = useState(null);
+
+  const actionReasons = [
+    { value: 'inappropriate_content', label: 'Inappropriate content' },
+    { value: 'spam', label: 'Spam' },
+    { value: 'harassment', label: 'Harassment' },
+    { value: 'misinformation', label: 'Misinformation' },
+    { value: 'copyright_violation', label: 'Copyright violation' },
+    { value: 'other', label: 'Other' },
+  ];
 
   const getStatusColor = (status) => {
     switch (status) {
@@ -64,15 +76,32 @@ export default function ReportDetailsPanel({ report, onClose, onUpdate, isGroupe
   };
 
   const openConfirmation = (status, action, actionLabel) => {
-    setConfirmAction({ status, action, actionLabel });
+    if (action === 'warned' || action === 'removed') {
+      setPendingAction({ status, action, actionLabel });
+      setShowReasonDropdown(true);
+      setSelectedReason('');
+    } else {
+      setConfirmAction({ status, action, actionLabel });
+    }
+  };
+
+  const handleReasonSubmit = () => {
+    if (!selectedReason) {
+      alert('Please select a reason for this action.');
+      return;
+    }
+
+    setShowReasonDropdown(false);
+    setConfirmAction({ ...pendingAction, reason: selectedReason });
+    setPendingAction(null);
   };
 
   const handleConfirmedAction = async () => {
     if (!user || !confirmAction) return;
 
-    const { status, action } = confirmAction;
+    const { status, action, reason } = confirmAction;
 
-    console.log('[CLIENT] Action button clicked:', { status, action, reportId: report.id, isGrouped });
+    console.log('[CLIENT] Action button clicked:', { status, action, reason, reportId: report.id, isGrouped });
     setIsUpdating(true);
     setUpdateError(null);
 
@@ -80,10 +109,15 @@ export default function ReportDetailsPanel({ report, onClose, onUpdate, isGroupe
       const token = await user.getIdToken();
       console.log('[CLIENT] Token obtained, sending request...');
       
-      // Use different endpoint for grouped summaries
       const endpoint = isGrouped 
         ? `/api/admin/reports/summary/${report.id}`
         : `/api/admin/reports/${report.id}`;
+      
+      const requestBody = { status, action };
+      
+      if (reason) {
+        requestBody.reason = reason;
+      }
       
       const response = await fetch(endpoint, {
         method: 'PATCH',
@@ -91,7 +125,7 @@ export default function ReportDetailsPanel({ report, onClose, onUpdate, isGroupe
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`,
         },
-        body: JSON.stringify({ status, action }),
+        body: JSON.stringify(requestBody),
       });
 
       console.log('[CLIENT] Response status:', response.status);
@@ -102,7 +136,6 @@ export default function ReportDetailsPanel({ report, onClose, onUpdate, isGroupe
         throw new Error(data.error || 'Failed to update report');
       }
 
-      // Show success message
       console.log('[CLIENT] ✅ Action completed successfully!');
       alert(`✅ Action completed successfully! ${action === 'no-action' ? 'Report dismissed' : action === 'warned' ? 'Warning issued' : 'Content removed'}`);
 
@@ -128,9 +161,9 @@ export default function ReportDetailsPanel({ report, onClose, onUpdate, isGroupe
       case 'no-action':
         return `Are you sure you want to dismiss this report? The ${isGrouped ? report.targetType : (report.type === 'profile' ? 'user' : 'campaign')} will be restored to active status.`;
       case 'warned':
-        return `Are you sure you want to issue a warning to this ${(isGrouped ? report.targetType === 'user' : report.type === 'profile') ? 'user' : 'creator'}? They will receive a notification.`;
+        return `Are you sure you want to issue a warning to this ${(isGrouped ? report.targetType === 'user' : report.type === 'profile') ? 'user' : 'creator'}? They will receive a notification with the selected reason.`;
       case 'removed':
-        return `Are you sure you want to ${(isGrouped ? report.targetType === 'user' : report.type === 'profile') ? 'ban this user' : 'remove this campaign'}? This action will hide the content and notify the ${(isGrouped ? report.targetType === 'user' : report.type === 'profile') ? 'user' : 'creator'}.`;
+        return `Are you sure you want to ${(isGrouped ? report.targetType === 'user' : report.type === 'profile') ? 'ban this user' : 'remove this campaign'}? This action will hide the content and notify the ${(isGrouped ? report.targetType === 'user' : report.type === 'profile') ? 'user' : 'creator'} with the selected reason and appeal deadline.`;
       default:
         return 'Are you sure you want to proceed with this action?';
     }
@@ -361,6 +394,59 @@ export default function ReportDetailsPanel({ report, onClose, onUpdate, isGroupe
           </div>
         </div>
       </div>
+
+      {/* Reason Selection Modal */}
+      {showReasonDropdown && (
+        <div className="fixed inset-0 z-[60] overflow-y-auto">
+          <div className="flex min-h-screen items-center justify-center p-4">
+            <div className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" onClick={() => setShowReasonDropdown(false)}></div>
+            
+            <div className="relative bg-white rounded-lg shadow-xl max-w-md w-full p-6">
+              <h3 className="text-lg font-medium text-gray-900 mb-4">
+                Select Reason for {pendingAction?.action === 'warned' ? 'Warning' : 'Removal/Ban'}
+              </h3>
+              
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Reason <span className="text-red-500">*</span>
+                </label>
+                <select
+                  value={selectedReason}
+                  onChange={(e) => setSelectedReason(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                >
+                  <option value="">-- Select a reason --</option>
+                  {actionReasons.map((reason) => (
+                    <option key={reason.value} value={reason.value}>
+                      {reason.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              
+              <div className="flex gap-3">
+                <button
+                  onClick={() => {
+                    setShowReasonDropdown(false);
+                    setPendingAction(null);
+                    setSelectedReason('');
+                  }}
+                  className="flex-1 px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleReasonSubmit}
+                  disabled={!selectedReason}
+                  className="flex-1 px-4 py-2 bg-emerald-600 text-white rounded-md hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Continue
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Confirmation Modal */}
       <ConfirmationModal

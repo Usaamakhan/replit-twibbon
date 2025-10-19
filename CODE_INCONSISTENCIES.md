@@ -142,6 +142,15 @@ The following issues have been fixed and are working correctly:
    - Applies to both campaign and user profile reports
    - File: `src/utils/reportRateLimit.js`
 
+2. ✅ **Admin Reason Selection for Warnings and Bans** - Frontend UI implementation
+   - Added reason dropdown modal when admins take "Warn" or "Ban/Remove" actions
+   - Admin must select a reason before confirming the action
+   - Available reasons: Inappropriate content, Spam, Harassment, Misinformation, Copyright violation, Other
+   - Selected reason is included in the API request and stored with the action
+   - Notifications to users now include the specific reason selected by admin
+   - Two-step confirmation process: Select reason → Confirm action
+   - File: `src/components/admin/ReportDetailsPanel.js`
+
 ### October 18, 2025:
 1. ✅ **Notifications for restored content** - Now correctly sent when admins dismiss reports
 2. ✅ **User account restoration** - Users fully restored when reports are dismissed
@@ -155,31 +164,16 @@ The following issues have been fixed and are working correctly:
 
 ## 📝 Notes
 
-**Last reviewed:** October 18, 2025
-
-**Frontend Note:**
-The backend API now supports reason parameters for admin actions. The frontend admin UI components will need to be updated to include dropdown selects for reason selection when taking actions (warn/ban/remove).
-
-📋Steps Needed
-Frontend UI Update Required:
-The admin UI components will need to be updated to include dropdown selects for reason selection. The backend API is ready and expects these parameters:
-
-Add reason dropdown to "Warn" action modal
-Add reason dropdown to "Ban/Remove" action modal
-Suggested reason options:
-
-Inappropriate content
-Spam
-Harassment
-Misinformation
-Copyright violation
-Other
+**Last reviewed:** October 19, 2025
 
 
 **Testing recommendations:**
 - Test IP-based rate limiting by submitting multiple reports from same IP
 - Test duplicate report prevention
-- Test notification content includes selected reason and appeal deadline
+- Test admin reason selection modal appears when clicking "Warn" or "Ban/Remove"
+- Test that "Continue" button is disabled until a reason is selected
+- Test notification content includes the admin-selected reason and appeal deadline
+- Test that warning and ban actions fail if reason is not provided
 - Review admin logs to confirm action tracking works
 
 **Future considerations:**
