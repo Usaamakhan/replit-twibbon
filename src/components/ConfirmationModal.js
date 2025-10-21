@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useBodyScrollLock } from '../hooks/useBodyScrollLock';
 
 export default function ConfirmationModal({ 
@@ -11,10 +11,20 @@ export default function ConfirmationModal({
   message = "Are you sure you want to proceed?",
   confirmText = "Confirm",
   cancelText = "Cancel",
-  type = "danger" // "danger" or "warning"
+  type = "danger", // "danger" or "warning"
+  requireTypedConfirmation = false // Require typing "CONFIRM" for dangerous actions
 }) {
+  const [confirmationText, setConfirmationText] = useState('');
+  
   // Lock body scroll when modal is open
   useBodyScrollLock(isOpen);
+
+  // Reset confirmation text when modal opens/closes
+  useEffect(() => {
+    if (isOpen) {
+      setConfirmationText('');
+    }
+  }, [isOpen]);
 
   // Close modal on Escape key
   useEffect(() => {
@@ -46,6 +56,8 @@ export default function ConfirmationModal({
     onClose();
   };
 
+  const isConfirmDisabled = requireTypedConfirmation && confirmationText !== 'CONFIRM';
+
   return (
     <div 
       className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
@@ -75,6 +87,25 @@ export default function ConfirmationModal({
         {/* Body */}
         <div className="px-6 py-4">
           <p className="text-gray-700 text-sm leading-relaxed">{message}</p>
+          
+          {requireTypedConfirmation && (
+            <div className="mt-4">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Type <span className="font-bold text-red-600">CONFIRM</span> to proceed:
+              </label>
+              <input
+                type="text"
+                value={confirmationText}
+                onChange={(e) => setConfirmationText(e.target.value)}
+                placeholder="Type CONFIRM"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 text-sm"
+                autoFocus
+              />
+              <p className="mt-2 text-xs text-gray-500">
+                This action requires confirmation to prevent accidental clicks.
+              </p>
+            </div>
+          )}
         </div>
         
         {/* Footer */}
@@ -87,11 +118,12 @@ export default function ConfirmationModal({
           </button>
           <button
             onClick={handleConfirm}
+            disabled={isConfirmDisabled}
             className={`btn-base px-4 py-2 text-sm ${
               type === "danger" 
                 ? "btn-danger" 
                 : "btn-warning"
-            }`}
+            } disabled:opacity-50 disabled:cursor-not-allowed`}
           >
             {confirmText}
           </button>

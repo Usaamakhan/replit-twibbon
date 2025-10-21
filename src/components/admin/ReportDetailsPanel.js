@@ -458,6 +458,7 @@ export default function ReportDetailsPanel({ report, onClose, onUpdate, isGroupe
         confirmText={confirmAction?.actionLabel || 'Confirm'}
         cancelText="Cancel"
         type={confirmAction?.action === 'removed' ? 'danger' : confirmAction?.action === 'warned' ? 'warning' : 'danger'}
+        requireTypedConfirmation={confirmAction?.action === 'warned' || confirmAction?.action === 'removed'}
       />
     </div>
   );

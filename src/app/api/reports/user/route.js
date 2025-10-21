@@ -69,7 +69,28 @@ export async function POST(request) {
       
       const userData = userDoc.data();
       const currentReportsCount = userData.reportsCount || 0;
-      const newReportsCount = currentReportsCount + 1;
+      
+      // Update or create report summary with reason counts
+      const now = new Date();
+      
+      let newReportsCount;
+      let isResettingCounts = false;
+      
+      if (summaryDoc.exists) {
+        const currentSummary = summaryDoc.data();
+        
+        // If previously resolved/dismissed, reset BOTH counters to start fresh
+        if (currentSummary.status === 'resolved' || currentSummary.status === 'dismissed') {
+          newReportsCount = 1;
+          isResettingCounts = true;
+        } else {
+          // Still pending, increment counter
+          newReportsCount = currentReportsCount + 1;
+        }
+      } else {
+        // New summary, start at 1
+        newReportsCount = 1;
+      }
       
       // Update user moderation fields
       const userUpdates = {
@@ -97,9 +118,6 @@ export async function POST(request) {
       
       transaction.update(userRef, userUpdates);
       
-      // Update or create report summary with reason counts
-      const now = new Date();
-      
       if (summaryDoc.exists) {
         // Update existing summary
         const currentSummary = summaryDoc.data();
@@ -109,7 +127,7 @@ export async function POST(request) {
         };
         
         // If previously resolved/dismissed, reset counter and status to start fresh
-        if (currentSummary.status === 'resolved' || currentSummary.status === 'dismissed') {
+        if (isResettingCounts) {
           summaryUpdates.status = 'pending';
           summaryUpdates.reportsCount = 1;
           summaryUpdates.firstReportedAt = now;
