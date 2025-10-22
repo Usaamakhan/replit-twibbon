@@ -8,50 +8,6 @@ This document tracks known issues and suggested improvements for the Twibbonize 
 
 ## 🔴 Critical Issues
 
-### 1. **Can't Track Which Admin Did What**
-
-**What's the problem?**
-When an admin takes action (ban, warning, dismiss), the system tries to save who did it. But the system looks for an ID in the wrong place, so it always records the generic word "admin" instead of the actual person's name.
-
-**Technical explanation:**
-The code tries to get the admin ID from `request.headers.get('x-user-id')` but this header is never set anywhere in the codebase. So it always falls back to the default value `'admin'`.
-
-**What does this mean?**
-If you have 5 admins working on reports, you can't tell who made which decision.
-
-**Example:**
-- Admin Sarah bans User123
-- Admin John dismisses the report for Campaign456
-- Both actions show "Issued by: admin" instead of showing their actual names
-
-**Impact:**
-- No accountability for admin actions
-- Can't track admin performance (who's reviewing the most reports?)
-- If there's a mistake, can't identify who made it
-- Can't see patterns (does one admin ban too quickly?)
-
-**Where in code:**
-- `src/app/api/admin/reports/summary/[summaryId]/route.js` (line 109)
-- Creates warning with `issuedBy: request.headers.get('x-user-id') || 'admin'`
-- But `x-user-id` header is never set
-
-**Best solution:**
-- Get the admin's user ID from the authentication token (already available in the request)
-- Save both the admin's ID AND name with every action
-- Create an admin activity log page showing all recent actions
-
-**How to fix:**
-```javascript
-// Instead of:
-issuedBy: request.headers.get('x-user-id') || 'admin'
-
-// Use the decoded token that's already available from authentication:
-const adminAuth = await requireAdmin(request);
-issuedBy: adminAuth.uid
-```
-
----
-
 ## ⚠️ Important Issues
 
 ### 5. **No Reminder for Appeal Deadlines**
@@ -261,6 +217,35 @@ transaction.update(summaryRef, {
 The following issues have been fixed and are working correctly:
 
 ### October 22, 2025 (Latest):
+
+**Issue #1 - Can't Track Which Admin Did What (RESOLVED)**
+- ✅ Fixed admin ID tracking to use real authenticated admin data
+- ✅ Created comprehensive admin action logging system
+- ✅ Built dedicated admin logs page with filtering and search
+- ✅ All admin actions now properly tracked with full accountability
+- **Where fixed:**
+  - `src/utils/logAdminAction.js` - New utility function to log all admin actions
+  - `src/app/api/admin/reports/summary/[summaryId]/route.js` - Captures real admin ID from auth token
+  - `src/app/api/admin/logs/route.js` - New API endpoint to fetch admin logs
+  - `src/app/(chrome)/admin/logs/page.js` - New admin logs UI page
+  - `src/components/admin/AdminLogsTable.js` - Table component to display logs
+  - `src/components/admin/AdminSidebar.js` - Added "Logs" navigation link
+- **Implementation:**
+  1. Created `adminLogs` Firestore collection to store all admin actions
+  2. Updated admin action endpoint to use `requireAdmin()` return value for admin ID
+  3. Added admin ID, email, and name to warning records
+  4. Log every admin action (dismissed, warned, removed) with full context
+  5. Built admin logs page with filters: action type, target type, admin, limit
+  6. Display logs in table with timestamp, admin, action, target, reason, reports count
+- **Data tracked for each action:**
+  - Admin ID, email, and display name
+  - Action type (dismissed, warned, removed)
+  - Target type (campaign or user) and target ID/title
+  - Reason provided by admin
+  - Report summary ID
+  - Previous status and reports count
+  - Timestamp
+- **Impact:** Full admin accountability, performance tracking, mistake identification, pattern analysis, audit trail for all moderation decisions
 
 **Issue #8 - Performance: Database Reads Could Be Optimized (RESOLVED)**
 - ✅ Eliminated N+1 query problem in admin reports dashboard
