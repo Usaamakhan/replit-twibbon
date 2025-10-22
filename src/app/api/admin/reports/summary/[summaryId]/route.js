@@ -4,10 +4,11 @@ import { adminFirestore } from '@/lib/firebaseAdmin';
 import { FieldValue } from 'firebase-admin/firestore';
 import { sendInAppNotification } from '@/utils/notifications/sendInAppNotification';
 import { getNotificationTemplate } from '@/utils/notifications/notificationTemplates';
+import { logAdminAction } from '@/utils/logAdminAction';
 
 export async function PATCH(request, { params }) {
   try {
-    await requireAdmin(request);
+    const adminUser = await requireAdmin(request);
     
     const { summaryId } = params;
     const { status, action, reason } = await request.json();
@@ -106,7 +107,9 @@ export async function PATCH(request, { params }) {
           targetId,
           reportId: summaryId,
           reason: reason, // Use admin-selected reason
-          issuedBy: request.headers.get('x-user-id') || 'admin',
+          issuedBy: adminUser.uid,
+          issuedByEmail: adminUser.email,
+          issuedByName: adminUser.displayName || adminUser.username || adminUser.email,
           issuedAt: now,
           acknowledged: false,
         });
@@ -162,6 +165,29 @@ export async function PATCH(request, { params }) {
       }
       
       transaction.update(summaryRef, summaryUpdates);
+    });
+    
+    // Log admin action after transaction completes
+    const actionMap = {
+      'no-action': 'dismissed',
+      'warned': 'warned',
+      'removed': 'removed'
+    };
+    
+    await logAdminAction({
+      adminId: adminUser.uid,
+      adminEmail: adminUser.email,
+      adminName: adminUser.displayName || adminUser.username || adminUser.email,
+      action: actionMap[action] || action,
+      targetType,
+      targetId,
+      targetTitle: targetType === 'campaign' ? summaryData.campaignTitle : summaryData.displayName || summaryData.username,
+      reason: reason || null,
+      summaryId,
+      additionalData: {
+        previousStatus: targetType === 'campaign' ? summaryData.moderationStatus : summaryData.accountStatus,
+        reportsCount: summaryData.reportsCount || 0
+      }
     });
     
     // Send notification after transaction completes
