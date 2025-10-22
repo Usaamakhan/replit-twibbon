@@ -32,35 +32,77 @@ export async function GET(request) {
     
     const summariesSnapshot = await summariesQuery.get();
     
-    const summaries = [];
+    // Step 1: Convert to plain objects and collect all IDs
+    const summariesData = summariesSnapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    }));
     
-    for (const doc of summariesSnapshot.docs) {
-      const summaryData = { id: doc.id, ...doc.data() };
-      
+    // Step 2: Collect unique IDs for batch fetching
+    const campaignIds = new Set();
+    const userIds = new Set();
+    
+    summariesData.forEach(summary => {
+      if (summary.targetType === 'campaign' && summary.targetId) {
+        campaignIds.add(summary.targetId);
+        if (summary.creatorId) {
+          userIds.add(summary.creatorId);
+        }
+      } else if (summary.targetType === 'user' && summary.targetId) {
+        userIds.add(summary.targetId);
+      }
+    });
+    
+    // Step 3: Batch fetch all campaigns and users at once (reduces N+1 queries)
+    const campaignRefs = Array.from(campaignIds).map(id => db.collection('campaigns').doc(id));
+    const userRefs = Array.from(userIds).map(id => db.collection('users').doc(id));
+    
+    // Fetch all documents in parallel
+    const [campaignDocs, userDocs] = await Promise.all([
+      campaignRefs.length > 0 ? db.getAll(...campaignRefs) : Promise.resolve([]),
+      userRefs.length > 0 ? db.getAll(...userRefs) : Promise.resolve([])
+    ]);
+    
+    // Step 4: Build lookup maps for O(1) access
+    const campaignsMap = new Map();
+    campaignDocs.forEach(doc => {
+      if (doc.exists) {
+        campaignsMap.set(doc.id, doc.data());
+      }
+    });
+    
+    const usersMap = new Map();
+    userDocs.forEach(doc => {
+      if (doc.exists) {
+        usersMap.set(doc.id, doc.data());
+      }
+    });
+    
+    // Step 5: Populate summaries with fetched data
+    const summaries = summariesData.map(summaryData => {
       // Fetch LIVE status from actual target document (campaign or user)
       if (summaryData.targetId) {
-        const targetCollection = summaryData.targetType === 'campaign' ? 'campaigns' : 'users';
-        const targetDoc = await db.collection(targetCollection).doc(summaryData.targetId).get();
-        
-        if (targetDoc.exists) {
-          const targetData = targetDoc.data();
+        if (summaryData.targetType === 'campaign') {
+          const targetData = campaignsMap.get(summaryData.targetId);
           
-          // Update with LIVE status (moderationStatus for campaigns, accountStatus for users)
-          if (summaryData.targetType === 'campaign') {
+          if (targetData) {
             summaryData.moderationStatus = targetData.moderationStatus || 'active';
             summaryData.campaignTitle = targetData.title || summaryData.campaignTitle;
             summaryData.campaignImage = targetData.imageUrl || summaryData.campaignImage;
           } else {
+            summaryData.targetDeleted = true;
+            summaryData.moderationStatus = 'deleted';
+          }
+        } else {
+          const targetData = usersMap.get(summaryData.targetId);
+          
+          if (targetData) {
             summaryData.accountStatus = targetData.accountStatus || 'active';
             summaryData.displayName = targetData.displayName || summaryData.displayName;
             summaryData.username = targetData.username || summaryData.username;
             summaryData.profileImage = targetData.profileImage || summaryData.profileImage;
-          }
-        } else {
-          summaryData.targetDeleted = true;
-          if (summaryData.targetType === 'campaign') {
-            summaryData.moderationStatus = 'deleted';
           } else {
+            summaryData.targetDeleted = true;
             summaryData.accountStatus = 'deleted';
           }
         }
@@ -68,11 +110,11 @@ export async function GET(request) {
       
       // Add creator info for campaign reports
       if (summaryData.targetType === 'campaign' && summaryData.creatorId) {
-        const creatorDoc = await db.collection('users').doc(summaryData.creatorId).get();
-        if (creatorDoc.exists) {
-          const creatorData = creatorDoc.data();
+        const creatorData = usersMap.get(summaryData.creatorId);
+        
+        if (creatorData) {
           summaryData.creator = {
-            uid: creatorDoc.id,
+            uid: summaryData.creatorId,
             displayName: creatorData.displayName,
             username: creatorData.username,
             profileImage: creatorData.profileImage,
@@ -104,8 +146,8 @@ export async function GET(request) {
         summaryData.resolvedAt = summaryData.resolvedAt.toDate().toISOString();
       }
       
-      summaries.push(summaryData);
-    }
+      return summaryData;
+    });
     
     return NextResponse.json({
       success: true,

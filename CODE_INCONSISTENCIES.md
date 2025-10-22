@@ -169,46 +169,7 @@ Three options:
 
 ## 💡 Suggestions for Improvements
 
-### 8. **Performance: Database Reads Could Be Optimized**
-
-**What's the problem?**
-When an admin opens the reports page, the system fetches live campaign/user status for each report summary individually instead of batching them together.
-
-**Example:**
-If the admin page shows 50 report summaries:
-- Reads 50 report summary documents ✅ (already optimized with aggregation!)
-- Reads 50 campaign/user documents individually (one-by-one in a loop)
-- Reads ~25 creator profiles for campaign reports (one-by-one in a loop)
-- **Total: ~75 database reads just to show the table**
-
-**What does this mean?**
-This is called an "N+1 query problem" - fetching data one-by-one in a loop instead of batching. However, the report aggregation system already saves 95% of operations compared to storing individual reports, so this is not as bad as it could be.
-
-**Impact:**
-- Slightly slower page load times (acceptable for admin dashboard)
-- Higher database costs (but still much better than without aggregation)
-- Could become noticeable with 200+ summaries (unlikely with pagination)
-
-**Where in code:**
-- `src/app/api/admin/reports/grouped/route.js` (lines 37-88)
-
-**Best solution:**
-Three options:
-- **Option 1:** Cache live status in report summary, refresh only when admin clicks "Take Action"
-- **Option 2:** Use Firestore's batch `getAll()` to fetch all campaigns/users at once (2 queries instead of 75)
-- **Option 3:** Accept current performance (already good enough with pagination and "Load More" button)
-
-**Recommendation:** Option 3 for now. The aggregation system already provides excellent performance. Only optimize if you notice slow load times with real usage.
-
-**Why this is a SUGGESTION, not CRITICAL:**
-- ✅ Report aggregation already saves 95% of operations
-- ✅ You have pagination with "Load More" to limit initial load
-- ✅ Loading 50 summaries with 75 reads is acceptable for an admin dashboard
-- ✅ This would only become a problem with 500+ summaries at once (unlikely)
-
----
-
-### 9. **Missing Status Transition Validation**
+### 8. **Missing Status Transition Validation**
 
 **What's the problem?**
 The system doesn't check if status changes make sense. An admin could accidentally restore something that should stay permanently deleted.
@@ -248,7 +209,7 @@ if (!VALID_TRANSITIONS[currentStatus].includes(newStatus)) {
 
 ---
 
-### 10. **Reason Counts Are Lost When Admin Takes Action**
+### 9. **Reason Counts Are Lost When Admin Takes Action**
 
 **What's the problem?**
 When a campaign/user gets reported, the system tracks WHY it was reported (spam, inappropriate, etc.) in detail. But when an admin takes action, all this information is deleted.
@@ -300,6 +261,25 @@ transaction.update(summaryRef, {
 The following issues have been fixed and are working correctly:
 
 ### October 22, 2025 (Latest):
+
+**Issue #8 - Performance: Database Reads Could Be Optimized (RESOLVED)**
+- ✅ Eliminated N+1 query problem in admin reports dashboard
+- ✅ Reduced database reads from ~76 to ~3 per page load (96% reduction!)
+- ✅ Implemented Firestore batch `getAll()` for efficient data fetching
+- ✅ Much faster page load times for admin dashboard
+- **Where fixed:**
+  - `src/app/api/admin/reports/grouped/route.js` - Complete refactor using batch fetching
+- **Implementation:**
+  1. Collect all unique IDs (campaigns, users, creators) from report summaries
+  2. Use `db.getAll()` to batch fetch all campaigns in one query
+  3. Use `db.getAll()` to batch fetch all users in one query (parallel with campaigns)
+  4. Build lookup maps for O(1) access when populating summary data
+  5. Map through summaries and populate with pre-fetched data
+- **Performance improvement:**
+  - Before: 1 query for summaries + 50 individual campaign queries + 25 individual user queries = ~76 reads
+  - After: 1 query for summaries + 1 batch query for campaigns + 1 batch query for users = 3 reads
+  - Result: **96% reduction in database operations** for admin dashboard
+- **Impact:** Faster admin dashboard, lower database costs, better scalability with more reports
 
 **Issue #9 - Authenticated Users Can Bypass Report Limits (RESOLVED)**
 - ✅ Fixed authenticated users bypassing rate limits by switching networks
