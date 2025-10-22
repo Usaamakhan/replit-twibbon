@@ -9,6 +9,7 @@ export default function AdminLogsPage() {
   const [logs, setLogs] = useState([]);
   const [admins, setAdmins] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
   const [filters, setFilters] = useState({
     action: 'all',
     targetType: 'all',
@@ -20,6 +21,7 @@ export default function AdminLogsPage() {
     if (!user) return;
 
     setLoading(true);
+    setError(null);
     try {
       const token = await user.getIdToken();
       
@@ -35,15 +37,31 @@ export default function AdminLogsPage() {
         },
       });
 
+      const data = await response.json();
+
       if (!response.ok) {
-        throw new Error('Failed to fetch admin logs');
+        if (data.indexError) {
+          setError({
+            type: 'index',
+            message: data.error
+          });
+        } else {
+          setError({
+            type: 'general',
+            message: data.error || 'Failed to fetch admin logs'
+          });
+        }
+        return;
       }
 
-      const data = await response.json();
       setLogs(data.data || []);
       setAdmins(data.admins || []);
     } catch (error) {
       console.error('Error fetching admin logs:', error);
+      setError({
+        type: 'general',
+        message: 'An unexpected error occurred'
+      });
     } finally {
       setLoading(false);
     }
@@ -148,6 +166,26 @@ export default function AdminLogsPage() {
           </div>
         )}
       </div>
+
+      {error && (
+        <div className={`rounded-lg p-4 ${error.type === 'index' ? 'bg-yellow-50 border border-yellow-200' : 'bg-red-50 border border-red-200'}`}>
+          <div className="flex">
+            <div className="flex-shrink-0">
+              <svg className={`h-5 w-5 ${error.type === 'index' ? 'text-yellow-400' : 'text-red-400'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              </svg>
+            </div>
+            <div className="ml-3">
+              <h3 className={`text-sm font-medium ${error.type === 'index' ? 'text-yellow-800' : 'text-red-800'}`}>
+                {error.type === 'index' ? 'Database Indexes Building' : 'Error Loading Logs'}
+              </h3>
+              <p className={`mt-2 text-sm ${error.type === 'index' ? 'text-yellow-700' : 'text-red-700'}`}>
+                {error.message}
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
 
       <AdminLogsTable
         logs={logs}

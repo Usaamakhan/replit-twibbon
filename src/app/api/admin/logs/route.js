@@ -77,6 +77,18 @@ export async function GET(request) {
       );
     }
     
+    // Handle Firestore index errors (FAILED_PRECONDITION)
+    if (error.code === 9 || error.message.includes('index') || error.message.includes('FAILED_PRECONDITION')) {
+      return NextResponse.json(
+        { 
+          success: false, 
+          error: 'Firestore indexes are still building. Please wait a few minutes and try again. If the issue persists, check Firebase Console for index status.',
+          indexError: true
+        },
+        { status: 503 }
+      );
+    }
+    
     return NextResponse.json(
       { success: false, error: 'Failed to fetch admin logs' },
       { status: 500 }
