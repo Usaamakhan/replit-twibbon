@@ -1,6 +1,6 @@
 # Code Issues & Improvements - Twibbonize Reporting System
 
-**Last Updated:** October 21, 2025
+**Last Updated:** October 22, 2025
 
 This document tracks known issues and suggested improvements for the Twibbonize reporting system. All issues are explained in simple, non-technical language so anyone can understand them.
 
@@ -8,38 +8,7 @@ This document tracks known issues and suggested improvements for the Twibbonize 
 
 ## 🔴 Critical Issues
 
-### 1. **Report Counts Get Out of Sync**
-
-**What's the problem?**
-When someone reports the same campaign/user multiple times (after admin reviewed it), the numbers shown in different parts of the system don't match.
-
-**Example scenario:**
-1. A campaign gets 5 reports → Admin dismisses them → Counter resets to 0
-2. Someone reports it again → The campaign shows "1 report" but the report summary shows "1 report"
-3. Someone else reports it → The campaign shows "2 reports" but the report summary STILL shows "1 report" temporarily
-
-**What causes this?**
-When a new report comes in after admin dismissed previous reports, the system:
-- Resets the report summary counter to 1 (starting fresh)
-- But keeps incrementing the campaign's counter from where it left off
-
-They sync again when admin takes action, but during the "pending" time they show different numbers.
-
-**Impact:**
-- Confusing for admins - different numbers in different places
-- Hard to tell the real report count
-- Could cause wrong decisions (admin might not realize how many reports exist)
-
-**Where in code:**
-- `src/app/api/reports/submit/route.js` (lines 102-117)
-- `src/app/api/reports/user/route.js` (lines 112-127)
-
-**Best solution:**
-Always keep both counters in sync. When resetting, reset BOTH the reportSummary and the campaign/user reportsCount to 1 at the same time.
-
----
-
-### 2. **No Way to Undo Accidental Admin Actions**
+### 1. **No Way to Undo Accidental Admin Actions**
 
 **What's the problem?**
 If an admin accidentally clicks "Ban User" instead of "Warn User," there's no undo button. They have to manually find the user and reverse the action.
@@ -67,7 +36,7 @@ Three options:
 
 ---
 
-### 3. **Performance: Too Many Database Reads**
+### 2. **Performance: Too Many Database Reads**
 
 **What's the problem?**
 When an admin opens the reports page, the system has to check the database many times - once for each report shown on the page.
@@ -100,7 +69,7 @@ Three options:
 
 ---
 
-### 4. **Can't Track Which Admin Did What**
+### 3. **Can't Track Which Admin Did What**
 
 **What's the problem?**
 When an admin takes action (ban, warning, dismiss), the system tries to save who did it. But the system looks for an ID in the wrong place, so it always records the generic word "admin" instead of the actual person's name.
@@ -428,6 +397,21 @@ transaction.update(summaryRef, {
 
 The following issues have been fixed and are working correctly:
 
+### October 22, 2025:
+
+**Critical Issue - Report Counts Synchronization (RESOLVED)**
+- ✅ Fixed counter synchronization between reportSummary and campaign/user documents
+- ✅ When new reports come in after admin action, BOTH counters now reset to 1 simultaneously
+- ✅ Eliminated temporary mismatches that confused admins during pending review periods
+- ✅ Updated both campaign and user profile report submission logic
+- **Where fixed:**
+  - `src/app/api/reports/submit/route.js` (lines 75-93, 120-135)
+  - `src/app/api/reports/user/route.js` (lines 79-93, 130-145)
+- **Implementation:** When `isResettingCounts = true`, both the target document (campaign/user) and reportSummary document set `reportsCount: 1` in the same transaction
+- **Impact:** Eliminated admin confusion, ensured accurate report counts across all system components
+
+---
+
 ### October 19, 2025:
 
 **Critical Issue 1 - Dual Database Collections (RESOLVED)**
@@ -505,9 +489,10 @@ The following issues have been fixed and are working correctly:
 
 ## 📝 Notes
 
-**Last reviewed:** October 21, 2025
+**Last reviewed:** October 22, 2025
 
 **Testing recommendations:**
+- Test report counter synchronization: Submit report → Admin dismiss → Submit new report → Verify both counters show same value
 - Test IP-based rate limiting by submitting multiple reports from same IP
 - Test duplicate report prevention
 - Test admin reason selection modal appears when clicking "Warn" or "Ban/Remove"
@@ -537,19 +522,25 @@ The following issues have been fixed and are working correctly:
 
 ## 📊 Documentation Update Summary
 
-**Latest Update:** October 21, 2025
+**Latest Update:** October 22, 2025
 
-**New Issues Added:**
-1. 🔴 **CRITICAL:** Report counts get out of sync between reportSummary and campaign/user documents
+**Issues Resolved:**
+1. ✅ **FIXED:** Report counts synchronization between reportSummary and campaign/user documents (October 22, 2025)
+
+**Active Issues:**
+1. 🔴 **CRITICAL:** No way to undo accidental admin actions
 2. 🔴 **CRITICAL:** Too many database reads (N+1 query problem) when loading reports
-3. ⚠️ **IMPORTANT:** Notification template parameter order could get mixed up
-4. 💡 **SUGGESTION:** Authenticated users can bypass rate limits
-5. 💡 **SUGGESTION:** Rate limit data never gets cleaned up
-6. 💡 **SUGGESTION:** Missing status transition validation
-7. 💡 **SUGGESTION:** Reason counts are lost when admin takes action
+3. 🔴 **CRITICAL:** Can't track which admin did what
+4. ⚠️ **IMPORTANT:** No reminder for appeal deadlines
+5. ⚠️ **IMPORTANT:** Notification template parameter order could get mixed up
+6. ⚠️ **IMPORTANT:** Appeal system shows deadlines but can't actually appeal
+7. 💡 **SUGGESTION:** Authenticated users can bypass rate limits
+8. 💡 **SUGGESTION:** Rate limit data never gets cleaned up
+9. 💡 **SUGGESTION:** Missing status transition validation
+10. 💡 **SUGGESTION:** Reason counts are lost when admin takes action
 
-**Improvements Made to Documentation:**
-- All issues now explained in simple, non-technical language
+**Documentation Quality:**
+- All issues explained in simple, non-technical language
 - Added "What's the problem?", "What does this mean?", "Impact", and "Best solution" sections
 - Technical explanations included for developers
 - Code locations added for each issue

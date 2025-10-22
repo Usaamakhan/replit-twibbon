@@ -39,9 +39,10 @@ The Twibbonize reporting system allows users to report inappropriate campaigns o
 ### For Campaigns:
 1. **Report is counted** - The campaign's report count increases by 1
 2. **Reason is tracked** - The specific reason (spam, inappropriate, etc.) is recorded in the report summary
-3. **Two separate counters updated:**
+3. **Two synchronized counters updated:**
    - Campaign document: `reportsCount` field increments
    - Report Summary document: `reasonCounts` object increments the specific reason count
+   - **Both counters always stay synchronized** - they increment together and reset together
 4. **Auto-hide at 3 reports:**
    - When a campaign reaches **3 or more reports**
    - Status changes to `under-review-hidden` (auto-hidden from public)
@@ -52,9 +53,10 @@ The Twibbonize reporting system allows users to report inappropriate campaigns o
 ### For User Profiles:
 1. **Report is counted** - The user's report count increases by 1
 2. **Reason is tracked** - The specific reason is recorded
-3. **Two separate counters updated:**
+3. **Two synchronized counters updated:**
    - User document: `reportsCount` field increments
    - Report Summary document: `reasonCounts` object increments the specific reason count
+   - **Both counters always stay synchronized** - they increment together and reset together
 4. **Auto-hide at 10 reports:**
    - When a user reaches **10 or more reports**
    - Account status changes to `under-review-hidden` (profile hidden from public)
@@ -62,12 +64,12 @@ The Twibbonize reporting system allows users to report inappropriate campaigns o
    - **User receives in-app notification**: "⚠️ Profile Under Review - Your profile has been flagged by users and is now under review"
 5. **Below 10 reports** - Profile stays visible, no notification sent
 
-**Important Note About Counter Synchronization:**
+**Counter Synchronization (Fixed October 22, 2025):**
 - When a new report comes in AFTER admin has reviewed previous reports (status was 'resolved' or 'dismissed'), the system:
-  - Resets the Report Summary counter to 1 (starting fresh)
-  - Continues incrementing the campaign/user counter from current value
-  - Both counters sync again when admin takes next action
-  - This temporary difference is by design to track "new wave" of reports separately
+  - Resets BOTH the Report Summary counter AND the campaign/user counter to 1 (starting fresh)
+  - Both counters increment together as new reports arrive
+  - Both counters reset to 0 together when admin takes action (dismiss/warn/remove)
+  - No temporary mismatches - counters are always synchronized
 
 ---
 
@@ -136,7 +138,7 @@ Admins visit `/admin/reports` and see a control panel with filters:
    - Does NOT auto-load on page open (admin must click "Load")
 
 **Performance Note:**
-When loading reports, the system fetches live status from each campaign/user document to ensure displayed information is current. This means if you load 100 reports, the system makes 100-300 database reads to show accurate data. This is a known performance issue (see CODE_INCONSISTENCIES.md #3).
+When loading reports, the system fetches live status from each campaign/user document to ensure displayed information is current. This means if you load 100 reports, the system makes 100-300 database reads to show accurate data. This is a known performance issue (see CODE_INCONSISTENCIES.md #2).
 
 ---
 
@@ -342,7 +344,7 @@ Warning is a "slap on the wrist" - admin reviewed and decided content is not sev
   - The exact appeal deadline date (formatted as "February 20, 2025")
 
 **Important Note:** 
-The appeal system is PROMISED in notifications but NOT YET IMPLEMENTED. Users receive notifications saying they can appeal, but there's no actual appeal submission interface. See CODE_INCONSISTENCIES.md #7 for details.
+The appeal system is PROMISED in notifications but NOT YET IMPLEMENTED. Users receive notifications saying they can appeal, but there's no actual appeal submission interface. See CODE_INCONSISTENCIES.md #6 for details.
 
 **Use when:** Content clearly violates rules and needs removal
 
@@ -385,10 +387,10 @@ The appeal system is PROMISED in notifications but NOT YET IMPLEMENTED. Users re
 
 1. **If admin previously dismissed or resolved:**
    - Report summary status resets to `pending`
-   - **Counter behavior differs:**
-     - **Report Summary**: Counter resets to 1 (starting fresh to track "new wave" of reports)
-     - **Campaign/User**: Counter continues from current value + 1
-     - This temporary mismatch is by design (see CODE_INCONSISTENCIES.md #1)
+   - **Counter behavior (synchronized):**
+     - **Both Report Summary AND Campaign/User counters reset to 1** (starting fresh to track "new wave" of reports)
+     - Counters stay synchronized and increment together as new reports arrive
+     - Fixed October 22, 2025 - no more temporary mismatches
    - All reason counts in summary reset to track new pattern
    - New reports trigger auto-hide thresholds again
 
@@ -407,7 +409,7 @@ The appeal system is PROMISED in notifications but NOT YET IMPLEMENTED. Users re
   - Audit trail for moderation decisions
   - Analysis of which violations are most common
 
-**Important:** Reason counts are reset to empty `{}` when admin takes action. Historical reason data is lost. See CODE_INCONSISTENCIES.md #11 for improvement suggestion to preserve this data.
+**Important:** Reason counts are reset to empty `{}` when admin takes action. Historical reason data is lost. See CODE_INCONSISTENCIES.md #10 for improvement suggestion to preserve this data.
 
 ### Campaign Deletion by Creator:
 When a campaign creator deletes their own campaign:
