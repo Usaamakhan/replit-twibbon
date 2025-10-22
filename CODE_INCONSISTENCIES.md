@@ -8,40 +8,7 @@ This document tracks known issues and suggested improvements for the Twibbonize 
 
 ## 🔴 Critical Issues
 
-### 1. **Performance: Too Many Database Reads**
-
-**What's the problem?**
-When an admin opens the reports page, the system has to check the database many times - once for each report shown on the page.
-
-**Example:**
-If the admin page shows 100 reports, the system:
-- Reads the report summary (1 read per report) = 100 reads
-- Reads the actual campaign/user data (1 read per report) = 100 reads
-- Reads the creator info for campaign reports (1 read per campaign) = up to 100 more reads
-- **Total: Up to 300 database reads just to show one page!**
-
-**What does this mean?**
-This is called an "N+1 query problem" in technical terms. For every report, we're asking the database for more information one by one, instead of getting everything at once.
-
-**Impact:**
-- Slower page load times for admins (could take 3-5 seconds instead of under 1 second)
-- Higher database costs (every read costs money)
-- Could become very slow if there are thousands of reports
-
-**Where in code:**
-- `src/app/api/admin/reports/grouped/route.js` (lines 37-88)
-
-**Best solution:**
-Three options:
-- **Option 1:** Only fetch live data when admin clicks on a specific report (fast table load, accurate when needed)
-- **Option 2:** Use cached data for table, accept it might be slightly old (fast but potentially outdated)
-- **Option 3:** Fetch all campaigns/users in one batch query instead of one-by-one (complex but most efficient)
-
-**Recommendation:** Option 1 for balance of speed and accuracy. Table loads fast with cached data, then when admin clicks "Take Action" it fetches the latest real-time data.
-
----
-
-### 2. **Can't Track Which Admin Did What**
+### 1. **Can't Track Which Admin Did What**
 
 **What's the problem?**
 When an admin takes action (ban, warning, dismiss), the system tries to save who did it. But the system looks for an ID in the wrong place, so it always records the generic word "admin" instead of the actual person's name.
@@ -202,7 +169,46 @@ Three options:
 
 ## 💡 Suggestions for Improvements
 
-### 8. **Authenticated Users Can Bypass Report Limits**
+### 8. **Performance: Database Reads Could Be Optimized**
+
+**What's the problem?**
+When an admin opens the reports page, the system fetches live campaign/user status for each report summary individually instead of batching them together.
+
+**Example:**
+If the admin page shows 50 report summaries:
+- Reads 50 report summary documents ✅ (already optimized with aggregation!)
+- Reads 50 campaign/user documents individually (one-by-one in a loop)
+- Reads ~25 creator profiles for campaign reports (one-by-one in a loop)
+- **Total: ~75 database reads just to show the table**
+
+**What does this mean?**
+This is called an "N+1 query problem" - fetching data one-by-one in a loop instead of batching. However, the report aggregation system already saves 95% of operations compared to storing individual reports, so this is not as bad as it could be.
+
+**Impact:**
+- Slightly slower page load times (acceptable for admin dashboard)
+- Higher database costs (but still much better than without aggregation)
+- Could become noticeable with 200+ summaries (unlikely with pagination)
+
+**Where in code:**
+- `src/app/api/admin/reports/grouped/route.js` (lines 37-88)
+
+**Best solution:**
+Three options:
+- **Option 1:** Cache live status in report summary, refresh only when admin clicks "Take Action"
+- **Option 2:** Use Firestore's batch `getAll()` to fetch all campaigns/users at once (2 queries instead of 75)
+- **Option 3:** Accept current performance (already good enough with pagination and "Load More" button)
+
+**Recommendation:** Option 3 for now. The aggregation system already provides excellent performance. Only optimize if you notice slow load times with real usage.
+
+**Why this is a SUGGESTION, not CRITICAL:**
+- ✅ Report aggregation already saves 95% of operations
+- ✅ You have pagination with "Load More" to limit initial load
+- ✅ Loading 50 summaries with 75 reads is acceptable for an admin dashboard
+- ✅ This would only become a problem with 500+ summaries at once (unlikely)
+
+---
+
+### 9. **Authenticated Users Can Bypass Report Limits**
 
 **What's the problem?**
 The system prevents the same computer (IP address) from reporting the same content multiple times. But if a user is logged in, they can report from different places and bypass this protection.
@@ -245,7 +251,7 @@ if (reportedBy && reportedBy !== 'anonymous') {
 
 ---
 
-### 9. **Rate Limit Data Never Gets Cleaned Up**
+### 10. **Rate Limit Data Never Gets Cleaned Up**
 
 **What's the problem?**
 The system keeps track of who reported what to prevent spam. This information is stored in the database. But old information (from weeks or months ago) is never deleted.
@@ -278,7 +284,7 @@ Two options:
 
 ---
 
-### 10. **Missing Status Transition Validation**
+### 11. **Missing Status Transition Validation**
 
 **What's the problem?**
 The system doesn't check if status changes make sense. An admin could accidentally restore something that should stay permanently deleted.
@@ -318,7 +324,7 @@ if (!VALID_TRANSITIONS[currentStatus].includes(newStatus)) {
 
 ---
 
-### 11. **Reason Counts Are Lost When Admin Takes Action**
+### 12. **Reason Counts Are Lost When Admin Takes Action**
 
 **What's the problem?**
 When a campaign/user gets reported, the system tracks WHY it was reported (spam, inappropriate, etc.) in detail. But when an admin takes action, all this information is deleted.
@@ -482,6 +488,26 @@ The following issues have been fixed and are working correctly:
 
 **Last reviewed:** October 22, 2025
 
+**Status Field Naming Rationale:**
+The codebase uses different field names for campaigns vs users intentionally:
+- **Campaigns:** `moderationStatus` (tracks content moderation state: active, removed, etc.)
+- **Users:** `accountStatus` (tracks account access state: active, banned, etc.)
+
+This is **correct and should be kept** because:
+✅ They represent different concepts (content moderation vs account access)
+✅ Prevents field name conflicts when handling both types in the same code
+✅ Makes code more readable and semantically accurate
+✅ Consistent usage throughout the entire codebase
+
+**IP Address Storage & Privacy:**
+The rate limiting system stores IP addresses securely:
+- IPs are **SHA-256 hashed** before storage (never stored raw)
+- Stored in Firestore `reportRateLimits` collection with ipHash as document ID
+- Each document contains array of recent reports with timestamps
+- Reports older than 1 hour are filtered out when checking limits
+- ⚠️ **Issue #10:** Old data is never deleted - documents grow indefinitely
+- **Recommendation:** Implement Firestore TTL to auto-delete documents older than 7 days
+
 **Testing recommendations:**
 - Test report counter synchronization: Submit report → Admin dismiss → Submit new report → Verify both counters show same value
 - Test typed confirmation: Try to ban user → Verify you must type "CONFIRM" → Try typing wrong text → Verify button stays disabled
@@ -522,11 +548,11 @@ The following issues have been fixed and are working correctly:
 2. ✅ **FIXED:** Typed confirmation required for all dangerous admin actions (October 22, 2025)
 
 **Active Issues:**
-1. 🔴 **CRITICAL:** Too many database reads (N+1 query problem) when loading reports
-2. 🔴 **CRITICAL:** Can't track which admin did what
-3. ⚠️ **IMPORTANT:** No reminder for appeal deadlines
-4. ⚠️ **IMPORTANT:** Notification template parameter order could get mixed up
-5. ⚠️ **IMPORTANT:** Appeal system shows deadlines but can't actually appeal
+1. 🔴 **CRITICAL:** Can't track which admin did what
+2. ⚠️ **IMPORTANT:** No reminder for appeal deadlines
+3. ⚠️ **IMPORTANT:** Notification template parameter order could get mixed up
+4. ⚠️ **IMPORTANT:** Appeal system shows deadlines but can't actually appeal
+5. 💡 **SUGGESTION:** Database reads could be optimized (already acceptable with current aggregation)
 6. 💡 **SUGGESTION:** Authenticated users can bypass rate limits
 7. 💡 **SUGGESTION:** Rate limit data never gets cleaned up
 8. 💡 **SUGGESTION:** Missing status transition validation
