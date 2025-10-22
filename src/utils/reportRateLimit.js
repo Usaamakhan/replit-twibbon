@@ -20,7 +20,7 @@ function getClientIP(request) {
   return 'unknown';
 }
 
-export async function checkReportRateLimit(request, targetId, targetType) {
+export async function checkReportRateLimit(request, targetId, targetType, userId = null) {
   const db = adminFirestore();
   const clientIP = getClientIP(request);
   
@@ -36,6 +36,7 @@ export async function checkReportRateLimit(request, targetId, targetType) {
   
   const now = Date.now();
   const oneHourAgo = now - (60 * 60 * 1000);
+  const oneDayFromNow = new Date(now + (24 * 60 * 60 * 1000)); // TTL: 24 hours from now
   
   try {
     const result = await db.runTransaction(async (transaction) => {
@@ -47,11 +48,13 @@ export async function checkReportRateLimit(request, targetId, targetType) {
         const data = doc.data();
         reports = data.reports || [];
         
+        // Filter out reports older than 1 hour
         reports = reports.filter(report => report.timestamp > oneHourAgo);
       }
       
       const reportsInLastHour = reports.filter(r => r.timestamp > oneHourAgo);
       
+      // Check IP-based rate limit (5 reports per hour)
       if (reportsInLastHour.length >= 5) {
         return {
           allowed: false,
@@ -60,11 +63,12 @@ export async function checkReportRateLimit(request, targetId, targetType) {
         };
       }
       
-      const duplicateReport = reports.find(
+      // Check IP-based duplicate
+      const duplicateReportByIP = reports.find(
         r => r.targetId === targetId && r.targetType === targetType
       );
       
-      if (duplicateReport) {
+      if (duplicateReportByIP) {
         return {
           allowed: false,
           reason: 'duplicate_report',
@@ -72,16 +76,36 @@ export async function checkReportRateLimit(request, targetId, targetType) {
         };
       }
       
+      // ISSUE #9 FIX: Check user-based duplicate for authenticated users
+      // Prevents bypass by changing networks
+      if (userId && userId !== 'anonymous') {
+        const duplicateReportByUser = reports.find(
+          r => r.targetId === targetId && r.targetType === targetType && r.userId === userId
+        );
+        
+        if (duplicateReportByUser) {
+          return {
+            allowed: false,
+            reason: 'duplicate_report',
+            message: 'You have already reported this content.'
+          };
+        }
+      }
+      
+      // Add new report with userId tracking
       reports.push({
         targetId,
         targetType,
-        timestamp: now
+        timestamp: now,
+        userId: userId || null // Track userId for authenticated users
       });
       
+      // ISSUE #10 FIX: Set TTL for automatic cleanup after 24 hours
       transaction.set(rateLimitRef, {
         reports,
         lastUpdated: new Date(),
-        ipHash
+        ipHash,
+        expireAt: oneDayFromNow // Firestore TTL field for auto-deletion
       }, { merge: true });
       
       return {

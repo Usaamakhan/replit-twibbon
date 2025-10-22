@@ -27,8 +27,8 @@ export async function POST(request) {
       );
     }
     
-    // Check rate limit and duplicate reports
-    const rateLimitCheck = await checkReportRateLimit(request, campaignId, 'campaign');
+    // Check rate limit and duplicate reports (pass userId to prevent authenticated bypass)
+    const rateLimitCheck = await checkReportRateLimit(request, campaignId, 'campaign', reportedBy);
     if (!rateLimitCheck.allowed) {
       return NextResponse.json(
         { 

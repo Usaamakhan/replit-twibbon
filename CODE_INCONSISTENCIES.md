@@ -208,83 +208,7 @@ Three options:
 
 ---
 
-### 9. **Authenticated Users Can Bypass Report Limits**
-
-**What's the problem?**
-The system prevents the same computer (IP address) from reporting the same content multiple times. But if a user is logged in, they can report from different places and bypass this protection.
-
-**Example:**
-- User reports Campaign123 from home WiFi → System blocks
-- Same user reports Campaign123 from work WiFi → **System allows it** (different IP address)
-- Same user reports Campaign123 from mobile network → **System allows it** (different IP address again)
-- **Result: One person made 3 reports, system counts it as 3 different people**
-
-**What does this mean?**
-Logged-in users can spam reports by switching networks.
-
-**Impact:**
-- Report abuse is still possible for logged-in users
-- One person can make a campaign auto-hide (needs 3 reports)
-- Not actually preventing spam, just making it slightly harder
-
-**Where in code:**
-- `src/utils/reportRateLimit.js` only checks IP address
-- Doesn't check if the same userId already reported this target
-
-**Best solution:**
-Check BOTH IP address and user ID:
-- Anonymous reporters: Track by IP only
-- Logged-in users: Track by user ID AND IP
-- Prevent duplicate: Same userId reporting same target, regardless of IP
-
-```javascript
-// Add to the duplicate check:
-if (reportedBy && reportedBy !== 'anonymous') {
-  const userAlreadyReported = reports.find(
-    r => r.targetId === targetId && r.userId === reportedBy
-  );
-  if (userAlreadyReported) {
-    return { allowed: false, reason: 'duplicate_report', message: 'You have already reported this content.' };
-  }
-}
-```
-
----
-
-### 10. **Rate Limit Data Never Gets Cleaned Up**
-
-**What's the problem?**
-The system keeps track of who reported what to prevent spam. This information is stored in the database. But old information (from weeks or months ago) is never deleted.
-
-**What does this mean?**
-Every time someone makes a report, a record is added to the database. But these records are never removed, even after they're no longer needed.
-
-**Example:**
-- January 1st: 100 reports → 100 records in database
-- February 1st: 100 more reports → 200 records total
-- March 1st: 100 more reports → 300 records total
-- After 1 year: 36,500 records that are no longer useful!
-
-**Impact:**
-- Database grows larger and larger forever
-- Costs more money (storage costs)
-- Queries get slower over time
-- Wastes resources
-
-**Where in code:**
-- `src/utils/reportRateLimit.js` (line 50) filters old reports when someone makes a NEW report
-- But if nobody reports that specific target again, the old data stays forever
-
-**Best solution:**
-Two options:
-- **Option 1:** Create a scheduled job (cron) that runs daily and deletes rate limit records older than 7 days
-- **Option 2:** Set Firestore TTL (Time To Live) on rate limit documents to auto-delete after 7 days
-
-**Recommendation:** Option 2 is simpler and automatic (Firestore handles it for you).
-
----
-
-### 11. **Missing Status Transition Validation**
+### 9. **Missing Status Transition Validation**
 
 **What's the problem?**
 The system doesn't check if status changes make sense. An admin could accidentally restore something that should stay permanently deleted.
@@ -324,7 +248,7 @@ if (!VALID_TRANSITIONS[currentStatus].includes(newStatus)) {
 
 ---
 
-### 12. **Reason Counts Are Lost When Admin Takes Action**
+### 10. **Reason Counts Are Lost When Admin Takes Action**
 
 **What's the problem?**
 When a campaign/user gets reported, the system tracks WHY it was reported (spam, inappropriate, etc.) in detail. But when an admin takes action, all this information is deleted.
@@ -375,7 +299,34 @@ transaction.update(summaryRef, {
 
 The following issues have been fixed and are working correctly:
 
-### October 22, 2025:
+### October 22, 2025 (Latest):
+
+**Issue #9 - Authenticated Users Can Bypass Report Limits (RESOLVED)**
+- ✅ Fixed authenticated users bypassing rate limits by switching networks
+- ✅ Added userId tracking for logged-in users in addition to IP tracking
+- ✅ Duplicate detection now checks BOTH IP address AND userId for authenticated users
+- ✅ Anonymous reporters continue to be tracked by IP only
+- **Where fixed:**
+  - `src/utils/reportRateLimit.js` - Added userId parameter and duplicate check by userId
+  - `src/app/api/reports/submit/route.js` - Pass reportedBy (userId) to rate limit check
+  - `src/app/api/reports/user/route.js` - Pass reportedBy (userId) to rate limit check
+- **Implementation:** When userId is provided and not 'anonymous', system checks if that userId has already reported the same target, preventing network-switching bypass
+- **Impact:** Closed report spam loophole, ensures one user = one report per target regardless of IP address
+
+**Issue #10 - Rate Limit Data Never Gets Cleaned Up (RESOLVED)**
+- ✅ Implemented Firestore TTL (Time To Live) for automatic cleanup
+- ✅ Rate limit documents now auto-delete after 24 hours
+- ✅ No manual cleanup or cron jobs needed
+- ✅ Prevents unlimited database growth
+- **Where fixed:**
+  - `src/utils/reportRateLimit.js` - Added `expireAt` field with 24-hour TTL
+- **Implementation:** Each rate limit document includes `expireAt: oneDayFromNow` timestamp. Firestore automatically deletes documents when this timestamp is reached
+- **Why 24 hours?** Rate limit is 5 reports per hour, but 24-hour retention provides safety buffer and potential audit trail while still preventing unlimited growth
+- **Impact:** Automatic cleanup prevents database bloat, reduces storage costs, maintains query performance over time
+
+---
+
+### October 22, 2025 (Earlier):
 
 **Critical Issue #1 - Report Counts Synchronization (RESOLVED)**
 - ✅ Fixed counter synchronization between reportSummary and campaign/user documents
