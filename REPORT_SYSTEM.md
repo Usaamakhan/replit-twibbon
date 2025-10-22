@@ -219,15 +219,39 @@ Opens a **detailed side panel** showing:
 
 ## Admin Actions
 
-When admin clicks "Take Action" in the side panel, they see **3 action buttons** with two-step confirmation:
+When admin clicks "Take Action" in the side panel, they see **3 action buttons** with multi-step confirmation to prevent accidents:
+
+### Safety Features (October 22, 2025)
+
+All dangerous admin actions now require **typing "CONFIRM"** to proceed:
+- ✅ **Ban User** - Requires typing "CONFIRM"
+- ✅ **Remove Campaign** - Requires typing "CONFIRM"  
+- ✅ **Warn User/Creator** - Requires typing "CONFIRM"
+- ❌ **Dismiss Report** - Simple click confirmation (restoring content is low-risk)
+- ❌ **Unban User** - Simple click confirmation (restoring access is low-risk)
+
+**How it works:**
+1. Admin fills in required information (reason, ban type, etc.)
+2. Clicks "Continue" to proceed
+3. A confirmation modal appears requiring them to type "CONFIRM" (exact match, case-sensitive)
+4. The confirm button is disabled until "CONFIRM" is typed correctly
+5. Clicking "Cancel" or outside the modal safely cancels the action
+
+**Why this matters:**
+- Prevents accidental clicks on destructive actions
+- Gives admins a moment to reconsider
+- Reduces stress and mistakes
+- Only adds 2-3 seconds to legitimate actions
+
+---
 
 ### 1. Dismiss Report (Secondary Button - Gray)
 
 **Step 1: Click "Dismiss Report"**
-- Shows confirmation modal
+- Shows simple confirmation modal (no typing required)
 
 **Step 2: Confirm Dismissal**
-- Admin confirms they want to dismiss
+- Admin confirms they want to dismiss (one click)
 
 **What it does:**
 - Marks report summary status as "dismissed"
@@ -263,9 +287,15 @@ When admin clicks "Take Action" in the side panel, they see **3 action buttons**
   - Copyright violation
   - Other
 
-**Step 2: Confirm Warning**
+**Step 2: Click "Continue"**
 - "Continue" button disabled until reason selected
-- Admin confirms the warning
+- Proceeds to typed confirmation
+
+**Step 3: Type "CONFIRM" to Proceed**
+- Confirmation modal appears showing the warning details
+- Admin must type "CONFIRM" (case-sensitive, exact match)
+- Confirm button stays disabled until correctly typed
+- Can click "Go Back" to edit the reason
 
 **What it does:**
 - Creates warning record in `warnings` collection with:
@@ -273,7 +303,7 @@ When admin clicks "Take Action" in the side panel, they see **3 action buttons**
   - User ID who received warning
   - Target type (campaign or user)
   - Target ID
-  - Admin ID (currently defaults to "admin" - see CODE_INCONSISTENCIES.md #4)
+  - Admin ID (currently defaults to "admin" - see CODE_INCONSISTENCIES.md #2)
   - Timestamp
   - Acknowledged status (false)
 - **Restores content to active status** (this is intentional - warning is not removal):
@@ -308,10 +338,19 @@ Warning is a "slap on the wrist" - admin reviewed and decided content is not sev
   - Copyright violation
   - Other
 
-**Step 2: Confirm Removal/Ban**
+**Step 2: Click "Continue"**
 - "Continue" button disabled until reason selected
-- Admin confirms the action
-- Shows strong warning about consequences
+- Proceeds to typed confirmation
+
+**Step 3: Type "CONFIRM" to Proceed**
+- Confirmation modal appears showing:
+  - Selected reason
+  - Ban type (temporary vs permanent, if banning user)
+  - Appeal deadline (if applicable)
+  - Clear warning about consequences
+- Admin must type "CONFIRM" (case-sensitive, exact match)
+- Confirm button stays disabled until correctly typed
+- Can click "Go Back" to edit inputs
 
 **What it does:**
 

@@ -8,35 +8,7 @@ This document tracks known issues and suggested improvements for the Twibbonize 
 
 ## 🔴 Critical Issues
 
-### 1. **No Way to Undo Accidental Admin Actions**
-
-**What's the problem?**
-If an admin accidentally clicks "Ban User" instead of "Warn User," there's no undo button. They have to manually find the user and reverse the action.
-
-**What does this mean?**
-Accidental clicks lead to long cleanup processes. The admin has to:
-1. Remember which user they just banned by mistake
-2. Go to the users page
-3. Search for that user
-4. Manually unban them
-
-**Impact:**
-- Wastes admin time (could take 2-5 minutes to fix one mistake)
-- Users experience temporary unfair bans
-- Higher chance of admin errors causing problems
-- Stressful for admins who make mistakes
-
-**Best solution:**
-Three options:
-- **Option 1:** Add "Undo" button that appears for 10 seconds after action
-- **Option 2:** Require typing "CONFIRM" before bans/removals
-- **Option 3:** Create admin history page where recent actions can be reversed
-
-**Recommendation:** Combine Options 2 and 3 for maximum safety.
-
----
-
-### 2. **Performance: Too Many Database Reads**
+### 1. **Performance: Too Many Database Reads**
 
 **What's the problem?**
 When an admin opens the reports page, the system has to check the database many times - once for each report shown on the page.
@@ -69,7 +41,7 @@ Three options:
 
 ---
 
-### 3. **Can't Track Which Admin Did What**
+### 2. **Can't Track Which Admin Did What**
 
 **What's the problem?**
 When an admin takes action (ban, warning, dismiss), the system tries to save who did it. But the system looks for an ID in the wrong place, so it always records the generic word "admin" instead of the actual person's name.
@@ -399,7 +371,7 @@ The following issues have been fixed and are working correctly:
 
 ### October 22, 2025:
 
-**Critical Issue - Report Counts Synchronization (RESOLVED)**
+**Critical Issue #1 - Report Counts Synchronization (RESOLVED)**
 - ✅ Fixed counter synchronization between reportSummary and campaign/user documents
 - ✅ When new reports come in after admin action, BOTH counters now reset to 1 simultaneously
 - ✅ Eliminated temporary mismatches that confused admins during pending review periods
@@ -409,6 +381,25 @@ The following issues have been fixed and are working correctly:
   - `src/app/api/reports/user/route.js` (lines 79-93, 130-145)
 - **Implementation:** When `isResettingCounts = true`, both the target document (campaign/user) and reportSummary document set `reportsCount: 1` in the same transaction
 - **Impact:** Eliminated admin confusion, ensured accurate report counts across all system components
+
+**Critical Issue #2 - Typed Confirmation for Admin Actions (RESOLVED)**
+- ✅ Implemented "type CONFIRM to proceed" requirement for all dangerous admin actions
+- ✅ Prevents accidental clicks on Ban/Remove/Warn actions
+- ✅ Two-step confirmation process provides safety without slowing down workflow
+- **Where implemented:**
+  - `src/components/ConfirmationModal.js` - Reusable modal with typed confirmation feature
+  - `src/components/admin/ReportDetailsPanel.js` (line 461) - Warn and Remove actions require typing "CONFIRM"
+  - `src/components/admin/UserDetailsModal.js` (lines 387-401) - Ban User action requires typing "CONFIRM"
+- **How it works:**
+  1. Admin selects action and fills in required details (reason, ban type, etc.)
+  2. Clicks "Continue" to proceed to confirmation modal
+  3. Must type "CONFIRM" (exact match, case-sensitive) to enable the confirm button
+  4. Clicking outside or pressing ESC cancels the action safely
+- **User experience:**
+  - Unban actions don't require typed confirmation (restoring access is low-risk)
+  - Dismiss report actions don't require typed confirmation (restoring content is low-risk)
+  - Only destructive actions (Ban, Remove, Warn) require typing "CONFIRM"
+- **Impact:** Eliminated accidental bans/removals, reduced admin stress, improved platform safety
 
 ---
 
@@ -493,6 +484,8 @@ The following issues have been fixed and are working correctly:
 
 **Testing recommendations:**
 - Test report counter synchronization: Submit report → Admin dismiss → Submit new report → Verify both counters show same value
+- Test typed confirmation: Try to ban user → Verify you must type "CONFIRM" → Try typing wrong text → Verify button stays disabled
+- Test typed confirmation: Click "Cancel" or click outside modal → Verify action is cancelled safely
 - Test IP-based rate limiting by submitting multiple reports from same IP
 - Test duplicate report prevention
 - Test admin reason selection modal appears when clicking "Warn" or "Ban/Remove"
@@ -526,18 +519,18 @@ The following issues have been fixed and are working correctly:
 
 **Issues Resolved:**
 1. ✅ **FIXED:** Report counts synchronization between reportSummary and campaign/user documents (October 22, 2025)
+2. ✅ **FIXED:** Typed confirmation required for all dangerous admin actions (October 22, 2025)
 
 **Active Issues:**
-1. 🔴 **CRITICAL:** No way to undo accidental admin actions
-2. 🔴 **CRITICAL:** Too many database reads (N+1 query problem) when loading reports
-3. 🔴 **CRITICAL:** Can't track which admin did what
-4. ⚠️ **IMPORTANT:** No reminder for appeal deadlines
-5. ⚠️ **IMPORTANT:** Notification template parameter order could get mixed up
-6. ⚠️ **IMPORTANT:** Appeal system shows deadlines but can't actually appeal
-7. 💡 **SUGGESTION:** Authenticated users can bypass rate limits
-8. 💡 **SUGGESTION:** Rate limit data never gets cleaned up
-9. 💡 **SUGGESTION:** Missing status transition validation
-10. 💡 **SUGGESTION:** Reason counts are lost when admin takes action
+1. 🔴 **CRITICAL:** Too many database reads (N+1 query problem) when loading reports
+2. 🔴 **CRITICAL:** Can't track which admin did what
+3. ⚠️ **IMPORTANT:** No reminder for appeal deadlines
+4. ⚠️ **IMPORTANT:** Notification template parameter order could get mixed up
+5. ⚠️ **IMPORTANT:** Appeal system shows deadlines but can't actually appeal
+6. 💡 **SUGGESTION:** Authenticated users can bypass rate limits
+7. 💡 **SUGGESTION:** Rate limit data never gets cleaned up
+8. 💡 **SUGGESTION:** Missing status transition validation
+9. 💡 **SUGGESTION:** Reason counts are lost when admin takes action
 
 **Documentation Quality:**
 - All issues explained in simple, non-technical language

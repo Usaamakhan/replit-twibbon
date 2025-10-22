@@ -3,12 +3,14 @@
 import { useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useBodyScrollLock } from "@/hooks/useBodyScrollLock";
+import ConfirmationModal from "@/components/ConfirmationModal";
 
 export default function UserDetailsModal({ user, onClose, onUpdate }) {
   const { user: currentUser } = useAuth();
   const [isUpdating, setIsUpdating] = useState(false);
   const [updateError, setUpdateError] = useState(null);
   const [showBanModal, setShowBanModal] = useState(false);
+  const [showBanConfirmation, setShowBanConfirmation] = useState(false);
   const [banReason, setBanReason] = useState('');
   const [banType, setBanType] = useState('temporary');
 
@@ -71,9 +73,7 @@ export default function UserDetailsModal({ user, onClose, onUpdate }) {
     }
   };
 
-  const handleBanToggle = async () => {
-    if (!currentUser) return;
-
+  const handleBanModalContinue = () => {
     const isBanned = user.accountStatus?.includes('banned') || user.banned;
     
     if (!isBanned && !banReason.trim()) {
@@ -81,8 +81,19 @@ export default function UserDetailsModal({ user, onClose, onUpdate }) {
       return;
     }
 
+    // Close the ban details modal and open confirmation modal
+    setShowBanModal(false);
+    setShowBanConfirmation(true);
+  };
+
+  const handleBanToggle = async () => {
+    if (!currentUser) return;
+
+    const isBanned = user.accountStatus?.includes('banned') || user.banned;
+
     setIsUpdating(true);
     setUpdateError(null);
+    setShowBanConfirmation(false);
 
     try {
       const token = await currentUser.getIdToken();
@@ -109,7 +120,6 @@ export default function UserDetailsModal({ user, onClose, onUpdate }) {
         throw new Error(data.error || 'Failed to update ban status');
       }
 
-      setShowBanModal(false);
       setBanReason('');
       setBanType('temporary');
       
@@ -351,23 +361,41 @@ export default function UserDetailsModal({ user, onClose, onUpdate }) {
                   onClick={() => {
                     setShowBanModal(false);
                     setBanReason('');
+                    setBanType('temporary');
                   }}
                   className="flex-1 btn-base bg-gray-200 text-gray-800 hover:bg-gray-300"
                 >
                   Cancel
                 </button>
                 <button
-                  onClick={handleBanToggle}
+                  onClick={(user.accountStatus?.includes('banned') || user.banned) ? handleBanToggle : handleBanModalContinue}
                   disabled={!(user.accountStatus?.includes('banned') || user.banned) && !banReason.trim()}
                   className={`flex-1 btn-base ${(user.accountStatus?.includes('banned') || user.banned) ? 'bg-green-600 hover:bg-green-700' : 'bg-red-600 hover:bg-red-700'} text-white disabled:opacity-50 disabled:cursor-not-allowed`}
                 >
-                  Confirm
+                  {(user.accountStatus?.includes('banned') || user.banned) ? 'Confirm Unban' : 'Continue'}
                 </button>
               </div>
             </div>
           </div>
         </div>
       )}
+
+      {/* Typed Confirmation Modal for Banning */}
+      <ConfirmationModal
+        isOpen={showBanConfirmation}
+        onClose={() => {
+          setShowBanConfirmation(false);
+          // Reopen the ban modal so they can edit their inputs
+          setShowBanModal(true);
+        }}
+        onConfirm={handleBanToggle}
+        title={`Ban User - ${user.username || user.displayName}`}
+        message={`You are about to ${banType === 'permanent' ? 'permanently ban' : 'temporarily ban (30-day appeal window)'} this user for: "${banReason}". This action will prevent them from accessing the platform. Type CONFIRM to proceed.`}
+        confirmText="Ban User"
+        cancelText="Go Back"
+        type="danger"
+        requireTypedConfirmation={true}
+      />
     </>
   );
 }
