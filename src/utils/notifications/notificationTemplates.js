@@ -1,5 +1,5 @@
 export const notificationTemplates = {
-  campaignUnderReview: (campaignTitle) => ({
+  campaignUnderReview: ({ campaignTitle }) => ({
     title: '⚠️ Campaign Under Review',
     body: `Your campaign "${campaignTitle}" has been flagged by users and is now under review. We'll notify you of the outcome.`,
     actionUrl: '/profile',
@@ -7,7 +7,7 @@ export const notificationTemplates = {
     type: 'campaign-under-review',
   }),
 
-  campaignRemoved: (campaignTitle, appealDeadline, removalReason) => ({
+  campaignRemoved: ({ campaignTitle, appealDeadline, removalReason }) => ({
     title: '🚫 Campaign Removed',
     body: `Your campaign "${campaignTitle}" has been removed for: ${removalReason}. You can appeal this decision until ${appealDeadline}.`,
     actionUrl: '/profile',
@@ -15,7 +15,7 @@ export const notificationTemplates = {
     type: 'campaign-removed',
   }),
 
-  campaignRestored: (campaignTitle) => ({
+  campaignRestored: ({ campaignTitle }) => ({
     title: '✅ Campaign Restored',
     body: `Good news! Your campaign "${campaignTitle}" has been reviewed and restored.`,
     actionUrl: '/profile',
@@ -23,7 +23,7 @@ export const notificationTemplates = {
     type: 'campaign-restored',
   }),
 
-  warningIssued: (reason) => ({
+  warningIssued: ({ reason }) => ({
     title: '⚠️ Warning Issued',
     body: `You've received a warning for: ${reason}. Please review our community guidelines.`,
     actionUrl: '/profile',
@@ -39,7 +39,7 @@ export const notificationTemplates = {
     type: 'profile-under-review',
   }),
 
-  accountBanned: (banReason, appealDeadline) => ({
+  accountBanned: ({ banReason, appealDeadline }) => ({
     title: '🚫 Account Banned',
     body: `Your account has been banned for: ${banReason}. You can appeal until ${appealDeadline}.`,
     actionUrl: '/profile',
@@ -55,7 +55,7 @@ export const notificationTemplates = {
     type: 'profile-restored',
   }),
 
-  appealDeadlineReminder: (daysLeft, type) => ({
+  appealDeadlineReminder: ({ daysLeft, type }) => ({
     title: '⏰ Appeal Deadline Reminder',
     body: `You have ${daysLeft} days left to appeal your ${type} removal. Don't miss the deadline!`,
     actionUrl: '/profile',
@@ -63,7 +63,7 @@ export const notificationTemplates = {
     type: 'appeal-deadline-reminder',
   }),
 
-  appealApproved: (type) => ({
+  appealApproved: ({ type }) => ({
     title: '✅ Appeal Approved',
     body: `Your appeal for ${type} removal has been approved and restored.`,
     actionUrl: '/profile',
@@ -71,7 +71,7 @@ export const notificationTemplates = {
     type: 'appeal-approved',
   }),
 
-  appealRejected: (type) => ({
+  appealRejected: ({ type }) => ({
     title: '❌ Appeal Rejected',
     body: `Your appeal for ${type} removal has been reviewed and rejected.`,
     actionUrl: '/profile',
@@ -93,5 +93,5 @@ export function getNotificationTemplate(type, params = {}) {
     };
   }
 
-  return typeof template === 'function' ? template(...Object.values(params)) : template;
+  return typeof template === 'function' ? template(params) : template;
 }
