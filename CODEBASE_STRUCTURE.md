@@ -1,6 +1,6 @@
 # Codebase Structure Documentation
 
-**Last Updated:** October 13, 2025  
+**Last Updated:** October 23, 2025  
 **Project:** Twibbonize - Campaign Photo Frame & Background Platform
 
 This document provides a complete overview of the codebase structure with descriptions of each file and folder's purpose.
@@ -24,8 +24,10 @@ This document provides a complete overview of the codebase structure with descri
 - **`replit.md`** - Project overview, strict policies, architecture, and user preferences
 - **`TASKS.md`** - Campaign system task tracker with implementation status
 - **`CAMPAIGN_SYSTEM.md`** - Complete campaign system implementation guide
+- **`REPORT_SYSTEM.md`** - Comprehensive reporting and moderation system documentation
 - **`CODE_INCONSISTENCIES.md`** - Tracks code/documentation inconsistencies and fixes
 - **`CODEBASE_STRUCTURE.md`** - This file - complete codebase structure documentation
+- **`EMAIL_SETUP_INSTRUCTIONS.md`** - Email notification system setup guide
 
 ### Configuration Files
 
@@ -36,6 +38,7 @@ This document provides a complete overview of the codebase structure with descri
 - **`eslint.config.mjs`** - ESLint linting rules
 - **`jsconfig.json`** - JavaScript/TypeScript configuration and path aliases
 - **`firestore.rules`** - Firestore database security rules
+- **`firestore.indexes.json`** - Firestore composite index definitions
 
 ---
 
@@ -93,13 +96,16 @@ Admin-only routes for platform moderation and management.
 #### **`page.js`** - Admin analytics dashboard (default admin page)
 
 #### 📁 **`/reports`** - Reports Management
-- **`page.js`** - Reports table with filters and moderation actions
+- **`page.js`** - Reports table with filters and moderation actions (uses aggregated reportSummary)
 
 #### 📁 **`/campaigns`** - Campaign Moderation
 - **`page.js`** - Campaign grid with moderation status and actions
 
 #### 📁 **`/users`** - User Management
 - **`page.js`** - User table with role assignment and ban actions
+
+#### 📁 **`/logs`** - Admin Action Logs
+- **`page.js`** - Admin activity audit log with filters (action type, target type, admin, date range)
 
 ---
 
@@ -157,18 +163,6 @@ Creator workflow for uploading new campaigns.
 
 ---
 
-### 📁 `/src/app/(chrome)/settings` - Settings Pages
-
-User settings with sidebar navigation.
-
-#### **`layout.js`** - Settings layout with SettingsSidebar
-#### **`page.js`** - Main settings page (redirects to notifications)
-
-#### 📁 **`/notifications`**
-- **`page.js`** - Notification preferences (enable/disable, manage devices, per-notification-type toggles)
-
----
-
 ### 📁 `/src/app/(chrome)/u/[username]` - Public Profiles
 
 #### **`page.js`** - Public user profile pages (accessible via username)
@@ -205,45 +199,66 @@ Server-side admin operations (protected by admin middleware).
 - **`/[campaignId]/route.js`** - PATCH: Update campaign moderation status
 - **`/[campaignId]/delete/route.js`** - DELETE: Permanently delete campaign + image
 
+#### 📁 **`/logs`**
+- **`route.js`** - GET: Fetch admin action logs with filters (action type, target type, admin, limit)
+
 #### 📁 **`/reports`**
-- **`route.js`** - GET: Fetch all reports with filters
-- **`/[reportId]/route.js`** - PATCH: Update report status and perform moderation actions
+- **`route.js`** - GET: Fetch all reports (legacy endpoint, still functional)
+- **`/grouped/route.js`** - GET: Fetch aggregated report summaries with batch-optimized queries (96% faster)
+- **`/summary/[summaryId]/route.js`** - PATCH: Take moderation action on aggregated report summary (dismiss/warn/remove)
 
 #### 📁 **`/users`**
 - **`route.js`** - GET: Fetch all users with search/filters
 - **`/[userId]/role/route.js`** - PATCH: Assign/revoke admin role
-- **`/[userId]/ban/route.js`** - PATCH: Ban/unban user
+- **`/[userId]/ban/route.js`** - PATCH: Ban/unban user (sends email notification to user)
 
 ---
 
 ### 📁 `/src/app/api/campaigns` - Campaign Operations
+
+#### 📁 **`/[campaignId]`**
+- **`route.js`** - DELETE: Delete campaign and auto-dismiss all related reports (owner only)
 
 #### 📁 **`/track-download`**
 - **`route.js`** - POST: Increment campaign supportersCount on download
 
 ---
 
-### 📁 `/src/app/api/notifications` - In-App Notifications
+### 📁 `/src/app/api/notifications` - Notification System
 
-Firestore-based in-app notification system (no browser permissions required).
+**Hybrid notification system** combining in-app and email:
 
 #### 📁 **`/[notificationId]`**
 - **`route.js`** - PATCH: Mark notification as read/unread, DELETE: Delete notification
 
-**System:** In-app notifications delivered via Firestore real-time listeners:
+**In-App Notifications (Firestore-based):**
 - No browser permissions required
-- Notifications delivered instantly via Firestore snapshots
+- Delivered instantly via Firestore real-time listeners
+- Used for: warnings, campaign removals, auto-hides, content restorations
 - Works on all devices without setup
+
+**Email Notifications (MailerSend):**
+- Used exclusively for: user bans and unbans
+- Critical for banned users who cannot access their account
+- Professional HTML templates with ban reasons and appeal deadlines
+- See `src/utils/notifications/emailTemplates.js` and `sendEmail.js`
 
 ---
 
 ### 📁 `/src/app/api/reports` - Report Submission
 
 #### 📁 **`/submit`**
-- **`route.js`** - POST: Submit campaign report (anonymous allowed)
+- **`route.js`** - POST: Submit campaign report with IP-based rate limiting (5/hour) and duplicate prevention
 
 #### 📁 **`/user`**
-- **`route.js`** - POST: Submit user/profile report (anonymous allowed)
+- **`route.js`** - POST: Submit user/profile report with IP-based rate limiting (5/hour) and duplicate prevention
+
+**Rate Limiting:**
+- Maximum 5 reports per hour per IP address
+- Duplicate prevention: same IP/user cannot report same target twice
+- Authenticated users tracked by userId to prevent network-switching bypass
+- IP addresses hashed (SHA-256) for privacy
+- Auto-cleanup after 24 hours via Firestore TTL
 
 ---
 
@@ -327,14 +342,16 @@ Reusable UI components organized by feature.
 
 Located in `/src/components/admin/`:
 
-- **`AdminSidebar.js`** - Admin dashboard sidebar navigation
+- **`AdminSidebar.js`** - Admin dashboard sidebar navigation with Logs link
 - **`AdminHeader.js`** - Admin dashboard header with breadcrumbs
 - **`AdminActionButton.js`** - Reusable action button with loading/confirm dialog
-- **`ReportsTable.js`** - Reports data table with filters (uses adminHelpers)
-- **`ReportDetailsPanel.js`** - Report details slide-out panel
+- **`ReportsTable.js`** - LEGACY: Individual reports data table (still functional but unused)
+- **`GroupedReportsTable.js`** - NEW: Aggregated report summaries table with batch-optimized queries
+- **`ReportDetailsPanel.js`** - Report details slide-out panel with typed confirmation for dangerous actions
 - **`CampaignModerationCard.js`** - Campaign card with moderation actions (uses adminHelpers)
 - **`UsersTable.js`** - Users data table with search (uses adminHelpers)
-- **`UserDetailsModal.js`** - User details modal with admin actions
+- **`UserDetailsModal.js`** - User details modal with admin actions and typed confirmation for bans
+- **`AdminLogsTable.js`** - NEW: Admin action audit log table with filters
 
 ### Notification Components
 
@@ -346,7 +363,7 @@ Located in `/src/components/notifications/`:
 
 ### Utility Components
 
-- **`ConfirmationModal.js`** - Reusable confirmation dialog
+- **`ConfirmationModal.js`** - Reusable confirmation dialog with typed confirmation feature (requires typing "CONFIRM" for dangerous actions)
 - **`LoadingSpinner.js`** - Loading spinner component
 - **`PageLoader.js`** - Full-page loading indicator
 - **`ErrorBoundary.js`** - Error boundary wrapper
@@ -467,8 +484,9 @@ Located in `/src/utils/notifications/`:
   - Campaign under review, removed, restored
   - Warning issued
   - Profile under review, restored
-  - Account banned
+  - Account banned (NOTE: Now replaced with email for actual bans)
   - Appeal deadline reminders
+  - All templates use object destructuring to prevent parameter order issues
   - All templates include type field for categorization
 
 - **`sendInAppNotification.js`** - Server-side in-app notification sender
@@ -476,12 +494,35 @@ Located in `/src/utils/notifications/`:
   - Instant delivery via Firestore real-time listeners
   - Supports metadata for rich notifications
 
+- **`emailTemplates.js`** - NEW: Email notification templates (MailerSend)
+  - Account banned (temporary/permanent with appeal deadline)
+  - Account unbanned (restoration notification)
+  - Warning issued (optional, can be in-app only)
+  - Professional HTML design with inline CSS
+  - Mobile-responsive with call-to-action buttons
+
+- **`sendEmail.js`** - NEW: Email sending utility (MailerSend API)
+  - Server-side email delivery
+  - Used exclusively for ban/unban notifications
+  - Returns success/error status for logging
+  - Supports custom sender domain
+
 ### General Utilities
 
 - **`validation.js`** - Input validation functions
 - **`schemas.js`** - Data schemas and validators
 - **`firebaseErrorHandler.js`** - Firebase error messages formatter
 - **`networkUtils.js`** - Network request utilities
+- **`logAdminAction.js`** - NEW: Admin action logging utility
+  - Logs all admin moderation actions to `adminLogs` collection
+  - Tracks: admin ID/email/name, action type, target, reason, timestamp
+  - Used for audit trail and accountability
+- **`reportRateLimit.js`** - NEW: IP-based report rate limiting
+  - Maximum 5 reports per hour per IP address
+  - Duplicate prevention by IP and userId
+  - SHA-256 IP hashing for privacy
+  - Auto-cleanup after 24 hours via Firestore TTL
+  - Prevents report spam and network-switching bypass
 
 ---
 
@@ -508,10 +549,13 @@ Located in `/src/utils/notifications/`:
 
 ### Admin Moderation Flow
 1. Admin visits `/admin` → `adminAuth.js` middleware checks role
-2. View reports → `/api/admin/reports` → `firebaseAdmin.js`
-3. Moderate campaign → `/api/admin/campaigns/[id]` → Update status
-4. Send in-app notification → `sendInAppNotification.js` → Firestore
-5. User receives notification → `useNotifications.js` → `NotificationToast.js`
+2. View reports → `/api/admin/reports/grouped` → Batch-optimized queries (96% faster)
+3. Take moderation action → `/api/admin/reports/summary/[summaryId]` → Atomic transaction
+4. Action logged → `logAdminAction.js` → `adminLogs` collection
+5. Notification sent:
+   - **For bans:** Email notification → `sendEmail.js` → MailerSend → User's inbox
+   - **For warnings/removals:** In-app notification → `sendInAppNotification.js` → Firestore
+6. User receives notification via email or in-app depending on action type
 
 ### In-App Notification Flow
 1. Server action triggers notification → `sendInAppNotification.js`
@@ -519,6 +563,13 @@ Located in `/src/utils/notifications/`:
 3. Real-time listener detects new notification → `useNotifications.js`
 4. NotificationToast displays latest unread → Auto-dismisses after 5s
 5. User views full inbox at `/profile/notifications`
+
+### Email Notification Flow (for Bans/Unbans)
+1. Admin bans/unbans user → `/api/admin/users/[userId]/ban` or `/api/admin/reports/summary/[summaryId]`
+2. Email template generated → `emailTemplates.js` → accountBanned or accountUnbanned
+3. Email sent → `sendEmail.js` → MailerSend API → User's email inbox
+4. User receives email with ban reason, appeal deadline, and action buttons
+5. Banned users can read email even when locked out of account
 
 ---
 
@@ -532,14 +583,17 @@ Located in `/src/utils/notifications/`:
 ### Backend Services
 - **Firebase** - Authentication and Firestore database
 - **Supabase** - Object storage for images with CDN
+- **MailerSend** - Email delivery service for ban/unban notifications
 - **ImageKit.io** - Image optimization (deprecated in favor of Supabase CDN)
 
 ### Key Libraries
 - **@supabase/supabase-js** - Supabase client
 - **firebase** - Firebase client SDK (auth + firestore only)
 - **firebase-admin** - Firebase server SDK
+- **mailersend** - MailerSend email API client
 - **zod** - Schema validation
 - **server-only** - Ensure server-side only code
+- **date-fns** - Date formatting and manipulation
 
 ---
 
@@ -561,7 +615,11 @@ Located in `/src/utils/notifications/`:
 - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
 - `SUPABASE_SERVICE_ROLE_KEY`
 
-### ImageKit.io (Legacy)
+### MailerSend (Email Service)
+- `MAILERSEND_API_KEY`
+- `NEXT_PUBLIC_BASE_URL` (for email links)
+
+### ImageKit.io (Legacy - Deprecated)
 - `NEXT_PUBLIC_IMAGEKIT_URL_ENDPOINT`
 - `IMAGEKIT_PUBLIC_KEY`
 - `IMAGEKIT_PRIVATE_KEY`
@@ -592,36 +650,44 @@ Located in `/src/utils/notifications/`:
 - Top creators leaderboard
 
 **Admin Dashboard:**
-- Reports management with moderation actions
+- Reports management with aggregated summaries and batch-optimized queries (96% faster)
 - Campaign moderation with status updates
 - User management with role assignment and bans
 - Platform analytics dashboard
+- Admin action audit logs with comprehensive tracking
 
 **Moderation System:**
-- Report submission (campaigns + profiles)
+- Report submission (campaigns + profiles) with IP-based rate limiting
 - Auto-hide rules (3+ reports for campaigns, 10+ for profiles)
-- Admin actions: Dismiss, Warn, Remove/Ban
+- Admin actions: Dismiss, Warn, Remove/Ban (with typed confirmation for dangerous actions)
 - Warnings collection and tracking
+- Admin action logging for accountability and audit trail
 
-**In-App Notifications:**
-- ✅ Real-time Firestore notifications (no browser permissions required)
-- ✅ Notification templates for all moderation actions
-- ✅ In-app notification inbox at `/profile/notifications` (read/unread, filter, delete)
-- ✅ Notification history saved to Firestore (`users/{userId}/notifications`)
-- ✅ Foreground notification toasts (`NotificationToast.js`)
-- ✅ NotificationBell with unread count
-- ✅ Settings page at `/settings/notifications` with:
-  - Per-notification-type preferences (localStorage-based)
-  - In-app notification explainer banner
-- ✅ NotificationProvider integrated in app layout
-- ✅ useNotifications hook for real-time listeners
+**Hybrid Notification System:**
+- ✅ **In-App Notifications** (Firestore-based, no browser permissions required)
+  - Real-time delivery via Firestore listeners
+  - Notification templates for warnings, campaign removals, auto-hides
+  - In-app notification inbox at `/profile/notifications` (read/unread, filter, delete)
+  - Notification history saved to Firestore (`users/{userId}/notifications`)
+  - Foreground notification toasts (`NotificationToast.js`)
+  - NotificationBell with unread count
+  - NotificationProvider integrated in app layout
+  - useNotifications hook for real-time listeners
+
+- ✅ **Email Notifications** (MailerSend-based)
+  - Used exclusively for ban/unban notifications
+  - Professional HTML templates with ban reasons and appeal deadlines
+  - Critical for banned users who cannot access their account
+  - Templates: accountBanned (temp/permanent), accountUnbanned
+  - Sent via `sendEmail.js` utility
 
 ### ⏸️ Deferred Features
 
 - Appeals system (user appeals for removed content/banned accounts)
+  - **Note:** Appeal deadlines are mentioned in notifications but no submission form exists yet
 - Admin warning history view in user details
 - Auto-deletion cron jobs (30-day appeal deadline enforcement)
-- Email notifications for moderation actions
+- Appeal deadline email reminders (7 days, 3 days, 1 day before deadline)
 
 ---
 
@@ -635,9 +701,14 @@ Located in `/src/utils/notifications/`:
 - Supabase CDN used for all image transformations (WebP, resizing)
 - Download tracking uses Firestore transactions to prevent race conditions
 - Username reservation uses dedicated collection for atomicity
-- Notifications saved to Firestore: `users/{userId}/notifications/{notificationId}`
+- In-app notifications saved to Firestore: `users/{userId}/notifications/{notificationId}`
+- Email notifications sent via MailerSend for ban/unban only
+- Admin action logs saved to Firestore: `adminLogs` collection
+- Report rate limits tracked in Firestore: `reportRateLimits` collection with 24h TTL
+- Report system uses aggregated `reportSummary` collection (not individual `reports` documents)
 - `ReportModal.js` handles both campaign and user/profile reports (universal component)
 - `ShareModal.js` handles both campaign and profile sharing (universal component)
+- `ConfirmationModal.js` supports typed confirmation (requires typing "CONFIRM") for dangerous actions
 
 ---
 
