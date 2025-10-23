@@ -64,37 +64,7 @@ Implement a cron job (scheduled task) that runs daily:
 
 ---
 
-### 3. **Debug Console Logs Left in Production Code**
-
-**What's the problem?**
-The adjust page (`src/app/(chrome)/campaign/[slug]/adjust/page.js`) contains 24 DEBUG console.log statements that will run in production.
-
-**Examples:**
-```javascript
-console.log('[DEBUG] imagesReady state changed:', imagesReady);
-console.log('[DEBUG] Canvas init check:', { ... });
-console.log('[DEBUG] Starting campaign image load:', campaignImageUrl);
-```
-
-**Impact:**
-- Performance degradation (logging is expensive)
-- Security risk (exposes internal state to browser console)
-- Clutters user's browser console
-- Makes debugging harder for actual users reporting issues
-
-**Solution:**
-1. Remove all `[DEBUG]` console.log statements
-2. Or wrap them in `if (process.env.NODE_ENV === 'development')` checks
-3. Use a proper logging library for production
-
-**Files affected:**
-- `src/app/(chrome)/campaign/[slug]/adjust/page.js` - 24 debug logs
-
-**Priority:** HIGH (affects user experience)
-
----
-
-### 4. **Rate Limit Data Never Gets Cleaned Up**
+### 3. **Rate Limit Data Never Gets Cleaned Up**
 
 **What's the problem?**
 The `reportRateLimits` collection in Firestore stores IP address hashes for rate limiting. While the code filters out old reports (older than 1 hour), the Firestore documents themselves never get deleted.
@@ -126,7 +96,7 @@ The `reportRateLimits` collection in Firestore stores IP address hashes for rate
 
 ## ⚠️ Important Issues
 
-### 5. **Missing Status Transition Validation**
+### 4. **Missing Status Transition Validation**
 
 **What's the problem?**
 Admins can change campaign/user statuses in ways that violate business rules. For example:
@@ -167,7 +137,7 @@ if (!VALID_TRANSITIONS[currentStatus].includes(newStatus)) {
 
 ---
 
-### 6. **Email Notifications Only for Bans (Not Warnings/Removals)**
+### 5. **Email Notifications Only for Bans (Not Warnings/Removals)**
 
 **What's the problem?**
 The system sends email notifications ONLY when users are banned or unbanned. When campaigns are removed or users are warned, only in-app notifications are sent.
@@ -198,7 +168,7 @@ Extend email notification system to cover:
 
 ---
 
-### 7. **Auto-Deletion After 30 Days Not Implemented**
+### 6. **Auto-Deletion After 30 Days Not Implemented**
 
 **What's the problem?**
 When appeals expire (30 days after removal/ban), the content should be permanently deleted automatically. But this doesn't happen - it requires manual admin action.
@@ -228,7 +198,7 @@ Implement a daily cron job that:
 
 ## 🐛 Code Quality Issues
 
-### 8. **Fallback Firebase Initialization May Mask Errors**
+### 7. **Fallback Firebase Initialization May Mask Errors**
 
 **What's the problem?**
 In `src/lib/firebaseAdmin.js`, if the Firebase service account key is missing or invalid, the code falls back to initializing without credentials:
@@ -265,14 +235,13 @@ try {
 
 ---
 
-### 9. **Excessive Console Logging in Production**
+### 8. **Excessive Console Logging in Production**
 
 **What's the problem?**
 Throughout the codebase, there are 76+ console.log/warn/error statements that run in production.
 
 **Files with most logging:**
 - `src/lib/firestore.js` - 29 console statements
-- `src/app/(chrome)/campaign/[slug]/adjust/page.js` - 24 DEBUG logs
 - `src/lib/supabase.js` - 5 console statements
 - Many API routes with error logging
 
@@ -292,7 +261,7 @@ Throughout the codebase, there are 76+ console.log/warn/error statements that ru
 
 ---
 
-### 10. **Mock Supabase Client May Fail at Runtime**
+### 9. **Mock Supabase Client May Fail at Runtime**
 
 **What's the problem?**
 In `src/lib/supabase-admin.js`, if Supabase credentials are missing, a mock client is created:
@@ -333,7 +302,7 @@ if (!supabaseUrl || !supabaseServiceKey) {
 
 ## 📚 Documentation Issues
 
-### 11. **Non-existent File Referenced in Search Results**
+### 10. **Non-existent File Referenced in Search Results**
 
 **What's the problem?**
 Earlier search results mentioned `NOTIFICATION_SYSTEM_FIXES.md`, but this file doesn't exist in the codebase.
@@ -354,7 +323,7 @@ Earlier search results mentioned `NOTIFICATION_SYSTEM_FIXES.md`, but this file d
 
 ---
 
-### 12. **Environment Variable Validation Could Be Stronger**
+### 11. **Environment Variable Validation Could Be Stronger**
 
 **What's the problem?**
 While the code checks if environment variables exist, it doesn't validate their format or correctness.
@@ -385,7 +354,7 @@ function validateMailersendKey(key) {
 
 ## 💡 Architectural Improvements
 
-### 13. **Admin Log Identifier Defaults to 'admin'**
+### 12. **Admin Log Identifier Defaults to 'admin'**
 
 **What's the problem?**
 The `logAdminAction` utility (`src/utils/logAdminAction.js`) currently logs admin actions but might default the admin identifier to 'admin' instead of using the actual admin's name.
@@ -407,7 +376,7 @@ Ensure all admin actions log:
 
 ---
 
-### 14. **No Firestore Index Error Handling in Queries**
+### 13. **No Firestore Index Error Handling in Queries**
 
 **What's the problem?**
 Some queries may fail if Firestore indexes are missing, but there's no clear error message guiding developers to create the index.
@@ -478,30 +447,29 @@ These are patterns that appear inconsistent but are actually CORRECT:
 **What should you do next:**
 
 1. **Immediate (Before Launch):**
-   - Remove all `[DEBUG]` console.log statements (Issue #3)
    - Add appeal placeholder page or remove appeal references (Issue #1)
-   - Add status transition validation (Issue #5)
+   - Add status transition validation (Issue #4)
+   - Implement rate limit cleanup (Issue #3)
 
 2. **Short-term (Within 1 Month):**
-   - Implement rate limit cleanup (Issue #4)
-   - Extend email notifications to warnings/removals (Issue #6)
-   - Improve environment variable validation (Issue #12)
+   - Extend email notifications to warnings/removals (Issue #5)
+   - Improve environment variable validation (Issue #11)
+   - Clean up console logging throughout (Issue #8)
 
 3. **Long-term (Future):**
    - Build complete appeals system (Issue #1 full solution)
-   - Implement auto-deletion cron jobs (Issue #7)
+   - Implement auto-deletion cron jobs (Issue #6)
    - Set up appeal deadline reminders (Issue #2)
-   - Improve logging strategy (Issue #9)
 
 4. **Code Quality:**
-   - Review and strengthen Firebase/Supabase initialization (Issues #8, #10)
-   - Clean up console logging throughout (Issue #9)
-   - Verify admin logging implementation (Issue #13)
+   - Review and strengthen Firebase/Supabase initialization (Issues #7, #9)
+   - Verify admin logging implementation (Issue #12)
+   - Add Firestore index error handling (Issue #13)
 
 ---
 
-**Total Issues Found:** 14  
-**Critical:** 4  
+**Total Issues Found:** 13  
+**Critical:** 3  
 **Important:** 3  
 **Code Quality:** 3  
 **Documentation:** 2  
