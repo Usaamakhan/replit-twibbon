@@ -8,6 +8,630 @@ This document tracks known issues and suggested improvements for the Twibbonize 
 
 ## 🔴 Critical Issues
 
+### 1. **Banned Users Cannot See Their Ban Notifications**
+
+**What's the problem?**
+When a user is banned, the system sends them an in-app notification about the ban. But banned users are immediately signed out and cannot log in to their account - so they can never see the notification that explains why they were banned!
+
+**How the current system works:**
+
+1. **When banning a user:**
+   - Admin selects "Remove/Ban" action in `src/app/api/admin/reports/summary/[summaryId]/route.js` (line 228-244)
+   - System updates user's `accountStatus` to `banned-temporary` or `banned-permanent`
+   - System sends in-app notification using `sendInAppNotification()` with template `accountBanned`
+   - Notification saved to Firestore: `users/{userId}/notifications/{notificationId}`
+   - Notification includes ban reason and appeal deadline
+
+2. **When user tries to login:**
+   - User enters credentials on signin page
+   - Firebase authenticates successfully
+   - System checks user profile in `src/hooks/useAuth.js` (line 130)
+   - Finds `profile.banned === true`
+   - **Immediately signs user out** (line 132)
+   - Stores ban info in `sessionStorage` for banned page
+   - Redirects to `/banned` page (line 82-103 in `src/app/signin/page.js`)
+
+3. **What user sees:**
+   - `/banned` page shows: "Account Suspended" with reason and date
+   - Ban info comes from `sessionStorage`, NOT from the in-app notification
+   - User is locked out - cannot access their account, profile, or notifications
+
+**What does this mean?**
+The in-app notification about the ban is sent to a place the user can never access. It's like mailing a letter to someone and then locking them out of their house before they can read it!
+
+**Current notification flow (BROKEN):**
+```
+Admin bans user 
+  → In-app notification sent to users/{userId}/notifications/
+  → User tries to login
+  → System signs them out immediately
+  → User redirected to /banned page
+  → In-app notification sits unread forever ❌
+```
+
+**Example scenario:**
+- User "john@example.com" posts inappropriate content
+- Admin bans the user with reason: "Violated community guidelines - offensive content"
+- System sends in-app notification: "Your account has been banned for: Violated community guidelines. You can appeal until March 15, 2025."
+- User tries to login next day
+- System blocks login and shows generic `/banned` page with reason from sessionStorage
+- User never receives the detailed notification or appeal deadline info
+- Appeal system information is lost
+
+**Impact:**
+- **Users don't get complete ban information** - they only see what's in sessionStorage from their current login attempt
+- **Appeal deadlines are not communicated** - users don't know they have 30 days to appeal
+- **No notification history** - if user clears sessionStorage, they lose all ban details
+- **Unprofessional experience** - users feel abandoned with no way to contact support
+- **Wasted resources** - system generates notifications nobody can read
+- **Similar issue for unbanned users** - when an admin unbans a user, NO notification is sent at all (they just discover it when login suddenly works)
+
+**Where in code:**
+- Ban notification sent: `src/app/api/admin/reports/summary/[summaryId]/route.js` (lines 228-244)
+- Ban check during login: `src/hooks/useAuth.js` (lines 130-146)
+- Banned page display: `src/app/banned/page.js`
+- Notification template: `src/utils/notifications/notificationTemplates.js` (lines 42-48)
+- In-app notification function: `src/utils/notifications/sendInAppNotification.js`
+
+---
+
+### 2. **Email System Should Replace In-App Notifications for Banned Users**
+
+**Best solution:**
+Replace in-app notifications with **email notifications** for ban/unban actions, since banned users cannot access their account.
+
+**Why email is the right solution:**
+- ✅ Users receive ban notification even when locked out
+- ✅ Email provides permanent record they can reference later
+- ✅ Appeal deadline information is preserved in their inbox
+- ✅ Professional and industry-standard approach
+- ✅ Works for both banned and unbanned notifications
+
+**Current email infrastructure:**
+The project already has Firebase Authentication which sends emails for:
+- Email verification (`sendEmailVerification` in `src/hooks/useAuth.js` line 176)
+- Password reset (`sendPasswordResetEmail` in `src/hooks/useAuth.js` line 279)
+
+However, there's **NO custom email service** for moderation notifications yet.
+
+**Implementation Tasks:**
+
+#### **Task 1: Choose and Setup Email Service Provider**
+
+**Options to consider:**
+1. **Resend** (RECOMMENDED for this project)
+   - Modern, developer-friendly API
+   - Simple pricing: $20/month for 50,000 emails
+   - React Email templates support (great for Next.js projects)
+   - Fast setup, excellent docs
+   - Free tier: 100 emails/day for testing
+
+2. **SendGrid**
+   - Enterprise-grade, very reliable
+   - Free tier: 100 emails/day forever
+   - More complex API and setup
+   - Good for high-volume needs
+
+3. **Mailgun**
+   - Pay-as-you-go pricing
+   - Free tier: 5,000 emails/month
+   - Good for developers
+   - Flexible routing rules
+
+4. **Firebase Extensions - Trigger Email**
+   - Built into Firebase ecosystem
+   - Uses SendGrid/Mailgun under the hood
+   - Requires Firebase Blaze plan (pay-as-you-go)
+   - Less code but less control
+
+**Setup steps (using Resend as example):**
+```bash
+# 1. Install package
+npm install resend
+
+# 2. Get API key from https://resend.com
+# 3. Add to environment variables
+RESEND_API_KEY=re_xxxxxxxxx
+
+# 4. Set verified sender domain
+# (Resend requires domain verification to send from your domain)
+```
+
+---
+
+#### **Task 2: Create Email Utility Function**
+
+**Create:** `src/utils/notifications/sendEmail.js`
+
+```javascript
+import { Resend } from 'resend';
+
+const resend = new Resend(process.env.RESEND_API_KEY);
+
+export async function sendEmail({ to, subject, html, from = 'noreply@yourdomain.com' }) {
+  try {
+    console.log('[EMAIL] Sending to:', to);
+    console.log('[EMAIL] Subject:', subject);
+
+    if (!to || !subject || !html) {
+      throw new Error('Missing required fields: to, subject, and html');
+    }
+
+    const result = await resend.emails.send({
+      from: from,
+      to: to,
+      subject: subject,
+      html: html,
+    });
+
+    console.log('[EMAIL] Sent successfully:', result.id);
+
+    return {
+      success: true,
+      emailId: result.id,
+      message: 'Email sent successfully',
+    };
+  } catch (error) {
+    console.error('[EMAIL] Error:', error);
+    return {
+      success: false,
+      error: error.message,
+    };
+  }
+}
+```
+
+**Why this design:**
+- Mirrors existing `sendInAppNotification.js` structure
+- Easy to swap email providers by changing only this file
+- Returns consistent success/error format
+- Includes logging for debugging
+
+---
+
+#### **Task 3: Create Email Templates**
+
+**Create:** `src/utils/notifications/emailTemplates.js`
+
+```javascript
+export const getEmailTemplate = (templateName, params = {}) => {
+  const templates = {
+    accountBanned: ({ userEmail, username, banReason, appealDeadline, isPermanent }) => ({
+      subject: '🚫 Your Account Has Been Suspended',
+      html: `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <style>
+            body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+            .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+            .header { background: #dc2626; color: white; padding: 20px; text-align: center; }
+            .content { background: #f9fafb; padding: 30px; }
+            .warning-box { background: #fef2f2; border-left: 4px solid #dc2626; padding: 15px; margin: 20px 0; }
+            .footer { text-align: center; padding: 20px; color: #666; font-size: 14px; }
+            .button { background: #2563eb; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block; }
+          </style>
+        </head>
+        <body>
+          <div class="container">
+            <div class="header">
+              <h1>🚫 Account Suspended</h1>
+            </div>
+            <div class="content">
+              <p>Hello ${username || userEmail},</p>
+              
+              <p>Your Twibbonize account has been ${isPermanent ? 'permanently' : 'temporarily'} suspended by our moderation team.</p>
+              
+              <div class="warning-box">
+                <strong>Reason for suspension:</strong>
+                <p>${banReason}</p>
+              </div>
+              
+              ${!isPermanent ? `
+                <p><strong>Appeal Deadline:</strong> ${appealDeadline}</p>
+                <p>You have the right to appeal this decision within 30 days. If you believe this suspension was made in error, you can submit an appeal before the deadline.</p>
+                <p style="text-align: center; margin: 30px 0;">
+                  <a href="${process.env.NEXT_PUBLIC_BASE_URL}/appeal" class="button">Submit an Appeal</a>
+                </p>
+              ` : `
+                <p>This is a permanent suspension. Your account will not be restored.</p>
+              `}
+              
+              <p>If you have any questions, please contact our support team at support@twibbonize.com</p>
+            </div>
+            <div class="footer">
+              <p>Twibbonize Moderation Team</p>
+              <p>This is an automated email. Please do not reply directly.</p>
+            </div>
+          </div>
+        </body>
+        </html>
+      `,
+    }),
+
+    accountUnbanned: ({ userEmail, username }) => ({
+      subject: '✅ Your Account Has Been Restored',
+      html: `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <style>
+            body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+            .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+            .header { background: #16a34a; color: white; padding: 20px; text-align: center; }
+            .content { background: #f9fafb; padding: 30px; }
+            .success-box { background: #f0fdf4; border-left: 4px solid #16a34a; padding: 15px; margin: 20px 0; }
+            .footer { text-align: center; padding: 20px; color: #666; font-size: 14px; }
+            .button { background: #2563eb; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block; }
+          </style>
+        </head>
+        <body>
+          <div class="container">
+            <div class="header">
+              <h1>✅ Account Restored</h1>
+            </div>
+            <div class="content">
+              <p>Hello ${username || userEmail},</p>
+              
+              <div class="success-box">
+                <p><strong>Good news!</strong> Your Twibbonize account has been reviewed and restored by our moderation team.</p>
+              </div>
+              
+              <p>You can now log in and access your account normally. We appreciate your patience during the review process.</p>
+              
+              <p style="text-align: center; margin: 30px 0;">
+                <a href="${process.env.NEXT_PUBLIC_BASE_URL}/signin" class="button">Sign In Now</a>
+              </p>
+              
+              <p>Please remember to follow our community guidelines to avoid future issues. If you have any questions, contact us at support@twibbonize.com</p>
+            </div>
+            <div class="footer">
+              <p>Twibbonize Moderation Team</p>
+              <p>This is an automated email. Please do not reply directly.</p>
+            </div>
+          </div>
+        </body>
+        </html>
+      `,
+    }),
+
+    warningIssued: ({ userEmail, username, reason }) => ({
+      subject: '⚠️ Warning Issued for Your Account',
+      html: `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <style>
+            body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+            .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+            .header { background: #f59e0b; color: white; padding: 20px; text-align: center; }
+            .content { background: #f9fafb; padding: 30px; }
+            .warning-box { background: #fffbeb; border-left: 4px solid #f59e0b; padding: 15px; margin: 20px 0; }
+            .footer { text-align: center; padding: 20px; color: #666; font-size: 14px; }
+            .button { background: #2563eb; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block; }
+          </style>
+        </head>
+        <body>
+          <div class="container">
+            <div class="header">
+              <h1>⚠️ Warning Issued</h1>
+            </div>
+            <div class="content">
+              <p>Hello ${username || userEmail},</p>
+              
+              <p>You've received a warning from our moderation team regarding your account activity.</p>
+              
+              <div class="warning-box">
+                <strong>Reason for warning:</strong>
+                <p>${reason}</p>
+              </div>
+              
+              <p>This is a formal warning. Your account remains active, but please review our community guidelines to ensure future content complies with our policies.</p>
+              
+              <p><strong>Next Steps:</strong></p>
+              <ul>
+                <li>Review our community guidelines</li>
+                <li>Make necessary changes to your content</li>
+                <li>Contact support if you have questions</li>
+              </ul>
+              
+              <p style="text-align: center; margin: 30px 0;">
+                <a href="${process.env.NEXT_PUBLIC_BASE_URL}/guidelines" class="button">View Guidelines</a>
+              </p>
+              
+              <p>Repeated violations may result in account suspension. If you have any questions, contact us at support@twibbonize.com</p>
+            </div>
+            <div class="footer">
+              <p>Twibbonize Moderation Team</p>
+              <p>This is an automated email. Please do not reply directly.</p>
+            </div>
+          </div>
+        </body>
+        </html>
+      `,
+    }),
+  };
+
+  const template = templates[templateName];
+  if (!template) {
+    throw new Error(`Email template "${templateName}" not found`);
+  }
+
+  return typeof template === 'function' ? template(params) : template;
+};
+```
+
+**Design notes:**
+- Professional HTML email design with inline CSS (works across all email clients)
+- Consistent branding with color codes (red for ban, green for unban, yellow for warning)
+- Mobile-responsive design
+- Clear call-to-action buttons
+- Matches notification template structure for consistency
+
+---
+
+#### **Task 4: Update Admin Ban Endpoint to Send Emails**
+
+**Modify:** `src/app/api/admin/reports/summary/[summaryId]/route.js`
+
+**Current code (lines 228-244):**
+```javascript
+// Currently ONLY sends in-app notification
+else if (action === 'removed') {
+  const appealDeadline = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+  const formattedDeadline = appealDeadline.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+  
+  const notification = targetType === 'campaign' 
+    ? getNotificationTemplate('campaignRemoved', { ... })
+    : getNotificationTemplate('accountBanned', { banReason: reason, appealDeadline: formattedDeadline });
+  
+  await sendInAppNotification({ ... }); // ❌ Banned users can't see this!
+}
+```
+
+**Updated code (SHOULD BE):**
+```javascript
+else if (action === 'removed') {
+  const appealDeadline = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+  const formattedDeadline = appealDeadline.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+  
+  const userId = targetType === 'campaign' ? summaryData.creatorId : targetId;
+  
+  if (targetType === 'user') {
+    // For BANNED USERS: Send EMAIL instead of in-app notification
+    const { sendEmail } = await import('@/utils/notifications/sendEmail');
+    const { getEmailTemplate } = await import('@/utils/notifications/emailTemplates');
+    
+    // Get user email from database
+    const userDoc = await db.collection('users').doc(userId).get();
+    const userData = userDoc.data();
+    
+    if (userData?.email) {
+      const isPermanent = userData.accountStatus === 'banned-permanent';
+      const emailTemplate = getEmailTemplate('accountBanned', {
+        userEmail: userData.email,
+        username: userData.displayName || userData.username,
+        banReason: reason,
+        appealDeadline: formattedDeadline,
+        isPermanent: isPermanent,
+      });
+      
+      await sendEmail({
+        to: userData.email,
+        subject: emailTemplate.subject,
+        html: emailTemplate.html,
+      }).catch(err => console.error('Failed to send ban email:', err));
+    }
+  } else {
+    // For CAMPAIGN REMOVALS: Keep in-app notification (user can still log in)
+    const notification = getNotificationTemplate('campaignRemoved', { 
+      campaignTitle: summaryData.campaignTitle, 
+      appealDeadline: formattedDeadline, 
+      removalReason: reason 
+    });
+    
+    await sendInAppNotification({
+      userId,
+      title: notification.title,
+      body: notification.body,
+      actionUrl: notification.actionUrl,
+      icon: notification.icon,
+      type: notification.type,
+    });
+  }
+}
+```
+
+**Key changes:**
+- Check if target is user (banned account) vs campaign (removed content)
+- For banned users: send EMAIL instead of in-app notification
+- For removed campaigns: keep in-app notification (creator can still access account)
+- Fetch user email from Firestore users collection
+- Handle permanent vs temporary bans differently in email
+
+---
+
+#### **Task 5: Add Email Notification for Unbanning Users**
+
+**Modify:** `src/app/api/admin/users/[userId]/ban/route.js`
+
+**Current code:**
+- Lines 83-89: Updates user status to `active` when unbanning
+- **NO notification sent at all** ❌
+
+**Add this code after line 91 (after `userRef.update(updateData)`):**
+```javascript
+await userRef.update(updateData);
+
+// NEW CODE: Send email notification when unbanning a user
+if (accountStatus === 'active' && userDoc.data().banned === true) {
+  // User is being unbanned - send email notification
+  const { sendEmail } = await import('@/utils/notifications/sendEmail');
+  const { getEmailTemplate } = await import('@/utils/notifications/emailTemplates');
+  
+  const userData = userDoc.data();
+  
+  if (userData?.email) {
+    const emailTemplate = getEmailTemplate('accountUnbanned', {
+      userEmail: userData.email,
+      username: userData.displayName || userData.username,
+    });
+    
+    await sendEmail({
+      to: userData.email,
+      subject: emailTemplate.subject,
+      html: emailTemplate.html,
+    }).catch(err => console.error('Failed to send unban email:', err));
+  }
+}
+
+const updatedDoc = await userRef.get();
+```
+
+**Why this matters:**
+- Currently, unbanned users discover they're unbanned by **accidentally trying to login**
+- No communication from platform about account restoration
+- Professional platforms (Twitter, Reddit) always notify users when reinstated
+- Builds trust and shows platform cares about user experience
+
+---
+
+#### **Task 6: Update Warning Notifications to Send Emails Too**
+
+**Modify:** `src/app/api/admin/reports/summary/[summaryId]/route.js` (lines 215-227)
+
+**Current code:**
+```javascript
+else if (action === 'warned') {
+  const notification = getNotificationTemplate('warningIssued', { reason: reason });
+  
+  await sendInAppNotification({ ... }); // Only in-app
+}
+```
+
+**Updated code (SEND BOTH EMAIL + IN-APP):**
+```javascript
+else if (action === 'warned') {
+  // Send in-app notification (user can still access account)
+  const notification = getNotificationTemplate('warningIssued', { reason: reason });
+  
+  await sendInAppNotification({
+    userId,
+    title: notification.title,
+    body: notification.body,
+    actionUrl: notification.actionUrl,
+    icon: notification.icon,
+    type: notification.type,
+  });
+  
+  // ALSO send email for important warnings (belt-and-suspenders approach)
+  const { sendEmail } = await import('@/utils/notifications/sendEmail');
+  const { getEmailTemplate } = await import('@/utils/notifications/emailTemplates');
+  
+  const userDoc = targetType === 'campaign' 
+    ? await db.collection('users').doc(summaryData.creatorId).get()
+    : await db.collection('users').doc(targetId).get();
+  
+  const userData = userDoc.data();
+  
+  if (userData?.email) {
+    const emailTemplate = getEmailTemplate('warningIssued', {
+      userEmail: userData.email,
+      username: userData.displayName || userData.username,
+      reason: reason,
+    });
+    
+    await sendEmail({
+      to: userData.email,
+      subject: emailTemplate.subject,
+      html: emailTemplate.html,
+    }).catch(err => console.error('Failed to send warning email:', err));
+  }
+}
+```
+
+**Why send both email + in-app for warnings:**
+- Warned users CAN still access account (not banned)
+- Email ensures they don't miss the warning
+- In-app notification provides in-app history
+- Industry best practice: important moderation actions always get email
+
+---
+
+#### **Task 7: Add Environment Variables**
+
+**Add to `.env.local`:**
+```bash
+# Email Service (Resend)
+RESEND_API_KEY=re_your_api_key_here
+
+# Base URL for email links
+NEXT_PUBLIC_BASE_URL=https://yourdomain.com
+```
+
+**Add to `.env.example`:**
+```bash
+# Email Service
+RESEND_API_KEY=
+NEXT_PUBLIC_BASE_URL=
+```
+
+---
+
+#### **Task 8: Remove or Keep In-App Notifications?**
+
+**Decision needed:** What to do with existing in-app ban notifications?
+
+**Option A: Remove completely** (RECOMMENDED)
+- Remove `sendInAppNotification` for ban actions
+- Saves Firestore writes
+- Cleaner code
+- Users can't access them anyway
+
+**Option B: Keep as backup**
+- Send both email AND in-app notification
+- Provides notification history if user is unbanned
+- Small extra cost (1 Firestore write per ban)
+
+**Recommendation:** Option A - remove in-app notifications for bans since they're inaccessible and wasteful.
+
+---
+
+### **Summary of Changes Required:**
+
+1. ✅ **Choose email provider** (Resend recommended)
+2. ✅ **Install email package** (`npm install resend`)
+3. ✅ **Create `sendEmail.js`** utility function
+4. ✅ **Create `emailTemplates.js`** with ban/unban/warning templates
+5. ✅ **Update ban endpoint** to send email instead of in-app notification for users
+6. ✅ **Update unban endpoint** to send email notification (currently missing)
+7. ✅ **Update warning endpoint** to send both email + in-app notification
+8. ✅ **Add environment variables** for email API key
+9. ✅ **Test thoroughly** with real email addresses
+
+**Files to create:**
+- `src/utils/notifications/sendEmail.js` (new)
+- `src/utils/notifications/emailTemplates.js` (new)
+
+**Files to modify:**
+- `src/app/api/admin/reports/summary/[summaryId]/route.js` (ban and warning notifications)
+- `src/app/api/admin/users/[userId]/ban/route.js` (unban notifications)
+- `.env.local` (add RESEND_API_KEY)
+- `.env.example` (document required env vars)
+
+**Estimated effort:**
+- Setup email provider: 30 minutes
+- Create utility + templates: 2 hours
+- Update endpoints: 1 hour
+- Testing: 1 hour
+- **Total: ~4-5 hours**
+
+**Monthly cost estimate:**
+- Resend: $0 (free tier: 100 emails/day = 3,000/month)
+- For 10,000 moderation emails/month: $20/month
+
+---
+
 ## ⚠️ Important Issues
 
 ### 5. **No Reminder for Appeal Deadlines**
@@ -121,52 +745,6 @@ if (!VALID_TRANSITIONS[currentStatus].includes(newStatus)) {
 
 ---
 
-### 9. **Reason Counts Are Lost When Admin Takes Action**
-
-**What's the problem?**
-When a campaign/user gets reported, the system tracks WHY it was reported (spam, inappropriate, etc.) in detail. But when an admin takes action, all this information is deleted.
-
-**Example:**
-- Campaign gets 15 reports: 8 for spam, 5 for inappropriate content, 2 for copyright
-- Admin reviews it and dismisses (false reports)
-- The reason breakdown is deleted (reset to empty: `{}`)
-- Later, campaign gets reported again
-- Admin has NO history of what reasons were given before
-
-**What does this mean?**
-Admins can't see patterns or history of why content was previously reported.
-
-**Impact:**
-- Can't identify repeat offenders
-- Can't see if a user keeps violating the same rule
-- No data for analyzing which rules are most violated
-- Makes it harder to make informed decisions
-
-**Where in code:**
-- `src/app/api/admin/reports/summary/[summaryId]/route.js` (line 143)
-- Sets `reasonCounts: {}` which erases all reason data
-
-**Suggested improvement:**
-Keep a history of admin actions with reason counts:
-
-```javascript
-// Instead of deleting reasonCounts, archive them
-const adminActionHistory = {
-  actionDate: now,
-  action: action, // 'dismissed', 'warned', or 'removed'
-  reasonCounts: summaryData.reasonCounts,
-  adminId: adminId,
-};
-
-// Add to an array
-transaction.update(summaryRef, {
-  reportsCount: 0,
-  reasonCounts: {}, // Reset current counts
-  actionHistory: FieldValue.arrayUnion(adminActionHistory), // Keep history
-});
-```
-
----
 
 ## ✅ Recently Fixed Issues
 
@@ -440,10 +1018,11 @@ The rate limiting system stores IP addresses securely:
 3. ✅ **FIXED:** Notification template parameter order could get mixed up (October 23, 2025)
 
 **Active Issues:**
-1. ⚠️ **IMPORTANT:** No reminder for appeal deadlines
-2. ⚠️ **IMPORTANT:** Appeal system shows deadlines but can't actually appeal
-3. 💡 **SUGGESTION:** Missing status transition validation
-4. 💡 **SUGGESTION:** Reason counts are lost when admin takes action
+1. 🔴 **CRITICAL:** Banned users cannot see their ban notifications (in-app notifications inaccessible when logged out)
+2. 🔴 **CRITICAL:** Email system should replace in-app notifications for banned users (comprehensive implementation guide added)
+3. ⚠️ **IMPORTANT:** No reminder for appeal deadlines
+4. ⚠️ **IMPORTANT:** Appeal system shows deadlines but can't actually appeal
+5. 💡 **SUGGESTION:** Missing status transition validation
 
 **Documentation Quality:**
 - All issues explained in simple, non-technical language
