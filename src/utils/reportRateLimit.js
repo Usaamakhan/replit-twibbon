@@ -36,7 +36,7 @@ export async function checkReportRateLimit(request, targetId, targetType, userId
   
   const now = Date.now();
   const oneHourAgo = now - (60 * 60 * 1000);
-  const oneDayFromNow = new Date(now + (24 * 60 * 60 * 1000)); // TTL: 24 hours from now
+  const oneDayAgo = now - (24 * 60 * 60 * 1000);
   
   try {
     const result = await db.runTransaction(async (transaction) => {
@@ -48,8 +48,18 @@ export async function checkReportRateLimit(request, targetId, targetType, userId
         const data = doc.data();
         reports = data.reports || [];
         
-        // Filter out reports older than 1 hour
-        reports = reports.filter(report => report.timestamp > oneHourAgo);
+        // Self-cleaning: If ALL reports are older than 24 hours, delete the entire document
+        const allReportsExpired = reports.every(report => report.timestamp < oneDayAgo);
+        if (allReportsExpired) {
+          transaction.delete(rateLimitRef);
+          return {
+            allowed: true,
+            reason: null
+          };
+        }
+        
+        // Filter out reports older than 24 hours (keep recent ones)
+        reports = reports.filter(report => report.timestamp > oneDayAgo);
       }
       
       const reportsInLastHour = reports.filter(r => r.timestamp > oneHourAgo);
@@ -100,12 +110,11 @@ export async function checkReportRateLimit(request, targetId, targetType, userId
         userId: userId || null // Track userId for authenticated users
       });
       
-      // ISSUE #10 FIX: Set TTL for automatic cleanup after 24 hours
+      // Save updated reports with self-cleaning (no TTL needed)
       transaction.set(rateLimitRef, {
         reports,
         lastUpdated: new Date(),
-        ipHash,
-        expireAt: oneDayFromNow // Firestore TTL field for auto-deletion
+        ipHash
       }, { merge: true });
       
       return {

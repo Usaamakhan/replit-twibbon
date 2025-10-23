@@ -64,39 +64,9 @@ Implement a cron job (scheduled task) that runs daily:
 
 ---
 
-### 3. **Rate Limit Data Never Gets Cleaned Up**
-
-**What's the problem?**
-The `reportRateLimits` collection in Firestore stores IP address hashes for rate limiting. While the code filters out old reports (older than 1 hour), the Firestore documents themselves never get deleted.
-
-**What happens:**
-- Every report creates or updates a document in `reportRateLimits`
-- Old data accumulates forever
-- Database bloat increases costs
-- Query performance degrades over time
-
-**Where in code:**
-- `src/utils/reportRateLimit.js` - Creates documents with 24-hour TTL comment but no actual cleanup
-
-**Impact:**
-- Increased Firestore storage costs
-- Slower queries as collection grows
-- Wasted database resources
-
-**Solution Options:**
-1. **Firestore TTL policy** (if supported by your plan)
-2. **Daily cron job** to delete documents older than 24 hours
-3. **Client-side deletion** after successful rate limit check (less reliable)
-
-**Recommendation:** Option 1 (Firestore TTL) or Option 2 (cron job)
-
-**Status:** KNOWN ISSUE - Needs implementation
-
----
-
 ## ⚠️ Important Issues
 
-### 4. **Missing Status Transition Validation**
+### 3. **Missing Status Transition Validation**
 
 **What's the problem?**
 Admins can change campaign/user statuses in ways that violate business rules. For example:
@@ -137,7 +107,7 @@ if (!VALID_TRANSITIONS[currentStatus].includes(newStatus)) {
 
 ---
 
-### 5. **Email Notifications Only for Bans (Not Warnings/Removals)**
+### 4. **Email Notifications Only for Bans (Not Warnings/Removals)**
 
 **What's the problem?**
 The system sends email notifications ONLY when users are banned or unbanned. When campaigns are removed or users are warned, only in-app notifications are sent.
@@ -168,7 +138,7 @@ Extend email notification system to cover:
 
 ---
 
-### 6. **Auto-Deletion After 30 Days Not Implemented**
+### 5. **Auto-Deletion After 30 Days Not Implemented**
 
 **What's the problem?**
 When appeals expire (30 days after removal/ban), the content should be permanently deleted automatically. But this doesn't happen - it requires manual admin action.
@@ -198,7 +168,7 @@ Implement a daily cron job that:
 
 ## 🐛 Code Quality Issues
 
-### 7. **Fallback Firebase Initialization May Mask Errors**
+### 6. **Fallback Firebase Initialization May Mask Errors**
 
 **What's the problem?**
 In `src/lib/firebaseAdmin.js`, if the Firebase service account key is missing or invalid, the code falls back to initializing without credentials:
@@ -235,7 +205,7 @@ try {
 
 ---
 
-### 8. **Excessive Console Logging in Production**
+### 7. **Excessive Console Logging in Production**
 
 **What's the problem?**
 Throughout the codebase, there are 76+ console.log/warn/error statements that run in production.
@@ -261,7 +231,7 @@ Throughout the codebase, there are 76+ console.log/warn/error statements that ru
 
 ---
 
-### 9. **Mock Supabase Client May Fail at Runtime**
+### 8. **Mock Supabase Client May Fail at Runtime**
 
 **What's the problem?**
 In `src/lib/supabase-admin.js`, if Supabase credentials are missing, a mock client is created:
@@ -302,7 +272,7 @@ if (!supabaseUrl || !supabaseServiceKey) {
 
 ## 📚 Documentation Issues
 
-### 10. **Non-existent File Referenced in Search Results**
+### 9. **Non-existent File Referenced in Search Results**
 
 **What's the problem?**
 Earlier search results mentioned `NOTIFICATION_SYSTEM_FIXES.md`, but this file doesn't exist in the codebase.
@@ -323,7 +293,7 @@ Earlier search results mentioned `NOTIFICATION_SYSTEM_FIXES.md`, but this file d
 
 ---
 
-### 11. **Environment Variable Validation Could Be Stronger**
+### 10. **Environment Variable Validation Could Be Stronger**
 
 **What's the problem?**
 While the code checks if environment variables exist, it doesn't validate their format or correctness.
@@ -354,7 +324,7 @@ function validateMailersendKey(key) {
 
 ## 💡 Architectural Improvements
 
-### 12. **Admin Log Identifier Defaults to 'admin'**
+### 11. **Admin Log Identifier Defaults to 'admin'**
 
 **What's the problem?**
 The `logAdminAction` utility (`src/utils/logAdminAction.js`) currently logs admin actions but might default the admin identifier to 'admin' instead of using the actual admin's name.
@@ -376,7 +346,7 @@ Ensure all admin actions log:
 
 ---
 
-### 13. **No Firestore Index Error Handling in Queries**
+### 12. **No Firestore Index Error Handling in Queries**
 
 **What's the problem?**
 Some queries may fail if Firestore indexes are missing, but there's no clear error message guiding developers to create the index.
@@ -448,28 +418,27 @@ These are patterns that appear inconsistent but are actually CORRECT:
 
 1. **Immediate (Before Launch):**
    - Add appeal placeholder page or remove appeal references (Issue #1)
-   - Add status transition validation (Issue #4)
-   - Implement rate limit cleanup (Issue #3)
+   - Add status transition validation (Issue #3)
 
 2. **Short-term (Within 1 Month):**
-   - Extend email notifications to warnings/removals (Issue #5)
-   - Improve environment variable validation (Issue #11)
-   - Clean up console logging throughout (Issue #8)
+   - Extend email notifications to warnings/removals (Issue #4)
+   - Improve environment variable validation (Issue #10)
+   - Clean up console logging throughout (Issue #7)
 
 3. **Long-term (Future):**
    - Build complete appeals system (Issue #1 full solution)
-   - Implement auto-deletion cron jobs (Issue #6)
+   - Implement auto-deletion cron jobs (Issue #5)
    - Set up appeal deadline reminders (Issue #2)
 
 4. **Code Quality:**
-   - Review and strengthen Firebase/Supabase initialization (Issues #7, #9)
-   - Verify admin logging implementation (Issue #12)
-   - Add Firestore index error handling (Issue #13)
+   - Review and strengthen Firebase/Supabase initialization (Issues #6, #8)
+   - Verify admin logging implementation (Issue #11)
+   - Add Firestore index error handling (Issue #12)
 
 ---
 
-**Total Issues Found:** 13  
-**Critical:** 3  
+**Total Issues Found:** 12  
+**Critical:** 2  
 **Important:** 3  
 **Code Quality:** 3  
 **Documentation:** 2  
