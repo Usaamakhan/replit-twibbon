@@ -485,36 +485,67 @@ When a campaign creator deletes their own campaign:
 
 ## Notification System
 
-All notifications are **in-app only** (Firestore-based, no browser permissions needed):
+The system uses **hybrid notifications** - combining in-app and email notifications based on user accessibility:
+
+### Notification Types by Delivery Method:
+
+**📧 EMAIL NOTIFICATIONS** (for banned users who cannot access their account):
+- **User bans** → "🚫 Your Account Has Been Suspended"
+  - Sent via MailerSend to user's email address
+  - Includes ban reason and appeal deadline
+  - Works for both temporary and permanent bans
+  - **Why email:** Banned users are immediately signed out and cannot access in-app notifications
+
+- **User unbans** → "✅ Your Account Has Been Restored"
+  - Sent via MailerSend to user's email address
+  - Notifies user their account is restored
+  - **Why email:** Previously, unbanned users had no notification at all - they discovered it by accident
+
+**📱 IN-APP NOTIFICATIONS** (Firestore-based, no browser permissions needed):
+- **Campaign reaches 3 reports** → "⚠️ Campaign Under Review"
+- **User profile reaches 10 reports** → "⚠️ Profile Under Review"
+- **Admin dismisses reports** → "✅ Campaign/Profile Restored"
+- **Admin issues warning** → "⚠️ Warning Issued"
+- **Campaign removals** → "🚫 Campaign Removed" (user can still log in)
 
 ### When Notifications Are Sent:
 
-1. **Campaign reaches 3 reports** → "⚠️ Campaign Under Review"
+1. **Campaign reaches 3 reports** → In-app notification
    - Triggered automatically when 3rd report submitted
    - Only if current status is `active`
 
-2. **User profile reaches 10 reports** → "⚠️ Profile Under Review"
+2. **User profile reaches 10 reports** → In-app notification
    - Triggered automatically when 10th report submitted
    - Only if current status is `active`
 
-3. **Admin dismisses reports** → "✅ Campaign/Profile Restored"
+3. **Admin dismisses reports** → In-app notification
    - Only sent if content was previously hidden (at threshold)
    - Not sent if content was never auto-hidden
 
-4. **Admin issues warning** → "⚠️ Warning Issued"
+4. **Admin issues warning** → In-app notification
    - Always sent
    - Includes admin-selected reason
 
-5. **Admin removes/bans** → "🚫 Campaign Removed" or "🚫 Account Banned"
-   - Always sent
+5. **Admin removes campaign** → In-app notification
+   - Sent to creator (who can still access their account)
    - Includes admin-selected reason and appeal deadline
    - **Note:** Promises appeal system that doesn't exist yet
 
-6. **Appeal deadline reminders** → "⏰ Appeal Deadline Reminder"
-   - PLANNED but not implemented (requires cron job)
+6. **Admin bans user** → EMAIL notification ✅
+   - Sent to user's email address (bypasses account lockout)
+   - Includes ban reason and appeal deadline
+   - **Critical:** User cannot access account, so email is the only way to reach them
+
+7. **Admin unbans user** → EMAIL notification ✅
+   - Sent to user's email address
+   - Notifies account restoration
+   - **Important:** Builds trust by informing users of positive moderation decisions
+
+8. **Appeal deadline reminders** → PLANNED (not implemented)
+   - Requires cron job
    - Would notify 7 days, 3 days, and 1 day before deadline
 
-### Notification Delivery:
+### In-App Notification Delivery:
 - Saved to Firestore: `users/{userId}/notifications/{notificationId}`
 - Real-time listeners update UI instantly via `useNotifications` hook
 - Shows in notification bell icon in header (with unread count badge)
@@ -526,7 +557,14 @@ All notifications are **in-app only** (Firestore-based, no browser permissions n
   - Mark all as read
   - Action buttons (e.g., "View Campaign", "Appeal Removal")
 
-### Notification Structure:
+### Email Notification Delivery:
+- Sent via MailerSend API (`src/utils/notifications/sendEmail.js`)
+- Professional HTML templates (`src/utils/notifications/emailTemplates.js`)
+- Includes ban reason, appeal deadline, and action buttons
+- Free tier: 12,000 emails/month with trial domain
+- Custom domain supported for production
+
+### In-App Notification Structure:
 ```javascript
 {
   id: "auto-generated-id",
@@ -538,6 +576,15 @@ All notifications are **in-app only** (Firestore-based, no browser permissions n
   read: false,
   createdAt: timestamp,
   metadata: { campaignId, reason, etc. } // Optional additional data
+}
+```
+
+### Email Template Structure:
+```javascript
+{
+  subject: "🚫 Your Account Has Been Suspended",
+  html: "<professional HTML email with inline CSS>",
+  // Includes: ban reason, appeal deadline, action buttons, support contact
 }
 ```
 
@@ -595,7 +642,10 @@ All notifications are **in-app only** (Firestore-based, no browser permissions n
 
 2. **Transparency** - Clear reason breakdowns help admins make informed decisions quickly
 
-3. **User Communication** - Automatic in-app notifications keep creators informed of all moderation actions
+3. **User Communication** - Hybrid notification system ensures users are always informed:
+   - **In-app notifications** for accessible accounts (warnings, campaign removals, auto-hides)
+   - **Email notifications** for inaccessible accounts (bans, unbans)
+   - **Critical:** Banned users receive email since they cannot access their account
 
 4. **Audit Trail** - Keep report summaries forever for pattern detection and repeat offender tracking
 
