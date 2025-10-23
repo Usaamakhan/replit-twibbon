@@ -7,7 +7,7 @@ The email notification system has been implemented to replace in-app notificatio
 ### Changes Made:
 
 1. **New Files Created:**
-   - `src/utils/notifications/sendEmail.js` - Email sending utility using Resend API
+   - `src/utils/notifications/sendEmail.js` - Email sending utility using MailerSend API
    - `src/utils/notifications/emailTemplates.js` - HTML email templates for ban/unban notifications
 
 2. **Updated Endpoints:**
@@ -24,56 +24,28 @@ The email notification system has been implemented to replace in-app notificatio
 
 ## Steps to Enable Email Notifications
 
-### Step 1: Install the Resend Package
+### Step 1: Get MailerSend API Key
 
-Run this command in your project:
-
-```bash
-npm install resend
-```
-
-This will add the Resend email service library to your project.
-
----
-
-### Step 2: Get Resend API Key
-
-1. Go to **https://resend.com** and sign up for a free account
-2. Free tier includes: **100 emails/day** (3,000/month) - good for testing
-3. Navigate to **API Keys** section in the dashboard
-4. Click **Create API Key**
-5. Copy the API key (starts with `re_...`)
+1. Go to **https://mailersend.com** and sign up for a free account
+2. Free tier includes: **12,000 emails/month** + trial domain (no custom domain verification needed!)
+3. Navigate to **API Tokens** section in the dashboard
+4. Click **Create Token**
+5. Copy the API key
 
 **Pricing Note:** 
-- Free: 100 emails/day
-- Paid: $20/month for 50,000 emails
+- Free: 12,000 emails/month with trial domain
+- Paid: $25/month for 50,000 emails with custom domain
 
 ---
 
-### Step 3: Configure Domain (Optional but Recommended)
+### Step 2: Add Environment Variable to Vercel
 
-For production, you should verify your domain:
-
-1. In Resend dashboard, go to **Domains**
-2. Click **Add Domain**
-3. Enter your domain (e.g., `twibbonize.com`)
-4. Add the DNS records they provide to your domain registrar
-5. Wait for verification (usually 5-10 minutes)
-
-**For testing:** You can skip this and use Resend's test mode which delivers to verified email addresses only.
-
----
-
-### Step 4: Add Environment Variables to Vercel
-
-Go to your Vercel project settings and add these environment variables:
-
-#### Required Variables:
+Go to your Vercel project settings and add:
 
 | Variable Name | Value | Example |
 |---------------|-------|---------|
-| `RESEND_API_KEY` | Your Resend API key | `re_123abc456def789...` |
-| `NEXT_PUBLIC_BASE_URL` | Your app's public URL | `https://twibbonize.com` |
+| `MAILERSEND_API_KEY` | Your MailerSend API key | `mlsn.abc123...` |
+| `NEXT_PUBLIC_BASE_URL` | Your app's public URL | `https://replit-twibbon.vercel.app` |
 
 **How to add in Vercel:**
 1. Go to your project in Vercel dashboard
@@ -82,37 +54,28 @@ Go to your Vercel project settings and add these environment variables:
 4. Set them for: **Production**, **Preview**, and **Development** environments
 5. Click **Save**
 
-**For the sender email address:**
-- If you verified a domain: Update `from` parameter in templates to use your domain (e.g., `noreply@twibbonize.com`)
-- If using free tier: Keep default `noreply@yourdomain.com` (Resend will handle it)
-
 ---
 
-### Step 5: Update Email Templates (Optional)
-
-In `src/utils/notifications/emailTemplates.js`, you can customize:
-
-1. **Sender email:** Change the default `from` parameter:
-   ```javascript
-   from: 'noreply@twibbonize.com'  // Use your verified domain
-   ```
-
-2. **Email content:** Modify the HTML templates to match your branding
-
-3. **Appeal link:** Update the appeal URL when you implement the appeal system:
-   ```html
-   <a href="${process.env.NEXT_PUBLIC_BASE_URL}/appeal" class="button">Submit an Appeal</a>
-   ```
-
----
-
-### Step 6: Redeploy on Vercel
+### Step 3: Redeploy on Vercel
 
 After adding the environment variables:
 
 1. Go to **Deployments** tab in Vercel
 2. Click **Redeploy** on your latest deployment
 3. Or simply push a new commit to trigger automatic deployment
+
+---
+
+## Using MailerSend Trial Domain
+
+The free tier includes a **trial domain** (`trial.mailersend.net`) that works immediately without DNS verification!
+
+**Default sender:** `noreply@trial.mailersend.net`
+
+**To switch to your own domain later:**
+1. Purchase a custom domain (e.g., `twibbonize.com`)
+2. Verify it in MailerSend dashboard
+3. Update the `from` parameter in `src/utils/notifications/sendEmail.js`
 
 ---
 
@@ -161,12 +124,12 @@ After adding the environment variables:
 **Check Environment Variables:**
 ```bash
 # In Vercel dashboard, verify:
-- RESEND_API_KEY is set correctly
+- MAILERSEND_API_KEY is set correctly
 - NEXT_PUBLIC_BASE_URL is set correctly
 ```
 
-**Check Resend Dashboard:**
-- Go to https://resend.com/emails
+**Check MailerSend Dashboard:**
+- Go to https://mailersend.com/activity
 - See delivery status of sent emails
 - Check for any errors or bounces
 
@@ -175,65 +138,51 @@ After adding the environment variables:
 - Look for `[EMAIL]` log entries
 - Check for errors
 
-### Email Goes to Spam?
+---
 
-This is common if you haven't verified a domain:
-- Verify your domain in Resend (see Step 3)
-- Add SPF, DKIM, and DMARC records
-- Use a professional "from" address (not noreply@random.com)
+## Switching to Custom Domain (Optional)
 
-### Rate Limiting?
+When you purchase your own domain:
 
-Free tier: 100 emails/day
-- If exceeded, upgrade to paid plan ($20/month for 50,000)
-- Or implement email queuing to batch send
+1. **Verify in MailerSend:**
+   - Add domain in MailerSend dashboard
+   - Add DNS records to your domain registrar
+   - Wait for verification
+
+2. **Update Code:**
+   - In `src/utils/notifications/sendEmail.js`, change:
+   ```javascript
+   from = "noreply@yourdomain.com"
+   ```
+
+3. **Redeploy** your app
 
 ---
 
-## What's Next?
+## Switching Back to Resend (If Needed)
 
-After implementing email notifications, you should consider:
+If you purchase a custom domain and want to use Resend:
 
-1. **Implement the Appeal System** (Critical Issue #6 in CODE_INCONSISTENCIES.md)
-   - Create `/appeal` page for users to submit appeals
-   - Create admin interface to review appeals
-   - The email already links to `/appeal` but the page doesn't exist yet
-
-2. **Email Reminder System** (Issue #5 - now optional)
-   - Send reminder emails 3-7 days before appeal deadline
-   - Requires setting up a cron job (Vercel Cron or similar)
-
-3. **Monitor Email Delivery**
-   - Set up Resend webhooks to track opens, clicks, bounces
-   - Log email failures for investigation
+1. Install Resend: `npm install resend`
+2. Update `src/utils/notifications/sendEmail.js` to use Resend API
+3. Change `MAILERSEND_API_KEY` to `RESEND_API_KEY` in Vercel
+4. Redeploy
 
 ---
 
 ## Cost Estimation
 
-**Resend Pricing:**
-- Free: 100 emails/day (3,000/month)
-- Paid: $20/month for 50,000 emails (~$0.0004 per email)
+**MailerSend Pricing:**
+- Free: 12,000 emails/month
+- Paid: $25/month for 50,000 emails (~$0.0005 per email)
 
 **Example Scenarios:**
-- 10 bans/unbans per day: Free tier is sufficient
-- 100 bans/unbans per day: Still free tier (3,000/month)
-- 5,000 bans/unbans per month: Need paid plan ($20/month)
-
----
-
-## Support
-
-If you encounter issues:
-- Resend Documentation: https://resend.com/docs
-- Resend Support: support@resend.com
-- Check Vercel function logs for debugging
+- 100 bans/unbans per day: Free tier is sufficient (3,000/month)
+- 400 bans/unbans per day: Still free tier (12,000/month)
+- 50,000 bans/unbans per month: Need paid plan ($25/month)
 
 ---
 
 **Implementation completed!** 
 
-Email notifications are now ready to use once you:
-1. Install `resend` package (`npm install resend`)
-2. Add environment variables to Vercel
-3. Redeploy your application
+Email notifications are ready to use once you add `MAILERSEND_API_KEY` to Vercel and redeploy.

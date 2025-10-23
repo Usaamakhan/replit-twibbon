@@ -1,21 +1,23 @@
-import { Resend } from "resend";
+import { MailerSend, EmailParams, Sender, Recipient } from "mailersend";
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+const mailerSend = new MailerSend({
+  apiKey: process.env.MAILERSEND_API_KEY || "",
+});
 
 /**
- * Send an email using Resend API
+ * Send an email using MailerSend API
  * @param {Object} params - Email parameters
  * @param {string} params.to - Recipient email address
  * @param {string} params.subject - Email subject line
  * @param {string} params.html - HTML email content
- * @param {string} [params.from] - Sender email address (defaults to noreply@replit-twibbon.vercel.app)
+ * @param {string} [params.from] - Sender email address (defaults to MailerSend trial domain)
  * @returns {Promise<Object>} - Result object with success status
  */
 export async function sendEmail({
   to,
   subject,
   html,
-  from = "noreply@replit-twibbon.vercel.app",
+  from = "noreply@trial.mailersend.net", // MailerSend trial domain
 }) {
   try {
     console.log("[EMAIL] Sending to:", to);
@@ -25,22 +27,26 @@ export async function sendEmail({
       throw new Error("Missing required fields: to, subject, and html");
     }
 
-    if (!process.env.RESEND_API_KEY) {
-      throw new Error("RESEND_API_KEY environment variable is not set");
+    if (!process.env.MAILERSEND_API_KEY) {
+      throw new Error("MAILERSEND_API_KEY environment variable is not set");
     }
 
-    const result = await resend.emails.send({
-      from: from,
-      to: to,
-      subject: subject,
-      html: html,
-    });
+    const sentFrom = new Sender(from, "Twibbonize");
+    const recipients = [new Recipient(to, to)];
 
-    console.log("[EMAIL] Sent successfully:", result.id);
+    const emailParams = new EmailParams()
+      .setFrom(sentFrom)
+      .setTo(recipients)
+      .setSubject(subject)
+      .setHtml(html);
+
+    const result = await mailerSend.email.send(emailParams);
+
+    console.log("[EMAIL] Sent successfully:", result.body?.messageId || "sent");
 
     return {
       success: true,
-      emailId: result.id,
+      emailId: result.body?.messageId || "sent",
       message: "Email sent successfully",
     };
   } catch (error) {

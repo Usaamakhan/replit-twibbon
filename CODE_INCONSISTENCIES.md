@@ -99,7 +99,7 @@ However, there's **NO custom email service** for moderation notifications yet.
 #### **Task 1: Choose and Setup Email Service Provider**
 
 **Options to consider:**
-1. **Resend** (RECOMMENDED for this project)
+1. **MailerSend** (RECOMMENDED for this project - includes free trial domain, no DNS setup needed)
    - Modern, developer-friendly API
    - Simple pricing: $20/month for 50,000 emails
    - React Email templates support (great for Next.js projects)
@@ -124,17 +124,17 @@ However, there's **NO custom email service** for moderation notifications yet.
    - Requires Firebase Blaze plan (pay-as-you-go)
    - Less code but less control
 
-**Setup steps (using Resend as example):**
+**Setup steps (using MailerSend):**
 ```bash
 # 1. Install package
-npm install resend
+npm install mailersend
 
-# 2. Get API key from https://resend.com
+# 2. Get API key from https://mailersend.com
 # 3. Add to environment variables
-RESEND_API_KEY=re_xxxxxxxxx
+MAILERSEND_API_KEY=mlsn_xxxxxxxxx
 
-# 4. Set verified sender domain
-# (Resend requires domain verification to send from your domain)
+# 4. Use trial sender domain (no verification needed!)
+# MailerSend provides trial.mailersend.net for free tier
 ```
 
 ---
@@ -144,11 +144,13 @@ RESEND_API_KEY=re_xxxxxxxxx
 **Create:** `src/utils/notifications/sendEmail.js`
 
 ```javascript
-import { Resend } from 'resend';
+import { MailerSend, EmailParams, Sender, Recipient } from 'mailersend';
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+const mailerSend = new MailerSend({
+  apiKey: process.env.MAILERSEND_API_KEY || '',
+});
 
-export async function sendEmail({ to, subject, html, from = 'noreply@yourdomain.com' }) {
+export async function sendEmail({ to, subject, html, from = 'noreply@trial.mailersend.net' }) {
   try {
     console.log('[EMAIL] Sending to:', to);
     console.log('[EMAIL] Subject:', subject);
@@ -157,18 +159,22 @@ export async function sendEmail({ to, subject, html, from = 'noreply@yourdomain.
       throw new Error('Missing required fields: to, subject, and html');
     }
 
-    const result = await resend.emails.send({
-      from: from,
-      to: to,
-      subject: subject,
-      html: html,
-    });
+    const sentFrom = new Sender(from, 'Twibbonize');
+    const recipients = [new Recipient(to, to)];
 
-    console.log('[EMAIL] Sent successfully:', result.id);
+    const emailParams = new EmailParams()
+      .setFrom(sentFrom)
+      .setTo(recipients)
+      .setSubject(subject)
+      .setHtml(html);
+
+    const result = await mailerSend.email.send(emailParams);
+
+    console.log('[EMAIL] Sent successfully:', result.body?.messageId || 'sent');
 
     return {
       success: true,
-      emailId: result.id,
+      emailId: result.body?.messageId || 'sent',
       message: 'Email sent successfully',
     };
   } catch (error) {
@@ -562,8 +568,8 @@ else if (action === 'warned') {
 
 **Add to `.env.local`:**
 ```bash
-# Email Service (Resend)
-RESEND_API_KEY=re_your_api_key_here
+# Email Service (MailerSend)
+MAILERSEND_API_KEY=mlsn_your_api_key_here
 
 # Base URL for email links
 NEXT_PUBLIC_BASE_URL=https://yourdomain.com
@@ -572,7 +578,7 @@ NEXT_PUBLIC_BASE_URL=https://yourdomain.com
 **Add to `.env.example`:**
 ```bash
 # Email Service
-RESEND_API_KEY=
+MAILERSEND_API_KEY=
 NEXT_PUBLIC_BASE_URL=
 ```
 
@@ -599,8 +605,8 @@ NEXT_PUBLIC_BASE_URL=
 
 ### **Summary of Changes Required:**
 
-1. ✅ **Choose email provider** (Resend recommended)
-2. ✅ **Install email package** (`npm install resend`)
+1. ✅ **Choose email provider** (MailerSend recommended)
+2. ✅ **Install email package** (`npm install mailersend`)
 3. ✅ **Create `sendEmail.js`** utility function
 4. ✅ **Create `emailTemplates.js`** with ban/unban/warning templates
 5. ✅ **Update ban endpoint** to send email instead of in-app notification for users
@@ -616,7 +622,7 @@ NEXT_PUBLIC_BASE_URL=
 **Files to modify:**
 - `src/app/api/admin/reports/summary/[summaryId]/route.js` (ban and warning notifications)
 - `src/app/api/admin/users/[userId]/ban/route.js` (unban notifications)
-- `.env.local` (add RESEND_API_KEY)
+- `.env.local` (add MAILERSEND_API_KEY)
 - `.env.example` (document required env vars)
 
 **Estimated effort:**
@@ -627,7 +633,7 @@ NEXT_PUBLIC_BASE_URL=
 - **Total: ~4-5 hours**
 
 **Monthly cost estimate:**
-- Resend: $0 (free tier: 100 emails/day = 3,000/month)
+- MailerSend: $0 (free tier: 12,000 emails/month with trial domain)
 - For 10,000 moderation emails/month: $20/month
 
 ---

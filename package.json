@@ -13,10 +13,10 @@
     "date-fns": "^4.1.0",
     "firebase": "^12.2.1",
     "firebase-admin": "^13.5.0",
+    "mailersend": "^2.6.0",
     "next": "15.5.2",
     "react": "19.1.0",
     "react-dom": "19.1.0",
-    "resend": "^6.2.2",
     "server-only": "^0.0.1",
     "zod": "^4.1.8"
   },
