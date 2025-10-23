@@ -17,7 +17,7 @@ export async function sendEmail({
   to,
   subject,
   html,
-  from = "noreply@trial.mailersend.net", // MailerSend trial domain
+  from = "test-nrw7gymxx6jg2k8e.mlsender.net", // MailerSend trial domain
 }) {
   try {
     console.log("[EMAIL] Sending to:", to);
