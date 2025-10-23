@@ -27,7 +27,6 @@ This document provides a complete overview of the codebase structure with descri
 - **`REPORT_SYSTEM.md`** - Comprehensive reporting and moderation system documentation
 - **`CODE_INCONSISTENCIES.md`** - Tracks code/documentation inconsistencies and fixes
 - **`CODEBASE_STRUCTURE.md`** - This file - complete codebase structure documentation
-- **`EMAIL_SETUP_INSTRUCTIONS.md`** - Email notification system setup guide
 
 ### Configuration Files
 
