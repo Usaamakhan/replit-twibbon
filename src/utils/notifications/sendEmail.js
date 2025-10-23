@@ -1,4 +1,4 @@
-import { Resend } from 'resend';
+import { Resend } from "resend";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
@@ -8,20 +8,25 @@ const resend = new Resend(process.env.RESEND_API_KEY);
  * @param {string} params.to - Recipient email address
  * @param {string} params.subject - Email subject line
  * @param {string} params.html - HTML email content
- * @param {string} [params.from] - Sender email address (defaults to noreply@yourdomain.com)
+ * @param {string} [params.from] - Sender email address (defaults to noreply@replit-twibbon.vercel.app)
  * @returns {Promise<Object>} - Result object with success status
  */
-export async function sendEmail({ to, subject, html, from = 'noreply@yourdomain.com' }) {
+export async function sendEmail({
+  to,
+  subject,
+  html,
+  from = "noreply@replit-twibbon.vercel.app",
+}) {
   try {
-    console.log('[EMAIL] Sending to:', to);
-    console.log('[EMAIL] Subject:', subject);
+    console.log("[EMAIL] Sending to:", to);
+    console.log("[EMAIL] Subject:", subject);
 
     if (!to || !subject || !html) {
-      throw new Error('Missing required fields: to, subject, and html');
+      throw new Error("Missing required fields: to, subject, and html");
     }
 
     if (!process.env.RESEND_API_KEY) {
-      throw new Error('RESEND_API_KEY environment variable is not set');
+      throw new Error("RESEND_API_KEY environment variable is not set");
     }
 
     const result = await resend.emails.send({
@@ -31,15 +36,15 @@ export async function sendEmail({ to, subject, html, from = 'noreply@yourdomain.
       html: html,
     });
 
-    console.log('[EMAIL] Sent successfully:', result.id);
+    console.log("[EMAIL] Sent successfully:", result.id);
 
     return {
       success: true,
       emailId: result.id,
-      message: 'Email sent successfully',
+      message: "Email sent successfully",
     };
   } catch (error) {
-    console.error('[EMAIL] Error:', error);
+    console.error("[EMAIL] Error:", error);
     return {
       success: false,
       error: error.message,
