@@ -93,6 +93,61 @@ export async function PATCH(request, { params }) {
     const updatedDoc = await userRef.get();
     const updatedData = { id: updatedDoc.id, ...updatedDoc.data() };
     
+    // Send email notification for ban/unban actions
+    try {
+      const userData = userDoc.data();
+      
+      if (userData?.email) {
+        const { sendEmail } = await import('@/utils/notifications/sendEmail');
+        const { getEmailTemplate } = await import('@/utils/notifications/emailTemplates');
+        
+        if (accountStatus === 'banned-temporary' || accountStatus === 'banned-permanent') {
+          // User is being banned - send ban email
+          const isPermanent = accountStatus === 'banned-permanent';
+          const appealDeadline = isPermanent ? null : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+          const formattedDeadline = isPermanent ? null : appealDeadline.toLocaleDateString('en-US', { 
+            year: 'numeric', 
+            month: 'long', 
+            day: 'numeric' 
+          });
+          
+          const emailTemplate = getEmailTemplate('accountBanned', {
+            userEmail: userData.email,
+            username: userData.displayName || userData.username || userData.email,
+            banReason: banReason,
+            appealDeadline: formattedDeadline,
+            isPermanent: isPermanent,
+          });
+          
+          await sendEmail({
+            to: userData.email,
+            subject: emailTemplate.subject,
+            html: emailTemplate.html,
+          });
+          
+          console.log('[BAN] Ban email sent to:', userData.email);
+        } else if (accountStatus === 'active' && (userDoc.data().banned === true || userDoc.data().accountStatus === 'banned-temporary' || userDoc.data().accountStatus === 'banned-permanent')) {
+          // User is being unbanned - send unban email
+          // Check both `banned` boolean (legacy/direct bans) and `accountStatus` (report-based bans)
+          const emailTemplate = getEmailTemplate('accountUnbanned', {
+            userEmail: userData.email,
+            username: userData.displayName || userData.username || userData.email,
+          });
+          
+          await sendEmail({
+            to: userData.email,
+            subject: emailTemplate.subject,
+            html: emailTemplate.html,
+          });
+          
+          console.log('[UNBAN] Unban email sent to:', userData.email);
+        }
+      }
+    } catch (emailError) {
+      // Don't fail the entire request if email fails - just log it
+      console.error('[EMAIL] Failed to send ban/unban email:', emailError);
+    }
+    
     if (updatedData.createdAt && updatedData.createdAt.toDate) {
       updatedData.createdAt = updatedData.createdAt.toDate().toISOString();
     }

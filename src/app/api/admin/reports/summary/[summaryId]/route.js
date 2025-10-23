@@ -229,19 +229,50 @@ export async function PATCH(request, { params }) {
         const appealDeadline = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
         const formattedDeadline = appealDeadline.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
         
-        // Note: Template functions take positional parameters, not named object
-        const notification = targetType === 'campaign' 
-          ? getNotificationTemplate('campaignRemoved', { campaignTitle: summaryData.campaignTitle, appealDeadline: formattedDeadline, removalReason: reason })
-          : getNotificationTemplate('accountBanned', { banReason: reason, appealDeadline: formattedDeadline });
-        
-        await sendInAppNotification({
-          userId,
-          title: notification.title,
-          body: notification.body,
-          actionUrl: notification.actionUrl,
-          icon: notification.icon,
-          type: notification.type,
-        });
+        if (targetType === 'user') {
+          // For BANNED USERS: Send EMAIL instead of in-app notification
+          // Banned users cannot access their account, so email is the only way to reach them
+          const { sendEmail } = await import('@/utils/notifications/sendEmail');
+          const { getEmailTemplate } = await import('@/utils/notifications/emailTemplates');
+          
+          // Get user email from database
+          const userDoc = await db.collection('users').doc(targetId).get();
+          const userData = userDoc.data();
+          
+          if (userData?.email) {
+            const emailTemplate = getEmailTemplate('accountBanned', {
+              userEmail: userData.email,
+              username: userData.displayName || userData.username || userData.email,
+              banReason: reason,
+              appealDeadline: formattedDeadline,
+              isPermanent: false, // From reports, it's always temporary ban
+            });
+            
+            await sendEmail({
+              to: userData.email,
+              subject: emailTemplate.subject,
+              html: emailTemplate.html,
+            });
+            
+            console.log('[REPORT BAN] Ban email sent to:', userData.email);
+          }
+        } else {
+          // For CAMPAIGN REMOVALS: Keep in-app notification (creator can still log in)
+          const notification = getNotificationTemplate('campaignRemoved', { 
+            campaignTitle: summaryData.campaignTitle, 
+            appealDeadline: formattedDeadline, 
+            removalReason: reason 
+          });
+          
+          await sendInAppNotification({
+            userId,
+            title: notification.title,
+            body: notification.body,
+            actionUrl: notification.actionUrl,
+            icon: notification.icon,
+            type: notification.type,
+          });
+        }
       }
     } catch (notifError) {
       console.error('Failed to send notification:', notifError);
