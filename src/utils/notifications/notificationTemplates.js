@@ -63,6 +63,14 @@ export const notificationTemplates = {
     type: 'appeal-deadline-reminder',
   }),
 
+  appealSubmitted: () => ({
+    title: '✅ Appeal Submitted',
+    body: 'Your appeal has been submitted and is under review. You will be notified of the outcome.',
+    actionUrl: '/profile/notifications',
+    icon: '/icon-192x192.png',
+    type: 'appeal-submitted',
+  }),
+
   appealApproved: ({ type }) => ({
     title: '✅ Appeal Approved',
     body: `Your appeal for ${type} removal has been approved and restored.`,
