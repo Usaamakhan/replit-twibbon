@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { adminAuth, adminDb } from '@/lib/firebaseAdmin';
+import { FieldValue } from 'firebase-admin/firestore';
 import { sendInAppNotification } from '@/utils/notifications/sendInAppNotification';
 
 export async function POST(request) {
@@ -134,12 +135,12 @@ export async function POST(request) {
         .collection('campaigns')
         .doc(targetId)
         .update({
-          appealCount: adminDb.FieldValue.increment(1),
+          appealCount: FieldValue.increment(1),
         });
     }
 
     await sendInAppNotification(userId, {
-      type: 'appeal_submitted',
+      type: 'appealSubmitted',
       title: '✅ Appeal Submitted',
       message: `Your appeal for ${type} removal has been submitted and is under review.`,
       actionUrl: '/profile/notifications',

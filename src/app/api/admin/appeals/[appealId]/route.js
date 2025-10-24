@@ -61,7 +61,7 @@ export async function PATCH(request, { params }) {
           const campaignData = campaignDoc.data();
 
           await sendInAppNotification(appealData.userId, {
-            type: 'appeal_approved',
+            type: 'appealApproved',
             title: '✅ Appeal Approved',
             message: `Your appeal for campaign "${campaignData.title}" has been approved and your campaign has been restored.`,
             actionUrl: `/campaign/${campaignData.slug}`,
@@ -97,7 +97,7 @@ export async function PATCH(request, { params }) {
           const userData = userDoc.data();
 
           await sendInAppNotification(appealData.userId, {
-            type: 'appeal_approved',
+            type: 'appealApproved',
             title: '✅ Appeal Approved',
             message: 'Your appeal has been approved and your account has been restored. Welcome back!',
             actionUrl: '/profile',
@@ -130,7 +130,7 @@ export async function PATCH(request, { params }) {
           const campaignData = campaignDoc.data();
 
           await sendInAppNotification(appealData.userId, {
-            type: 'appeal_rejected',
+            type: 'appealRejected',
             title: '❌ Appeal Rejected',
             message: `Your appeal for campaign "${campaignData.title}" has been reviewed and rejected. The removal is now permanent.`,
             actionUrl: '/profile',
@@ -159,7 +159,7 @@ export async function PATCH(request, { params }) {
           });
 
           await sendInAppNotification(appealData.userId, {
-            type: 'appeal_rejected',
+            type: 'appealRejected',
             title: '❌ Appeal Rejected',
             message: 'Your appeal has been reviewed and rejected. Your account ban is now permanent.',
             actionUrl: '/profile',

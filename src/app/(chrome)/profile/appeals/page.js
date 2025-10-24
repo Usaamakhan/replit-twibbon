@@ -35,55 +35,16 @@ function AppealsContent() {
       setLoading(true);
       const token = await user.getIdToken();
 
-      const [campaignsRes, userRes] = await Promise.all([
-        fetch('/api/admin/campaigns', {
-          headers: { Authorization: `Bearer ${token}` },
-        }),
-        fetch(`/api/users/${user.uid}`, {
-          headers: { Authorization: `Bearer ${token}` },
-        }),
-      ]);
+      const response = await fetch('/api/appeals/eligible', {
+        headers: { Authorization: `Bearer ${token}` },
+      });
 
-      const items = [];
-
-      if (campaignsRes.ok) {
-        const { campaigns } = await campaignsRes.json();
-        const removedCampaigns = campaigns.filter(
-          (c) =>
-            c.creatorId === user.uid &&
-            c.moderationStatus === 'removed-temporary' &&
-            c.appealDeadline
-        );
-        items.push(
-          ...removedCampaigns.map((c) => ({
-            type: 'campaign',
-            id: c.id,
-            title: c.title,
-            imageUrl: c.imageUrl,
-            removalReason: c.removalReason,
-            appealDeadline: c.appealDeadline,
-            appealCount: c.appealCount || 0,
-          }))
-        );
+      if (!response.ok) {
+        throw new Error('Failed to fetch eligible items');
       }
 
-      if (userRes.ok) {
-        const userData = await userRes.json();
-        if (
-          userData.accountStatus === 'banned-temporary' &&
-          userData.appealDeadline
-        ) {
-          items.push({
-            type: 'account',
-            id: user.uid,
-            title: 'Your Account',
-            banReason: userData.banReason,
-            appealDeadline: userData.appealDeadline,
-          });
-        }
-      }
-
-      setRemovedItems(items);
+      const data = await response.json();
+      setRemovedItems(data.items || []);
     } catch (err) {
       console.error('Error fetching removed items:', err);
       setError('Failed to load eligible items for appeal');
