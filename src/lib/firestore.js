@@ -1348,3 +1348,61 @@ export const getTopCreators = async (filters = {}) => {
 // Note: Admin role management is handled server-side via API routes
 // See: /api/admin/users/[userId]/role for setUserRole implementation
 // This ensures admin operations use Firebase Admin SDK and bypass client-side security rules
+
+// ==================== APPEAL FUNCTIONS ====================
+
+export const createAppeal = async (appealData) => {
+  try {
+    const appealsRef = collection(db, 'appeals');
+    const appealDoc = await addDoc(appealsRef, {
+      ...appealData,
+      status: 'pending',
+      submittedAt: serverTimestamp(),
+      createdAt: serverTimestamp(),
+    });
+    
+    return { success: true, appealId: appealDoc.id };
+  } catch (error) {
+    console.error('Error creating appeal:', error);
+    throw handleFirebaseError(error);
+  }
+};
+
+export const getAppealsByUser = async (userId) => {
+  try {
+    const appealsRef = collection(db, 'appeals');
+    const q = query(
+      appealsRef,
+      where('userId', '==', userId),
+      orderBy('submittedAt', 'desc')
+    );
+    
+    const snapshot = await getDocs(q);
+    const appeals = [];
+    
+    snapshot.forEach((doc) => {
+      appeals.push({ id: doc.id, ...doc.data() });
+    });
+    
+    return appeals;
+  } catch (error) {
+    console.error('Error getting user appeals:', error);
+    return [];
+  }
+};
+
+export const getAppealById = async (appealId) => {
+  try {
+    const appealRef = doc(db, 'appeals', appealId);
+    const appealDoc = await getDoc(appealRef);
+    
+    if (!appealDoc.exists()) {
+      return null;
+    }
+    
+    return { id: appealDoc.id, ...appealDoc.data() };
+  } catch (error) {
+    console.error('Error getting appeal:', error);
+    return null;
+  }
+};
