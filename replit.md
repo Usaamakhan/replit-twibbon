@@ -92,9 +92,48 @@ Conducted comprehensive documentation audit comparing actual codebase against al
 - ✅ Settings hub with notification preferences
 - ✅ Notification inbox with history
 - ✅ Optimized grouped reporting system
-- ⏸️ Appeals system (deferred)
+- ✅ Complete appeal system (user submission + admin review)
 - ⏸️ Admin warning history view (deferred)
 - ⏸️ Auto-deletion cron jobs (deferred)
+- ⏸️ Appeal deadline reminder notifications (deferred)
+
+## Recent Updates (October 24, 2025)
+
+### Complete Appeal System Implementation
+Implemented a full-featured appeal system for removed campaigns and banned accounts:
+
+**User Features:**
+- Appeal submission page at `/profile/appeals` showing all eligible items
+- 30-day appeal window from removal/ban date
+- One appeal per item with minimum 20-character reason requirement
+- Real-time notifications for appeal submission, approval, and rejection
+
+**Admin Features:**
+- Appeals review dashboard at `/admin/appeals` with filtering (status, type, limit)
+- Approve/reject actions with typed confirmation ("CONFIRM" requirement)
+- Admin notes field for documentation
+- Complete integration with moderation workflow
+
+**Technical Implementation:**
+- User API endpoint: `/api/appeals/eligible` (fetches user's removed items)
+- User API endpoint: `/api/appeals/submit` (submits appeal)
+- Admin API endpoint: `/api/admin/appeals` (lists appeals)
+- Admin API endpoint: `/api/admin/appeals/[appealId]` (approve/reject)
+- Appeals Firestore helper functions in `firestore.js`
+- Notification templates: appealSubmitted, appealApproved, appealRejected
+- AdminSidebar updated with Appeals navigation link
+
+**Integration:**
+- Appeals restore content on approval (moderationStatus → active, accountStatus → active)
+- Appeals set permanent status on rejection (removed-permanent, banned-permanent)
+- Full audit trail through admin action logging
+- Notification system integration for all appeal events
+
+**Deferred Items:**
+- Appeal deadline reminder notifications (requires cron job)
+- Auto-deletion after 30 days if no appeal (requires cron job)
+
+---
 
 ## Recent Updates (October 14, 2025)
 

@@ -106,7 +106,7 @@
 ---
 
 ## Phase 3: Admin Dashboard & Moderation
-✅ **Status:** COMPLETED (Core Features) | ⏸️ PENDING (Appeals & Advanced Features)
+✅ **Status:** COMPLETED
 
 ### 3.1 Admin Dashboard Overview
 - ✅ Admin login at `/admin` (role-based access)
@@ -417,7 +417,7 @@ The admin report action buttons (**Dismiss Report**, **Warn Creator**, **Remove 
 - ✅ Updated API route to create warning documents
 - ✅ Supports both campaign and profile warnings
 - ⏸️ Admin warning history view (deferred to future update)
-- ⏸️ In-app notification delivery (deferred - see Section 9.2)
+- ✅ In-app notification delivery
 
 ---
 
@@ -437,9 +437,11 @@ The admin report action buttons (**Dismiss Report**, **Warn Creator**, **Remove 
 - ✅ Sets `removalReason` from report reason
 - ✅ Calculates `appealDeadline` (30 days from removal)
 - ✅ Tracks `appealCount` for campaigns
-- ⏸️ Appeal submission UI (deferred to future update)
+- ✅ Appeal submission UI at `/profile/appeals`
+- ✅ Admin appeals review dashboard at `/admin/appeals`
+- ✅ In-app notifications for appeal submission, approval, and rejection
 - ⏸️ Auto-deletion after 30 days (deferred - requires cron job)
-- ⏸️ In-app notification with appeal link (deferred - see Section 9.2)
+- ⏸️ Appeal deadline reminder notifications (deferred - requires cron job)
 
 ---
 
@@ -458,7 +460,58 @@ The admin report action buttons (**Dismiss Report**, **Warn Creator**, **Remove 
 
 ---
 
-### 9.2: In-App Notification System
+### 9.2: Appeal System
+
+**Priority:** CRITICAL  
+**Status:** ✅ FULLY IMPLEMENTED  
+**Last Updated:** October 24, 2025
+
+**Overview:**
+Complete appeal system allowing users to appeal removed campaigns or banned accounts within a 30-day window. Admins can review and approve/reject appeals through a dedicated dashboard.
+
+**User-Facing Features:**
+- ✅ Appeal submission page at `/profile/appeals`
+- ✅ Fetches eligible removed campaigns and banned accounts
+- ✅ 30-day appeal window enforcement
+- ✅ One appeal per item limit
+- ✅ Minimum 20-character appeal reason requirement
+- ✅ Real-time submission confirmation
+- ✅ Appeal eligible items API endpoint (`/api/appeals/eligible`)
+- ✅ Appeal submission API endpoint (`/api/appeals/submit`)
+
+**Admin Features:**
+- ✅ Admin appeals dashboard at `/admin/appeals`
+- ✅ Filter appeals by status (pending, approved, rejected)
+- ✅ Filter by type (campaign, account)
+- ✅ Comprehensive appeal details display
+- ✅ Approve/reject actions with confirmation modal
+- ✅ Admin notes field for documentation
+- ✅ Type "CONFIRM" requirement to prevent accidents
+- ✅ Appeals listing API (`/api/admin/appeals`)
+- ✅ Appeal action API (`/api/admin/appeals/[appealId]`)
+
+**Notifications:**
+- ✅ Appeal submitted confirmation
+- ✅ Appeal approved notification (restores content/account)
+- ✅ Appeal rejected notification (permanent removal/ban)
+- ✅ All notifications use camelCase type names
+
+**Database:**
+- ✅ Appeals collection with full CRUD operations
+- ✅ Appeal status tracking (pending, approved, rejected)
+- ✅ appealCount increments on campaigns
+- ✅ Integration with moderation workflow
+
+**Admin Navigation:**
+- ✅ Appeals link added to AdminSidebar
+
+**Outstanding Items:**
+- ⏸️ Appeal deadline reminder notifications (requires cron job)
+- ⏸️ Auto-deletion after 30 days (requires cron job)
+
+---
+
+### 9.3: In-App Notification System
 
 **Priority:** HIGH  
 **Status:** ✅ FULLY IMPLEMENTED  

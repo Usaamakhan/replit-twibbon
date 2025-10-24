@@ -382,10 +382,107 @@ Warning is a "slap on the wrist" - admin reviewed and decided content is not sev
   - The specific reason admin selected from dropdown
   - The exact appeal deadline date (formatted as "February 20, 2025")
 
-**Important Note:** 
-The appeal system is PROMISED in notifications but NOT YET IMPLEMENTED. Users receive notifications saying they can appeal, but there's no actual appeal submission interface. See CODE_INCONSISTENCIES.md #6 for details.
-
 **Use when:** Content clearly violates rules and needs removal
+
+---
+
+## Appeal System
+
+### How Appeals Work
+
+When a campaign is removed or a user is banned temporarily, they have **30 days** to appeal the decision. Here's the complete flow:
+
+#### For Users to Submit an Appeal:
+
+1. **User receives notification**
+   - Campaign removed: "🚫 Campaign Removed - Your campaign has been removed for: [reason]. You can appeal this decision until [date]."
+   - Account banned: "🚫 Account Banned - Your account has been banned for: [reason]. You can appeal until [date]."
+   - Notification includes exact appeal deadline (e.g., "February 20, 2025")
+
+2. **User visits appeals page** (`/profile/appeals`)
+   - Shows all removed campaigns and banned accounts eligible for appeal
+   - Displays appeal deadline for each item
+   - Only shows items with active appeal window (within 30 days)
+   - One appeal allowed per item
+
+3. **User selects item and submits appeal**
+   - Writes appeal reason (minimum 20 characters required)
+   - Explains why they believe the removal/ban was unfair
+   - Submits appeal for admin review
+   - Receives confirmation: "✅ Appeal Submitted - Your appeal has been submitted and is under review. You will be notified of the outcome."
+
+4. **Appeal is tracked**
+   - Appeal status set to `pending`
+   - `appealCount` increments on the campaign (tracks multiple appeals if previous ones were rejected)
+   - Appeal stored in `appeals` collection with: userId, type, targetId, reason, status, submittedAt
+
+#### For Admins to Review Appeals:
+
+5. **Admin visits appeals dashboard** (`/admin/appeals`)
+   - Filter by:
+     - **Status**: All, Pending, Approved, Rejected
+     - **Type**: All, Campaign, Account
+     - **Limit**: 10, 25, 50, 100
+   - Table shows:
+     - User info (profile picture, username, display name)
+     - Appeal type (Campaign or Account)
+     - Target details (campaign title/image or account info)
+     - Original removal/ban reason
+     - User's appeal reason
+     - Submission date
+
+6. **Admin reviews and decides**
+   - Click "Approve" or "Reject" button
+   - Modal appears with:
+     - Full appeal details
+     - Option to add admin notes (optional)
+     - Warning about consequences
+     - Type "CONFIRM" requirement (prevents accidental clicks)
+
+7. **Admin approves appeal**
+   - **For campaigns:**
+     - `moderationStatus` → `active` (campaign restored)
+     - Clears all removal-related fields (`bannedAt`, `banReason`, `appealDeadline`)
+     - Notification sent: "✅ Appeal Approved - Your appeal for campaign '[title]' has been approved and your campaign has been restored."
+   - **For accounts:**
+     - `accountStatus` → `active` (account restored)
+     - Clears ban-related fields
+     - Notification sent: "✅ Appeal Approved - Your appeal has been approved and your account has been restored. Welcome back!"
+   - Appeal status → `approved`
+   - Admin action logged for audit trail
+
+8. **Admin rejects appeal**
+   - **For campaigns:**
+     - `moderationStatus` → `removed-permanent` (no more appeals allowed)
+     - Clears `appealDeadline` (permanent removal)
+     - Notification sent: "❌ Appeal Rejected - Your appeal for campaign '[title]' has been reviewed and rejected. The removal is now permanent."
+   - **For accounts:**
+     - `accountStatus` → `banned-permanent` (permanent ban)
+     - Clears `appealDeadline`
+     - Notification sent: "❌ Appeal Rejected - Your appeal has been reviewed and rejected. Your account ban is now permanent."
+   - Appeal status → `rejected`
+   - Admin action logged
+
+### Appeal System Rules:
+
+- ✅ **30-day window** - Appeals must be submitted within 30 days of removal/ban
+- ✅ **One appeal per item** - Users cannot submit multiple pending appeals for the same campaign/account
+- ✅ **Minimum 20 characters** - Appeal reason must be at least 20 characters long
+- ✅ **Real-time notifications** - Users notified immediately when appeal is approved/rejected
+- ✅ **Admin confirmation** - All approve/reject actions require typing "CONFIRM" to prevent accidents
+- ✅ **Audit trail** - All appeals and admin decisions are logged
+
+### Appeal Deadline Expiration:
+
+**Current Behavior:**
+- After 30 days, the appeal window closes
+- Users can no longer submit appeals
+- Content remains in temporary status indefinitely
+
+**Future Enhancement (Requires Cron Job):**
+- Automatic upgrade to permanent status after deadline passes
+- Auto-deletion of permanently removed content
+- Appeal deadline reminder notifications (7 days, 3 days, 1 day before expiry)
 
 ---
 
