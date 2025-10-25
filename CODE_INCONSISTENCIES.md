@@ -77,36 +77,6 @@ if (!VALID_TRANSITIONS[currentStatus].includes(newStatus)) {
 
 ---
 
-### 4. **Email Notifications Only for Bans (Not Warnings/Removals)**
-
-**What's the problem?**
-The system sends email notifications ONLY when users are banned or unbanned. When campaigns are removed or users are warned, only in-app notifications are sent.
-
-**Why this matters:**
-- Banned users can't access the app, so they NEED email
-- But removed campaigns and warnings also deserve email notifications
-- Users might miss important moderation actions if they don't check the app
-
-**Current behavior:**
-✅ Ban user → Email sent
-✅ Unban user → Email sent  
-❌ Remove campaign → Only in-app notification
-❌ Warn user → Only in-app notification
-
-**Impact:**
-- Users miss important notifications
-- Lower engagement with moderation system
-- More "I didn't know my campaign was removed" support tickets
-
-**Solution:**
-Extend email notification system to cover:
-- Campaign removals
-- User warnings
-- Campaign restorations
-
-**Status:** DEFERRED (per TASKS.md Section 9.2)
-
----
 
 ### 5. **Auto-Deletion After 30 Days Not Implemented**
 
@@ -237,29 +207,6 @@ if (!supabaseUrl || !supabaseServiceKey) {
 3. Add deployment checks to verify all environment variables
 
 **Priority:** MEDIUM
-
----
-
-## 📚 Documentation Issues
-
-### 9. **Non-existent File Referenced in Search Results**
-
-**What's the problem?**
-Earlier search results mentioned `NOTIFICATION_SYSTEM_FIXES.md`, but this file doesn't exist in the codebase.
-
-**Where mentioned:**
-- Appeared in codebase search results
-- May have been deleted or never existed
-
-**Impact:**
-- Minor - just confusing for developers
-- Could indicate outdated search index
-
-**Solution:**
-- Ignore this reference (file doesn't exist)
-- Or create it if notification fixes need documentation
-
-**Priority:** LOW (cosmetic issue)
 
 ---
 
