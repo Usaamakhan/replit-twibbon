@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { requireAdmin } from '@/middleware/adminAuth';
 import { adminFirestore } from '@/lib/firebaseAdmin';
 import { FieldValue } from 'firebase-admin/firestore';
+import { validateAccountTransition } from '@/utils/admin/statusTransitionValidator';
 
 export async function PATCH(request, { params }) {
   try {
@@ -27,10 +28,10 @@ export async function PATCH(request, { params }) {
       }
     }
     
-    const validStatuses = ['active', 'banned-temporary', 'banned-permanent'];
+    const validStatuses = ['active', 'under-review', 'under-review-hidden', 'banned-temporary', 'banned-permanent'];
     if (accountStatus && !validStatuses.includes(accountStatus)) {
       return NextResponse.json(
-        { success: false, error: 'Account status must be: active, banned-temporary, or banned-permanent' },
+        { success: false, error: 'Account status must be: active, under-review, under-review-hidden, banned-temporary, or banned-permanent' },
         { status: 400 }
       );
     }
@@ -58,6 +59,20 @@ export async function PATCH(request, { params }) {
         { success: false, error: 'User not found' },
         { status: 404 }
       );
+    }
+    
+    const userData = userDoc.data();
+    const currentStatus = userData.accountStatus || 'active';
+    
+    // Validate status transition if accountStatus is being changed
+    if (accountStatus) {
+      const validation = validateAccountTransition(currentStatus, accountStatus);
+      if (!validation.valid) {
+        return NextResponse.json(
+          { success: false, error: validation.error },
+          { status: 400 }
+        );
+      }
     }
     
     const updateData = {

@@ -5,6 +5,7 @@ import { FieldValue } from 'firebase-admin/firestore';
 import { sendInAppNotification } from '@/utils/notifications/sendInAppNotification';
 import { getNotificationTemplate } from '@/utils/notifications/notificationTemplates';
 import { logAdminAction } from '@/utils/logAdminAction';
+import { validateCampaignTransition, validateAccountTransition } from '@/utils/admin/statusTransitionValidator';
 
 export async function PATCH(request, { params }) {
   try {
@@ -72,13 +73,37 @@ export async function PATCH(request, { params }) {
       const targetData = targetDoc.data();
       const now = new Date();
       
+      // Get current status for validation
+      const currentStatus = targetType === 'campaign' 
+        ? (targetData.moderationStatus || 'active')
+        : (targetData.accountStatus || 'active');
+      
+      // Determine new status based on action
+      let newStatus;
+      if (action === 'no-action') {
+        newStatus = 'active';
+      } else if (action === 'warned') {
+        newStatus = 'active';
+      } else if (action === 'removed') {
+        newStatus = targetType === 'campaign' ? 'removed-temporary' : 'banned-temporary';
+      }
+      
+      // Validate status transition
+      const validation = targetType === 'campaign'
+        ? validateCampaignTransition(currentStatus, newStatus)
+        : validateAccountTransition(currentStatus, newStatus);
+      
+      if (!validation.valid) {
+        throw new Error(validation.error);
+      }
+      
       // Check if it was previously hidden (auto-hidden at 3+ reports for campaigns, 10+ for users)
       // For campaigns: check moderationStatus === 'under-review-hidden'
       // For users: check accountStatus === 'under-review-hidden'
       if (targetType === 'campaign') {
-        wasHidden = targetData.moderationStatus === 'under-review-hidden';
+        wasHidden = targetData.moderationStatus === 'under-review-hidden' || targetData.moderationStatus === 'under-review';
       } else {
-        wasHidden = targetData.accountStatus === 'under-review-hidden';
+        wasHidden = targetData.accountStatus === 'under-review-hidden' || targetData.accountStatus === 'under-review';
       }
       
       // Update the target based on action - ALWAYS reset reportsCount to 0

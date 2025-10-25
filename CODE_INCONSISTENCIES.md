@@ -36,140 +36,38 @@ Implement a cron job (scheduled task) that runs daily:
 
 ## ⚠️ Important Issues
 
-### 3. **Missing Status Transition Validation**
+### 3. ~~**Missing Status Transition Validation**~~ ✅ **FIXED** (October 25, 2025)
 
-**Last Updated:** October 25, 2025
+**Status:** RESOLVED
 
-**What's the problem?**
-Admins can change campaign/user statuses in ways that violate business rules. After analyzing the actual codebase, here are the specific issues found:
+**What was fixed:**
+Complete status transition validation system implemented with intermediate `under-review` status:
 
-#### Problem 1: Permanent Statuses Can Be Reversed
+1. ✅ **Created transition validator utility** (`/src/utils/admin/statusTransitionValidator.js`)
+   - Validates all campaign moderationStatus transitions
+   - Validates all user accountStatus transitions
+   - Prevents permanent statuses from being reversed
+   - Returns clear error messages for invalid transitions
 
-**Where:** 
-- `/api/admin/campaigns/[campaignId]/route.js` (Lines 14-77)
-- `/api/admin/users/[userId]/ban/route.js` (Lines 30-89)
+2. ✅ **Implemented `under-review` intermediate status:**
+   - Campaigns: 1-2 reports → `under-review` (visible), 3+ reports → `under-review-hidden` (hidden)
+   - Users: 1-9 reports → `under-review` (visible), 10+ reports → `under-review-hidden` (hidden)
+   - Updated report submission endpoints with new logic
 
-**Evidence:**
-Both endpoints accept ANY valid status without checking current status. This allows:
-- `removed-permanent` → `active` (campaign restoration)
-- `banned-permanent` → `active` (permanent ban reversal)
+3. ✅ **Added validation to all admin endpoints:**
+   - `/api/admin/campaigns/[campaignId]/route.js` - Validates before status change
+   - `/api/admin/users/[userId]/ban/route.js` - Validates before ban/unban
+   - `/api/admin/reports/summary/[summaryId]/route.js` - Validates before dismiss/warn/remove
+   - `/api/admin/appeals/[appealId]/route.js` - Validates before approve/reject
 
-**Why this is bad:**
-- "Permanent" doesn't mean permanent
-- Contradicts messaging to users ("your ban is permanent")
-- Could create legal issues if users challenge "permanent" claims
+4. ✅ **Transition rules enforced:**
+   - Permanent statuses (`removed-permanent`, `banned-permanent`) CANNOT be reversed
+   - All valid transitions documented and enforced
+   - Clear error messages for invalid attempts
 
-#### Problem 2: Dead Code - "under-review" Status
+**Implementation Details:** See REPORT_SYSTEM.md - "Status Transition System - Complete Technical Analysis"
 
-**Where:** `/src/utils/admin/adminValidation.js` (Line 14)
-
-**Evidence:**
-```javascript
-const VALID_MODERATION_STATUSES = [
-  'active', 
-  'under-review',        // Listed as valid but NEVER used
-  'under-review-hidden', // Actually used everywhere
-  'removed-temporary', 
-  'removed-permanent'
-];
-```
-
-But actual code only uses `under-review-hidden`:
-- `/api/reports/submit/route.js` Line 96: `moderationStatus = 'under-review-hidden'`
-- No file in codebase sets status to `under-review`
-
-**Why this is bad:**
-- Confusing for developers
-- Validation accepts status that nothing uses
-- Documentation inconsistency
-
-#### Problem 3: No Validation for Appeal Eligibility
-
-**Where:** `/api/admin/appeals/[appealId]/route.js` (Lines 46-59)
-
-**Evidence:**
-Appeal approval code doesn't verify target is still in temporary status:
-```javascript
-// No check for campaignData.moderationStatus === 'removed-temporary'
-await campaignRef.update({
-  moderationStatus: 'active', // Restores regardless of current status
-});
-```
-
-**Edge Case:**
-1. Campaign removed-temporary → user appeals
-2. Admin makes it removed-permanent before reviewing appeal
-3. Admin approves appeal → campaign restored (should fail)
-
-**Why this is bad:**
-- Could restore content admin explicitly made permanent
-- Race condition if two admins act simultaneously
-
-#### Problem 4: Report Actions Can Transition From ANY Status
-
-**Where:** `/api/admin/reports/summary/[summaryId]/route.js` (Lines 84-143)
-
-**Evidence:**
-Dismiss/Warn/Remove actions have NO status checks. They can:
-- Dismiss reports on `removed-permanent` → restores to `active` (wrong!)
-- Warn user with `banned-permanent` → restores to `active` (wrong!)
-- Remove campaign that's already `removed-permanent` → sets to `removed-temporary` (downgrade!)
-
-**Current Implementation (NO VALIDATION):**
-```javascript
-if (action === 'no-action') {
-  // Restores to active from ANY status - even permanent
-  targetUpdates.moderationStatus = 'active';
-}
-```
-
-**Impact:**
-- Business rules not enforced
-- Data integrity issues
-- Confusing for admins and users
-- Could lead to legal issues (claiming "permanent ban" but allowing restoration)
-
----
-
-**Solution:**
-
-See detailed implementation in REPORT_SYSTEM.md - "Status Transition System" section, which includes:
-
-1. **Create transition validation utility:** `/src/utils/admin/statusTransitionValidator.js`
-   - `validateCampaignTransition(currentStatus, newStatus)`
-   - `validateAccountTransition(currentStatus, newStatus)`
-   - Returns `{ valid: true/false, error: string }`
-
-2. **Valid transition rules:**
-   ```javascript
-   Campaign Transitions:
-   - 'active' → ['under-review-hidden', 'removed-temporary', 'removed-permanent']
-   - 'under-review-hidden' → ['active', 'removed-temporary', 'removed-permanent']
-   - 'removed-temporary' → ['active', 'removed-permanent']
-   - 'removed-permanent' → [] // NO transitions out
-   
-   Account Transitions:
-   - 'active' → ['under-review-hidden', 'banned-temporary', 'banned-permanent']
-   - 'under-review-hidden' → ['active', 'banned-temporary', 'banned-permanent']
-   - 'banned-temporary' → ['active', 'banned-permanent']
-   - 'banned-permanent' → [] // NO transitions out
-   ```
-
-3. **Apply validation in these files:**
-   - `/api/admin/campaigns/[campaignId]/route.js` - Before line 45
-   - `/api/admin/users/[userId]/ban/route.js` - Before line 64
-   - `/api/admin/reports/summary/[summaryId]/route.js` - Before line 90
-   - `/api/admin/appeals/[appealId]/route.js` - Before lines 51 and 124
-
-4. **Remove dead code:**
-   - Remove `'under-review'` from `adminValidation.js` line 16
-   - Update all documentation to only mention `'under-review-hidden'`
-
-**Priority:** HIGH (was MEDIUM, upgraded after detailed analysis)
-
-**Files Affected:** 4 API routes + 1 validation utility
-
-**See Also:** REPORT_SYSTEM.md - "Status Transition System - Complete Technical Analysis" for comprehensive transition map and implementation details.
+**Files Modified:** 8 files (1 new utility + 4 admin routes + 2 report routes + 1 documentation update)
 
 ---
 

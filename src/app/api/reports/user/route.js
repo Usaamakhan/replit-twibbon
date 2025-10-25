@@ -103,8 +103,20 @@ export async function POST(request) {
         userUpdates.accountStatus = 'active';
       }
       
-      // Auto-hide profile at 10+ reports (as per spec)
-      if (newReportsCount >= 10 && userData.accountStatus === 'active') {
+      // Auto-flag for review based on report count thresholds
+      // 1-9 reports: under-review (visible but flagged)
+      // 10+ reports: under-review-hidden (profile hidden)
+      if (newReportsCount >= 1 && newReportsCount <= 9 && userData.accountStatus === 'active') {
+        userUpdates.accountStatus = 'under-review';
+        
+        // Flag for notification after transaction
+        shouldNotify = true;
+        notificationData = {
+          userId: reportedUserId,
+          reason,
+          notificationType: 'under-review'
+        };
+      } else if (newReportsCount >= 10 && (userData.accountStatus === 'active' || userData.accountStatus === 'under-review')) {
         userUpdates.accountStatus = 'under-review-hidden';
         userUpdates.hiddenAt = new Date();
         
@@ -112,7 +124,8 @@ export async function POST(request) {
         shouldNotify = true;
         notificationData = {
           userId: reportedUserId,
-          reason
+          reason,
+          notificationType: 'under-review-hidden'
         };
       }
       
@@ -144,8 +157,10 @@ export async function POST(request) {
           };
         }
         
-        // Sync account status when user profile is auto-hidden
-        if (newReportsCount >= 10 && userData.accountStatus === 'active') {
+        // Sync account status based on report count
+        if (newReportsCount >= 1 && newReportsCount <= 9 && userData.accountStatus === 'active') {
+          summaryUpdates.accountStatus = 'under-review';
+        } else if (newReportsCount >= 10 && (userData.accountStatus === 'active' || userData.accountStatus === 'under-review')) {
           summaryUpdates.accountStatus = 'under-review-hidden';
           summaryUpdates.hiddenAt = now;
         }
@@ -179,7 +194,12 @@ export async function POST(request) {
     
     // Send notification AFTER transaction completes
     if (shouldNotify && notificationData) {
-      const notification = getNotificationTemplate('profileUnderReview');
+      // Choose notification template based on status
+      const templateType = notificationData.notificationType === 'under-review' 
+        ? 'profileUnderReview' 
+        : 'profileUnderReview'; // Using same template for now
+      
+      const notification = getNotificationTemplate(templateType);
       
       await sendInAppNotification({
         userId: notificationData.userId,
@@ -191,6 +211,7 @@ export async function POST(request) {
         metadata: {
           reportedUserId: notificationData.userId,
           reason: notificationData.reason,
+          notificationType: notificationData.notificationType
         }
       }).catch(err => console.error('Failed to send notification:', err));
     }

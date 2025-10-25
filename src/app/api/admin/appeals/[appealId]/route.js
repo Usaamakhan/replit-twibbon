@@ -3,6 +3,7 @@ import { requireAdmin } from '@/middleware/adminAuth';
 import { adminDb } from '@/lib/firebaseAdmin';
 import { sendInAppNotification } from '@/utils/notifications/sendInAppNotification';
 import { logAdminAction } from '@/utils/logAdminAction';
+import { validateCampaignTransition, validateAccountTransition } from '@/utils/admin/statusTransitionValidator';
 
 export async function PATCH(request, { params }) {
   try {
@@ -48,6 +49,18 @@ export async function PATCH(request, { params }) {
         const campaignDoc = await campaignRef.get();
 
         if (campaignDoc.exists()) {
+          const campaignData = campaignDoc.data();
+          const currentStatus = campaignData.moderationStatus || 'active';
+          
+          // Validate transition to active
+          const validation = validateCampaignTransition(currentStatus, 'active');
+          if (!validation.valid) {
+            return NextResponse.json(
+              { error: validation.error },
+              { status: 400 }
+            );
+          }
+          
           await campaignRef.update({
             moderationStatus: 'active',
             removedAt: null,
@@ -83,6 +96,18 @@ export async function PATCH(request, { params }) {
         const userDoc = await userRef.get();
 
         if (userDoc.exists()) {
+          const userData = userDoc.data();
+          const currentStatus = userData.accountStatus || 'active';
+          
+          // Validate transition to active
+          const validation = validateAccountTransition(currentStatus, 'active');
+          if (!validation.valid) {
+            return NextResponse.json(
+              { error: validation.error },
+              { status: 400 }
+            );
+          }
+          
           await userRef.update({
             accountStatus: 'active',
             bannedAt: null,
@@ -121,6 +146,18 @@ export async function PATCH(request, { params }) {
         const campaignDoc = await campaignRef.get();
 
         if (campaignDoc.exists()) {
+          const campaignData = campaignDoc.data();
+          const currentStatus = campaignData.moderationStatus || 'active';
+          
+          // Validate transition to removed-permanent
+          const validation = validateCampaignTransition(currentStatus, 'removed-permanent');
+          if (!validation.valid) {
+            return NextResponse.json(
+              { error: validation.error },
+              { status: 400 }
+            );
+          }
+          
           await campaignRef.update({
             moderationStatus: 'removed-permanent',
             appealDeadline: null,
@@ -152,6 +189,18 @@ export async function PATCH(request, { params }) {
         const userDoc = await userRef.get();
 
         if (userDoc.exists()) {
+          const userData = userDoc.data();
+          const currentStatus = userData.accountStatus || 'active';
+          
+          // Validate transition to banned-permanent
+          const validation = validateAccountTransition(currentStatus, 'banned-permanent');
+          if (!validation.valid) {
+            return NextResponse.json(
+              { error: validation.error },
+              { status: 400 }
+            );
+          }
+          
           await userRef.update({
             accountStatus: 'banned-permanent',
             appealDeadline: null,

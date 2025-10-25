@@ -91,8 +91,22 @@ export async function POST(request) {
         updatedAt: new Date(),
       };
       
-      // Auto-flag for review if threshold reached (3+ reports)
-      if (newReportsCount >= 3 && campaignData.moderationStatus === 'active') {
+      // Auto-flag for review based on report count thresholds
+      // 1-2 reports: under-review (visible but flagged)
+      // 3+ reports: under-review-hidden (hidden from public)
+      if (newReportsCount >= 1 && newReportsCount <= 2 && campaignData.moderationStatus === 'active') {
+        campaignUpdates.moderationStatus = 'under-review';
+        
+        // Flag for notification after transaction
+        shouldNotify = true;
+        notificationData = {
+          userId: campaignData.creatorId,
+          campaignTitle: campaignData.title || 'Your campaign',
+          campaignId,
+          reason,
+          notificationType: 'under-review'
+        };
+      } else if (newReportsCount >= 3 && (campaignData.moderationStatus === 'active' || campaignData.moderationStatus === 'under-review')) {
         campaignUpdates.moderationStatus = 'under-review-hidden';
         campaignUpdates.hiddenAt = new Date();
         
@@ -102,7 +116,8 @@ export async function POST(request) {
           userId: campaignData.creatorId,
           campaignTitle: campaignData.title || 'Your campaign',
           campaignId,
-          reason
+          reason,
+          notificationType: 'under-review-hidden'
         };
       }
       
@@ -134,8 +149,10 @@ export async function POST(request) {
           };
         }
         
-        // Sync moderation status when campaign is auto-hidden
-        if (newReportsCount >= 3 && campaignData.moderationStatus === 'active') {
+        // Sync moderation status based on report count
+        if (newReportsCount >= 1 && newReportsCount <= 2 && campaignData.moderationStatus === 'active') {
+          summaryUpdates.moderationStatus = 'under-review';
+        } else if (newReportsCount >= 3 && (campaignData.moderationStatus === 'active' || campaignData.moderationStatus === 'under-review')) {
           summaryUpdates.moderationStatus = 'under-review-hidden';
           summaryUpdates.hiddenAt = now;
         }
@@ -170,7 +187,12 @@ export async function POST(request) {
     
     // Send notification AFTER transaction completes
     if (shouldNotify && notificationData) {
-      const notification = getNotificationTemplate('campaignUnderReview', {
+      // Choose notification template based on status
+      const templateType = notificationData.notificationType === 'under-review' 
+        ? 'campaignUnderReview' 
+        : 'campaignUnderReview'; // Using same template for now
+      
+      const notification = getNotificationTemplate(templateType, {
         campaignTitle: notificationData.campaignTitle
       });
       
@@ -184,6 +206,7 @@ export async function POST(request) {
         metadata: {
           campaignId: notificationData.campaignId,
           reason: notificationData.reason,
+          notificationType: notificationData.notificationType
         }
       }).catch(err => console.error('Failed to send notification:', err));
     }

@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { requireAdmin } from '@/middleware/adminAuth';
 import { adminFirestore } from '@/lib/firebaseAdmin';
 import { FieldValue } from 'firebase-admin/firestore';
+import { validateCampaignTransition } from '@/utils/admin/statusTransitionValidator';
 
 export async function PATCH(request, { params }) {
   try {
@@ -11,10 +12,10 @@ export async function PATCH(request, { params }) {
     const body = await request.json();
     const { moderationStatus, removeReason } = body;
     
-    const validStatuses = ['active', 'under-review-hidden', 'removed-temporary', 'removed-permanent'];
+    const validStatuses = ['active', 'under-review', 'under-review-hidden', 'removed-temporary', 'removed-permanent'];
     if (moderationStatus && !validStatuses.includes(moderationStatus)) {
       return NextResponse.json(
-        { success: false, error: 'Invalid moderation status. Must be: active, under-review-hidden, removed-temporary, or removed-permanent' },
+        { success: false, error: 'Invalid moderation status. Must be: active, under-review, under-review-hidden, removed-temporary, or removed-permanent' },
         { status: 400 }
       );
     }
@@ -35,6 +36,20 @@ export async function PATCH(request, { params }) {
         { success: false, error: 'Campaign not found' },
         { status: 404 }
       );
+    }
+    
+    const campaignData = campaignDoc.data();
+    const currentStatus = campaignData.moderationStatus || 'active';
+    
+    // Validate status transition if moderationStatus is being changed
+    if (moderationStatus) {
+      const validation = validateCampaignTransition(currentStatus, moderationStatus);
+      if (!validation.valid) {
+        return NextResponse.json(
+          { success: false, error: validation.error },
+          { status: 400 }
+        );
+      }
     }
     
     const updateData = {

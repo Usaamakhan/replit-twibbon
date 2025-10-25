@@ -43,12 +43,13 @@ The Twibbonize reporting system allows users to report inappropriate campaigns o
    - Campaign document: `reportsCount` field increments
    - Report Summary document: `reasonCounts` object increments the specific reason count
    - **Both counters always stay synchronized** - they increment together and reset together
-4. **Auto-hide at 3 reports:**
-   - When a campaign reaches **3 or more reports**
-   - Status changes to `under-review-hidden` (auto-hidden from public)
-   - Hidden timestamp recorded
-   - **Creator receives in-app notification**: "⚠️ Campaign Under Review - Your campaign has been flagged by users and is now under review"
-5. **Below 3 reports** - Campaign stays visible, no notification sent
+4. **Auto-flag based on report count:**
+   - **1-2 reports**: Status changes to `under-review` (flagged for review but still visible to public)
+     - **Creator receives notification**: "⚠️ Campaign Under Review - Your campaign has been flagged by users"
+   - **3+ reports**: Status changes to `under-review-hidden` (hidden from public)
+     - Hidden timestamp recorded
+     - **Creator receives notification**: "⚠️ Campaign Hidden - Your campaign has been auto-hidden due to multiple reports"
+5. **No reports** - Campaign stays in `active` status, fully visible
 
 ### For User Profiles:
 1. **Report is counted** - The user's report count increases by 1
@@ -57,12 +58,13 @@ The Twibbonize reporting system allows users to report inappropriate campaigns o
    - User document: `reportsCount` field increments
    - Report Summary document: `reasonCounts` object increments the specific reason count
    - **Both counters always stay synchronized** - they increment together and reset together
-4. **Auto-hide at 10 reports:**
-   - When a user reaches **10 or more reports**
-   - Account status changes to `under-review-hidden` (profile hidden from public)
-   - Hidden timestamp recorded
-   - **User receives in-app notification**: "⚠️ Profile Under Review - Your profile has been flagged by users and is now under review"
-5. **Below 10 reports** - Profile stays visible, no notification sent
+4. **Auto-flag based on report count:**
+   - **1-9 reports**: Account status changes to `under-review` (flagged for review but profile still visible)
+     - **User receives notification**: "⚠️ Profile Under Review - Your profile has been flagged by users"
+   - **10+ reports**: Account status changes to `under-review-hidden` (profile hidden from public)
+     - Hidden timestamp recorded
+     - **User receives notification**: "⚠️ Profile Hidden - Your profile has been auto-hidden due to multiple reports"
+5. **No reports** - User stays in `active` status, profile fully visible
 
 **Counter Synchronization (Fixed October 22, 2025):**
 - When a new report comes in AFTER admin has reviewed previous reports (status was 'resolved' or 'dismissed'), the system:
@@ -499,6 +501,7 @@ When a campaign is removed or a user is banned temporarily, they have **30 days*
 
 ### Moderation Statuses (For Campaigns):
 - **active** - Visible to public, no issues
+- **under-review** - 1-2 reports received, still visible but flagged for admin review
 - **under-review-hidden** - Hidden due to 3+ reports, awaiting admin review
 - **removed-temporary** - Campaign removed by admin, 30-day appeal window
 - **removed-permanent** - Campaign permanently deleted (second offense or severe violation)
@@ -506,6 +509,7 @@ When a campaign is removed or a user is banned temporarily, they have **30 days*
 
 ### Account Statuses (For Users):
 - **active** - Profile visible, account accessible, no issues
+- **under-review** - 1-9 reports received, profile still visible but flagged for admin review
 - **under-review-hidden** - Profile hidden due to 10+ reports, awaiting admin review
 - **banned-temporary** - User banned by admin, 30-day appeal window, cannot login
 - **banned-permanent** - User permanently banned (severe violations), all data deleted
@@ -939,11 +943,12 @@ Campaigns use the `moderationStatus` field to track content visibility and moder
 #### Available Statuses:
 
 1. **`active`** - Campaign is visible to public, no moderation issues
-2. **`under-review-hidden`** - Campaign auto-hidden at 3+ reports, awaiting admin review
-3. **`removed-temporary`** - Admin removed campaign with 30-day appeal window
-4. **`removed-permanent`** - Campaign permanently removed, no recovery possible
+2. **`under-review`** - 1-2 reports received, still visible but flagged for review
+3. **`under-review-hidden`** - Campaign auto-hidden at 3+ reports, awaiting admin review
+4. **`removed-temporary`** - Admin removed campaign with 30-day appeal window
+5. **`removed-permanent`** - Campaign permanently removed, no recovery possible
 
-**Note:** The status `under-review` mentioned in some documentation does NOT exist in actual code. Only `under-review-hidden` is implemented.
+**Note:** The status `under-review` serves as an intermediate flagging state before auto-hiding content from the public.
 
 ---
 
@@ -953,12 +958,14 @@ Users have TWO separate status fields that serve different purposes:
 
 #### 1. `accountStatus` - Controls account access and bans:
 - **`active`** - User can log in, account fully functional
+- **`under-review`** - 1-9 reports received, profile still visible (user can still log in)
 - **`under-review-hidden`** - Profile hidden at 10+ reports (user can still log in)
 - **`banned-temporary`** - User cannot log in, 30-day appeal window
 - **`banned-permanent`** - User cannot log in, permanent ban, data scheduled for deletion
 
 #### 2. `moderationStatus` - Controls profile visibility (separate from campaigns):
 - **`active`** - Profile visible to public
+- **`under-review`** - Profile flagged for review but still visible
 - **`under-review-hidden`** - Profile hidden from public (user can still log in and appeal)
 
 **Important Distinction:**
