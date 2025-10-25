@@ -37,36 +37,28 @@ Implement a cron job (scheduled task) that runs daily:
 ## ⚠️ Important Issues
 
 ### 3. ~~**Missing Status Transition Validation**~~ ✅ **FIXED** (October 25, 2025)
-
 **Status:** RESOLVED
-
 **What was fixed:**
 Complete status transition validation system implemented with intermediate `under-review` status:
-
 1. ✅ **Created transition validator utility** (`/src/utils/admin/statusTransitionValidator.js`)
    - Validates all campaign moderationStatus transitions
    - Validates all user accountStatus transitions
    - Prevents permanent statuses from being reversed
    - Returns clear error messages for invalid transitions
-
 2. ✅ **Implemented `under-review` intermediate status:**
    - Campaigns: 1-2 reports → `under-review` (visible), 3+ reports → `under-review-hidden` (hidden)
    - Users: 1-9 reports → `under-review` (visible), 10+ reports → `under-review-hidden` (hidden)
    - Updated report submission endpoints with new logic
-
 3. ✅ **Added validation to all admin endpoints:**
    - `/api/admin/campaigns/[campaignId]/route.js` - Validates before status change
    - `/api/admin/users/[userId]/ban/route.js` - Validates before ban/unban
    - `/api/admin/reports/summary/[summaryId]/route.js` - Validates before dismiss/warn/remove
    - `/api/admin/appeals/[appealId]/route.js` - Validates before approve/reject
-
 4. ✅ **Transition rules enforced:**
    - Permanent statuses (`removed-permanent`, `banned-permanent`) CANNOT be reversed
    - All valid transitions documented and enforced
    - Clear error messages for invalid attempts
-
 **Implementation Details:** See REPORT_SYSTEM.md - "Status Transition System - Complete Technical Analysis"
-
 **Files Modified:** 8 files (1 new utility + 4 admin routes + 2 report routes + 1 documentation update)
 
 ---
