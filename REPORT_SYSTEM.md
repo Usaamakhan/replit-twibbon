@@ -920,4 +920,409 @@ The Twibbonize reporting system is designed to:
 
 This system balances automation with human oversight, ensuring bad content is addressed quickly while giving creators/users appropriate notifications and (eventually) appeal rights.
 
-**Note:** This document reflects the actual implementation as of October 21, 2025. For known issues and improvement suggestions, see CODE_INCONSISTENCIES.md.
+**Note:** This document reflects the actual implementation as of October 25, 2025. For known issues and improvement suggestions, see CODE_INCONSISTENCIES.md.
+
+---
+
+## Status Transition System - Complete Technical Analysis
+
+**Last Updated:** October 25, 2025
+
+This section documents how campaign and user statuses change throughout the moderation lifecycle, where transitions are triggered, validation rules, and identified gaps in the current implementation.
+
+---
+
+### Campaign Status System (moderationStatus)
+
+Campaigns use the `moderationStatus` field to track content visibility and moderation state.
+
+#### Available Statuses:
+
+1. **`active`** - Campaign is visible to public, no moderation issues
+2. **`under-review-hidden`** - Campaign auto-hidden at 3+ reports, awaiting admin review
+3. **`removed-temporary`** - Admin removed campaign with 30-day appeal window
+4. **`removed-permanent`** - Campaign permanently removed, no recovery possible
+
+**Note:** The status `under-review` mentioned in some documentation does NOT exist in actual code. Only `under-review-hidden` is implemented.
+
+---
+
+### User Status System (accountStatus + moderationStatus)
+
+Users have TWO separate status fields that serve different purposes:
+
+#### 1. `accountStatus` - Controls account access and bans:
+- **`active`** - User can log in, account fully functional
+- **`under-review-hidden`** - Profile hidden at 10+ reports (user can still log in)
+- **`banned-temporary`** - User cannot log in, 30-day appeal window
+- **`banned-permanent`** - User cannot log in, permanent ban, data scheduled for deletion
+
+#### 2. `moderationStatus` - Controls profile visibility (separate from campaigns):
+- **`active`** - Profile visible to public
+- **`under-review-hidden`** - Profile hidden from public (user can still log in and appeal)
+
+**Important Distinction:**
+- `accountStatus` = whether user can ACCESS their account
+- `moderationStatus` = whether profile is VISIBLE to public
+- These can be different (e.g., profile hidden but user can still log in to appeal)
+
+---
+
+### Status Transition Map
+
+#### Campaign Status Transitions:
+
+```
+AUTOMATIC TRANSITIONS (triggered by reports):
+active → under-review-hidden (at 3rd report)
+
+ADMIN ACTIONS (via /api/admin/reports/summary/[summaryId]):
+under-review-hidden → active (dismiss reports)
+under-review-hidden → removed-temporary (remove campaign)
+active → removed-temporary (remove campaign without being hidden first)
+active → active (warn creator - resets to active if was hidden)
+under-review-hidden → active (warn creator - always restores to active)
+
+ADMIN DIRECT ACTIONS (via /api/admin/campaigns/[campaignId]):
+ANY_STATUS → active (restore campaign)
+ANY_STATUS → under-review-hidden (manual hide)
+ANY_STATUS → removed-temporary (temporary removal)
+ANY_STATUS → removed-permanent (permanent removal)
+
+APPEAL SYSTEM (via /api/admin/appeals/[appealId]):
+removed-temporary → active (appeal approved)
+removed-temporary → removed-permanent (appeal rejected)
+
+CREATOR ACTIONS:
+ANY_NON_REMOVED_STATUS → deleted (creator deletes their campaign)
+```
+
+#### User Status Transitions:
+
+```
+AUTOMATIC TRANSITIONS (triggered by reports):
+accountStatus: active → under-review-hidden (at 10th report)
+
+ADMIN REPORT ACTIONS (via /api/admin/reports/summary/[summaryId]):
+accountStatus: under-review-hidden → active (dismiss reports)
+accountStatus: under-review-hidden → banned-temporary (ban user)
+accountStatus: active → banned-temporary (ban directly)
+accountStatus: active → active (warn user - resets to active if hidden)
+accountStatus: under-review-hidden → active (warn user)
+
+ADMIN DIRECT BAN (via /api/admin/users/[userId]/ban):
+accountStatus: ANY → active (unban)
+accountStatus: ANY → banned-temporary (temporary ban)
+accountStatus: ANY → banned-permanent (permanent ban)
+
+APPEAL SYSTEM (via /api/admin/appeals/[appealId]):
+accountStatus: banned-temporary → active (appeal approved)
+accountStatus: banned-temporary → banned-permanent (appeal rejected)
+```
+
+---
+
+### Where Transitions Happen
+
+#### 1. Auto-Hide on Reports
+**File:** `/src/app/api/reports/submit/route.js` and `/src/app/api/reports/user/route.js`
+
+**Trigger:** Report submission increments counter
+
+**Campaign Logic:**
+```javascript
+if (newReportsCount >= 3 && campaignData.moderationStatus === 'active') {
+  campaignUpdates.moderationStatus = 'under-review-hidden';
+  campaignUpdates.hiddenAt = now;
+  // Send notification to creator
+}
+```
+
+**User Logic:**
+```javascript
+if (newReportsCount >= 10 && userData.accountStatus === 'active') {
+  userUpdates.accountStatus = 'under-review-hidden';
+  userUpdates.hiddenAt = now;
+  // Send notification to user
+}
+```
+
+**Validation:** ✅ Only triggers if current status is `active` (prevents re-hiding reviewed content)
+
+---
+
+#### 2. Admin Report Actions (Dismiss/Warn/Remove)
+**File:** `/src/app/api/admin/reports/summary/[summaryId]/route.js`
+
+**Actions:**
+
+**A. Dismiss Report (`action: 'no-action'`):**
+- Campaigns: `moderationStatus → 'active'`
+- Users: `accountStatus → 'active'`
+- Clears: `hiddenAt`, `bannedAt`, `banReason`, `appealDeadline`
+- Resets: `reportsCount → 0`
+
+**B. Warn (`action: 'warned'`):**
+- Creates warning record in `warnings` collection
+- Campaigns: `moderationStatus → 'active'` (always restores)
+- Users: `accountStatus → 'active'` (always restores)
+- Clears all moderation fields (same as dismiss)
+- Rationale: Warning means "reviewed but not severe enough for removal"
+
+**C. Remove/Ban (`action: 'removed'`):**
+- Campaigns: `moderationStatus → 'removed-temporary'`
+- Users: `accountStatus → 'banned-temporary'`
+- Sets: `bannedAt`, `banReason`, `appealDeadline` (30 days)
+- Resets: `reportsCount → 0`
+
+**Validation:** ❌ NO status transition validation - can transition from ANY status
+
+---
+
+#### 3. Admin Direct Campaign Moderation
+**File:** `/src/app/api/admin/campaigns/[campaignId]/route.js`
+
+**Allowed Statuses:** `['active', 'under-review-hidden', 'removed-temporary', 'removed-permanent']`
+
+**Behavior:**
+- Admin can set campaign to ANY valid status directly
+- Sets appeal deadline for `removed-temporary`
+- Clears appeal fields for `removed-permanent`
+- Clears moderation fields when setting to `active`
+
+**Validation:** ❌ NO transition validation - can go from `removed-permanent` → `active`
+
+---
+
+#### 4. Admin Direct User Ban
+**File:** `/src/app/api/admin/users/[userId]/ban/route.js`
+
+**Allowed Statuses:** `['active', 'banned-temporary', 'banned-permanent']`
+
+**Behavior:**
+- Admin can set user to ANY valid status directly
+- Sets appeal deadline for `banned-temporary`
+- Clears appeal fields for `banned-permanent`
+- Sends email notification for bans/unbans
+
+**Validation:** ❌ NO transition validation - can go from `banned-permanent` → `active`
+
+---
+
+#### 5. Appeal Approval/Rejection
+**File:** `/src/app/api/admin/appeals/[appealId]/route.js`
+
+**Appeal Approval:**
+- Campaigns: `removed-temporary → active`
+- Users: `banned-temporary → active`
+- Clears all moderation/ban fields
+- Resets `reportsCount → 0`
+
+**Appeal Rejection:**
+- Campaigns: `removed-temporary → removed-permanent`
+- Users: `banned-temporary → banned-permanent`
+- Clears `appealDeadline` (no more appeals)
+
+**Validation:** ✅ Checks appeal status is `pending` before processing
+**Validation:** ❌ Does NOT check if target is actually in temporary status (assumes submission validation was correct)
+
+---
+
+### Current Validation Gaps
+
+#### 1. **Permanent Status Can Be Reversed**
+
+**Problem:** Admins can restore permanently removed/banned content directly.
+
+**Code Evidence:**
+```javascript
+// /api/admin/campaigns/[campaignId]/route.js - Line 67
+if (moderationStatus === 'active') {
+  updateData.hiddenAt = FieldValue.delete();
+  updateData.removedAt = FieldValue.delete();
+  updateData.removalReason = FieldValue.delete();
+  updateData.appealDeadline = FieldValue.delete();
+}
+```
+
+No check prevents: `removed-permanent` → `active` or `banned-permanent` → `active`
+
+**Impact:** "Permanent" doesn't mean permanent if admin changes mind
+
+---
+
+#### 2. **Missing "under-review" vs "under-review-hidden" Distinction**
+
+**Problem:** Documentation mentions separate "under-review" status (visible but flagged), but code only implements "under-review-hidden" (always hidden).
+
+**Code Evidence:**
+```javascript
+// adminValidation.js - Line 14
+const VALID_MODERATION_STATUSES = [
+  'active', 
+  'under-review',        // Listed as valid
+  'under-review-hidden', 
+  'removed-temporary', 
+  'removed-permanent'
+];
+```
+
+But actual code only uses `under-review-hidden`:
+```javascript
+// reports/submit/route.js - Line 96
+campaignUpdates.moderationStatus = 'under-review-hidden';
+```
+
+**Impact:** Validation allows `under-review` but nothing uses it - dead code
+
+---
+
+#### 3. **No Validation for Appeal Eligibility**
+
+**Problem:** Appeal submission checks temporary status, but approval doesn't verify target is still in appealable state.
+
+**Code Evidence:**
+```javascript
+// /api/admin/appeals/[appealId]/route.js - Line 52
+// No check for campaignData.moderationStatus === 'removed-temporary'
+await campaignRef.update({
+  moderationStatus: 'active', // Restores regardless of current status
+});
+```
+
+**Impact:** Could approve appeal for campaign that admin already made permanent
+
+---
+
+#### 4. **Inconsistent Status Checks in Auto-Hide**
+
+**Problem:** Auto-hide only triggers if status is `active`, but doesn't prevent hiding already-removed content.
+
+**Current Logic:**
+```javascript
+if (newReportsCount >= 3 && campaignData.moderationStatus === 'active')
+```
+
+**Edge Case:** What if status is `removed-temporary`? Reports still increment but don't trigger hide.
+
+**Impact:** Minor - removed campaigns shouldn't get new reports anyway (hidden from public)
+
+---
+
+### Suggested Status Transition Rules
+
+Based on the actual implementation, here are the logical transition rules that SHOULD be enforced:
+
+#### Campaign Transitions:
+
+```javascript
+const VALID_CAMPAIGN_TRANSITIONS = {
+  'active': ['under-review-hidden', 'removed-temporary', 'removed-permanent'],
+  'under-review-hidden': ['active', 'removed-temporary', 'removed-permanent'],
+  'removed-temporary': ['active', 'removed-permanent'], // Only via appeal approval/rejection
+  'removed-permanent': [], // NO transitions out - truly permanent
+};
+```
+
+#### User Transitions:
+
+```javascript
+const VALID_ACCOUNT_TRANSITIONS = {
+  'active': ['under-review-hidden', 'banned-temporary', 'banned-permanent'],
+  'under-review-hidden': ['active', 'banned-temporary', 'banned-permanent'],
+  'banned-temporary': ['active', 'banned-permanent'], // Only via appeal or admin decision
+  'banned-permanent': [], // NO transitions out - truly permanent
+};
+```
+
+---
+
+### Implementation Recommendations
+
+#### 1. **Add Transition Validation Function**
+
+Create utility: `/src/utils/admin/statusTransitionValidator.js`
+
+```javascript
+export function validateCampaignTransition(currentStatus, newStatus) {
+  const VALID_TRANSITIONS = {
+    'active': ['under-review-hidden', 'removed-temporary', 'removed-permanent'],
+    'under-review-hidden': ['active', 'removed-temporary', 'removed-permanent'],
+    'removed-temporary': ['active', 'removed-permanent'],
+    'removed-permanent': [], // Cannot transition out
+  };
+  
+  if (!VALID_TRANSITIONS[currentStatus]) {
+    return { valid: false, error: `Invalid current status: ${currentStatus}` };
+  }
+  
+  if (!VALID_TRANSITIONS[currentStatus].includes(newStatus)) {
+    return { 
+      valid: false, 
+      error: `Cannot transition from ${currentStatus} to ${newStatus}. Permanent statuses cannot be reversed.` 
+    };
+  }
+  
+  return { valid: true };
+}
+
+export function validateAccountTransition(currentStatus, newStatus) {
+  const VALID_TRANSITIONS = {
+    'active': ['under-review-hidden', 'banned-temporary', 'banned-permanent'],
+    'under-review-hidden': ['active', 'banned-temporary', 'banned-permanent'],
+    'banned-temporary': ['active', 'banned-permanent'],
+    'banned-permanent': [], // Cannot transition out
+  };
+  
+  if (!VALID_TRANSITIONS[currentStatus]) {
+    return { valid: false, error: `Invalid current status: ${currentStatus}` };
+  }
+  
+  if (!VALID_TRANSITIONS[currentStatus].includes(newStatus)) {
+    return { 
+      valid: false, 
+      error: `Cannot transition from ${currentStatus} to ${newStatus}. Permanent bans cannot be reversed.` 
+    };
+  }
+  
+  return { valid: true };
+}
+```
+
+#### 2. **Apply Validation in All Endpoints**
+
+Update these files:
+- `/api/admin/campaigns/[campaignId]/route.js` - Add validation before update
+- `/api/admin/users/[userId]/ban/route.js` - Add validation before update
+- `/api/admin/appeals/[appealId]/route.js` - Add validation before approval
+
+#### 3. **Remove Dead "under-review" Status**
+
+- Remove from `adminValidation.js` valid statuses list
+- Update documentation to only mention `under-review-hidden`
+
+---
+
+### Business Rule Summary
+
+Based on actual code analysis, the moderation system follows these rules:
+
+✅ **Implemented Correctly:**
+1. Auto-hide only triggers on `active` status (prevents re-hiding reviewed content)
+2. Warnings always restore to `active` (warning is not removal)
+3. Appeals check for `pending` status before processing
+4. Report counts reset to 0 on all admin actions
+5. Temporary statuses set 30-day appeal deadlines
+
+❌ **Missing Validation:**
+1. Permanent statuses CAN be reversed (should be blocked)
+2. No validation of target status before appeal approval
+3. "under-review" status exists in validation but never used
+
+⚠️ **Potential Issues:**
+1. User can have `accountStatus = 'banned-temporary'` but `moderationStatus = 'active'` (profile hidden but can appeal)
+2. Reports can still increment on `removed-temporary` content (minor edge case)
+
+---
+
+**End of Status Transition Analysis**

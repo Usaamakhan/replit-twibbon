@@ -38,42 +38,138 @@ Implement a cron job (scheduled task) that runs daily:
 
 ### 3. **Missing Status Transition Validation**
 
-**What's the problem?**
-Admins can change campaign/user statuses in ways that violate business rules. For example:
-- A `removed-permanent` campaign could be restored to `active` by dismissing reports
-- A `banned-permanent` user could be unbanned
-- No validation prevents invalid state transitions
+**Last Updated:** October 25, 2025
 
-**What does this mean?**
-"Permanent" doesn't actually mean permanent if an admin clicks the wrong button.
+**What's the problem?**
+Admins can change campaign/user statuses in ways that violate business rules. After analyzing the actual codebase, here are the specific issues found:
+
+#### Problem 1: Permanent Statuses Can Be Reversed
+
+**Where:** 
+- `/api/admin/campaigns/[campaignId]/route.js` (Lines 14-77)
+- `/api/admin/users/[userId]/ban/route.js` (Lines 30-89)
+
+**Evidence:**
+Both endpoints accept ANY valid status without checking current status. This allows:
+- `removed-permanent` → `active` (campaign restoration)
+- `banned-permanent` → `active` (permanent ban reversal)
+
+**Why this is bad:**
+- "Permanent" doesn't mean permanent
+- Contradicts messaging to users ("your ban is permanent")
+- Could create legal issues if users challenge "permanent" claims
+
+#### Problem 2: Dead Code - "under-review" Status
+
+**Where:** `/src/utils/admin/adminValidation.js` (Line 14)
+
+**Evidence:**
+```javascript
+const VALID_MODERATION_STATUSES = [
+  'active', 
+  'under-review',        // Listed as valid but NEVER used
+  'under-review-hidden', // Actually used everywhere
+  'removed-temporary', 
+  'removed-permanent'
+];
+```
+
+But actual code only uses `under-review-hidden`:
+- `/api/reports/submit/route.js` Line 96: `moderationStatus = 'under-review-hidden'`
+- No file in codebase sets status to `under-review`
+
+**Why this is bad:**
+- Confusing for developers
+- Validation accepts status that nothing uses
+- Documentation inconsistency
+
+#### Problem 3: No Validation for Appeal Eligibility
+
+**Where:** `/api/admin/appeals/[appealId]/route.js` (Lines 46-59)
+
+**Evidence:**
+Appeal approval code doesn't verify target is still in temporary status:
+```javascript
+// No check for campaignData.moderationStatus === 'removed-temporary'
+await campaignRef.update({
+  moderationStatus: 'active', // Restores regardless of current status
+});
+```
+
+**Edge Case:**
+1. Campaign removed-temporary → user appeals
+2. Admin makes it removed-permanent before reviewing appeal
+3. Admin approves appeal → campaign restored (should fail)
+
+**Why this is bad:**
+- Could restore content admin explicitly made permanent
+- Race condition if two admins act simultaneously
+
+#### Problem 4: Report Actions Can Transition From ANY Status
+
+**Where:** `/api/admin/reports/summary/[summaryId]/route.js` (Lines 84-143)
+
+**Evidence:**
+Dismiss/Warn/Remove actions have NO status checks. They can:
+- Dismiss reports on `removed-permanent` → restores to `active` (wrong!)
+- Warn user with `banned-permanent` → restores to `active` (wrong!)
+- Remove campaign that's already `removed-permanent` → sets to `removed-temporary` (downgrade!)
+
+**Current Implementation (NO VALIDATION):**
+```javascript
+if (action === 'no-action') {
+  // Restores to active from ANY status - even permanent
+  targetUpdates.moderationStatus = 'active';
+}
+```
 
 **Impact:**
 - Business rules not enforced
 - Data integrity issues
 - Confusing for admins and users
-- Could lead to legal issues (claiming "permanent ban" but allowing unban)
+- Could lead to legal issues (claiming "permanent ban" but allowing restoration)
+
+---
 
 **Solution:**
-Add status transition validation in admin action endpoints:
 
-```javascript
-// Define valid transitions
-const VALID_TRANSITIONS = {
-  'active': ['under-review-hidden', 'removed-temporary', 'banned-temporary'],
-  'under-review-hidden': ['active', 'removed-temporary', 'banned-temporary'],
-  'removed-temporary': ['active', 'removed-permanent'],
-  'banned-temporary': ['active', 'banned-permanent'],
-  'removed-permanent': [], // Cannot transition out
-  'banned-permanent': [], // Cannot transition out
-};
+See detailed implementation in REPORT_SYSTEM.md - "Status Transition System" section, which includes:
 
-// Check before updating
-if (!VALID_TRANSITIONS[currentStatus].includes(newStatus)) {
-  throw new Error('Invalid status transition');
-}
-```
+1. **Create transition validation utility:** `/src/utils/admin/statusTransitionValidator.js`
+   - `validateCampaignTransition(currentStatus, newStatus)`
+   - `validateAccountTransition(currentStatus, newStatus)`
+   - Returns `{ valid: true/false, error: string }`
 
-**Priority:** MEDIUM
+2. **Valid transition rules:**
+   ```javascript
+   Campaign Transitions:
+   - 'active' → ['under-review-hidden', 'removed-temporary', 'removed-permanent']
+   - 'under-review-hidden' → ['active', 'removed-temporary', 'removed-permanent']
+   - 'removed-temporary' → ['active', 'removed-permanent']
+   - 'removed-permanent' → [] // NO transitions out
+   
+   Account Transitions:
+   - 'active' → ['under-review-hidden', 'banned-temporary', 'banned-permanent']
+   - 'under-review-hidden' → ['active', 'banned-temporary', 'banned-permanent']
+   - 'banned-temporary' → ['active', 'banned-permanent']
+   - 'banned-permanent' → [] // NO transitions out
+   ```
+
+3. **Apply validation in these files:**
+   - `/api/admin/campaigns/[campaignId]/route.js` - Before line 45
+   - `/api/admin/users/[userId]/ban/route.js` - Before line 64
+   - `/api/admin/reports/summary/[summaryId]/route.js` - Before line 90
+   - `/api/admin/appeals/[appealId]/route.js` - Before lines 51 and 124
+
+4. **Remove dead code:**
+   - Remove `'under-review'` from `adminValidation.js` line 16
+   - Update all documentation to only mention `'under-review-hidden'`
+
+**Priority:** HIGH (was MEDIUM, upgraded after detailed analysis)
+
+**Files Affected:** 4 API routes + 1 validation utility
+
+**See Also:** REPORT_SYSTEM.md - "Status Transition System - Complete Technical Analysis" for comprehensive transition map and implementation details.
 
 ---
 
