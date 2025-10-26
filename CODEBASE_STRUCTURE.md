@@ -1,6 +1,6 @@
 # Codebase Structure Documentation
 
-**Last Updated:** October 23, 2025  
+**Last Updated:** October 26, 2025  
 **Project:** Twibbonize - Campaign Photo Frame & Background Platform
 
 This document provides a complete overview of the codebase structure with descriptions of each file and folder's purpose.
@@ -27,6 +27,7 @@ This document provides a complete overview of the codebase structure with descri
 - **`REPORT_SYSTEM.md`** - Comprehensive reporting and moderation system documentation
 - **`CODE_INCONSISTENCIES.md`** - Tracks code/documentation inconsistencies and fixes
 - **`CODEBASE_STRUCTURE.md`** - This file - complete codebase structure documentation
+- **`VERCEL_CRON_SETUP.md`** - Guide for setting up Vercel cron jobs for automated moderation tasks
 
 ### Configuration Files
 
@@ -38,6 +39,7 @@ This document provides a complete overview of the codebase structure with descri
 - **`jsconfig.json`** - JavaScript/TypeScript configuration and path aliases
 - **`firestore.rules`** - Firestore database security rules
 - **`firestore.indexes.json`** - Firestore composite index definitions
+- **`vercel.json`** - Vercel deployment configuration including 2 cron jobs for automated moderation
 
 ---
 
@@ -106,6 +108,9 @@ Admin-only routes for platform moderation and management.
 #### 📁 **`/logs`** - Admin Action Logs
 - **`page.js`** - Admin activity audit log with filters (action type, target type, admin, date range)
 
+#### 📁 **`/appeals`** - Appeals Review
+- **`page.js`** - Admin dashboard for reviewing user appeals with approve/reject actions and typed confirmation
+
 ---
 
 ### 📁 `/src/app/(chrome)/campaign/[slug]` - 3-Page Campaign Flow
@@ -160,6 +165,11 @@ Creator workflow for uploading new campaigns.
 #### 📁 **`/notifications`**
 - **`page.js`** - Notification inbox with read/unread status and history
 
+#### 📁 **`/appeals`**
+- **`page.js`** - User appeals submission page for removed campaigns and banned accounts
+
+**Note:** The `/settings` directory is planned but not yet implemented. Currently documented in TASKS.md Section 11 as a future enhancement to create a unified settings hub under `/settings/notifications`, `/settings/account`, etc. Profile editing remains at `/profile/edit`.
+
 ---
 
 ### 📁 `/src/app/(chrome)/u/[username]` - Public Profiles
@@ -211,6 +221,10 @@ Server-side admin operations (protected by admin middleware).
 - **`/[userId]/role/route.js`** - PATCH: Assign/revoke admin role
 - **`/[userId]/ban/route.js`** - PATCH: Ban/unban user (sends email notification to user)
 
+#### 📁 **`/appeals`**
+- **`route.js`** - GET: Fetch appeals for admin review with filtering (status, type, limit)
+- **`/[appealId]/route.js`** - PATCH: Approve or reject appeals with status transition validation
+
 ---
 
 ### 📁 `/src/app/api/campaigns` - Campaign Operations
@@ -241,6 +255,35 @@ Server-side admin operations (protected by admin middleware).
 - Critical for banned users who cannot access their account
 - Professional HTML templates with ban reasons and appeal deadlines
 - See `src/utils/notifications/emailTemplates.js` and `sendEmail.js`
+
+---
+
+### 📁 `/src/app/api/appeals` - Appeal System
+
+#### 📁 **`/eligible`**
+- **`route.js`** - GET: Fetch campaigns/accounts eligible for appeal (removed-temporary or banned-temporary with active appeal window)
+
+#### 📁 **`/submit`**
+- **`route.js`** - POST: Submit appeal for removed campaign or banned account with validation (min 20 chars, one appeal per item)
+
+---
+
+### 📁 `/src/app/api/cron` - Vercel Cron Jobs
+
+**Two automated moderation cron jobs (runs in production only):**
+
+#### 📁 **`/cleanup-expired-appeals`**
+- **`route.js`** - GET: Daily cron job (2:00 AM UTC) to upgrade expired temporary removals/bans to permanent status
+- Secured with `CRON_SECRET` environment variable
+- Sends in-app notifications for campaigns, email notifications for user bans
+- Logs all actions to `adminLogs` collection
+
+#### 📁 **`/send-appeal-reminders`**
+- **`route.js`** - GET: Daily cron job (10:00 AM UTC) to send appeal deadline reminders (7, 3, 1 day before expiry)
+- Sends both in-app and email notifications
+- Includes countdown timer and direct appeal link
+
+**Configuration:** See `vercel.json` and `VERCEL_CRON_SETUP.md`
 
 ---
 
@@ -350,7 +393,7 @@ Located in `/src/components/admin/`:
 - **`CampaignModerationCard.js`** - Campaign card with moderation actions (uses adminHelpers)
 - **`UsersTable.js`** - Users data table with search (uses adminHelpers)
 - **`UserDetailsModal.js`** - User details modal with admin actions and typed confirmation for bans
-- **`AdminLogsTable.js`** - NEW: Admin action audit log table with filters
+- **`AdminLogsTable.js`** - Admin action audit log table with filters (includes cron job actions)
 
 ### Notification Components
 
@@ -493,16 +536,17 @@ Located in `/src/utils/notifications/`:
   - Instant delivery via Firestore real-time listeners
   - Supports metadata for rich notifications
 
-- **`emailTemplates.js`** - NEW: Email notification templates (MailerSend)
+- **`emailTemplates.js`** - Email notification templates (MailerSend)
   - Account banned (temporary/permanent with appeal deadline)
   - Account unbanned (restoration notification)
-  - Warning issued (optional, can be in-app only)
+  - Appeal deadline reminders (7, 3, 1 day countdowns)
+  - Campaign/account permanently removed notifications
   - Professional HTML design with inline CSS
   - Mobile-responsive with call-to-action buttons
 
-- **`sendEmail.js`** - NEW: Email sending utility (MailerSend API)
+- **`sendEmail.js`** - Email sending utility (MailerSend API)
   - Server-side email delivery
-  - Used exclusively for ban/unban notifications
+  - Used for ban/unban notifications and appeal reminders
   - Returns success/error status for logging
   - Supports custom sender domain
 
@@ -512,11 +556,12 @@ Located in `/src/utils/notifications/`:
 - **`schemas.js`** - Data schemas and validators
 - **`firebaseErrorHandler.js`** - Firebase error messages formatter
 - **`networkUtils.js`** - Network request utilities
-- **`logAdminAction.js`** - NEW: Admin action logging utility
+- **`logAdminAction.js`** - Admin action logging utility
   - Logs all admin moderation actions to `adminLogs` collection
   - Tracks: admin ID/email/name, action type, target, reason, timestamp
   - Used for audit trail and accountability
-- **`reportRateLimit.js`** - NEW: IP-based report rate limiting
+  - Also used by cron jobs (admin: "system") for automatic permanent upgrades
+- **`reportRateLimit.js`** - IP-based report rate limiting
   - Maximum 5 reports per hour per IP address
   - Duplicate prevention by IP and userId
   - SHA-256 IP hashing for privacy

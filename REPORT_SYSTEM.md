@@ -1,5 +1,7 @@
 # Twibbonize Reporting System
 
+**Last Updated:** October 26, 2025
+
 ## Overview
 The Twibbonize reporting system allows users to report inappropriate campaigns or user profiles. The system is designed to be efficient, reducing database operations by 95% through an optimized aggregation approach. This document explains how the system works in simple, non-technical terms.
 
@@ -364,7 +366,7 @@ Warning is a "slap on the wrist" - admin reviewed and decided content is not sev
 - Stores `bannedAt` timestamp
 - Sets `appealCount` to 0
 - Resets `reportsCount` to 0
-- **After 30 days:** Should auto-delete permanently if no appeal (requires cron job - currently not implemented)
+- **After 30 days:** ✅ Auto-upgrades to permanent status via Vercel Cron Job (runs daily at 2:00 AM)
 - **Second removal:** Admin can manually set to `removed-permanent` (no recovery)
 
 **For Users:**
@@ -375,7 +377,7 @@ Warning is a "slap on the wrist" - admin reviewed and decided content is not sev
 - Stores admin-selected reason in `banReason` field
 - Stores `bannedAt` timestamp
 - Resets `reportsCount` to 0
-- **After 30 days:** Should auto-delete all data if no appeal (requires cron job - currently not implemented)
+- **After 30 days:** ✅ Auto-upgrades to permanent ban via Vercel Cron Job (runs daily at 2:00 AM), sends email notification
 
 **Notification sent:** ✅ **ALWAYS**
 - **Campaign**: "🚫 Campaign Removed - Your campaign has been removed for: [reason]. You can appeal this decision until [date]."
@@ -476,15 +478,29 @@ When a campaign is removed or a user is banned temporarily, they have **30 days*
 
 ### Appeal Deadline Expiration:
 
-**Current Behavior:**
-- After 30 days, the appeal window closes
-- Users can no longer submit appeals
-- Content remains in temporary status indefinitely
+**✅ FULLY IMPLEMENTED (October 26, 2025):**
 
-**Future Enhancement (Requires Cron Job):**
+**Automatic Cleanup (Vercel Cron Job):**
+- **Runs daily at 2:00 AM UTC** via `/api/cron/cleanup-expired-appeals`
 - Automatic upgrade to permanent status after deadline passes
-- Auto-deletion of permanently removed content
-- Appeal deadline reminder notifications (7 days, 3 days, 1 day before expiry)
+- Campaigns: `removed-temporary` → `removed-permanent`
+- Users: `banned-temporary` → `banned-permanent`
+- **Sends in-app notification** for permanently removed campaigns (users can still log in)
+- **Sends email notification** for permanent bans (users cannot log in to see in-app)
+- All actions logged to `adminLogs` collection for audit trail
+
+**Appeal Deadline Reminders (Vercel Cron Job):**
+- **Runs daily at 10:00 AM UTC** via `/api/cron/send-appeal-reminders`
+- Sends reminders at 7, 3, and 1 day(s) before deadline expires
+- **Dual notification system:** Both in-app + email reminders sent
+- Includes countdown timer, removal reason, and direct appeal link
+- Prevents users from missing their appeal window
+
+**Vercel Cron Job Configuration:**
+- Secured with `CRON_SECRET` environment variable
+- Free tier limit: 2 cron jobs (both slots used)
+- Monitored via Vercel function logs and admin logs dashboard
+- See `VERCEL_CRON_SETUP.md` for complete setup guide
 
 ---
 
