@@ -71,7 +71,6 @@ export async function PATCH(request, { params }) {
             updatedAt: now,
           });
 
-          const campaignData = campaignDoc.data();
 
           await sendInAppNotification(appealData.userId, {
             type: 'appealApproved',
@@ -119,7 +118,6 @@ export async function PATCH(request, { params }) {
             updatedAt: now,
           });
 
-          const userData = userDoc.data();
 
           await sendInAppNotification(appealData.userId, {
             type: 'appealApproved',
@@ -164,7 +162,6 @@ export async function PATCH(request, { params }) {
             updatedAt: now,
           });
 
-          const campaignData = campaignDoc.data();
 
           await sendInAppNotification(appealData.userId, {
             type: 'appealRejected',
