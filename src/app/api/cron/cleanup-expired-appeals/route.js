@@ -96,8 +96,6 @@ export async function GET(request) {
               subject: emailTemplate.subject,
               html: emailTemplate.html,
             });
-
-            console.log(`[CRON] Sent permanent ban email to ${user.email}`);
           }
 
           await logAdminAction({

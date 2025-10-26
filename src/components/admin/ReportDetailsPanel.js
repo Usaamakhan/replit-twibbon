@@ -101,13 +101,11 @@ export default function ReportDetailsPanel({ report, onClose, onUpdate, isGroupe
 
     const { status, action, reason } = confirmAction;
 
-    console.log('[CLIENT] Action button clicked:', { status, action, reason, reportId: report.id, isGrouped });
     setIsUpdating(true);
     setUpdateError(null);
 
     try {
       const token = await user.getIdToken();
-      console.log('[CLIENT] Token obtained, sending request...');
       
       const endpoint = isGrouped 
         ? `/api/admin/reports/summary/${report.id}`
@@ -128,23 +126,18 @@ export default function ReportDetailsPanel({ report, onClose, onUpdate, isGroupe
         body: JSON.stringify(requestBody),
       });
 
-      console.log('[CLIENT] Response status:', response.status);
       const data = await response.json();
-      console.log('[CLIENT] Response data:', data);
 
       if (!response.ok) {
         throw new Error(data.error || 'Failed to update report');
       }
 
-      console.log('[CLIENT] ✅ Action completed successfully!');
       alert(`✅ Action completed successfully! ${action === 'no-action' ? 'Report dismissed' : action === 'warned' ? 'Warning issued' : 'Content removed'}`);
 
       if (onUpdate) {
         onUpdate(data.data);
       }
     } catch (error) {
-      console.error('[CLIENT] ❌ Error updating report:', error);
-      console.error('[CLIENT] Error details:', error.message);
       setUpdateError(error.message);
       alert(`❌ Error: ${error.message}`);
     } finally {

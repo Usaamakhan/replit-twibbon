@@ -53,21 +53,27 @@ export function getTransformedImageUrl(imageUrlOrPath, options = {}) {
   const { width, height, format = 'webp', quality = 80 } = options;
   
   if (!imageUrlOrPath) {
-    console.error('Image path is required for transformation');
+    if (process.env.NODE_ENV === 'development') {
+      console.error('[DEV ERROR] Image path is required for transformation');
+    }
     return '';
   }
   
   const imagePath = extractStoragePath(imageUrlOrPath);
   
   if (!imagePath) {
-    console.error('Could not extract storage path from:', imageUrlOrPath);
+    if (process.env.NODE_ENV === 'development') {
+      console.error('[DEV ERROR] Could not extract storage path from:', imageUrlOrPath);
+    }
     return imageUrlOrPath;
   }
   
   const imagekitUrl = process.env.NEXT_PUBLIC_IMAGEKIT_URL_ENDPOINT;
   
   if (!imagekitUrl) {
-    console.error('NEXT_PUBLIC_IMAGEKIT_URL_ENDPOINT is not configured');
+    if (process.env.NODE_ENV === 'development') {
+      console.error('[DEV ERROR] NEXT_PUBLIC_IMAGEKIT_URL_ENDPOINT is not configured');
+    }
     return '';
   }
   
@@ -140,7 +146,9 @@ export function getCampaignCanvas(imageUrlOrPath) {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   
   if (!supabaseUrl) {
-    console.error('NEXT_PUBLIC_SUPABASE_URL is not configured');
+    if (process.env.NODE_ENV === 'development') {
+      console.error('[DEV ERROR] NEXT_PUBLIC_SUPABASE_URL is not configured');
+    }
     return '';
   }
   
