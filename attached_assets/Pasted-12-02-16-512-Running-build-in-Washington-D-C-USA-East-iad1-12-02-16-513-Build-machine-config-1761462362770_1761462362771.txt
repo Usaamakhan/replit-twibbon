@@ -1,0 +1,44 @@
+12:02:16.512 Running build in Washington, D.C., USA (East) – iad1
+12:02:16.513 Build machine configuration: 2 cores, 8 GB
+12:02:16.842 Cloning github.com/Usaamakhan/replit-twibbon (Branch: main, Commit: 2337ed1)
+12:02:17.623 Cloning completed: 772.000ms
+12:02:19.078 Restored build cache from previous deployment (22KDa6Sw8VPkFEWM4giue9n4wN5Z)
+12:02:19.662 Running "vercel build"
+12:02:20.039 Vercel CLI 48.6.0
+12:02:20.372 Installing dependencies...
+12:02:21.594 
+12:02:21.595 up to date in 1s
+12:02:21.595 
+12:02:21.596 157 packages are looking for funding
+12:02:21.596   run `npm fund` for details
+12:02:21.623 Detected Next.js version: 15.5.2
+12:02:21.630 Running "npm run build"
+12:02:21.736 
+12:02:21.736 > twibbonize-app@0.1.0 build
+12:02:21.736 > next build
+12:02:21.737 
+12:02:22.494    ▲ Next.js 15.5.2
+12:02:22.495    - Experiments (use with caution):
+12:02:22.495      · serverActions
+12:02:22.495 
+12:02:22.573    Creating an optimized production build ...
+12:02:29.054 Failed to compile.
+12:02:29.055 
+12:02:29.055 ./src/app/api/admin/appeals/[appealId]/route.js
+12:02:29.055 Module parse failed: Identifier 'campaignData' has already been declared (75:26)
+12:02:29.055 File was processed with these loaders:
+12:02:29.055  * ./node_modules/next/dist/build/webpack/loaders/next-flight-loader/index.js
+12:02:29.055  * ./node_modules/next/dist/build/webpack/loaders/next-swc-loader.js
+12:02:29.055 You may need an additional loader to handle the result of these loaders.
+12:02:29.056 |                         updatedAt: now
+12:02:29.056 |                     });
+12:02:29.056 >                     const campaignData = campaignDoc.data();
+12:02:29.056 |                     await sendInAppNotification(appealData.userId, {
+12:02:29.056 |                         type: 'appealApproved',
+12:02:29.056 
+12:02:29.056 Import trace for requested module:
+12:02:29.056 ./src/app/api/admin/appeals/[appealId]/route.js
+12:02:29.056 
+12:02:29.059 
+12:02:29.059 > Build failed because of webpack errors
+12:02:29.097 Error: Command "npm run build" exited with 1
