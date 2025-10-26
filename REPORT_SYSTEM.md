@@ -12,21 +12,29 @@ The Twibbonize reporting system allows users to report inappropriate campaigns o
 ### Reporting a Campaign
 1. **User clicks "Report" button** on a campaign page
 2. **Selects a reason** from dropdown (required):
-   - Inappropriate Content
-   - Spam
-   - Copyright Violation
-   - Other
+   - **Inappropriate Content** (API value: `inappropriate`)
+   - **Spam** (API value: `spam`)
+   - **Copyright Violation** (API value: `copyright`)
+   - **Other** (API value: `other`)
 3. **Submits the report** (no text field needed - just reason selection)
+
+**API Endpoint:** `POST /api/reports/submit`  
+**Required Fields:** `campaignId` (string), `reason` (one of the API values above)  
+**Optional Fields:** `reportedBy` (user ID or 'anonymous'), `campaignSlug` (string)
 
 ### Reporting a User Profile
 1. **User clicks "Report" button** on a user's profile page
 2. **Selects a reason** from dropdown (required):
-   - Inappropriate Profile Picture
-   - Offensive Username
-   - Spam in Bio/Description
-   - Impersonation
-   - Other
+   - **Inappropriate Profile Picture** (API value: `inappropriate_avatar`)
+   - **Offensive Username** (API value: `offensive_username`)
+   - **Spam in Bio/Description** (API value: `spam_bio`)
+   - **Impersonation** (API value: `impersonation`)
+   - **Other** (API value: `other`)
 3. **Submits the report**
+
+**API Endpoint:** `POST /api/reports/user`  
+**Required Fields:** `reportedUserId` (string), `reason` (one of the API values above)  
+**Optional Fields:** `reportedBy` (user ID or 'anonymous'), `reportedUsername` (string)
 
 **Rate Limiting:**
 - Maximum 5 reports per hour from the same IP address
@@ -492,7 +500,9 @@ When a campaign is removed or a user is banned temporarily, they have **30 days*
 **Appeal Deadline Reminders (Vercel Cron Job):**
 - **Runs daily at 10:00 AM UTC** via `/api/cron/send-appeal-reminders`
 - Sends reminders at 7, 3, and 1 day(s) before deadline expires
-- **Dual notification system:** Both in-app + email reminders sent
+- **Notification delivery varies by type:**
+  - **Campaign removals:** BOTH in-app + email reminders sent (creators can still log in)
+  - **Account bans:** Email reminders ONLY (banned users cannot log in to see in-app)
 - Includes countdown timer, removal reason, and direct appeal link
 - Prevents users from missing their appeal window
 
