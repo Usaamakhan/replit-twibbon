@@ -11,7 +11,9 @@ The cron job automatically upgrades expired temporary removals/bans to permanent
 - **Runs:** Daily at 2:00 AM
 - **Checks:** All campaigns with `removed-temporary` status and users with `banned-temporary` status
 - **Action:** If appeal deadline has passed (30 days), upgrades to permanent status
-- **Notifications:** Sends in-app notifications to affected users
+- **Notifications:** 
+  - Campaigns: Sends in-app notifications (users can still log in)
+  - Users: Sends email notifications (cannot log in after permanent ban)
 - **Logging:** Records all actions in the adminLogs collection
 
 ---

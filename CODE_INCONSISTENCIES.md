@@ -48,7 +48,8 @@ Implemented Vercel Cron Job to automatically upgrade expired temporary removals/
    - Queries campaigns with `removed-temporary` status and expired appealDeadline
    - Queries users with `banned-temporary` status and expired appealDeadline
    - Upgrades to `removed-permanent` or `banned-permanent`
-   - Sends in-app notifications to affected users
+   - Sends in-app notifications for campaign removals (users can still log in)
+   - Sends email notifications for permanent bans (users cannot log in to see in-app)
    - Logs all actions to adminLogs collection
 2. ✅ Added `vercel.json` with cron configuration (runs daily at 2 AM)
 3. ✅ Secured endpoint with `CRON_SECRET` environment variable

@@ -3,6 +3,8 @@ import { adminDb } from '@/lib/firebaseAdmin';
 import { FieldValue } from 'firebase-admin/firestore';
 import { logAdminAction } from '@/utils/logAdminAction';
 import { sendInAppNotification } from '@/utils/notifications/sendInAppNotification';
+import { sendEmail } from '@/utils/notifications/sendEmail';
+import { getEmailTemplate } from '@/utils/notifications/emailTemplates';
 
 export const dynamic = 'force-dynamic';
 export const maxDuration = 60;
@@ -81,13 +83,22 @@ export async function GET(request) {
             updatedAt: FieldValue.serverTimestamp(),
           });
 
-          await sendInAppNotification(doc.id, {
-            type: 'accountPermanentlyBanned',
-            title: '🚫 Account Permanently Banned',
-            message: 'Your account has been permanently banned. The 30-day appeal window has expired.',
-            actionUrl: '/banned',
-            actionLabel: 'View Details',
-          });
+          if (user.email) {
+            const emailTemplate = getEmailTemplate('accountBanned', {
+              userEmail: user.email,
+              username: user.username || user.displayName || 'User',
+              banReason: user.banReason || 'Community guidelines violation',
+              isPermanent: true,
+            });
+
+            await sendEmail({
+              to: user.email,
+              subject: emailTemplate.subject,
+              html: emailTemplate.html,
+            });
+
+            console.log(`[CRON] Sent permanent ban email to ${user.email}`);
+          }
 
           await logAdminAction({
             adminId: 'system',
