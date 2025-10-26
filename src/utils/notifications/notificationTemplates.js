@@ -86,6 +86,22 @@ export const notificationTemplates = {
     icon: '/icon-192x192.png',
     type: 'appeal-rejected',
   }),
+
+  campaignPermanentlyRemoved: ({ campaignTitle }) => ({
+    title: '🚫 Campaign Permanently Removed',
+    body: `Your campaign "${campaignTitle}" has been permanently removed. The 30-day appeal window has expired.`,
+    actionUrl: '/profile',
+    icon: '/icon-192x192.png',
+    type: 'campaign-permanently-removed',
+  }),
+
+  accountPermanentlyBanned: () => ({
+    title: '🚫 Account Permanently Banned',
+    body: 'Your account has been permanently banned. The 30-day appeal window has expired.',
+    actionUrl: '/banned',
+    icon: '/icon-192x192.png',
+    type: 'account-permanently-banned',
+  }),
 };
 
 export function getNotificationTemplate(type, params = {}) {
