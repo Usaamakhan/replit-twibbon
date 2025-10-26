@@ -3,6 +3,7 @@ import 'server-only'
 import { initializeApp, getApps, cert } from 'firebase-admin/app'
 import { getAuth } from 'firebase-admin/auth'
 import { getFirestore } from 'firebase-admin/firestore'
+import { validateFirebaseServiceKey } from '../utils/validateEnv'
 
 // Check if Firebase Admin is already initialized
 let adminApp = null
@@ -14,6 +15,9 @@ if (getApps().length === 0) {
   const isDevelopment = process.env.NODE_ENV === 'development';
   
   if (process.env.FIREBASE_SERVICE_ACCOUNT_KEY) {
+    // Validate the service account key format
+    validateFirebaseServiceKey(process.env.FIREBASE_SERVICE_ACCOUNT_KEY);
+    
     try {
       const serviceAccountKey = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_KEY);
       credential = cert(serviceAccountKey);

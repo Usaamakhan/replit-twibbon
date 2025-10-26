@@ -1,4 +1,8 @@
 import { MailerSend, EmailParams, Sender, Recipient } from "mailersend";
+import { validateMailersendKey } from "../validateEnv";
+
+// Validate API key on initialization
+validateMailersendKey(process.env.MAILERSEND_API_KEY);
 
 const mailerSend = new MailerSend({
   apiKey: process.env.MAILERSEND_API_KEY || "",
