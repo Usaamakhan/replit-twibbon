@@ -41,6 +41,12 @@ export async function PATCH(request, { params }) {
 
     const adminUid = adminCheck.user.uid;
     const adminEmail = adminCheck.user.email || 'admin';
+    
+    // Get admin user data for complete audit trail
+    const adminUserDoc = await adminDb.collection('users').doc(adminUid).get();
+    const adminUserData = adminUserDoc.exists ? adminUserDoc.data() : null;
+    const adminName = adminUserData?.displayName || adminUserData?.username || adminEmail;
+    
     const now = new Date();
 
     if (action === 'approve') {
@@ -83,6 +89,7 @@ export async function PATCH(request, { params }) {
           await logAdminAction({
             adminId: adminUid,
             adminEmail: adminEmail,
+            adminName: adminName,
             action: 'appeal_approved',
             targetType: 'campaign',
             targetId: appealData.targetId,
@@ -130,6 +137,7 @@ export async function PATCH(request, { params }) {
           await logAdminAction({
             adminId: adminUid,
             adminEmail: adminEmail,
+            adminName: adminName,
             action: 'appeal_approved',
             targetType: 'user',
             targetId: appealData.targetId,
@@ -174,6 +182,7 @@ export async function PATCH(request, { params }) {
           await logAdminAction({
             adminId: adminUid,
             adminEmail: adminEmail,
+            adminName: adminName,
             action: 'appeal_rejected',
             targetType: 'campaign',
             targetId: appealData.targetId,
@@ -215,6 +224,7 @@ export async function PATCH(request, { params }) {
           await logAdminAction({
             adminId: adminUid,
             adminEmail: adminEmail,
+            adminName: adminName,
             action: 'appeal_rejected',
             targetType: 'user',
             targetId: appealData.targetId,
