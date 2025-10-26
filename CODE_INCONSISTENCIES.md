@@ -6,51 +6,8 @@ This document tracks known issues, inconsistencies, broken code, and suggested i
 
 ---
 
-## ✅ Recently Fixed Issues
-
-### 1. **Fallback Firebase Initialization May Mask Errors** ✅ FIXED (Oct 26, 2025)
-
-**What was the problem?**
-Firebase Admin initialization would fall back to a credentials-less mode even in production, masking configuration errors.
-
-**What was fixed:**
-- Added `NODE_ENV` check to only allow fallback in development
-- Production now throws an error if credentials are missing
-- Added clear warning logs when using fallback mode
-- Improved error messaging for debugging
-
-**Files changed:**
-- `src/lib/firebaseAdmin.js`
-
----
-
-### 2. **Excessive Console Logging in Production** ✅ FIXED (Oct 26, 2025)
-
-**What was the problem?**
-176+ console.log/warn/error statements throughout the codebase that ran in production, causing performance overhead and security risks.
-
-**What was fixed:**
-- Removed debug console logs from client components (ProfilePage, ReportDetailsPanel)
-- Wrapped utility error logs in NODE_ENV checks (imageTransform)
-- Cleaned up informational logs in cron jobs
-- Kept only critical error logs for production debugging in API routes
-- Server-side error logging preserved where needed for monitoring
-
-**Files changed:**
-- `src/components/ProfilePage.js` - Removed 8 debug console statements
-- `src/components/admin/ReportDetailsPanel.js` - Removed 7 debug console statements  
-- `src/utils/imageTransform.js` - Wrapped 5 error logs in NODE_ENV checks
-- `src/app/api/cron/cleanup-expired-appeals/route.js` - Removed informational log
-
-**Implementation approach:**
-- Client components: Removed all console logs
-- Utility libraries: Wrapped error logs in `NODE_ENV === 'development'` checks
-- API routes: Kept `console.error` for actual errors (needed for production monitoring)
-
----
 
 ## 🐛 Code Quality Issues
-
 
 
 ### 3. **Mock Supabase Client May Fail at Runtime**
