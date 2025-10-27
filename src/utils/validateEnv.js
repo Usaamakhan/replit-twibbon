@@ -20,7 +20,7 @@ export function validateMailersendKey(key) {
     return false;
   }
 
-  // MailerSend API keys start with 'mlsn_'
+  // MailerSend API keys start with 'mlsn.'
   if (!key.startsWith("mlsn.")) {
     const error =
       'MAILERSEND_API_KEY must start with "mlsn_" - this appears to be an invalid MailerSend API key';
