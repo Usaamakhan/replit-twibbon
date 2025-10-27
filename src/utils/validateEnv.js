@@ -4,7 +4,7 @@
  * Provides format validation for various environment variables to catch
  * configuration issues early rather than at runtime.
  */
-
+o
 /**
  * Validate MailerSend API Key format
  * @param {string} key - The API key to validate
