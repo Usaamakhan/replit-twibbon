@@ -27,7 +27,6 @@ This document provides a complete overview of the codebase structure with descri
 - **`REPORT_SYSTEM.md`** - Comprehensive reporting and moderation system documentation
 - **`CODE_INCONSISTENCIES.md`** - Tracks code/documentation inconsistencies and fixes
 - **`CODEBASE_STRUCTURE.md`** - This file - complete codebase structure documentation
-- **`VERCEL_CRON_SETUP.md`** - Guide for setting up Vercel cron jobs for automated moderation tasks
 
 ### Configuration Files
 
@@ -282,8 +281,6 @@ Server-side admin operations (protected by admin middleware).
 - **`route.js`** - GET: Daily cron job (10:00 AM UTC) to send appeal deadline reminders (7, 3, 1 day before expiry)
 - Sends both in-app and email notifications
 - Includes countdown timer and direct appeal link
-
-**Configuration:** See `vercel.json` and `VERCEL_CRON_SETUP.md`
 
 ---
 

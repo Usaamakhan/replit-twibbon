@@ -510,7 +510,6 @@ When a campaign is removed or a user is banned temporarily, they have **30 days*
 - Secured with `CRON_SECRET` environment variable
 - Free tier limit: 2 cron jobs (both slots used)
 - Monitored via Vercel function logs and admin logs dashboard
-- See `VERCEL_CRON_SETUP.md` for complete setup guide
 
 ---
 
