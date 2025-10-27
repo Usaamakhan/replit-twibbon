@@ -102,6 +102,9 @@ export const adminAuth = getAuth(adminApp)
 // Get Firestore instance
 export const adminFirestore = () => getFirestore(adminApp)
 
+// Export adminDb for backward compatibility
+export const adminDb = getFirestore(adminApp)
+
 // Helper function to verify ID tokens
 export const verifyIdToken = async (idToken) => {
   try {
