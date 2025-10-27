@@ -118,7 +118,6 @@ export async function PATCH(request, { params }) {
           targetUpdates.moderationStatus = 'active';
         } else {
           targetUpdates.accountStatus = 'active';
-          targetUpdates.banned = false; // Clear banned flag for users
         }
         targetUpdates.hiddenAt = FieldValue.delete();
         targetUpdates.bannedAt = FieldValue.delete();
@@ -147,7 +146,6 @@ export async function PATCH(request, { params }) {
           targetUpdates.moderationStatus = 'active';
         } else {
           targetUpdates.accountStatus = 'active';
-          targetUpdates.banned = false; // Clear banned flag for users
         }
         targetUpdates.hiddenAt = FieldValue.delete();
         targetUpdates.bannedAt = FieldValue.delete();
@@ -160,7 +158,6 @@ export async function PATCH(request, { params }) {
           targetUpdates.appealCount = 0;
         } else {
           targetUpdates.accountStatus = 'banned-temporary';
-          targetUpdates.banned = true; // Set banned flag for auth checks
         }
         targetUpdates.bannedAt = now;
         targetUpdates.banReason = reason; // Use admin-selected reason

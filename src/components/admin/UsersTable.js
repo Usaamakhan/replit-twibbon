@@ -74,7 +74,7 @@ export default function UsersTable({ users, loading, onSelectUser, searchTerm, o
                 onClick={() => handleRowClick(user)}
                 className={`cursor-pointer transition-colors ${
                   selectedUserId === user.id ? 'bg-emerald-50' : 'hover:bg-gray-50'
-                } ${user.banned ? 'opacity-60' : ''}`}
+                } ${user.accountStatus?.includes('banned') ? 'opacity-60' : ''}`}
               >
                 <td className="px-6 py-4 whitespace-nowrap">
                   <div className="flex items-center">
@@ -96,7 +96,7 @@ export default function UsersTable({ users, loading, onSelectUser, searchTerm, o
                     <div className="ml-4">
                       <div className="text-sm font-medium text-gray-900 flex items-center gap-2">
                         {user.displayName || 'Unnamed User'}
-                        {user.banned && (
+                        {user.accountStatus?.includes('banned') && (
                           <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-red-100 text-red-800">
                             Banned
                           </span>

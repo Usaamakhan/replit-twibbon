@@ -28,7 +28,7 @@ export function UserProfileProvider({ children }) {
         const profile = await getUserProfile(user.uid);
         
         // CHECK FOR BAN STATUS - Enforce ban immediately
-        if (profile?.banned === true) {
+        if (profile?.accountStatus?.includes('banned')) {
           console.log('User is banned, logging out...');
           
           // Store ban info in sessionStorage for ban page to display

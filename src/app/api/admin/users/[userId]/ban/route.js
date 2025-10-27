@@ -93,14 +93,11 @@ export async function PATCH(request, { params }) {
         // Clear temporary-only fields when setting to permanent
         updateData.appealDeadline = FieldValue.delete();
       }
-      
-      updateData.banned = true;
     } else {
       updateData.banReason = FieldValue.delete();
       updateData.bannedBy = FieldValue.delete();
       updateData.bannedAt = FieldValue.delete();
       updateData.appealDeadline = FieldValue.delete();
-      updateData.banned = false;
     }
     
     await userRef.update(updateData);
@@ -141,9 +138,8 @@ export async function PATCH(request, { params }) {
           });
           
           console.log('[BAN] Ban email sent to:', userData.email);
-        } else if (accountStatus === 'active' && (userDoc.data().banned === true || userDoc.data().accountStatus === 'banned-temporary' || userDoc.data().accountStatus === 'banned-permanent')) {
+        } else if (accountStatus === 'active' && (userDoc.data().accountStatus === 'banned-temporary' || userDoc.data().accountStatus === 'banned-permanent')) {
           // User is being unbanned - send unban email
-          // Check both `banned` boolean (legacy/direct bans) and `accountStatus` (report-based bans)
           const emailTemplate = getEmailTemplate('accountUnbanned', {
             userEmail: userData.email,
             username: userData.displayName || userData.username || userData.email,

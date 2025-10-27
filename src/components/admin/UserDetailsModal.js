@@ -74,7 +74,7 @@ export default function UserDetailsModal({ user, onClose, onUpdate }) {
   };
 
   const handleBanModalContinue = () => {
-    const isBanned = user.accountStatus?.includes('banned') || user.banned;
+    const isBanned = user.accountStatus?.includes('banned');
     
     if (!isBanned && !banReason.trim()) {
       setUpdateError('Please provide a reason for banning this user');
@@ -89,7 +89,7 @@ export default function UserDetailsModal({ user, onClose, onUpdate }) {
   const handleBanToggle = async () => {
     if (!currentUser) return;
 
-    const isBanned = user.accountStatus?.includes('banned') || user.banned;
+    const isBanned = user.accountStatus?.includes('banned');
 
     setIsUpdating(true);
     setUpdateError(null);
@@ -190,7 +190,7 @@ export default function UserDetailsModal({ user, onClose, onUpdate }) {
                   </div>
                 </div>
 
-                {(user.accountStatus?.includes('banned') || user.banned) && (
+                {(user.accountStatus?.includes('banned')) && (
                   <div className="bg-red-50 border border-red-200 rounded-lg p-4">
                     <div className="flex items-center">
                       <svg className="h-5 w-5 text-red-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -272,9 +272,9 @@ export default function UserDetailsModal({ user, onClose, onUpdate }) {
                     <button
                       onClick={() => setShowBanModal(true)}
                       disabled={isUpdating}
-                      className={`w-full btn-base ${(user.accountStatus?.includes('banned') || user.banned) ? 'bg-green-600 hover:bg-green-700' : 'bg-red-600 hover:bg-red-700'} text-white disabled:opacity-50 disabled:cursor-not-allowed`}
+                      className={`w-full btn-base ${(user.accountStatus?.includes('banned')) ? 'bg-green-600 hover:bg-green-700' : 'bg-red-600 hover:bg-red-700'} text-white disabled:opacity-50 disabled:cursor-not-allowed`}
                     >
-                      {isUpdating ? 'Processing...' : (user.accountStatus?.includes('banned') || user.banned) ? 'Unban User' : 'Ban User'}
+                      {isUpdating ? 'Processing...' : (user.accountStatus?.includes('banned')) ? 'Unban User' : 'Ban User'}
                     </button>
 
                     {user.username && (
@@ -302,10 +302,10 @@ export default function UserDetailsModal({ user, onClose, onUpdate }) {
             
             <div className="relative bg-white rounded-lg max-w-md w-full p-6 z-[70]">
               <h3 className="text-lg font-medium text-gray-900 mb-4">
-                {(user.accountStatus?.includes('banned') || user.banned) ? 'Unban User' : 'Ban User'}
+                {(user.accountStatus?.includes('banned')) ? 'Unban User' : 'Ban User'}
               </h3>
               
-              {!(user.accountStatus?.includes('banned') || user.banned) && (
+              {!(user.accountStatus?.includes('banned')) && (
                 <>
                   <div className="mb-4">
                     <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -351,7 +351,7 @@ export default function UserDetailsModal({ user, onClose, onUpdate }) {
               )}
               
               <p className="text-sm text-gray-600 mb-4">
-                {(user.accountStatus?.includes('banned') || user.banned)
+                {(user.accountStatus?.includes('banned'))
                   ? 'This will unban the user and restore their access.' 
                   : 'This will prevent the user from accessing the platform.'}
               </p>
@@ -368,11 +368,11 @@ export default function UserDetailsModal({ user, onClose, onUpdate }) {
                   Cancel
                 </button>
                 <button
-                  onClick={(user.accountStatus?.includes('banned') || user.banned) ? handleBanToggle : handleBanModalContinue}
-                  disabled={!(user.accountStatus?.includes('banned') || user.banned) && !banReason.trim()}
-                  className={`flex-1 btn-base ${(user.accountStatus?.includes('banned') || user.banned) ? 'bg-green-600 hover:bg-green-700' : 'bg-red-600 hover:bg-red-700'} text-white disabled:opacity-50 disabled:cursor-not-allowed`}
+                  onClick={(user.accountStatus?.includes('banned')) ? handleBanToggle : handleBanModalContinue}
+                  disabled={!(user.accountStatus?.includes('banned')) && !banReason.trim()}
+                  className={`flex-1 btn-base ${(user.accountStatus?.includes('banned')) ? 'bg-green-600 hover:bg-green-700' : 'bg-red-600 hover:bg-red-700'} text-white disabled:opacity-50 disabled:cursor-not-allowed`}
                 >
-                  {(user.accountStatus?.includes('banned') || user.banned) ? 'Confirm Unban' : 'Continue'}
+                  {(user.accountStatus?.includes('banned')) ? 'Confirm Unban' : 'Continue'}
                 </button>
               </div>
             </div>

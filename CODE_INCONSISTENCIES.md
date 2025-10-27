@@ -5,53 +5,9 @@
 
 ---
 
-## 🟡 MEDIUM PRIORITY ISSUES
-
-### 1. Legacy "banned" Boolean Field Redundancy
-**Priority:** MEDIUM - Maintenance burden  
-**Status:** UNFIXED
-
-**Problem:**  
-Users collection has both legacy `banned` boolean and newer `accountStatus` enum. Both are updated simultaneously, creating redundancy and potential for bugs.
-
-**Where Updated:**
-- `src/app/api/admin/users/[userId]/ban/route.js` (lines 97, 103)
-- `src/app/api/admin/reports/summary/[summaryId]/route.js` (lines 121, 150, 163)
-
-**Where Checked:**
-- `src/hooks/useAuth.js` (lines 130, 199)
-- `src/components/UserProfileProvider.js` (line 31)
-- `src/components/admin/UserDetailsModal.js` (multiple lines)
-- `src/components/admin/UsersTable.js` (lines 77, 99)
-
-**Example:**
-```javascript
-// Updates both fields
-updateData.accountStatus = 'banned-temporary'; // Primary
-updateData.banned = true; // Legacy (redundant)
-
-// Code checks both
-if (profile?.banned === true) { } // Legacy check
-if (profile?.accountStatus?.includes('banned')) { } // Modern check
-```
-
-**Impact:**
-- Data redundancy
-- Must keep two fields in sync
-- Risk of inconsistency
-- Code confusion
-
-**Recommended Fix:**
-1. Update all code to only check `accountStatus`
-2. Create migration script for data consistency
-3. Remove `banned` field from updates
-4. Update Firestore security rules
-
----
-
 ## 🟢 LOW PRIORITY ISSUES
 
-### 2. React Hook Missing Dependencies
+### 1. React Hook Missing Dependencies
 **Priority:** LOW - Code quality and potential bugs  
 **Status:** UNFIXED
 
@@ -93,7 +49,7 @@ useCallback(() => {
 
 ---
 
-### 3. Using <img> Instead of Next.js <Image /> Component
+### 2. Using <img> Instead of Next.js <Image /> Component
 **Priority:** LOW - Performance optimization  
 **Status:** UNFIXED
 
@@ -144,14 +100,12 @@ This is a performance optimization that should be implemented gradually. Start w
 
 ## 📊 SUMMARY
 
-**Total Issues:** 3 unfixed issues
+**Total Issues:** 2 unfixed issues
 
 **By Priority:**
-- 🟡 Medium: 1 issue (plan migration)
 - 🟢 Low: 2 issues (quality improvement)
 
 **By Category:**
-- Code Cleanup: 1 issue
 - React Best Practices: 1 issue
 - Performance Optimization: 1 issue
 
@@ -159,6 +113,7 @@ This is a performance optimization that should be implemented gradually. Start w
 - ✅ Missing Field Validation in Cron Jobs - Added proper validation for campaign.title, removalReason, username, and banReason
 - ✅ Missing Error Handling for appealDeadline Conversion - Added try-catch blocks with fallback handling
 - ✅ Cron Job Logging Missing Target Titles - Added targetTitle parameter to all logAdminAction calls
+- ✅ Legacy "banned" Boolean Field Redundancy - Removed all references to legacy `banned` field, now using only `accountStatus` enum
 
 ---
 
@@ -168,8 +123,7 @@ This is a performance optimization that should be implemented gradually. Start w
 1. Fix React Hook dependency warnings in critical components
 
 ### Quarter 1 (Long-term)
-2. Deprecate and remove legacy banned boolean field
-3. Migrate `<img>` tags to Next.js `<Image />` component for performance optimization
+2. Migrate `<img>` tags to Next.js `<Image />` component for performance optimization
 
 ---
 

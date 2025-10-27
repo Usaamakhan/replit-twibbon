@@ -127,7 +127,7 @@ export function AuthProvider({ children }) {
       const { getUserProfile } = await import('../lib/firestore');
       const profile = await getUserProfile(result.user.uid);
       
-      if (profile?.banned === true) {
+      if (profile?.accountStatus?.includes('banned')) {
         // User is banned - sign them out immediately
         await signOut(firebase.auth);
         
@@ -196,7 +196,7 @@ export function AuthProvider({ children }) {
       const { getUserProfile } = await import('../lib/firestore');
       const profile = await getUserProfile(result.user.uid);
       
-      if (profile?.banned === true) {
+      if (profile?.accountStatus?.includes('banned')) {
         // User is banned - sign them out immediately
         await signOut(firebase.auth);
         
