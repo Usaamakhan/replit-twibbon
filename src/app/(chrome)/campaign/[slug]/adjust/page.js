@@ -73,7 +73,7 @@ export default function CampaignAdjustPage() {
     };
     
     loadSession();
-  }, [slug, router]);
+  }, [slug, router, campaignSession]);
 
   const initializeCanvas = useCallback(async () => {
     if (!campaign || !canvasRef.current || canvasInitializedRef.current) {
@@ -204,7 +204,7 @@ export default function CampaignAdjustPage() {
   useEffect(() => {
     if (!slug || !session) return;
     campaignSession.setAdjustments(slug, adjustments);
-  }, [adjustments, slug, session]);
+  }, [adjustments, slug, session, campaignSession]);
 
   const handleWheel = useCallback((e) => {
     if (!userPhoto) return;

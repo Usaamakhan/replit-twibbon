@@ -128,6 +128,50 @@ export default function OnboardingPage() {
     }
   }, [hasChanges, currentUrl]);
 
+  // Function to check username availability with debouncing
+  const checkUsernameAvailability = useCallback(async (username) => {
+    if (!username || username.length < 3) {
+      setUsernameStatus(null);
+      return;
+    }
+
+    // If username is unchanged from original, mark as unchanged
+    if (username === originalUsername) {
+      setUsernameStatus('unchanged');
+      return;
+    }
+
+    // Clear existing timeout
+    if (usernameCheckTimeoutRef.current) {
+      clearTimeout(usernameCheckTimeoutRef.current);
+    }
+
+    setUsernameStatus('checking');
+    
+    // Increment request ID to handle race conditions
+    const currentRequestId = ++usernameRequestIdRef.current;
+
+    // Set new timeout for debouncing
+    usernameCheckTimeoutRef.current = setTimeout(async () => {
+      try {
+        const exists = await checkUsernameExists(username);
+        
+        // Only update if this is still the latest request
+        if (currentRequestId === usernameRequestIdRef.current) {
+          const newStatus = exists ? 'taken' : 'available';
+          setUsernameStatus(newStatus);
+        }
+      } catch (error) {
+        if (process.env.NODE_ENV === 'development') {
+          console.error('Error checking username:', error);
+        }
+        if (currentRequestId === usernameRequestIdRef.current) {
+          setUsernameStatus(null); // Show neutral state on error
+        }
+      }
+    }, 500); // 500ms debounce
+  }, [originalUsername]);
+
   // Load user data when component mounts - same as profile/edit page
   useEffect(() => {
     const loadUserData = async () => {
@@ -197,51 +241,7 @@ export default function OnboardingPage() {
     };
 
     loadUserData();
-  }, [user]);
-
-  // Function to check username availability with debouncing
-  const checkUsernameAvailability = async (username) => {
-    if (!username || username.length < 3) {
-      setUsernameStatus(null);
-      return;
-    }
-
-    // If username is unchanged from original, mark as unchanged
-    if (username === originalUsername) {
-      setUsernameStatus('unchanged');
-      return;
-    }
-
-    // Clear existing timeout
-    if (usernameCheckTimeoutRef.current) {
-      clearTimeout(usernameCheckTimeoutRef.current);
-    }
-
-    setUsernameStatus('checking');
-    
-    // Increment request ID to handle race conditions
-    const currentRequestId = ++usernameRequestIdRef.current;
-
-    // Set new timeout for debouncing
-    usernameCheckTimeoutRef.current = setTimeout(async () => {
-      try {
-        const exists = await checkUsernameExists(username);
-        
-        // Only update if this is still the latest request
-        if (currentRequestId === usernameRequestIdRef.current) {
-          const newStatus = exists ? 'taken' : 'available';
-          setUsernameStatus(newStatus);
-        }
-      } catch (error) {
-        if (process.env.NODE_ENV === 'development') {
-          console.error('Error checking username:', error);
-        }
-        if (currentRequestId === usernameRequestIdRef.current) {
-          setUsernameStatus(null); // Show neutral state on error
-        }
-      }
-    }, 500); // 500ms debounce
-  };
+  }, [user, checkUsernameAvailability]);
 
   // Track if user has made any edits (not just has content)
   const [userHasEdited, setUserHasEdited] = useState(false);

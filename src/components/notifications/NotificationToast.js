@@ -1,11 +1,18 @@
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 
 export default function NotificationToast({ notification, onClose }) {
   const router = useRouter();
   const [isExiting, setIsExiting] = useState(false);
+  
+  const handleClose = useCallback(() => {
+    setIsExiting(true);
+    setTimeout(() => {
+      onClose();
+    }, 300);
+  }, [onClose]);
   
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -13,14 +20,7 @@ export default function NotificationToast({ notification, onClose }) {
     }, 10000);
     
     return () => clearTimeout(timer);
-  }, []);
-  
-  const handleClose = () => {
-    setIsExiting(true);
-    setTimeout(() => {
-      onClose();
-    }, 300);
-  };
+  }, [handleClose]);
   
   const handleClick = () => {
     if (notification.actionUrl) {

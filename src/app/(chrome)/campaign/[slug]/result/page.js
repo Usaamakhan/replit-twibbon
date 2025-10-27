@@ -79,7 +79,7 @@ export default function CampaignResultPage() {
         URL.revokeObjectURL(composedImageUrlRef.current);
       }
     };
-  }, [slug, router]);
+  }, [slug, router, campaignSession]);
 
   // Start Over - clear session and go to page 1
   const handleStartOver = () => {

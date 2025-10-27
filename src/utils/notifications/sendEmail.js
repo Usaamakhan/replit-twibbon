@@ -1,12 +1,23 @@
 import { MailerSend, EmailParams, Sender, Recipient } from "mailersend";
 import { validateMailersendKey } from "../validateEnv";
 
-// Validate API key on initialization
-validateMailersendKey(process.env.MAILERSEND_API_KEY);
+// Lazy validation - only validate when actually sending emails, not during build
+let mailerSend = null;
+let isValidated = false;
 
-const mailerSend = new MailerSend({
-  apiKey: process.env.MAILERSEND_API_KEY || "",
-});
+function getMailerSendInstance() {
+  if (!mailerSend) {
+    // Only validate at runtime when actually sending emails
+    if (!isValidated) {
+      validateMailersendKey(process.env.MAILERSEND_API_KEY);
+      isValidated = true;
+    }
+    mailerSend = new MailerSend({
+      apiKey: process.env.MAILERSEND_API_KEY || "",
+    });
+  }
+  return mailerSend;
+}
 
 /**
  * Send an email using MailerSend API
@@ -44,7 +55,8 @@ export async function sendEmail({
       .setSubject(subject)
       .setHtml(html);
 
-    const result = await mailerSend.email.send(emailParams);
+    const mailer = getMailerSendInstance();
+    const result = await mailer.email.send(emailParams);
 
     console.log("[EMAIL] Sent successfully:", result.body?.messageId || "sent");
 

@@ -50,7 +50,7 @@ export default function UserOnboardingWrapper({ children }) {
     };
 
     checkProfileStatus();
-  }, [user, loading]);
+  }, [user, loading, router]);
 
 
   // Don't render welcome popup if still loading or checking
