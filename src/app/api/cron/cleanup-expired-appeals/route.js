@@ -34,32 +34,50 @@ export async function GET(request) {
       try {
         const campaign = doc.data();
         
-        if (campaign.appealDeadline && campaign.appealDeadline.toDate() < now) {
-          await doc.ref.update({
-            moderationStatus: 'removed-permanent',
-            appealDeadline: FieldValue.delete(),
-            appealCount: FieldValue.delete(),
-            updatedAt: FieldValue.serverTimestamp(),
-          });
+        // Validate campaign fields
+        const campaignTitle = campaign.title || `Campaign ${doc.id}`;
+        
+        // Safely handle appealDeadline conversion
+        if (campaign.appealDeadline) {
+          let deadline;
+          try {
+            deadline = campaign.appealDeadline.toDate 
+              ? campaign.appealDeadline.toDate() 
+              : new Date(campaign.appealDeadline);
+          } catch (conversionError) {
+            console.error(`Invalid appealDeadline format for campaign ${doc.id}:`, conversionError);
+            errors.push({ campaignId: doc.id, error: 'Invalid appealDeadline format' });
+            continue;
+          }
+          
+          if (deadline < now) {
+            await doc.ref.update({
+              moderationStatus: 'removed-permanent',
+              appealDeadline: FieldValue.delete(),
+              appealCount: FieldValue.delete(),
+              updatedAt: FieldValue.serverTimestamp(),
+            });
 
-          await sendInAppNotification(campaign.creatorId, {
-            type: 'campaignPermanentlyRemoved',
-            title: '🚫 Campaign Permanently Removed',
-            message: `Your campaign "${campaign.title}" has been permanently removed. The 30-day appeal window has expired.`,
-            actionUrl: '/profile',
-            actionLabel: 'View Profile',
-          });
+            await sendInAppNotification(campaign.creatorId, {
+              type: 'campaignPermanentlyRemoved',
+              title: '🚫 Campaign Permanently Removed',
+              message: `Your campaign "${campaignTitle}" has been permanently removed. The 30-day appeal window has expired.`,
+              actionUrl: '/profile',
+              actionLabel: 'View Profile',
+            });
 
-          await logAdminAction({
-            adminId: 'system',
-            adminEmail: 'system@twibbonize.com',
-            action: 'auto_permanent_removal',
-            targetType: 'campaign',
-            targetId: doc.id,
-            reason: 'Appeal deadline expired - auto-upgraded to permanent removal',
-          });
+            await logAdminAction({
+              adminId: 'system',
+              adminEmail: 'system@twibbonize.com',
+              action: 'auto_permanent_removal',
+              targetType: 'campaign',
+              targetId: doc.id,
+              targetTitle: campaignTitle,
+              reason: 'Appeal deadline expired - auto-upgraded to permanent removal',
+            });
 
-          campaignsProcessed++;
+            campaignsProcessed++;
+          }
         }
       } catch (error) {
         console.error(`Error processing campaign ${doc.id}:`, error);
@@ -76,38 +94,57 @@ export async function GET(request) {
       try {
         const user = doc.data();
         
-        if (user.appealDeadline && user.appealDeadline.toDate() < now) {
-          await doc.ref.update({
-            accountStatus: 'banned-permanent',
-            appealDeadline: FieldValue.delete(),
-            updatedAt: FieldValue.serverTimestamp(),
-          });
-
-          if (user.email) {
-            const emailTemplate = getEmailTemplate('accountBanned', {
-              userEmail: user.email,
-              username: user.username || user.displayName || 'User',
-              banReason: user.banReason || 'Community guidelines violation',
-              isPermanent: true,
-            });
-
-            await sendEmail({
-              to: user.email,
-              subject: emailTemplate.subject,
-              html: emailTemplate.html,
-            });
+        // Validate user fields
+        const username = user.username || user.displayName || `User ${doc.id}`;
+        const banReason = user.banReason || 'Community guidelines violation';
+        
+        // Safely handle appealDeadline conversion
+        if (user.appealDeadline) {
+          let deadline;
+          try {
+            deadline = user.appealDeadline.toDate 
+              ? user.appealDeadline.toDate() 
+              : new Date(user.appealDeadline);
+          } catch (conversionError) {
+            console.error(`Invalid appealDeadline format for user ${doc.id}:`, conversionError);
+            errors.push({ userId: doc.id, error: 'Invalid appealDeadline format' });
+            continue;
           }
+          
+          if (deadline < now) {
+            await doc.ref.update({
+              accountStatus: 'banned-permanent',
+              appealDeadline: FieldValue.delete(),
+              updatedAt: FieldValue.serverTimestamp(),
+            });
 
-          await logAdminAction({
-            adminId: 'system',
-            adminEmail: 'system@twibbonize.com',
-            action: 'auto_permanent_ban',
-            targetType: 'user',
-            targetId: doc.id,
-            reason: 'Appeal deadline expired - auto-upgraded to permanent ban',
-          });
+            if (user.email) {
+              const emailTemplate = getEmailTemplate('accountBanned', {
+                userEmail: user.email,
+                username: username,
+                banReason: banReason,
+                isPermanent: true,
+              });
 
-          usersProcessed++;
+              await sendEmail({
+                to: user.email,
+                subject: emailTemplate.subject,
+                html: emailTemplate.html,
+              });
+            }
+
+            await logAdminAction({
+              adminId: 'system',
+              adminEmail: 'system@twibbonize.com',
+              action: 'auto_permanent_ban',
+              targetType: 'user',
+              targetId: doc.id,
+              targetTitle: username,
+              reason: 'Appeal deadline expired - auto-upgraded to permanent ban',
+            });
+
+            usersProcessed++;
+          }
         }
       } catch (error) {
         console.error(`Error processing user ${doc.id}:`, error);

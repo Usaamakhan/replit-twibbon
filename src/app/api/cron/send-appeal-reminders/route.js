@@ -46,6 +46,10 @@ export async function GET(request) {
         try {
           const campaign = doc.data();
           
+          // Validate campaign fields
+          const campaignTitle = campaign.title || 'Your campaign';
+          const removalReason = campaign.removalReason || 'Community guidelines violation';
+          
           const creatorDoc = await adminDb.collection('users').doc(campaign.creatorId).get();
           const creator = creatorDoc.data();
 
@@ -53,7 +57,7 @@ export async function GET(request) {
             await sendInAppNotification(campaign.creatorId, {
               type: 'appealDeadlineReminder',
               title: '⏰ Appeal Deadline Reminder',
-              message: `You have ${daysLeft} day${daysLeft > 1 ? 's' : ''} left to appeal the removal of your campaign "${campaign.title}". Don't miss the deadline!`,
+              message: `You have ${daysLeft} day${daysLeft > 1 ? 's' : ''} left to appeal the removal of your campaign "${campaignTitle}". Don't miss the deadline!`,
               actionUrl: '/profile/appeals',
               actionLabel: 'Submit Appeal',
             });
@@ -63,8 +67,8 @@ export async function GET(request) {
               username: creator.username || creator.displayName || 'User',
               daysLeft,
               itemType: 'campaign',
-              itemName: campaign.title,
-              removalReason: campaign.removalReason || 'Community guidelines violation',
+              itemName: campaignTitle,
+              removalReason: removalReason,
             });
 
             await sendEmail({
