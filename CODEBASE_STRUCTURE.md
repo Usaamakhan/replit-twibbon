@@ -490,9 +490,10 @@ Helper functions and algorithms.
   - Frame: photo under frame
   - Background: photo on top
   - Zoom, position, rotate adjustments
-- **`imageTransform.js`** - Supabase CDN transformations
-  - Thumbnail, preview, avatar, banner presets
+- **`imageTransform.js`** - ImageKit.io CDN transformations
+  - Thumbnail, preview, avatar, banner presets via ImageKit.io
   - WebP conversion and quality optimization
+  - Supabase used only for full-size canvas operations (no transforms)
 
 ### Admin Utilities
 
@@ -623,9 +624,9 @@ Located in `/src/utils/notifications/`:
 
 ### Backend Services
 - **Firebase** - Authentication and Firestore database
-- **Supabase** - Object storage for images with CDN
+- **Supabase** - Object storage for images (no CDN transforms)
 - **MailerSend** - Email delivery service for ban/unban notifications
-- **ImageKit.io** - Image optimization (deprecated in favor of Supabase CDN)
+- **ImageKit.io** - Active CDN for image optimization and transformations (WebP, resizing, quality)
 
 ### Key Libraries
 - **@supabase/supabase-js** - Supabase client
@@ -660,10 +661,8 @@ Located in `/src/utils/notifications/`:
 - `MAILERSEND_API_KEY`
 - `NEXT_PUBLIC_BASE_URL` (for email links)
 
-### ImageKit.io (Legacy - Deprecated)
-- `NEXT_PUBLIC_IMAGEKIT_URL_ENDPOINT`
-- `IMAGEKIT_PUBLIC_KEY`
-- `IMAGEKIT_PRIVATE_KEY`
+### ImageKit.io (Active - Required)
+- `NEXT_PUBLIC_IMAGEKIT_URL_ENDPOINT` (required for all image transformations)
 
 ---
 

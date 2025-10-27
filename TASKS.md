@@ -185,16 +185,17 @@
 - ⏸️ Campaign promotion tools (boost visibility)
 
 ### 5.3 Automation & Scaling
-- ⏸️ **Auto-deletion cron jobs:**
-  - Daily job to check expired `appealDeadline` (30 days)
-  - Permanent deletion logic for campaigns + images
-  - Permanent ban logic for users + cascade delete
-  - Requires: Vercel Cron or Firebase Scheduled Functions
+- ✅ **Auto-deletion cron jobs:** FULLY IMPLEMENTED (October 26, 2025)
+  - Daily job at 2:00 AM UTC checks expired `appealDeadline` (30 days)
+  - Permanent deletion logic for campaigns (removed-permanent)
+  - Permanent ban logic for users (banned-permanent)
+  - Implemented via: Vercel Cron Jobs (configured in vercel.json)
 
-- ⏸️ **Email notifications:**
-  - Moderation action updates
-  - Appeal deadline reminders (3 days before)
-  - Weekly campaign performance digest
+- ✅ **Email notifications:** IMPLEMENTED for critical actions
+  - ✅ Account ban/unban notifications via MailerSend
+  - ✅ Appeal deadline reminders (7, 3, 1 day before)
+  - ⏸️ Moderation action updates (in-app only currently)
+  - ⏸️ Weekly campaign performance digest
 
 - ⏸️ **Content moderation automation:**
   - AI-based image moderation (detect inappropriate content)
@@ -440,8 +441,8 @@ The admin report action buttons (**Dismiss Report**, **Warn Creator**, **Remove 
 - ✅ Appeal submission UI at `/profile/appeals`
 - ✅ Admin appeals review dashboard at `/admin/appeals`
 - ✅ In-app notifications for appeal submission, approval, and rejection
-- ⏸️ Auto-deletion after 30 days (deferred - requires cron job)
-- ⏸️ Appeal deadline reminder notifications (deferred - requires cron job)
+- ✅ Auto-deletion after 30 days (fully implemented via Vercel cron job)
+- ✅ Appeal deadline reminder notifications (fully implemented via Vercel cron job)
 
 ---
 
@@ -505,9 +506,9 @@ Complete appeal system allowing users to appeal removed campaigns or banned acco
 **Admin Navigation:**
 - ✅ Appeals link added to AdminSidebar
 
-**Outstanding Items:**
-- ⏸️ Appeal deadline reminder notifications (requires cron job)
-- ⏸️ Auto-deletion after 30 days (requires cron job)
+**All Items Completed:**
+- ✅ Appeal deadline reminder notifications (implemented via cron job at 10:00 AM UTC)
+- ✅ Auto-deletion after 30 days (implemented via cron job at 2:00 AM UTC)
 
 ---
 
@@ -629,7 +630,7 @@ await sendInAppNotification(userId, {
 - ✅ Warning issued → Notify creator
 - ✅ Account banned → Notify with appeal link
 - ✅ Admin dismisses reports → Notify "Restored"
-- ⏸️ Appeal deadline reminder → 3 days before (requires cron job)
+- ✅ Appeal deadline reminder → 7, 3, 1 days before (implemented via Vercel cron job)
 
 ---
 

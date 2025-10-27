@@ -38,9 +38,10 @@ The application is built with Next.js 15.5.2 (App Router), React 19.1.0, and Tai
 - **Notification History/Inbox System:** All notifications are saved to Firestore (`users/{userId}/notifications`) for an in-app inbox with real-time updates and authenticated APIs for managing read/delete status.
 
 ## External Dependencies
-- **Firebase:** Authentication and backend services.
-- **Supabase:** Database and image storage.
-- **ImageKit.io:** CDN for image optimization and transformations.
+- **Firebase:** Authentication and Firestore database.
+- **Supabase:** Image storage (campaigns, profiles).
+- **ImageKit.io:** Active CDN for image optimization and transformations (WebP, resizing).
+- **MailerSend:** Email notifications for critical actions (bans, unbans).
 - **Next.js:** Web framework (v15.5.2).
 - **React:** UI library (v19.1.0).
 - **Tailwind CSS:** Styling (v4).
@@ -93,9 +94,9 @@ Conducted comprehensive documentation audit comparing actual codebase against al
 - ✅ Notification inbox with history
 - ✅ Optimized grouped reporting system
 - ✅ Complete appeal system (user submission + admin review)
-- ⏸️ Admin warning history view (deferred)
-- ⏸️ Auto-deletion cron jobs (deferred)
-- ⏸️ Appeal deadline reminder notifications (deferred)
+- ✅ Auto-deletion cron jobs (fully implemented)
+- ✅ Appeal deadline reminder notifications (fully implemented)
+- ⏸️ Admin warning history view (deferred - future enhancement)
 
 ## Recent Updates (October 24, 2025)
 
@@ -129,9 +130,9 @@ Implemented a full-featured appeal system for removed campaigns and banned accou
 - Full audit trail through admin action logging
 - Notification system integration for all appeal events
 
-**Deferred Items:**
-- Appeal deadline reminder notifications (requires cron job)
-- Auto-deletion after 30 days if no appeal (requires cron job)
+**Completed Items (October 26, 2025):**
+- ✅ Appeal deadline reminder notifications (implemented via Vercel cron job)
+- ✅ Auto-deletion after 30 days if no appeal (implemented via Vercel cron job)
 
 ---
 

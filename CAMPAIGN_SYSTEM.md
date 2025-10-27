@@ -205,7 +205,7 @@ Twibbonize supports two campaign types:
 ---
 
 ### Appeals Collection (Firestore: `appeals`)
-⏸️ **Status: Pending Implementation**
+✅ **Status: Fully Implemented** (October 24, 2025)
 
 ```javascript
 {
@@ -223,9 +223,10 @@ Twibbonize supports two campaign types:
 
 **Purpose:**
 - 30-day appeal window for removed content/banned accounts
-- Admin reviews in `/admin/appeals`
-- Approve → Restore content/account
-- Reject → Permanent deletion
+- User submission at `/profile/appeals`
+- Admin reviews at `/admin/appeals`
+- Approve → Restore content/account to `active` status
+- Reject → Upgrade to `removed-permanent` or `banned-permanent`
 
 ---
 
@@ -484,9 +485,9 @@ drawUserPhoto(ctx, userPhoto, adjustments);
 ### Image Optimization
 ✅ **Status: Implemented (October 05, 2025) - `imageTransform.js`**
 
-**Supabase Image Transformation API integration for bandwidth reduction:**
+**ImageKit.io CDN integration for bandwidth reduction:**
 
-Automatically serves optimized WebP images with appropriate sizes for different use cases, reducing bandwidth costs by 89%.
+Automatically serves optimized WebP images with appropriate sizes for different use cases through ImageKit.io CDN, reducing bandwidth costs by 89%. Supabase Storage is used only for full-size canvas operations where transparency must be preserved.
 
 **Transformation Presets:**
 
@@ -508,12 +509,12 @@ getProfileBanner(imagePath)      // Profile page headers
 ```
 
 **Implementation:**
-- Automatic WebP conversion with quality optimization
+- ImageKit.io CDN handles transformations (WebP conversion, resizing, quality optimization)
 - Campaign images preserve aspect ratio (width-based scaling)
 - Profile avatars and banners use fixed dimensions (center crop)
-- Maintains original images for canvas operations (transparency required)
-- Leverages Supabase Smart CDN for edge caching
-- Compatible with Firebase photo URLs (pass-through)
+- Supabase Storage provides original images for canvas operations (transparency required)
+- Leverages ImageKit.io global CDN for edge caching and fast delivery
+- Compatible with Firebase photo URLs (pass-through, no transformation)
 
 **Cost Impact:**
 - Before: $520/month at 100k visitors
