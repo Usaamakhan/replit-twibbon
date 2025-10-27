@@ -10,26 +10,10 @@ export async function PATCH(request, { params }) {
     
     const { userId } = params;
     const body = await request.json();
-    let { accountStatus, banReason, permanent = false, banned } = body;
-    
-    // Legacy support: map old `banned` boolean to new `accountStatus` enum
-    if (accountStatus === undefined && banned !== undefined) {
-      if (typeof banned !== 'boolean') {
-        return NextResponse.json(
-          { success: false, error: 'Banned status must be a boolean' },
-          { status: 400 }
-        );
-      }
-      // Map banned boolean + permanent flag to new accountStatus
-      if (banned) {
-        accountStatus = permanent ? 'banned-permanent' : 'banned-temporary';
-      } else {
-        accountStatus = 'active';
-      }
-    }
+    const { accountStatus, banReason } = body;
     
     const validStatuses = ['active', 'under-review', 'under-review-hidden', 'banned-temporary', 'banned-permanent'];
-    if (accountStatus && !validStatuses.includes(accountStatus)) {
+    if (!accountStatus || !validStatuses.includes(accountStatus)) {
       return NextResponse.json(
         { success: false, error: 'Account status must be: active, under-review, under-review-hidden, banned-temporary, or banned-permanent' },
         { status: 400 }

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useRouter } from 'next/navigation';
 import AuthGate from '@/components/AuthGate';
@@ -24,13 +24,9 @@ function AppealsContent() {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
 
-  useEffect(() => {
-    if (user) {
-      fetchRemovedItems();
-    }
-  }, [user]);
-
-  const fetchRemovedItems = async () => {
+  const fetchRemovedItems = useCallback(async () => {
+    if (!user) return;
+    
     try {
       setLoading(true);
       const token = await user.getIdToken();
@@ -51,7 +47,11 @@ function AppealsContent() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [user]);
+
+  useEffect(() => {
+    fetchRemovedItems();
+  }, [fetchRemovedItems]);
 
   const handleSubmitAppeal = async (e) => {
     e.preventDefault();
