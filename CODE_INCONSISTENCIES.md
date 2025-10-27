@@ -34,4 +34,35 @@ All previously identified low-priority issues have been resolved.
 
 ---
 
+## 📧 API Key Validation Strategy (October 27, 2025)
+
+**File:** `src/utils/notifications/sendEmail.js`
+
+**Approach:** Build-time validation for production only
+
+**Implementation:**
+```javascript
+// Validate at build time ONLY for production builds
+if (process.env.NODE_ENV === 'production') {
+  validateMailersendKey(process.env.MAILERSEND_API_KEY);
+}
+```
+
+**Why this approach:**
+1. **Production safety:** Invalid API keys are caught during deployment, preventing broken email functionality from reaching users
+2. **Development flexibility:** Local builds proceed without requiring valid MailerSend credentials
+3. **Fast failure:** Vercel deployment fails immediately with clear error message if key is missing/invalid
+4. **Error visibility:** Build logs show the exact issue (e.g., "MAILERSEND_API_KEY must start with 'mlsn_'")
+
+**Where errors appear:**
+- **Build-time errors:** Vercel deployment logs (immediate feedback during CI/CD)
+- **Runtime errors (if validation bypassed):** Vercel function logs at `/api/admin/users/[userId]/ban` or cron job routes
+
+**Alternative considered:** Runtime-only validation
+- ❌ Errors only appear when sending emails (harder to catch)
+- ❌ Requires monitoring application logs
+- ❌ May cause issues during critical operations (user bans, appeal reminders)
+
+---
+
 **End of Report**
