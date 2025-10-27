@@ -4,7 +4,7 @@
  * Provides format validation for various environment variables to catch
  * configuration issues early rather than at runtime.
  */
-o
+
 /**
  * Validate MailerSend API Key format
  * @param {string} key - The API key to validate
@@ -23,7 +23,7 @@ export function validateMailersendKey(key) {
   // MailerSend API keys start with 'mlsn.'
   if (!key.startsWith("mlsn.")) {
     const error =
-      'MAILERSEND_API_KEY must start with "mlsn_" - this appears to be an invalid MailerSend API key';
+      'MAILERSEND_API_KEY must start with "mlsn." - this appears to be an invalid MailerSend API key';
 
     if (isProduction) {
       throw new Error(`[PRODUCTION] ${error}`);
