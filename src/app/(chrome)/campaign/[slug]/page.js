@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from 'react';
+import Image from 'next/image';
 import { useParams, useRouter } from 'next/navigation';
 import { getCampaignBySlug } from '../../../../lib/firestore';
 import { useCampaignSession } from '../../../../contexts/CampaignSessionContext';
@@ -187,13 +188,15 @@ export default function CampaignUploadPage() {
                 <div className="space-y-3">
                   <h2 className="text-lg font-bold text-gray-900">Campaign Preview</h2>
                   
-                  <div className="relative">
-                    <img
-                      src={getCampaignPreview(campaign.imageUrl)}
-                      alt={campaign.title}
-                      className="w-full h-auto rounded-lg border-2 border-gray-300"
-                      style={{ maxHeight: '500px', objectFit: 'contain' }}
-                    />
+                  <div className="relative w-full rounded-lg border-2 border-gray-300 overflow-hidden" style={{ maxHeight: '500px' }}>
+                    <div className="relative w-full" style={{ paddingBottom: '100%' }}>
+                      <Image
+                        src={getCampaignPreview(campaign.imageUrl)}
+                        alt={campaign.title}
+                        fill
+                        className="object-contain"
+                      />
+                    </div>
                     <div className="absolute top-4 right-4 bg-emerald-500 text-white px-3 py-1 rounded-full text-xs font-semibold uppercase">
                       {campaign.type === 'frame' ? 'Frame' : 'Background'}
                     </div>
@@ -202,11 +205,14 @@ export default function CampaignUploadPage() {
                   {creator && (
                     <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg border border-gray-200">
                       {creator.profileImage && (
-                        <img
-                          src={getProfileAvatar(creator.profileImage)}
-                          alt={creator.displayName}
-                          className="w-10 h-10 rounded-full border-2 border-gray-300"
-                        />
+                        <div className="relative w-10 h-10 rounded-full border-2 border-gray-300 overflow-hidden flex-shrink-0">
+                          <Image
+                            src={getProfileAvatar(creator.profileImage)}
+                            alt={creator.displayName}
+                            fill
+                            className="object-cover"
+                          />
+                        </div>
                       )}
                       <div className="flex-1">
                         <p className="text-sm text-gray-600">Created by</p>

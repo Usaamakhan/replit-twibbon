@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from 'react';
+import Image from 'next/image';
 import { useParams, useRouter } from 'next/navigation';
 import { useCampaignSession } from '../../../../../contexts/CampaignSessionContext';
 import { requireDownloadComplete } from '../../../../../utils/campaignRouteGuards';
@@ -25,6 +26,7 @@ export default function CampaignResultPage() {
   const [redownloading, setRedownloading] = useState(false);
 
   const canvasRef = useRef(null);
+  const composedImageUrlRef = useRef(null);
 
   // Load session and check route guard
   useEffect(() => {
@@ -59,6 +61,7 @@ export default function CampaignResultPage() {
           );
           
           const url = URL.createObjectURL(composedBlob);
+          composedImageUrlRef.current = url;
           setComposedImageUrl(url);
         } catch (error) {
           console.error('Error loading result:', error);
@@ -72,8 +75,8 @@ export default function CampaignResultPage() {
     
     // Cleanup composed image URL on unmount
     return () => {
-      if (composedImageUrl) {
-        URL.revokeObjectURL(composedImageUrl);
+      if (composedImageUrlRef.current) {
+        URL.revokeObjectURL(composedImageUrlRef.current);
       }
     };
   }, [slug, router]);
@@ -227,11 +230,14 @@ export default function CampaignResultPage() {
                       <p className="text-sm text-gray-600 text-center mb-2">Campaign by</p>
                       <div className="flex items-center justify-center gap-3">
                         {creator.profileImage && (
-                          <img
-                            src={getProfileAvatar(creator.profileImage)}
-                            alt={creator.displayName}
-                            className="w-10 h-10 rounded-full border-2 border-gray-300"
-                          />
+                          <div className="relative w-10 h-10 rounded-full border-2 border-gray-300 overflow-hidden flex-shrink-0">
+                            <Image
+                              src={getProfileAvatar(creator.profileImage)}
+                              alt={creator.displayName}
+                              fill
+                              className="object-cover"
+                            />
+                          </div>
                         )}
                         <div className="text-left">
                           <button

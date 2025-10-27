@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { getTopCreators } from '../../../lib/firestore';
 import { getProfileAvatar } from '../../../utils/imageTransform';
@@ -17,11 +17,7 @@ export default function CreatorsPage() {
     timePeriod: 'all'
   });
 
-  useEffect(() => {
-    loadCreators();
-  }, [filters]);
-
-  const loadCreators = async () => {
+  const loadCreators = useCallback(async () => {
     setLoading(true);
     try {
       const result = await getTopCreators(filters);
@@ -31,7 +27,11 @@ export default function CreatorsPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [filters]);
+
+  useEffect(() => {
+    loadCreators();
+  }, [loadCreators]);
 
   const handleApplyFilters = (newFilters) => {
     setFilters(newFilters);

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { getAllCampaigns } from '../../../lib/firestore';
 import LoadingSpinner from '../../../components/LoadingSpinner';
@@ -19,11 +19,7 @@ export default function CampaignsPage() {
     sortBy: 'createdAt'
   });
 
-  useEffect(() => {
-    loadCampaigns();
-  }, [filters]);
-
-  const loadCampaigns = async () => {
+  const loadCampaigns = useCallback(async () => {
     setLoading(true);
     try {
       const result = await getAllCampaigns(filters);
@@ -33,7 +29,11 @@ export default function CampaignsPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [filters]);
+
+  useEffect(() => {
+    loadCampaigns();
+  }, [loadCampaigns]);
 
   const handleApplyFilters = (newFilters) => {
     setFilters(newFilters);

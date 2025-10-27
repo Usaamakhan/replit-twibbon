@@ -183,7 +183,7 @@ export default function CampaignAdjustPage() {
       displayCtx.clearRect(0, 0, display.width, display.height);
       displayCtx.drawImage(offscreen, 0, 0);
     }
-  }, [adjustments, campaign, imagesReady, isInteracting]);
+  }, [adjustments, campaign, isInteracting]);
 
   useEffect(() => {
     if (rafRef.current) {

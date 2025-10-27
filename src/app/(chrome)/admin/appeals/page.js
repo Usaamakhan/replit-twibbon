@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
+import Image from 'next/image';
 import { useAuth } from '@/hooks/useAuth';
 import { formatTimestamp } from '@/utils/admin/adminHelpers';
 
@@ -21,13 +22,7 @@ export default function AdminAppealsPage() {
   const [confirmText, setConfirmText] = useState('');
   const [error, setError] = useState('');
 
-  useEffect(() => {
-    if (user) {
-      fetchAppeals();
-    }
-  }, [user]);
-
-  const fetchAppeals = async () => {
+  const fetchAppeals = useCallback(async () => {
     try {
       setLoading(true);
       setError('');
@@ -51,7 +46,13 @@ export default function AdminAppealsPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [user, filters]);
+
+  useEffect(() => {
+    if (user) {
+      fetchAppeals();
+    }
+  }, [user, fetchAppeals]);
 
   const handleAction = async () => {
     if (!selectedAppeal || !actionType) return;
@@ -230,11 +231,14 @@ export default function AdminAppealsPage() {
                     <td className="px-6 py-4">
                       <div className="flex items-center">
                         {appeal.userInfo?.profileImage ? (
-                          <img
-                            src={appeal.userInfo.profileImage}
-                            alt={appeal.userInfo.username}
-                            className="w-10 h-10 rounded-full mr-3"
-                          />
+                          <div className="relative w-10 h-10 rounded-full mr-3 overflow-hidden">
+                            <Image
+                              src={appeal.userInfo.profileImage}
+                              alt={appeal.userInfo.username}
+                              fill
+                              className="object-cover"
+                            />
+                          </div>
                         ) : (
                           <div className="w-10 h-10 rounded-full bg-gray-300 flex items-center justify-center mr-3 text-sm font-semibold">
                             {appeal.userInfo?.username?.charAt(0) || 'U'}
@@ -251,11 +255,14 @@ export default function AdminAppealsPage() {
                       {appeal.type === 'campaign' ? (
                         <div className="flex items-center">
                           {appeal.targetInfo?.imageUrl && (
-                            <img
-                              src={appeal.targetInfo.imageUrl}
-                              alt={appeal.targetInfo.title}
-                              className="w-12 h-12 object-cover rounded mr-3"
-                            />
+                            <div className="relative w-12 h-12 rounded mr-3 overflow-hidden flex-shrink-0">
+                              <Image
+                                src={appeal.targetInfo.imageUrl}
+                                alt={appeal.targetInfo.title}
+                                fill
+                                className="object-cover"
+                              />
+                            </div>
                           )}
                           <div>
                             <div className="font-medium">{appeal.targetInfo?.title || '[Deleted]'}</div>
