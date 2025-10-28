@@ -429,6 +429,7 @@ export const createCampaign = async (campaignData, userId) => {
         title: campaignData.title,                  // Campaign title
         slug: campaignData.slug,                    // URL-friendly slug
         imageUrl: campaignData.imageUrl,            // Supabase storage URL
+        storagePath: campaignData.storagePath,      // Storage path for deletion operations
         creatorId: userId,                          // Renamed from createdBy
         
         // Optional metadata fields
