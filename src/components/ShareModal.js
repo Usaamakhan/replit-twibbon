@@ -140,7 +140,7 @@ export default function ShareModal({
               {/* Facebook */}
               <button
                 onClick={handleShareFacebook}
-                className="w-14 h-14 rounded-full bg-blue-600 hover:bg-blue-700 flex items-center justify-center transition-colors cursor-pointer"
+                className="btn-base btn-facebook w-14 h-14 rounded-full"
                 aria-label="Share on Facebook"
               >
                 <svg

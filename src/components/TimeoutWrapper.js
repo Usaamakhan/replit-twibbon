@@ -41,7 +41,7 @@ export default function TimeoutWrapper({ children, timeout = 10000 }) {
           </p>
           <button
             onClick={() => window.location.reload()}
-            className="bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 px-4 rounded-lg transition-colors"
+            className="btn-base btn-info py-2 px-4"
           >
             Try Again
           </button>

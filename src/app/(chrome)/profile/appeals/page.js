@@ -262,7 +262,7 @@ function AppealsContent() {
                   <button
                     type="submit"
                     disabled={submitting || appealReason.trim().length < 20}
-                    className="flex-1 bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
+                    className="btn-base btn-info flex-1 px-6 py-3"
                   >
                     {submitting ? 'Submitting...' : 'Submit Appeal'}
                   </button>

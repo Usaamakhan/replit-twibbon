@@ -279,19 +279,19 @@ function CampaignUploadContent() {
                     <div className="grid grid-cols-3 gap-3">
                       <button
                         onClick={() => handleShare('twitter')}
-                        className="btn-base bg-blue-400 hover:bg-blue-500 text-white py-3 text-sm font-medium"
+                        className="btn-base btn-twitter py-3 text-sm"
                       >
                         Twitter
                       </button>
                       <button
                         onClick={() => handleShare('facebook')}
-                        className="btn-base bg-blue-600 hover:bg-blue-700 text-white py-3 text-sm font-medium"
+                        className="btn-base btn-facebook py-3 text-sm"
                       >
                         Facebook
                       </button>
                       <button
                         onClick={() => handleShare('whatsapp')}
-                        className="btn-base bg-green-500 hover:bg-green-600 text-white py-3 text-sm font-medium"
+                        className="btn-base btn-whatsapp py-3 text-sm"
                       >
                         WhatsApp
                       </button>

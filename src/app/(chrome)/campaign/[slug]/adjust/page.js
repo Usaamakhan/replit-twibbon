@@ -482,7 +482,7 @@ function CampaignAdjustContent() {
                         <div className="flex items-center gap-2">
                           <button
                             onClick={() => setAdjustments(prev => ({ ...prev, scale: Math.max(0.1, prev.scale - 0.1) }))}
-                            className="flex-shrink-0 w-8 h-8 bg-gray-200 hover:bg-gray-300 rounded-lg flex items-center justify-center text-gray-700 font-bold transition-colors"
+                            className="btn-base btn-neutral flex-shrink-0 w-8 h-8 rounded-lg"
                             aria-label="Zoom out"
                           >
                             −
@@ -498,7 +498,7 @@ function CampaignAdjustContent() {
                           />
                           <button
                             onClick={() => setAdjustments(prev => ({ ...prev, scale: Math.min(10, prev.scale + 0.1) }))}
-                            className="flex-shrink-0 w-8 h-8 bg-gray-200 hover:bg-gray-300 rounded-lg flex items-center justify-center text-gray-700 font-bold transition-colors"
+                            className="btn-base btn-neutral flex-shrink-0 w-8 h-8 rounded-lg"
                             aria-label="Zoom in"
                           >
                             +
@@ -516,7 +516,7 @@ function CampaignAdjustContent() {
                         <div className="flex items-center gap-2">
                           <button
                             onClick={() => setAdjustments(prev => ({ ...prev, rotation: Math.max(-180, (prev.rotation || 0) - 0.1) }))}
-                            className="flex-shrink-0 w-8 h-8 bg-gray-200 hover:bg-gray-300 rounded-lg flex items-center justify-center text-gray-700 font-bold transition-colors"
+                            className="btn-base btn-neutral flex-shrink-0 w-8 h-8 rounded-lg"
                             aria-label="Rotate counter-clockwise"
                           >
                             −
@@ -532,7 +532,7 @@ function CampaignAdjustContent() {
                           />
                           <button
                             onClick={() => setAdjustments(prev => ({ ...prev, rotation: Math.min(180, (prev.rotation || 0) + 0.1) }))}
-                            className="flex-shrink-0 w-8 h-8 bg-gray-200 hover:bg-gray-300 rounded-lg flex items-center justify-center text-gray-700 font-bold transition-colors"
+                            className="btn-base btn-neutral flex-shrink-0 w-8 h-8 rounded-lg"
                             aria-label="Rotate clockwise"
                           >
                             +
@@ -544,7 +544,7 @@ function CampaignAdjustContent() {
 
                   <button
                     onClick={handleChangePhoto}
-                    className="btn-base bg-gray-200 hover:bg-gray-300 text-gray-700 w-full py-2 text-sm font-medium"
+                    className="btn-base btn-neutral w-full py-2 text-sm"
                   >
                     Change Photo
                   </button>

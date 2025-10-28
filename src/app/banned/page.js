@@ -88,7 +88,7 @@ export default function BannedPage() {
                 sessionStorage.removeItem('banInfo');
                 router.push('/');
               }}
-              className="block w-full text-center py-3 px-4 bg-gray-200 hover:bg-gray-300 text-gray-700 font-medium rounded-lg transition-colors"
+              className="btn-base btn-neutral block w-full text-center py-3 px-4"
             >
               Clear and Return
             </button>

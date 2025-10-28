@@ -138,6 +138,79 @@
   transform: scale(1.02); /* Subtle zoom for text buttons */
 }
 
+/* Info button styling (for refresh, reload, etc.) */
+.btn-info {
+  background: #3b82f6; /* blue-500 */
+  color: white;
+}
+
+.btn-info:hover {
+  background: #2563eb; /* blue-600 */
+}
+
+.btn-info:focus {
+  outline: 2px solid #60a5fa; /* blue-400 focus ring */
+  outline-offset: 2px;
+}
+
+/* Neutral/utility button styling (for cancel, change, etc.) */
+.btn-neutral {
+  background: #e5e7eb; /* gray-200 */
+  color: #374151; /* gray-700 */
+}
+
+.btn-neutral:hover {
+  background: #d1d5db; /* gray-300 */
+}
+
+.btn-neutral:focus {
+  outline: 2px solid #9ca3af; /* gray-400 focus ring */
+  outline-offset: 2px;
+}
+
+/* Social media button variants */
+.btn-twitter {
+  background: #60a5fa; /* blue-400 - Twitter brand color */
+  color: white;
+}
+
+.btn-twitter:hover {
+  background: #3b82f6; /* blue-500 */
+}
+
+.btn-twitter:focus {
+  outline: 2px solid #93c5fd; /* blue-300 focus ring */
+  outline-offset: 2px;
+}
+
+.btn-facebook {
+  background: #2563eb; /* blue-600 - Facebook brand color */
+  color: white;
+}
+
+.btn-facebook:hover {
+  background: #1d4ed8; /* blue-700 */
+}
+
+.btn-facebook:focus {
+  outline: 2px solid #60a5fa; /* blue-400 focus ring */
+  outline-offset: 2px;
+}
+
+.btn-whatsapp {
+  background: #22c55e; /* green-500 - WhatsApp brand color */
+  color: white;
+}
+
+.btn-whatsapp:hover {
+  background: #16a34a; /* green-600 */
+}
+
+.btn-whatsapp:focus {
+  outline: 2px solid #4ade80; /* green-400 focus ring */
+  outline-offset: 2px;
+}
+
 /* Disabled state for all buttons */
 .btn-base:disabled {
   opacity: 0.5;
