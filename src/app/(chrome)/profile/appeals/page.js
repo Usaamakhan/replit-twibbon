@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useRouter } from 'next/navigation';
+import Image from 'next/image';
 import AuthGate from '@/components/AuthGate';
 
 export default function AppealsPage() {
@@ -193,9 +194,11 @@ function AppealsContent() {
                     >
                       <div className="flex items-start gap-4">
                         {item.type === 'campaign' && item.imageUrl && (
-                          <img
+                          <Image
                             src={item.imageUrl}
                             alt={item.title}
+                            width={64}
+                            height={64}
                             className="w-16 h-16 object-cover rounded"
                           />
                         )}
