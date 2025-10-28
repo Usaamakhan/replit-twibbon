@@ -58,15 +58,27 @@ export async function DELETE(request, { params }) {
     }
 
     try {
-      if (campaignData.imageUrl) {
-        const imagePath = campaignData.imageUrl;
+      if (campaignData.storagePath || campaignData.imageUrl) {
+        let imagePath = campaignData.storagePath;
         
-        const { error: storageError } = await supabaseAdmin.storage
-          .from('uploads')
-          .remove([imagePath]);
+        if (!imagePath && campaignData.imageUrl) {
+          if (campaignData.imageUrl.includes('/storage/v1/object/public/uploads/')) {
+            imagePath = campaignData.imageUrl.split('/storage/v1/object/public/uploads/')[1];
+          } else {
+            console.warn('Could not parse storage path from imageUrl:', campaignData.imageUrl);
+          }
+        }
         
-        if (storageError) {
-          console.error('Supabase storage deletion error:', storageError);
+        if (imagePath) {
+          const { error: storageError } = await supabaseAdmin.storage
+            .from('uploads')
+            .remove([imagePath]);
+          
+          if (storageError) {
+            console.error('Supabase storage deletion error for path:', imagePath, storageError);
+          } else {
+            console.log('Successfully deleted storage file:', imagePath);
+          }
         }
       }
     } catch (storageError) {

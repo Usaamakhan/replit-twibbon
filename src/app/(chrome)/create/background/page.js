@@ -133,6 +133,7 @@ export default function CreateBackgroundPage() {
         title: formData.title.trim(),
         description: formData.description.trim(),
         slug: slug,
+        storagePath: path,
         imageUrl: imageUrl,
         captionTemplate: formData.captionTemplate.trim()
       };
