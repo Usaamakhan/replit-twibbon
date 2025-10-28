@@ -3,8 +3,17 @@
 import { useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import AdminLogsTable from "@/components/admin/AdminLogsTable";
+import ErrorBoundary from "@/components/ErrorBoundary";
 
 export default function AdminLogsPage() {
+  return (
+    <ErrorBoundary>
+      <AdminLogsContent />
+    </ErrorBoundary>
+  );
+}
+
+function AdminLogsContent() {
   const { user } = useAuth();
   const [logs, setLogs] = useState([]);
   const [admins, setAdmins] = useState([]);

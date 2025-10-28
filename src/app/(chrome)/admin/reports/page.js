@@ -4,8 +4,17 @@ import { useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import GroupedReportsTable from "@/components/admin/GroupedReportsTable";
 import ReportDetailsPanel from "@/components/admin/ReportDetailsPanel";
+import ErrorBoundary from "@/components/ErrorBoundary";
 
 export default function AdminReportsPage() {
+  return (
+    <ErrorBoundary>
+      <AdminReportsContent />
+    </ErrorBoundary>
+  );
+}
+
+function AdminReportsContent() {
   const { user } = useAuth();
   const [summaries, setSummaries] = useState([]);
   const [loading, setLoading] = useState(false);

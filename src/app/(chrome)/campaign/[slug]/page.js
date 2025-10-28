@@ -11,8 +11,17 @@ import { abbreviateNumber } from '../../../../utils/validation';
 import LoadingSpinner from '../../../../components/LoadingSpinner';
 import CampaignStepIndicator from '../../../../components/CampaignStepIndicator';
 import ReportModal from '../../../../components/ReportModal';
+import ErrorBoundary from '../../../../components/ErrorBoundary';
 
 export default function CampaignUploadPage() {
+  return (
+    <ErrorBoundary>
+      <CampaignUploadContent />
+    </ErrorBoundary>
+  );
+}
+
+function CampaignUploadContent() {
   const params = useParams();
   const router = useRouter();
   const { user } = useAuth();

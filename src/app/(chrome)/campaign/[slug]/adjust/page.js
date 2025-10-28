@@ -8,8 +8,17 @@ import { loadImage, composeImages } from '../../../../../utils/imageComposition'
 import { getCampaignPreview } from '../../../../../utils/imageTransform';
 import LoadingSpinner from '../../../../../components/LoadingSpinner';
 import CampaignStepIndicator from '../../../../../components/CampaignStepIndicator';
+import ErrorBoundary from '../../../../../components/ErrorBoundary';
 
 export default function CampaignAdjustPage() {
+  return (
+    <ErrorBoundary>
+      <CampaignAdjustContent />
+    </ErrorBoundary>
+  );
+}
+
+function CampaignAdjustContent() {
   const params = useParams();
   const router = useRouter();
   const slug = params.slug;

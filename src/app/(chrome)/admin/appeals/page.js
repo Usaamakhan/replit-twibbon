@@ -4,8 +4,17 @@ import { useState, useEffect, useCallback } from 'react';
 import Image from 'next/image';
 import { useAuth } from '@/hooks/useAuth';
 import { formatTimestamp } from '@/utils/admin/adminHelpers';
+import ErrorBoundary from '@/components/ErrorBoundary';
 
 export default function AdminAppealsPage() {
+  return (
+    <ErrorBoundary>
+      <AdminAppealsContent />
+    </ErrorBoundary>
+  );
+}
+
+function AdminAppealsContent() {
   const { user } = useAuth();
   const [appeals, setAppeals] = useState([]);
   const [loading, setLoading] = useState(false);

@@ -5,11 +5,14 @@ import { useAuth } from '@/hooks/useAuth';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import AuthGate from '@/components/AuthGate';
+import ErrorBoundary from '@/components/ErrorBoundary';
 
 export default function AppealsPage() {
   return (
     <AuthGate>
-      <AppealsContent />
+      <ErrorBoundary>
+        <AppealsContent />
+      </ErrorBoundary>
     </AuthGate>
   );
 }

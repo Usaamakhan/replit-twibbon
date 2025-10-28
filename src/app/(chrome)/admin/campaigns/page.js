@@ -3,8 +3,17 @@
 import { useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import CampaignModerationCard from "@/components/admin/CampaignModerationCard";
+import ErrorBoundary from "@/components/ErrorBoundary";
 
 export default function AdminCampaignsPage() {
+  return (
+    <ErrorBoundary>
+      <AdminCampaignsContent />
+    </ErrorBoundary>
+  );
+}
+
+function AdminCampaignsContent() {
   const { user } = useAuth();
   const [campaigns, setCampaigns] = useState([]);
   const [loading, setLoading] = useState(false);

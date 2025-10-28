@@ -4,8 +4,17 @@ import { useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import UsersTable from "@/components/admin/UsersTable";
 import UserDetailsModal from "@/components/admin/UserDetailsModal";
+import ErrorBoundary from "@/components/ErrorBoundary";
 
 export default function AdminUsersPage() {
+  return (
+    <ErrorBoundary>
+      <AdminUsersContent />
+    </ErrorBoundary>
+  );
+}
+
+function AdminUsersContent() {
   const { user } = useAuth();
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(false);
