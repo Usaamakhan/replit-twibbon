@@ -2,7 +2,8 @@
  * Image Transformation Utilities
  * 
  * Uses ImageKit.io CDN for optimized image delivery with transformations.
- * Supabase code is kept commented for potential future migration.
+ * ImageKit was chosen over Supabase transforms for better performance,
+ * cost efficiency, and no Pro plan requirement.
  * 
  * ImageKit Documentation:
  * https://docs.imagekit.io/features/image-transformations
@@ -88,26 +89,6 @@ export function getTransformedImageUrl(imageUrlOrPath, options = {}) {
   const queryString = transformParams.length > 0 ? `?tr=${transformParams.join(',')}` : '';
   
   return `${imagekitUrl}/${imagePath}${queryString}`;
-  
-  /* SUPABASE TRANSFORMATION (Commented - Requires Pro Plan)
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  
-  if (!supabaseUrl) {
-    console.error('NEXT_PUBLIC_SUPABASE_URL is not configured');
-    return '';
-  }
-  
-  const transformParams = [];
-  
-  if (width) transformParams.push(`width=${width}`);
-  if (height) transformParams.push(`height=${height}`);
-  if (format) transformParams.push(`format=${format}`);
-  if (quality) transformParams.push(`quality=${quality}`);
-  
-  const queryString = transformParams.length > 0 ? `?${transformParams.join('&')}` : '';
-  
-  return `${supabaseUrl}/storage/v1/render/image/public/uploads/${imagePath}${queryString}`;
-  */
 }
 
 /**
