@@ -4,8 +4,14 @@
  */
 export const getEmailTemplate = (templateName, params = {}) => {
   const templates = {
-    accountBanned: ({ userEmail, username, banReason, appealDeadline, isPermanent }) => ({
-      subject: '🚫 Your Account Has Been Suspended',
+    accountBanned: ({
+      userEmail,
+      username,
+      banReason,
+      appealDeadline,
+      isPermanent,
+    }) => ({
+      subject: "🚫 Your Account Has Been Suspended",
       html: `
         <!DOCTYPE html>
         <html>
@@ -87,22 +93,26 @@ export const getEmailTemplate = (templateName, params = {}) => {
             <div class="content">
               <p>Hello ${username || userEmail},</p>
               
-              <p>Your Twibbonize account has been ${isPermanent ? 'permanently' : 'temporarily'} suspended by our moderation team.</p>
+              <p>Your Twibbonize account has been ${isPermanent ? "permanently" : "temporarily"} suspended by our moderation team.</p>
               
               <div class="warning-box">
                 <strong>Reason for suspension:</strong>
                 <p style="margin: 0;">${banReason}</p>
               </div>
               
-              ${!isPermanent ? `
+              ${
+                !isPermanent
+                  ? `
                 <p><strong>Appeal Deadline:</strong> ${appealDeadline}</p>
                 <p>You have the right to appeal this decision within 30 days. If you believe this suspension was made in error, you can submit an appeal before the deadline.</p>
                 <p style="text-align: center; margin: 30px 0;">
-                  <a href="${process.env.NEXT_PUBLIC_BASE_URL}/appeal" class="button">Submit an Appeal</a>
+                  <a href="${process.env.NEXT_PUBLIC_BASE_URL}/profile/appeal" class="button">Submit an Appeal</a>
                 </p>
-              ` : `
+              `
+                  : `
                 <p>This is a permanent suspension. Your account will not be restored.</p>
-              `}
+              `
+              }
               
               <p>If you have any questions, please contact our support team at support@twibbonize.com</p>
             </div>
@@ -116,8 +126,15 @@ export const getEmailTemplate = (templateName, params = {}) => {
       `,
     }),
 
-    appealReminder: ({ userEmail, username, daysLeft, itemType, itemName, removalReason }) => ({
-      subject: `⏰ Appeal Deadline Reminder - ${daysLeft} Day${daysLeft > 1 ? 's' : ''} Left`,
+    appealReminder: ({
+      userEmail,
+      username,
+      daysLeft,
+      itemType,
+      itemName,
+      removalReason,
+    }) => ({
+      subject: `⏰ Appeal Deadline Reminder - ${daysLeft} Day${daysLeft > 1 ? "s" : ""} Left`,
       html: `
         <!DOCTYPE html>
         <html>
@@ -222,10 +239,10 @@ export const getEmailTemplate = (templateName, params = {}) => {
               
               <div class="countdown">
                 <span class="days">${daysLeft}</span>
-                <span class="label">Day${daysLeft > 1 ? 's' : ''} Remaining</span>
+                <span class="label">Day${daysLeft > 1 ? "s" : ""} Remaining</span>
               </div>
               
-              <p>This is a reminder that you have <strong>${daysLeft} day${daysLeft > 1 ? 's' : ''} left</strong> to appeal the ${itemType} for <strong>${itemName}</strong>.</p>
+              <p>This is a reminder that you have <strong>${daysLeft} day${daysLeft > 1 ? "s" : ""} left</strong> to appeal the ${itemType} for <strong>${itemName}</strong>.</p>
               
               <div class="warning-box">
                 <strong>Original Removal Reason:</strong>
@@ -253,7 +270,7 @@ export const getEmailTemplate = (templateName, params = {}) => {
     }),
 
     accountUnbanned: ({ userEmail, username }) => ({
-      subject: '✅ Your Account Has Been Restored',
+      subject: "✅ Your Account Has Been Restored",
       html: `
         <!DOCTYPE html>
         <html>
@@ -364,5 +381,5 @@ export const getEmailTemplate = (templateName, params = {}) => {
     throw new Error(`Email template "${templateName}" not found`);
   }
 
-  return typeof template === 'function' ? template(params) : template;
+  return typeof template === "function" ? template(params) : template;
 };

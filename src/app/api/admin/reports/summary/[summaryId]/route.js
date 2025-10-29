@@ -239,6 +239,33 @@ export async function PATCH(request, { params }) {
             icon: notification.icon,
             type: notification.type,
           });
+          
+          // Send unban email if user was previously banned
+          if (targetType === 'user' && (summaryData.accountStatus === 'banned-temporary' || summaryData.accountStatus === 'banned-permanent')) {
+            const { sendEmail } = await import('@/utils/notifications/sendEmail');
+            const { getEmailTemplate } = await import('@/utils/notifications/emailTemplates');
+            
+            // Get user email from database
+            const userDoc = await db.collection('users').doc(targetId).get();
+            const userData = userDoc.data();
+            
+            if (userData?.email) {
+              const emailTemplate = getEmailTemplate('accountUnbanned', {
+                userEmail: userData.email,
+                username: userData.displayName || userData.username || userData.email,
+              });
+              
+              await sendEmail({
+                to: userData.email,
+                subject: emailTemplate.subject,
+                html: emailTemplate.html,
+              });
+              
+              if (process.env.NODE_ENV === 'development') {
+                console.log('[REPORT UNBAN] Unban email sent to:', userData.email);
+              }
+            }
+          }
         }
       } else if (action === 'warned') {
         const notification = getNotificationTemplate('warningIssued', { 
