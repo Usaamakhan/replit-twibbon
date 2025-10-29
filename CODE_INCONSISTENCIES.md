@@ -8,21 +8,6 @@ This document tracks code inconsistencies, bugs, and areas for improvement found
 
 ## 📧 Email Notification System Issues
 
-### 1. ✅ FIXED - Missing Unban Email from Reports Summary Endpoint
-
-**Issue:** When an admin unbans a user by dismissing reports from the `/admin/reports` page, no email notification was sent.
-
-**Fix Applied:** Added unban email logic to the reports summary endpoint (lines 246-271)
-
-**Current Behavior:**
-- `/api/admin/users/[userId]/ban/route.js` ✅ Sends unban email
-- `/api/admin/reports/summary/[summaryId]/route.js` ✅ NOW sends unban email
-
-**Location:** `src/app/api/admin/reports/summary/[summaryId]/route.js`, lines 246-271
-
-**Date Fixed:** October 29, 2025
-
----
 
 ### 3. Redundant In-App Notifications for Campaign Appeal Reminders
 
@@ -55,14 +40,3 @@ This appears to be intentional design, but could be streamlined to reduce notifi
 
 ---
 
-## 📊 Summary
-
-| Issue | Severity | Status | Location |
-|-------|----------|--------|----------|
-| Missing unban email from reports page | Medium | ✅ Fixed | `src/app/api/admin/reports/summary/[summaryId]/route.js:246-271` |
-| Incorrect appeal URL in ban email | High | ✅ Fixed | Fixed by user |
-| Redundant campaign appeal reminders | Low | ⚠️ Design Decision | `src/app/api/cron/send-appeal-reminders/route.js` |
-
----
-
-**End of Document**
