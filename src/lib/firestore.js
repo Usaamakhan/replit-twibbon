@@ -493,16 +493,22 @@ export const getPublicCampaigns = async (limitCount = 10) => {
 };
 
 export const getUserCampaigns = async (userId, options = {}) => {
-  console.log('🔍 [getUserCampaigns] Starting - userId:', userId);
+  if (process.env.NODE_ENV === 'development') {
+    console.log('🔍 [getUserCampaigns] Starting - userId:', userId);
+  }
   
   if (!userId) {
-    console.warn('🔍 [getUserCampaigns] No userId provided');
+    if (process.env.NODE_ENV === 'development') {
+      console.warn('🔍 [getUserCampaigns] No userId provided');
+    }
     return [];
   }
   
   // Check if database is initialized
   if (!db) {
-    console.error('🔍 [getUserCampaigns] Database not initialized (Firebase disabled)');
+    if (process.env.NODE_ENV === 'development') {
+      console.error('🔍 [getUserCampaigns] Database not initialized (Firebase disabled)');
+    }
     return [];
   }
   
@@ -513,14 +519,16 @@ export const getUserCampaigns = async (userId, options = {}) => {
     startAfterDoc = null
   } = options;
   
-  console.log('🔍 [getUserCampaigns] Query params:', {
-    orderByField,
-    orderDirection,
-    pageSize,
-    collection: 'campaigns',
-    field: 'creatorId',
-    value: userId
-  });
+  if (process.env.NODE_ENV === 'development') {
+    console.log('🔍 [getUserCampaigns] Query params:', {
+      orderByField,
+      orderDirection,
+      pageSize,
+      collection: 'campaigns',
+      field: 'creatorId',
+      value: userId
+    });
+  }
   
   try {
     // Use Firebase orderBy for better performance (newest first by default)
@@ -541,17 +549,21 @@ export const getUserCampaigns = async (userId, options = {}) => {
     const querySnapshot = await getDocs(q);
     const campaigns = [];
     
-    console.log('🔍 [getUserCampaigns] Query result - docs count:', querySnapshot.size);
+    if (process.env.NODE_ENV === 'development') {
+      console.log('🔍 [getUserCampaigns] Query result - docs count:', querySnapshot.size);
+    }
     
     querySnapshot.forEach((doc) => {
       const data = doc.data();
-      console.log('🔍 [getUserCampaigns] Document:', {
-        id: doc.id,
-        creatorId: data.creatorId,
-        title: data.title,
-        slug: data.slug,
-        imageUrl: data.imageUrl
-      });
+      if (process.env.NODE_ENV === 'development') {
+        console.log('🔍 [getUserCampaigns] Document:', {
+          id: doc.id,
+          creatorId: data.creatorId,
+          title: data.title,
+          slug: data.slug,
+          imageUrl: data.imageUrl
+        });
+      }
       
       campaigns.push({ 
         id: doc.id,
@@ -566,7 +578,9 @@ export const getUserCampaigns = async (userId, options = {}) => {
       });
     });
     
-    console.log('🔍 [getUserCampaigns] Returning campaigns:', campaigns.length);
+    if (process.env.NODE_ENV === 'development') {
+      console.log('🔍 [getUserCampaigns] Returning campaigns:', campaigns.length);
+    }
     return campaigns;
   } catch (error) {
     console.error('🔍 [getUserCampaigns] Error:', {

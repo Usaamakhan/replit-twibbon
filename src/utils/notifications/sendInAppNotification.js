@@ -16,13 +16,15 @@ export async function sendInAppNotification({
   metadata = {},
 }) {
   try {
-    console.log("[IN-APP NOTIFICATION] Sending to userId:", userId);
-    console.log("[IN-APP NOTIFICATION] Details:", {
-      title,
-      body,
-      actionUrl,
-      type,
-    });
+    if (process.env.NODE_ENV === 'development') {
+      console.log("[IN-APP NOTIFICATION] Sending to userId:", userId);
+      console.log("[IN-APP NOTIFICATION] Details:", {
+        title,
+        body,
+        actionUrl,
+        type,
+      });
+    }
 
     if (!userId || !title || !body) {
       throw new Error("Missing required fields: userId, title, and body");
@@ -49,10 +51,12 @@ export async function sendInAppNotification({
 
     await notificationRef.set(notificationData);
 
-    console.log(
-      "[IN-APP NOTIFICATION] Notification saved successfully:",
-      notificationRef.id,
-    );
+    if (process.env.NODE_ENV === 'development') {
+      console.log(
+        "[IN-APP NOTIFICATION] Notification saved successfully:",
+        notificationRef.id,
+      );
+    }
 
     return {
       success: true,

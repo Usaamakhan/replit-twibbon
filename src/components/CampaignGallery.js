@@ -27,13 +27,15 @@ export default function CampaignGallery({
   const [isDeleting, setIsDeleting] = useState(false);
   const [deleteSuccess, setDeleteSuccess] = useState(false);
 
-  console.log('🔍 [CampaignGallery] Render:', {
-    campaignsCount: campaigns?.length || 0,
-    loading,
-    isOwnProfile,
-    showCreatorInfo,
-    campaigns
-  });
+  if (process.env.NODE_ENV === 'development') {
+    console.log('🔍 [CampaignGallery] Render:', {
+      campaignsCount: campaigns?.length || 0,
+      loading,
+      isOwnProfile,
+      showCreatorInfo,
+      campaigns
+    });
+  }
 
   if (loading) {
     return (

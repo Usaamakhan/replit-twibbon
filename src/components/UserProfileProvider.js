@@ -29,7 +29,9 @@ export function UserProfileProvider({ children }) {
         
         // CHECK FOR BAN STATUS - Enforce ban immediately
         if (profile?.accountStatus?.includes('banned')) {
-          console.log('User is banned, logging out...');
+          if (process.env.NODE_ENV === 'development') {
+            console.log('User is banned, logging out...');
+          }
           
           // Store ban info in sessionStorage for ban page to display
           if (typeof window !== 'undefined') {
