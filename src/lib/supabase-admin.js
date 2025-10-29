@@ -2,58 +2,64 @@
 import 'server-only'
 import { createClient } from '@supabase/supabase-js'
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
-
 const isProduction = process.env.NODE_ENV === 'production';
 const isDevelopment = process.env.NODE_ENV === 'development';
 
-// Create client or mock based on available configuration
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+
+// Validate required environment variables
+const missingVars = [];
+if (!supabaseUrl) missingVars.push('NEXT_PUBLIC_SUPABASE_URL');
+if (!supabaseServiceKey) missingVars.push('SUPABASE_SERVICE_ROLE_KEY');
+
 let supabaseAdmin
 
-if (!supabaseUrl || !supabaseServiceKey) {
-  // In production, throw error immediately - no mock clients
+if (missingVars.length > 0) {
+  const errorMessage = `Missing required Supabase configuration: ${missingVars.join(', ')}`;
+  
   if (isProduction) {
-    throw new Error(
-      '[PRODUCTION] Supabase configuration is required in production. ' +
-      'Missing: ' +
-      (!supabaseUrl ? 'NEXT_PUBLIC_SUPABASE_URL ' : '') +
-      (!supabaseServiceKey ? 'SUPABASE_SERVICE_ROLE_KEY' : '')
-    );
+    // Production: Fail fast
+    throw new Error(`[PRODUCTION] ${errorMessage}. Please add these environment variables in Vercel.`);
   }
   
-  // In development, warn and create mock client for build compatibility
   if (isDevelopment) {
-    console.warn(
-      '[DEV WARNING] Missing Supabase configuration - using mock client. ' +
-      'Missing: ' +
-      (!supabaseUrl ? 'NEXT_PUBLIC_SUPABASE_URL ' : '') +
-      (!supabaseServiceKey ? 'SUPABASE_SERVICE_ROLE_KEY' : '')
-    );
+    // Development: Warn clearly
+    console.warn(`[DEV WARNING] ${errorMessage}`);
+    console.warn('[DEV WARNING] Supabase storage will not be available. Add these variables in Vercel for production.');
   }
   
-  // Create a mock client that will work during build but fail at runtime
+  // Create a mock client that fails at runtime with clear errors
   supabaseAdmin = {
     storage: {
       from: () => ({
-        list: () => Promise.reject(new Error('Supabase not configured')),
-        remove: () => Promise.reject(new Error('Supabase not configured')),
-        createSignedUrl: () => Promise.reject(new Error('Supabase not configured')),
+        list: () => Promise.reject(new Error('Supabase not configured - missing environment variables')),
+        remove: () => Promise.reject(new Error('Supabase not configured - missing environment variables')),
+        createSignedUrl: () => Promise.reject(new Error('Supabase not configured - missing environment variables')),
         getPublicUrl: () => ({ data: { publicUrl: '' } })
       })
     }
   }
 } else {
-  // Validate Supabase URL format in production
-  if (isProduction) {
-    try {
-      new URL(supabaseUrl);
-      if (!supabaseUrl.includes('supabase.co')) {
-        throw new Error('[PRODUCTION] NEXT_PUBLIC_SUPABASE_URL must be a valid Supabase URL');
-      }
-    } catch (error) {
-      throw new Error(`[PRODUCTION] Invalid NEXT_PUBLIC_SUPABASE_URL format: ${error.message}`);
+  // Validate Supabase URL format
+  try {
+    const url = new URL(supabaseUrl);
+    
+    if (isProduction && !supabaseUrl.includes('supabase.co')) {
+      throw new Error('[PRODUCTION] NEXT_PUBLIC_SUPABASE_URL must be a valid Supabase URL (*.supabase.co)');
     }
+  } catch (error) {
+    const errorMessage = `Invalid NEXT_PUBLIC_SUPABASE_URL format: ${error.message}`;
+    
+    if (isProduction) {
+      throw new Error(`[PRODUCTION] ${errorMessage}. Please check the URL in Vercel.`);
+    }
+    
+    if (isDevelopment) {
+      console.warn(`[DEV WARNING] ${errorMessage}`);
+    }
+    
+    throw error;
   }
   
   // Create admin client with service role key (server-side only)

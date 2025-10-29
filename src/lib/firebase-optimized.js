@@ -26,6 +26,9 @@ const initializeFirebaseModule = () => {
   }
 
   try {
+    const isProduction = process.env.NODE_ENV === "production";
+    const isDevelopment = process.env.NODE_ENV === "development";
+
     // Check environment variables
     const apiKey = process.env.NEXT_PUBLIC_FIREBASE_API_KEY;
     const projectId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
@@ -33,19 +36,26 @@ const initializeFirebaseModule = () => {
     const messagingSenderId =
       process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID;
 
-    // Check if Firebase should be disabled
-    if (
-      !apiKey ||
-      !projectId ||
-      !appId ||
-      apiKey === "not needed" ||
-      projectId === "not needed" ||
-      appId === "not needed" ||
-      apiKey === "" ||
-      projectId === "" ||
-      appId === ""
-    ) {
-      console.log("Firebase disabled - no valid configuration found");
+    // Validate required environment variables
+    const missingVars = [];
+    if (!apiKey) missingVars.push("NEXT_PUBLIC_FIREBASE_API_KEY");
+    if (!projectId) missingVars.push("NEXT_PUBLIC_FIREBASE_PROJECT_ID");
+    if (!appId) missingVars.push("NEXT_PUBLIC_FIREBASE_APP_ID");
+
+    if (missingVars.length > 0) {
+      const errorMessage = `Missing required Firebase configuration: ${missingVars.join(", ")}`;
+
+      if (isProduction) {
+        // Production: Fail fast
+        throw new Error(`[PRODUCTION] ${errorMessage}. Please add these environment variables in Vercel.`);
+      }
+
+      if (isDevelopment) {
+        // Development: Warn clearly
+        console.warn(`[DEV WARNING] ${errorMessage}`);
+        console.warn("[DEV WARNING] Firebase will not be available. Add these variables in Vercel for production.");
+      }
+
       isInitialized = true;
       isConfigured = false;
       return;
@@ -69,8 +79,20 @@ const initializeFirebaseModule = () => {
 
     isInitialized = true;
     isConfigured = true;
+
+    if (isDevelopment) {
+      console.log("[DEV] Firebase client initialized successfully");
+    }
   } catch (error) {
-    console.error("Firebase initialization failed:", error);
+    const isProduction = process.env.NODE_ENV === "production";
+
+    if (isProduction) {
+      // Production: Re-throw errors
+      throw error;
+    }
+
+    // Development: Log error and continue
+    console.error("[DEV ERROR] Firebase initialization failed:", error.message);
     isInitialized = true;
     isConfigured = false;
   }

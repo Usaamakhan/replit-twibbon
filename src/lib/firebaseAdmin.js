@@ -9,85 +9,94 @@ import { validateFirebaseServiceKey } from '../utils/validateEnv'
 let adminApp = null
 
 if (getApps().length === 0) {
-  // Parse service account key from environment variable
-  let credential = null;
   const isProduction = process.env.NODE_ENV === 'production';
   const isDevelopment = process.env.NODE_ENV === 'development';
   
-  if (process.env.FIREBASE_SERVICE_ACCOUNT_KEY) {
-    // Validate the service account key format
-    validateFirebaseServiceKey(process.env.FIREBASE_SERVICE_ACCOUNT_KEY);
+  // Validate required environment variables
+  const projectId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
+  const serviceAccountKey = process.env.FIREBASE_SERVICE_ACCOUNT_KEY;
+
+  if (!projectId) {
+    const errorMessage = 'Missing NEXT_PUBLIC_FIREBASE_PROJECT_ID environment variable';
     
-    try {
-      const serviceAccountKey = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_KEY);
-      credential = cert(serviceAccountKey);
-    } catch (error) {
-      const errorMsg = `Error parsing Firebase service account key: ${error.message}`;
-      
-      // In production, throw error immediately
-      if (isProduction) {
-        throw new Error(`[PRODUCTION] ${errorMsg}. Check FIREBASE_SERVICE_ACCOUNT_KEY environment variable.`);
-      }
-      
-      // In development, log warning
-      if (isDevelopment) {
-        console.warn(`[DEV WARNING] ${errorMsg}`);
-      }
-    }
-  } else {
-    // Missing service account key
     if (isProduction) {
-      throw new Error('[PRODUCTION] FIREBASE_SERVICE_ACCOUNT_KEY environment variable is required in production.');
+      throw new Error(`[PRODUCTION] ${errorMessage}. Please add this variable in Vercel.`);
     }
     
     if (isDevelopment) {
-      console.warn('[DEV WARNING] FIREBASE_SERVICE_ACCOUNT_KEY not found - using fallback initialization');
+      console.warn(`[DEV WARNING] ${errorMessage}`);
+      console.warn('[DEV WARNING] Firebase Admin will not be available.');
+    }
+    
+    throw new Error(errorMessage);
+  }
+
+  // Parse and validate service account key
+  let credential = null;
+  
+  if (!serviceAccountKey) {
+    const errorMessage = 'Missing FIREBASE_SERVICE_ACCOUNT_KEY environment variable';
+    
+    if (isProduction) {
+      throw new Error(`[PRODUCTION] ${errorMessage}. Please add this variable in Vercel.`);
+    }
+    
+    if (isDevelopment) {
+      console.warn(`[DEV WARNING] ${errorMessage}`);
+      console.warn('[DEV WARNING] Firebase Admin will run with limited functionality (no auth verification).');
+    }
+  } else {
+    // Validate the service account key format
+    validateFirebaseServiceKey(serviceAccountKey);
+    
+    try {
+      const parsedKey = JSON.parse(serviceAccountKey);
+      credential = cert(parsedKey);
+    } catch (error) {
+      const errorMessage = `Invalid FIREBASE_SERVICE_ACCOUNT_KEY format: ${error.message}`;
+      
+      if (isProduction) {
+        throw new Error(`[PRODUCTION] ${errorMessage}. Please check the JSON format in Vercel.`);
+      }
+      
+      if (isDevelopment) {
+        console.warn(`[DEV WARNING] ${errorMessage}`);
+        console.warn('[DEV WARNING] Firebase Admin will run with limited functionality.');
+      }
     }
   }
 
   try {
     const config = {
-      projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+      projectId,
     };
-    
-    if (!config.projectId) {
-      throw new Error('NEXT_PUBLIC_FIREBASE_PROJECT_ID environment variable is required');
-    }
     
     // Add credential if available
     if (credential) {
       config.credential = credential;
     } else if (isProduction) {
-      // In production, credential is required
-      throw new Error('[PRODUCTION] Firebase Admin credentials are required in production environment');
+      // In production, credential is required for full functionality
+      throw new Error('[PRODUCTION] Firebase Admin credentials are required in production. Please add FIREBASE_SERVICE_ACCOUNT_KEY in Vercel.');
     }
     
     adminApp = initializeApp(config);
     
-    // Log successful initialization in development
     if (isDevelopment) {
-      console.log(`[DEV] Firebase Admin initialized ${credential ? 'with credentials' : 'without credentials (fallback mode)'}`);
+      console.log(`[DEV] Firebase Admin initialized ${credential ? 'with credentials' : 'without credentials (limited functionality)'}`);
     }
   } catch (error) {
-    // In production, throw the error immediately
     if (isProduction) {
+      // Production: Fail fast
       throw new Error(`[PRODUCTION] Firebase Admin initialization failed: ${error.message}`);
     }
     
-    // In development, log error and attempt fallback
-    if (isDevelopment) {
-      console.error('[DEV ERROR] Firebase Admin initialization error:', error.message);
-      console.warn('[DEV] Attempting fallback initialization without credentials...');
-    }
+    // Development: Log error and attempt fallback
+    console.error('[DEV ERROR] Firebase Admin initialization error:', error.message);
+    console.warn('[DEV] Attempting fallback initialization without credentials...');
     
     try {
-      adminApp = initializeApp({
-        projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
-      });
-      
-      if (isDevelopment) {
-        console.log('[DEV] Fallback initialization successful (limited functionality)');
-      }
+      adminApp = initializeApp({ projectId });
+      console.log('[DEV] Fallback initialization successful (limited functionality - no auth verification)');
     } catch (fallbackError) {
       throw new Error(`Firebase Admin initialization completely failed: ${fallbackError.message}`);
     }
