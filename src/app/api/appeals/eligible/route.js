@@ -5,7 +5,7 @@ export async function GET(request) {
   try {
     const authHeader = request.headers.get('Authorization');
     if (!authHeader?.startsWith('Bearer ')) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
     }
 
     const token = authHeader.split('Bearer ')[1];
@@ -52,11 +52,11 @@ export async function GET(request) {
       }
     }
 
-    return NextResponse.json({ items });
+    return NextResponse.json({ success: true, items });
   } catch (error) {
     console.error('Error fetching eligible items:', error);
     return NextResponse.json(
-      { error: 'Failed to fetch eligible items', details: error.message },
+      { success: false, error: 'Failed to fetch eligible items' },
       { status: 500 }
     );
   }

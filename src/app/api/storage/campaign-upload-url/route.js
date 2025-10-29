@@ -26,7 +26,7 @@ export async function POST(request) {
     const authorization = headersList.get('authorization')
     
     if (!authorization || !authorization.startsWith('Bearer ')) {
-      return NextResponse.json({ error: 'No authorization token provided' }, { status: 401 })
+      return NextResponse.json({ success: false, error: 'No authorization token provided' }, { status: 401 })
     }
 
     const token = authorization.replace('Bearer ', '')
@@ -36,24 +36,26 @@ export async function POST(request) {
     try {
       decodedToken = await verifyIdToken(token)
     } catch (error) {
-      return NextResponse.json({ error: 'Invalid token' }, { status: 401 })
+      return NextResponse.json({ success: false, error: 'Invalid token' }, { status: 401 })
     }
 
     const { campaignId, fileSize, fileType } = await request.json()
     
     // Validate required fields
     if (!campaignId) {
-      return NextResponse.json({ error: 'campaignId is required' }, { status: 400 })
+      return NextResponse.json({ success: false, error: 'campaignId is required' }, { status: 400 })
     }
 
     if (!Number.isFinite(fileSize) || fileSize <= 0) {
       return NextResponse.json({ 
+        success: false,
         error: 'fileSize is required and must be a positive number' 
       }, { status: 400 })
     }
 
     if (!fileType || typeof fileType !== 'string' || fileType.trim() === '') {
       return NextResponse.json({ 
+        success: false,
         error: 'fileType is required and must be a non-empty string' 
       }, { status: 400 })
     }
@@ -62,6 +64,7 @@ export async function POST(request) {
     const campaignIdRegex = /^[a-zA-Z0-9_-]+$/
     if (!campaignIdRegex.test(campaignId)) {
       return NextResponse.json({ 
+        success: false,
         error: 'Invalid campaignId format. Use only letters, numbers, hyphens, and underscores.' 
       }, { status: 400 })
     }
@@ -70,6 +73,7 @@ export async function POST(request) {
     const MAX_FILE_SIZE = 5 * 1024 * 1024 // 5MB in bytes
     if (fileSize > MAX_FILE_SIZE) {
       return NextResponse.json({ 
+        success: false,
         error: 'File size exceeds 5MB limit for campaigns' 
       }, { status: 400 })
     }
@@ -78,6 +82,7 @@ export async function POST(request) {
     const allowedTypes = ['image/png', 'image/jpeg', 'image/jpg', 'image/webp']
     if (!allowedTypes.includes(fileType.toLowerCase())) {
       return NextResponse.json({ 
+        success: false,
         error: 'Invalid file type. Only PNG, JPG, and WEBP images are allowed for campaigns.' 
       }, { status: 400 })
     }
@@ -94,10 +99,11 @@ export async function POST(request) {
 
     if (error) {
       console.error('Supabase error:', error)
-      return NextResponse.json({ error: 'Failed to create upload URL' }, { status: 500 })
+      return NextResponse.json({ success: false, error: 'Failed to create upload URL' }, { status: 500 })
     }
 
     return NextResponse.json({
+      success: true,
       uploadUrl: data.signedUrl,
       path: filePath,
       token: data.token
@@ -105,6 +111,6 @@ export async function POST(request) {
 
   } catch (error) {
     console.error('Campaign upload URL generation error:', error)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    return NextResponse.json({ success: false, error: 'Internal server error' }, { status: 500 })
   }
 }

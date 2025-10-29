@@ -15,7 +15,7 @@ export async function GET(request) {
     
     if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
       return NextResponse.json(
-        { error: 'Unauthorized' },
+        { success: false, error: 'Unauthorized' },
         { status: 401 }
       );
     }

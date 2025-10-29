@@ -13,7 +13,7 @@ export async function POST(request) {
     const authorization = headersList.get('authorization')
     
     if (!authorization || !authorization.startsWith('Bearer ')) {
-      return NextResponse.json({ error: 'No authorization token provided' }, { status: 401 })
+      return NextResponse.json({ success: false, error: 'No authorization token provided' }, { status: 401 })
     }
 
     const token = authorization.replace('Bearer ', '')
@@ -23,7 +23,7 @@ export async function POST(request) {
     try {
       decodedToken = await verifyIdToken(token)
     } catch (error) {
-      return NextResponse.json({ error: 'Invalid token' }, { status: 401 })
+      return NextResponse.json({ success: false, error: 'Invalid token' }, { status: 401 })
     }
 
     const { fileName, fileType, fileSize, folder = 'uploads' } = await request.json()
@@ -31,22 +31,24 @@ export async function POST(request) {
     // Validate folder (whitelist allowed folders)
     const allowedFolders = ['uploads', 'profile-images', 'documents', 'temp', 'campaigns']
     if (!allowedFolders.includes(folder)) {
-      return NextResponse.json({ error: 'Invalid folder' }, { status: 400 })
+      return NextResponse.json({ success: false, error: 'Invalid folder' }, { status: 400 })
     }
     
     // Validate required fields
     if (!fileName) {
-      return NextResponse.json({ error: 'fileName is required' }, { status: 400 })
+      return NextResponse.json({ success: false, error: 'fileName is required' }, { status: 400 })
     }
 
     if (!Number.isFinite(fileSize) || fileSize <= 0) {
       return NextResponse.json({ 
+        success: false,
         error: 'fileSize is required and must be a positive number' 
       }, { status: 400 })
     }
 
     if (!fileType || typeof fileType !== 'string' || fileType.trim() === '') {
       return NextResponse.json({ 
+        success: false,
         error: 'fileType is required and must be a non-empty string' 
       }, { status: 400 })
     }
@@ -56,6 +58,7 @@ export async function POST(request) {
     if (fileSize > maxFileSize) {
       const maxSizeMB = (folder === 'campaigns' || folder === 'profile-images') ? 5 : 10
       return NextResponse.json({ 
+        success: false,
         error: `File size exceeds ${maxSizeMB}MB limit` 
       }, { status: 400 })
     }
@@ -65,6 +68,7 @@ export async function POST(request) {
       const allowedTypes = ['image/png', 'image/jpeg', 'image/jpg', 'image/webp']
       if (!allowedTypes.includes(fileType.toLowerCase())) {
         return NextResponse.json({ 
+          success: false,
           error: 'Invalid file type for campaigns. Only PNG, JPG, and WEBP are allowed.' 
         }, { status: 400 })
       }
@@ -82,10 +86,11 @@ export async function POST(request) {
 
     if (error) {
       console.error('Supabase error:', error)
-      return NextResponse.json({ error: 'Failed to create upload URL' }, { status: 500 })
+      return NextResponse.json({ success: false, error: 'Failed to create upload URL' }, { status: 500 })
     }
 
     return NextResponse.json({
+      success: true,
       uploadUrl: data.signedUrl,
       path: filePath,
       token: data.token
@@ -93,6 +98,6 @@ export async function POST(request) {
 
   } catch (error) {
     console.error('Upload URL generation error:', error)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    return NextResponse.json({ success: false, error: 'Internal server error' }, { status: 500 })
   }
 }

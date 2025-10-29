@@ -7,7 +7,7 @@ export async function POST(request) {
   try {
     const authHeader = request.headers.get('Authorization');
     if (!authHeader?.startsWith('Bearer ')) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
     }
 
     const token = authHeader.split('Bearer ')[1];
@@ -19,21 +19,21 @@ export async function POST(request) {
 
     if (!type || !targetId || !reason) {
       return NextResponse.json(
-        { error: 'Missing required fields: type, targetId, reason' },
+        { success: false, error: 'Missing required fields: type, targetId, reason' },
         { status: 400 }
       );
     }
 
     if (!['campaign', 'account'].includes(type)) {
       return NextResponse.json(
-        { error: 'Invalid appeal type. Must be "campaign" or "account"' },
+        { success: false, error: 'Invalid appeal type. Must be "campaign" or "account"' },
         { status: 400 }
       );
     }
 
     if (reason.trim().length < 20) {
       return NextResponse.json(
-        { error: 'Appeal reason must be at least 20 characters' },
+        { success: false, error: 'Appeal reason must be at least 20 characters' },
         { status: 400 }
       );
     }
@@ -46,21 +46,21 @@ export async function POST(request) {
       targetDoc = await campaignRef.get();
 
       if (!targetDoc.exists) {
-        return NextResponse.json({ error: 'Campaign not found' }, { status: 404 });
+        return NextResponse.json({ success: false, error: 'Campaign not found' }, { status: 404 });
       }
 
       const campaignData = targetDoc.data();
 
       if (campaignData.creatorId !== userId) {
         return NextResponse.json(
-          { error: 'You can only appeal your own campaigns' },
+          { success: false, error: 'You can only appeal your own campaigns' },
           { status: 403 }
         );
       }
 
       if (campaignData.moderationStatus !== 'removed-temporary') {
         return NextResponse.json(
-          { error: 'This campaign is not eligible for appeal' },
+          { success: false, error: 'This campaign is not eligible for appeal' },
           { status: 400 }
         );
       }
@@ -71,14 +71,14 @@ export async function POST(request) {
       targetDoc = await userRef.get();
 
       if (!targetDoc.exists) {
-        return NextResponse.json({ error: 'User not found' }, { status: 404 });
+        return NextResponse.json({ success: false, error: 'User not found' }, { status: 404 });
       }
 
       const userData = targetDoc.data();
 
       if (userData.accountStatus !== 'banned-temporary') {
         return NextResponse.json(
-          { error: 'Your account is not eligible for appeal' },
+          { success: false, error: 'Your account is not eligible for appeal' },
           { status: 400 }
         );
       }
@@ -88,7 +88,7 @@ export async function POST(request) {
 
     if (!appealDeadline) {
       return NextResponse.json(
-        { error: 'No appeal deadline found for this item' },
+        { success: false, error: 'No appeal deadline found for this item' },
         { status: 400 }
       );
     }
@@ -98,7 +98,7 @@ export async function POST(request) {
 
     if (now > deadline) {
       return NextResponse.json(
-        { error: 'Appeal deadline has passed' },
+        { success: false, error: 'Appeal deadline has passed' },
         { status: 400 }
       );
     }
@@ -113,7 +113,7 @@ export async function POST(request) {
 
     if (!existingAppealsQuery.empty) {
       return NextResponse.json(
-        { error: 'You have already submitted an appeal for this item' },
+        { success: false, error: 'You have already submitted an appeal for this item' },
         { status: 400 }
       );
     }
@@ -155,7 +155,7 @@ export async function POST(request) {
   } catch (error) {
     console.error('Error submitting appeal:', error);
     return NextResponse.json(
-      { error: 'Failed to submit appeal', details: error.message },
+      { success: false, error: 'Failed to submit appeal' },
       { status: 500 }
     );
   }

@@ -13,7 +13,7 @@ export async function GET(request) {
     const authorization = headersList.get('authorization')
     
     if (!authorization || !authorization.startsWith('Bearer ')) {
-      return NextResponse.json({ error: 'No authorization token provided' }, { status: 401 })
+      return NextResponse.json({ success: false, error: 'No authorization token provided' }, { status: 401 })
     }
 
     const token = authorization.replace('Bearer ', '')
@@ -23,7 +23,7 @@ export async function GET(request) {
     try {
       decodedToken = await verifyIdToken(token)
     } catch (error) {
-      return NextResponse.json({ error: 'Invalid token' }, { status: 401 })
+      return NextResponse.json({ success: false, error: 'Invalid token' }, { status: 401 })
     }
 
     const { searchParams } = new URL(request.url)
@@ -34,7 +34,7 @@ export async function GET(request) {
     // Validate folder
     const allowedFolders = ['uploads', 'profile-images', 'documents', 'temp', 'campaigns']
     if (!allowedFolders.includes(folder)) {
-      return NextResponse.json({ error: 'Invalid folder' }, { status: 400 })
+      return NextResponse.json({ success: false, error: 'Invalid folder' }, { status: 400 })
     }
 
     // List files in user's folder only
@@ -50,7 +50,7 @@ export async function GET(request) {
 
     if (error) {
       console.error('Supabase error:', error)
-      return NextResponse.json({ error: 'Failed to list files' }, { status: 500 })
+      return NextResponse.json({ success: false, error: 'Failed to list files' }, { status: 500 })
     }
 
     // Add full paths to the response
@@ -59,10 +59,13 @@ export async function GET(request) {
       fullPath: `${userFolder}/${file.name}`
     }))
 
-    return NextResponse.json({ files: filesWithPaths })
+    return NextResponse.json({ 
+      success: true,
+      files: filesWithPaths
+    })
 
   } catch (error) {
     console.error('File listing error:', error)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    return NextResponse.json({ success: false, error: 'Internal server error' }, { status: 500 })
   }
 }

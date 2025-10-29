@@ -9,7 +9,7 @@ export async function PATCH(request, { params }) {
   try {
     const adminCheck = await requireAdmin(request);
     if (adminCheck.error) {
-      return NextResponse.json({ error: adminCheck.error }, { status: adminCheck.status });
+      return NextResponse.json({ success: false, error: adminCheck.error }, { status: adminCheck.status });
     }
 
     const { appealId } = params;
@@ -18,7 +18,7 @@ export async function PATCH(request, { params }) {
 
     if (!['approve', 'reject'].includes(action)) {
       return NextResponse.json(
-        { error: 'Invalid action. Must be "approve" or "reject"' },
+        { success: false, error: 'Invalid action. Must be "approve" or "reject"' },
         { status: 400 }
       );
     }
@@ -27,14 +27,14 @@ export async function PATCH(request, { params }) {
     const appealDoc = await appealRef.get();
 
     if (!appealDoc.exists()) {
-      return NextResponse.json({ error: 'Appeal not found' }, { status: 404 });
+      return NextResponse.json({ success: false, error: 'Appeal not found' }, { status: 404 });
     }
 
     const appealData = appealDoc.data();
 
     if (appealData.status !== 'pending') {
       return NextResponse.json(
-        { error: 'This appeal has already been reviewed' },
+        { success: false, error: 'This appeal has already been reviewed' },
         { status: 400 }
       );
     }
@@ -62,7 +62,7 @@ export async function PATCH(request, { params }) {
           const validation = validateCampaignTransition(currentStatus, 'active');
           if (!validation.valid) {
             return NextResponse.json(
-              { error: validation.error },
+              { success: false, error: validation.error },
               { status: 400 }
             );
           }
@@ -109,7 +109,7 @@ export async function PATCH(request, { params }) {
           const validation = validateAccountTransition(currentStatus, 'active');
           if (!validation.valid) {
             return NextResponse.json(
-              { error: validation.error },
+              { success: false, error: validation.error },
               { status: 400 }
             );
           }

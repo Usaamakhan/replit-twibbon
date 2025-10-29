@@ -6,7 +6,7 @@ export async function GET(request) {
   try {
     const adminCheck = await requireAdmin(request);
     if (adminCheck.error) {
-      return NextResponse.json({ error: adminCheck.error }, { status: adminCheck.status });
+      return NextResponse.json({ success: false, error: adminCheck.error }, { status: adminCheck.status });
     }
 
     const { searchParams } = new URL(request.url);
@@ -88,11 +88,11 @@ export async function GET(request) {
       appeals.push(appealData);
     }
 
-    return NextResponse.json({ appeals });
+    return NextResponse.json({ success: true, appeals });
   } catch (error) {
     console.error('Error fetching appeals:', error);
     return NextResponse.json(
-      { error: 'Failed to fetch appeals', details: error.message },
+      { success: false, error: 'Failed to fetch appeals' },
       { status: 500 }
     );
   }

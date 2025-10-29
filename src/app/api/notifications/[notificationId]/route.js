@@ -11,7 +11,7 @@ export async function PATCH(request, { params }) {
     
     if (!authorization || !authorization.startsWith('Bearer ')) {
       return NextResponse.json(
-        { error: 'No authorization token provided' },
+        { success: false, error: 'No authorization token provided' },
         { status: 401 }
       );
     }
@@ -26,14 +26,14 @@ export async function PATCH(request, { params }) {
     
     if (!notificationId) {
       return NextResponse.json(
-        { error: 'Missing notificationId' },
+        { success: false, error: 'Missing notificationId' },
         { status: 400 }
       );
     }
     
     if (typeof read !== 'boolean') {
       return NextResponse.json(
-        { error: 'Invalid read status. Must be boolean' },
+        { success: false, error: 'Invalid read status. Must be boolean' },
         { status: 400 }
       );
     }
@@ -49,7 +49,7 @@ export async function PATCH(request, { params }) {
     const notificationDoc = await notificationRef.get();
     if (!notificationDoc.exists) {
       return NextResponse.json(
-        { error: 'Notification not found' },
+        { success: false, error: 'Notification not found' },
         { status: 404 }
       );
     }
@@ -68,13 +68,13 @@ export async function PATCH(request, { params }) {
     
     if (error.message.includes('Invalid authentication token')) {
       return NextResponse.json(
-        { error: 'Invalid or expired token' },
+        { success: false, error: 'Invalid or expired token' },
         { status: 401 }
       );
     }
     
     return NextResponse.json(
-      { error: 'Failed to update notification', details: error.message },
+      { success: false, error: 'Failed to update notification' },
       { status: 500 }
     );
   }
@@ -89,7 +89,7 @@ export async function DELETE(request, { params }) {
     
     if (!authorization || !authorization.startsWith('Bearer ')) {
       return NextResponse.json(
-        { error: 'No authorization token provided' },
+        { success: false, error: 'No authorization token provided' },
         { status: 401 }
       );
     }
@@ -102,7 +102,7 @@ export async function DELETE(request, { params }) {
     
     if (!notificationId) {
       return NextResponse.json(
-        { error: 'Missing notificationId' },
+        { success: false, error: 'Missing notificationId' },
         { status: 400 }
       );
     }
@@ -118,7 +118,7 @@ export async function DELETE(request, { params }) {
     const notificationDoc = await notificationRef.get();
     if (!notificationDoc.exists) {
       return NextResponse.json(
-        { error: 'Notification not found' },
+        { success: false, error: 'Notification not found' },
         { status: 404 }
       );
     }
@@ -134,13 +134,13 @@ export async function DELETE(request, { params }) {
     
     if (error.message.includes('Invalid authentication token')) {
       return NextResponse.json(
-        { error: 'Invalid or expired token' },
+        { success: false, error: 'Invalid or expired token' },
         { status: 401 }
       );
     }
     
     return NextResponse.json(
-      { error: 'Failed to delete notification', details: error.message },
+      { success: false, error: 'Failed to delete notification' },
       { status: 500 }
     );
   }

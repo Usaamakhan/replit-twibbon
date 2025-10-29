@@ -13,7 +13,7 @@ export async function DELETE(request) {
     const authorization = headersList.get('authorization')
     
     if (!authorization || !authorization.startsWith('Bearer ')) {
-      return NextResponse.json({ error: 'No authorization token provided' }, { status: 401 })
+      return NextResponse.json({ success: false, error: 'No authorization token provided' }, { status: 401 })
     }
 
     const token = authorization.replace('Bearer ', '')
@@ -23,13 +23,13 @@ export async function DELETE(request) {
     try {
       decodedToken = await verifyIdToken(token)
     } catch (error) {
-      return NextResponse.json({ error: 'Invalid token' }, { status: 401 })
+      return NextResponse.json({ success: false, error: 'Invalid token' }, { status: 401 })
     }
 
     const { path } = await request.json()
     
     if (!path) {
-      return NextResponse.json({ error: 'path is required' }, { status: 400 })
+      return NextResponse.json({ success: false, error: 'path is required' }, { status: 400 })
     }
 
     // Verify user owns this file - handle different folder structures
@@ -43,7 +43,7 @@ export async function DELETE(request) {
     
     const hasValidPrefix = allowedPrefixes.some(prefix => path.startsWith(prefix))
     if (!hasValidPrefix) {
-      return NextResponse.json({ error: 'Access denied' }, { status: 403 })
+      return NextResponse.json({ success: false, error: 'Access denied' }, { status: 403 })
     }
 
     // Delete the file
@@ -53,13 +53,13 @@ export async function DELETE(request) {
 
     if (error) {
       console.error('Supabase error:', error)
-      return NextResponse.json({ error: 'Failed to delete file' }, { status: 500 })
+      return NextResponse.json({ success: false, error: 'Failed to delete file' }, { status: 500 })
     }
 
-    return NextResponse.json({ success: true })
+    return NextResponse.json({ success: true, message: 'File deleted successfully' })
 
   } catch (error) {
     console.error('File deletion error:', error)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    return NextResponse.json({ success: false, error: 'Internal server error' }, { status: 500 })
   }
 }
