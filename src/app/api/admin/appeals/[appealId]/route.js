@@ -119,7 +119,6 @@ export async function PATCH(request, { params }) {
             bannedAt: null,
             banReason: null,
             appealDeadline: null,
-            moderationStatus: 'active',
             reportsCount: 0,
             hiddenAt: null,
             updatedAt: now,
@@ -159,7 +158,7 @@ export async function PATCH(request, { params }) {
           const validation = validateCampaignTransition(currentStatus, 'removed-permanent');
           if (!validation.valid) {
             return NextResponse.json(
-              { error: validation.error },
+              { success: false, error: validation.error },
               { status: 400 }
             );
           }
@@ -202,7 +201,7 @@ export async function PATCH(request, { params }) {
           const validation = validateAccountTransition(currentStatus, 'banned-permanent');
           if (!validation.valid) {
             return NextResponse.json(
-              { error: validation.error },
+              { success: false, error: validation.error },
               { status: 400 }
             );
           }

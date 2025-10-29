@@ -40,8 +40,8 @@ export async function GET(request) {
       // User counts
       db.collection('users').count().get(),
       db.collection('users').where('role', '==', 'admin').count().get(),
-      db.collection('users').where('moderationStatus', '==', 'banned-temporary').count().get(),
-      db.collection('users').where('moderationStatus', '==', 'banned-permanent').count().get(),
+      db.collection('users').where('accountStatus', '==', 'banned-temporary').count().get(),
+      db.collection('users').where('accountStatus', '==', 'banned-permanent').count().get(),
       
       // Report counts by status (using reportSummary collection)
       db.collection('reportSummary').count().get(),
