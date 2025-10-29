@@ -53,28 +53,15 @@ export async function GET(request) {
           const creatorDoc = await adminDb.collection('users').doc(campaign.creatorId).get();
           const creator = creatorDoc.data();
 
-          if (creator && creator.email) {
+          if (creator) {
+            // For campaign removals: Send ONLY in-app notification (creator can log in)
+            // No email needed - they can see the notification when they log in
             await sendInAppNotification(campaign.creatorId, {
               type: 'appealDeadlineReminder',
               title: '⏰ Appeal Deadline Reminder',
               message: `You have ${daysLeft} day${daysLeft > 1 ? 's' : ''} left to appeal the removal of your campaign "${campaignTitle}". Don't miss the deadline!`,
               actionUrl: '/profile/appeals',
               actionLabel: 'Submit Appeal',
-            });
-
-            const emailTemplate = getEmailTemplate('appealReminder', {
-              userEmail: creator.email,
-              username: creator.username || creator.displayName || 'User',
-              daysLeft,
-              itemType: 'campaign',
-              itemName: campaignTitle,
-              removalReason: removalReason,
-            });
-
-            await sendEmail({
-              to: creator.email,
-              subject: emailTemplate.subject,
-              html: emailTemplate.html,
             });
 
             remindersProcessed.campaigns[`day${daysLeft}`]++;
