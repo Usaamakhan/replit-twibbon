@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useBodyScrollLock } from "@/hooks/useBodyScrollLock";
 import ConfirmationModal from "@/components/ConfirmationModal";
+import { getRoleBadgeColor, formatTimestamp } from "@/utils/admin/adminHelpers";
 
 export default function UserDetailsModal({ user, onClose, onUpdate }) {
   const { user: currentUser } = useAuth();
@@ -16,27 +17,6 @@ export default function UserDetailsModal({ user, onClose, onUpdate }) {
 
   // Lock body scroll when modal is open
   useBodyScrollLock(true);
-
-  const getRoleBadgeColor = (role) => {
-    return role === 'admin' 
-      ? 'bg-purple-100 text-purple-800' 
-      : 'bg-gray-100 text-gray-800';
-  };
-
-  const formatDate = (dateString) => {
-    if (!dateString) return '-';
-    try {
-      return new Date(dateString).toLocaleDateString('en-US', {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit',
-      });
-    } catch {
-      return '-';
-    }
-  };
 
   const handleRoleChange = async (newRole) => {
     if (!currentUser) return;
@@ -204,10 +184,10 @@ export default function UserDetailsModal({ user, onClose, onUpdate }) {
                       <p className="mt-2 text-sm text-red-700">Reason: {user.banReason}</p>
                     )}
                     {user.bannedAt && (
-                      <p className="mt-1 text-xs text-red-600">Banned on: {formatDate(user.bannedAt)}</p>
+                      <p className="mt-1 text-xs text-red-600">Banned on: {formatTimestamp(user.bannedAt, true)}</p>
                     )}
                     {user.accountStatus === 'banned-temporary' && user.appealDeadline && (
-                      <p className="mt-1 text-xs text-red-600">Appeal deadline: {formatDate(user.appealDeadline)}</p>
+                      <p className="mt-1 text-xs text-red-600">Appeal deadline: {formatTimestamp(user.appealDeadline, true)}</p>
                     )}
                   </div>
                 )}
@@ -229,7 +209,7 @@ export default function UserDetailsModal({ user, onClose, onUpdate }) {
                     </div>
                     <div>
                       <dt className="text-xs text-gray-500">Joined</dt>
-                      <dd className="text-sm text-gray-900">{formatDate(user.createdAt)}</dd>
+                      <dd className="text-sm text-gray-900">{formatTimestamp(user.createdAt, true)}</dd>
                     </div>
                   </dl>
                 </div>
