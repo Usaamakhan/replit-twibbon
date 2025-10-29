@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState } from 'react';
 import Image from 'next/image';
 import { useAuth } from '@/hooks/useAuth';
 import { formatTimestamp } from '@/utils/admin/adminHelpers';
@@ -31,7 +31,9 @@ function AdminAppealsContent() {
   const [confirmText, setConfirmText] = useState('');
   const [error, setError] = useState('');
 
-  const fetchAppeals = useCallback(async () => {
+  const fetchAppeals = async () => {
+    if (!user) return;
+
     try {
       setLoading(true);
       setError('');
@@ -55,13 +57,7 @@ function AdminAppealsContent() {
     } finally {
       setLoading(false);
     }
-  }, [user, filters]);
-
-  useEffect(() => {
-    if (user) {
-      fetchAppeals();
-    }
-  }, [user, fetchAppeals]);
+  };
 
   const handleAction = async () => {
     if (!selectedAppeal || !actionType) return;
@@ -159,12 +155,12 @@ function AdminAppealsContent() {
             <select
               value={filters.status}
               onChange={(e) => setFilters({ ...filters, status: e.target.value })}
-              className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500"
+              className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 text-gray-900 bg-white"
             >
-              <option value="all">All</option>
-              <option value="pending">Pending</option>
-              <option value="approved">Approved</option>
-              <option value="rejected">Rejected</option>
+              <option value="all" className="text-gray-900">All</option>
+              <option value="pending" className="text-gray-900">Pending</option>
+              <option value="approved" className="text-gray-900">Approved</option>
+              <option value="rejected" className="text-gray-900">Rejected</option>
             </select>
           </div>
 
@@ -173,11 +169,11 @@ function AdminAppealsContent() {
             <select
               value={filters.type}
               onChange={(e) => setFilters({ ...filters, type: e.target.value })}
-              className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500"
+              className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 text-gray-900 bg-white"
             >
-              <option value="all">All</option>
-              <option value="campaign">Campaign</option>
-              <option value="account">Account</option>
+              <option value="all" className="text-gray-900">All</option>
+              <option value="campaign" className="text-gray-900">Campaign</option>
+              <option value="account" className="text-gray-900">Account</option>
             </select>
           </div>
 
@@ -186,19 +182,19 @@ function AdminAppealsContent() {
             <select
               value={filters.limit}
               onChange={(e) => setFilters({ ...filters, limit: parseInt(e.target.value) })}
-              className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500"
+              className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 text-gray-900 bg-white"
             >
-              <option value="10">10</option>
-              <option value="25">25</option>
-              <option value="50">50</option>
-              <option value="100">100</option>
+              <option value="10" className="text-gray-900">10</option>
+              <option value="25" className="text-gray-900">25</option>
+              <option value="50" className="text-gray-900">50</option>
+              <option value="100" className="text-gray-900">100</option>
             </select>
           </div>
 
           <div className="flex items-end">
             <button
               onClick={fetchAppeals}
-              disabled={loading}
+              disabled={loading || !user}
               className="px-6 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 disabled:bg-gray-300 transition-colors"
             >
               {loading ? 'Loading...' : 'Load Appeals'}
