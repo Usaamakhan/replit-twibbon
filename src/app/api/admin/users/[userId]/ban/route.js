@@ -121,7 +121,9 @@ export async function PATCH(request, { params }) {
             html: emailTemplate.html,
           });
           
-          console.log('[BAN] Ban email sent to:', userData.email);
+          if (process.env.NODE_ENV === 'development') {
+            console.log('[BAN] Ban email sent to:', userData.email);
+          }
         } else if (accountStatus === 'active' && (userDoc.data().accountStatus === 'banned-temporary' || userDoc.data().accountStatus === 'banned-permanent')) {
           // User is being unbanned - send unban email
           const emailTemplate = getEmailTemplate('accountUnbanned', {
@@ -135,7 +137,9 @@ export async function PATCH(request, { params }) {
             html: emailTemplate.html,
           });
           
-          console.log('[UNBAN] Unban email sent to:', userData.email);
+          if (process.env.NODE_ENV === 'development') {
+            console.log('[UNBAN] Unban email sent to:', userData.email);
+          }
         }
       }
     } catch (emailError) {

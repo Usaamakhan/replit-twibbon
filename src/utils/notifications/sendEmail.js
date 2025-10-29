@@ -27,8 +27,10 @@ export async function sendEmail({
   from = "noreply@test-nrw7gymxx6jg2k8e.mlsender.net", // MailerSend trial domain
 }) {
   try {
-    console.log("[EMAIL] Sending to:", to);
-    console.log("[EMAIL] Subject:", subject);
+    if (process.env.NODE_ENV === 'development') {
+      console.log("[EMAIL] Sending to:", to);
+      console.log("[EMAIL] Subject:", subject);
+    }
 
     if (!to || !subject || !html) {
       throw new Error("Missing required fields: to, subject, and html");
@@ -49,7 +51,9 @@ export async function sendEmail({
 
     const result = await mailerSend.email.send(emailParams);
 
-    console.log("[EMAIL] Sent successfully:", result.body?.messageId || "sent");
+    if (process.env.NODE_ENV === 'development') {
+      console.log("[EMAIL] Sent successfully:", result.body?.messageId || "sent");
+    }
 
     return {
       success: true,

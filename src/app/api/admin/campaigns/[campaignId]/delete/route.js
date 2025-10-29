@@ -68,7 +68,9 @@ export async function DELETE(request, { params }) {
       reportsCount: campaignData.reportsCount || 0,
     };
     
-    console.log('Campaign deleted by admin:', deletionLog);
+    if (process.env.NODE_ENV === 'development') {
+      console.log('Campaign deleted by admin:', deletionLog);
+    }
     
     return NextResponse.json({
       success: true,

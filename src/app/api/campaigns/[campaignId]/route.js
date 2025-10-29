@@ -65,7 +65,9 @@ export async function DELETE(request, { params }) {
           if (campaignData.imageUrl.includes('/storage/v1/object/public/uploads/')) {
             imagePath = campaignData.imageUrl.split('/storage/v1/object/public/uploads/')[1];
           } else {
-            console.warn('Could not parse storage path from imageUrl:', campaignData.imageUrl);
+            if (process.env.NODE_ENV === 'development') {
+              console.warn('Could not parse storage path from imageUrl:', campaignData.imageUrl);
+            }
           }
         }
         
@@ -77,7 +79,9 @@ export async function DELETE(request, { params }) {
           if (storageError) {
             console.error('Supabase storage deletion error for path:', imagePath, storageError);
           } else {
-            console.log('Successfully deleted storage file:', imagePath);
+            if (process.env.NODE_ENV === 'development') {
+              console.log('Successfully deleted storage file:', imagePath);
+            }
           }
         }
       }
@@ -117,7 +121,9 @@ export async function DELETE(request, { params }) {
     });
 
     if (reportsDismissed > 0) {
-      console.log(`Auto-dismissed ${reportsDismissed} reports for deleted campaign ${campaignId}`);
+      if (process.env.NODE_ENV === 'development') {
+        console.log(`Auto-dismissed ${reportsDismissed} reports for deleted campaign ${campaignId}`);
+      }
     }
 
     return NextResponse.json({

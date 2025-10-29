@@ -282,7 +282,9 @@ export async function PATCH(request, { params }) {
               html: emailTemplate.html,
             });
             
-            console.log('[REPORT BAN] Ban email sent to:', userData.email);
+            if (process.env.NODE_ENV === 'development') {
+              console.log('[REPORT BAN] Ban email sent to:', userData.email);
+            }
           }
         } else {
           // For CAMPAIGN REMOVALS: Keep in-app notification (creator can still log in)

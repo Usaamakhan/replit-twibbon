@@ -386,7 +386,9 @@ function CampaignAdjustContent() {
           body: JSON.stringify({ campaignId: campaign.id })
         });
       } catch (trackError) {
-        console.warn('Failed to track download:', trackError);
+        if (process.env.NODE_ENV === 'development') {
+          console.warn('Failed to track download:', trackError);
+        }
       }
       
       campaignSession.markDownloaded(slug);
