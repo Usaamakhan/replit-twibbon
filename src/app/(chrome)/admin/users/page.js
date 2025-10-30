@@ -18,15 +18,22 @@ function AdminUsersContent() {
   const { user } = useAuth();
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
   const [selectedUser, setSelectedUser] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [roleFilter, setRoleFilter] = useState('admin');
   const [limit, setLimit] = useState(10);
 
-  const fetchUsers = async () => {
+  const fetchUsers = async (isLoadMore = false) => {
     if (!user) return;
 
-    setLoading(true);
+    if (isLoadMore) {
+      setLoadingMore(true);
+    } else {
+      setLoading(true);
+    }
+    
     try {
       const token = await user.getIdToken();
       
@@ -46,12 +53,20 @@ function AdminUsersContent() {
       }
 
       const data = await response.json();
-      setUsers(data.data || []);
+      const newUsers = data.data || [];
+      setUsers(newUsers);
+      setHasMore(newUsers.length === limit);
     } catch (error) {
       console.error('Error fetching users:', error);
     } finally {
       setLoading(false);
+      setLoadingMore(false);
     }
+  };
+
+  const handleLoadMore = () => {
+    setLimit(prev => prev + 10);
+    setTimeout(() => fetchUsers(true), 0);
   };
 
   const handleSelectUser = (selectedUser) => {
@@ -152,6 +167,28 @@ function AdminUsersContent() {
         searchTerm={searchTerm}
         onSearchChange={setSearchTerm}
       />
+
+      {users.length > 0 && hasMore && !loading && (
+        <div className="bg-white rounded-lg shadow p-6 text-center">
+          <button
+            onClick={handleLoadMore}
+            disabled={loadingMore}
+            className="px-8 py-3 bg-emerald-600 text-white font-medium rounded-md hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
+          >
+            {loadingMore ? (
+              <span className="flex items-center justify-center">
+                <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                Loading More...
+              </span>
+            ) : (
+              'Load More (10 items)'
+            )}
+          </button>
+        </div>
+      )}
 
       {selectedUser && (
         <UserDetailsModal

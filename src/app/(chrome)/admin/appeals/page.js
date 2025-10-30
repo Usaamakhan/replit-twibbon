@@ -18,11 +18,13 @@ function AdminAppealsContent() {
   const { user } = useAuth();
   const [appeals, setAppeals] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
   const [processing, setProcessing] = useState(null);
   const [filters, setFilters] = useState({
     status: 'pending',
     type: 'all',
-    limit: 50,
+    limit: 10,
   });
   const [selectedAppeal, setSelectedAppeal] = useState(null);
   const [showActionModal, setShowActionModal] = useState(false);
@@ -31,11 +33,15 @@ function AdminAppealsContent() {
   const [confirmText, setConfirmText] = useState('');
   const [error, setError] = useState('');
 
-  const fetchAppeals = async () => {
+  const fetchAppeals = async (isLoadMore = false) => {
     if (!user) return;
 
     try {
-      setLoading(true);
+      if (isLoadMore) {
+        setLoadingMore(true);
+      } else {
+        setLoading(true);
+      }
       setError('');
       
       const token = await user.getIdToken();
@@ -50,13 +56,21 @@ function AdminAppealsContent() {
       }
 
       const data = await response.json();
-      setAppeals(data.appeals || []);
+      const newAppeals = data.appeals || [];
+      setAppeals(newAppeals);
+      setHasMore(newAppeals.length === filters.limit);
     } catch (err) {
       console.error('Error fetching appeals:', err);
       setError('Failed to load appeals');
     } finally {
       setLoading(false);
+      setLoadingMore(false);
     }
+  };
+
+  const handleLoadMore = () => {
+    setFilters(prev => ({ ...prev, limit: prev.limit + 10 }));
+    setTimeout(() => fetchAppeals(true), 0);
   };
 
   const handleAction = async () => {
@@ -326,6 +340,28 @@ function AdminAppealsContent() {
           </div>
         )}
       </div>
+
+      {appeals.length > 0 && hasMore && !loading && (
+        <div className="bg-white rounded-lg shadow-sm p-6 text-center">
+          <button
+            onClick={handleLoadMore}
+            disabled={loadingMore}
+            className="px-8 py-3 bg-emerald-600 text-white font-medium rounded-md hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
+          >
+            {loadingMore ? (
+              <span className="flex items-center justify-center">
+                <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                Loading More...
+              </span>
+            ) : (
+              'Load More (10 items)'
+            )}
+          </button>
+        </div>
+      )}
 
       {showActionModal && selectedAppeal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
