@@ -156,20 +156,19 @@ function AdminAppealsContent() {
   };
 
   return (
-    <div className="p-6">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">Appeals Management</h1>
-        <p className="text-gray-600 mt-1">Review and process user appeals for removed content and banned accounts</p>
-      </div>
-
-      <div className="bg-white rounded-lg shadow-sm p-4 mb-6">
-        <div className="flex flex-wrap gap-4">
+    <div className="space-y-6">
+      <div className="bg-white rounded-lg shadow p-6">
+        <h2 className="text-lg font-semibold text-gray-900 mb-4">Load Appeals</h2>
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
+            <label htmlFor="status-filter" className="block text-sm font-medium text-gray-700 mb-2">
+              Status
+            </label>
             <select
+              id="status-filter"
               value={filters.status}
               onChange={(e) => setFilters({ ...filters, status: e.target.value })}
-              className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 text-gray-900 bg-white"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-500 text-gray-900 bg-white"
             >
               <option value="all" className="text-gray-900">All</option>
               <option value="pending" className="text-gray-900">Pending</option>
@@ -179,11 +178,14 @@ function AdminAppealsContent() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Type</label>
+            <label htmlFor="type-filter" className="block text-sm font-medium text-gray-700 mb-2">
+              Type
+            </label>
             <select
+              id="type-filter"
               value={filters.type}
               onChange={(e) => setFilters({ ...filters, type: e.target.value })}
-              className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 text-gray-900 bg-white"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-500 text-gray-900 bg-white"
             >
               <option value="all" className="text-gray-900">All</option>
               <option value="campaign" className="text-gray-900">Campaign</option>
@@ -192,38 +194,55 @@ function AdminAppealsContent() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Limit</label>
-            <select
+            <label htmlFor="limit-input" className="block text-sm font-medium text-gray-700 mb-2">
+              Number of Appeals
+            </label>
+            <input
+              id="limit-input"
+              type="number"
+              min="1"
+              max="100"
               value={filters.limit}
-              onChange={(e) => setFilters({ ...filters, limit: parseInt(e.target.value) })}
-              className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 text-gray-900 bg-white"
-            >
-              <option value="10" className="text-gray-900">10</option>
-              <option value="25" className="text-gray-900">25</option>
-              <option value="50" className="text-gray-900">50</option>
-              <option value="100" className="text-gray-900">100</option>
-            </select>
+              onChange={(e) => setFilters({ ...filters, limit: parseInt(e.target.value) || 10 })}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-500 text-gray-900 bg-white"
+              placeholder="10"
+            />
           </div>
 
           <div className="flex items-end">
             <button
               onClick={fetchAppeals}
               disabled={loading || !user}
-              className="px-6 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 disabled:bg-gray-300 transition-colors"
+              className="w-full px-6 py-2 bg-emerald-600 text-white font-medium rounded-md hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
             >
-              {loading ? 'Loading...' : 'Load Appeals'}
+              {loading ? (
+                <span className="flex items-center justify-center">
+                  <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  Loading...
+                </span>
+              ) : (
+                'Load Appeals'
+              )}
             </button>
           </div>
         </div>
+        {appeals.length > 0 && (
+          <div className="mt-4 text-sm text-gray-600">
+            Showing <span className="font-semibold">{appeals.length}</span> appeal{appeals.length !== 1 ? 's' : ''}
+          </div>
+        )}
       </div>
 
       {error && (
-        <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
           <p className="text-red-800">{error}</p>
         </div>
       )}
 
-      <div className="bg-white rounded-lg shadow-sm overflow-hidden">
+      <div className="bg-white rounded-lg shadow overflow-hidden">
         {appeals.length === 0 ? (
           <div className="p-12 text-center">
             <div className="text-gray-400 text-5xl mb-4">📋</div>
@@ -342,7 +361,7 @@ function AdminAppealsContent() {
       </div>
 
       {appeals.length > 0 && hasMore && !loading && (
-        <div className="bg-white rounded-lg shadow-sm p-6 text-center">
+        <div className="bg-white rounded-lg shadow p-6 text-center">
           <button
             onClick={handleLoadMore}
             disabled={loadingMore}
