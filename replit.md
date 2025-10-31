@@ -48,19 +48,24 @@ The application is built with Next.js 15.5.2 (App Router), React 19.1.0, and Tai
 
 ## Recent Updates (October 31, 2025)
 
-### Documentation Cleanup - Notification Settings Clarification
-Removed outdated documentation about planned `/settings` and `/settings/notifications` pages:
+### Documentation Cleanup - Settings Architecture Clarification
+Updated documentation to clarify the settings architecture plan:
 
-**Rationale:**
-- All notifications are moderation-related (warnings, removals, bans, appeals)
-- Users must receive all moderation notifications to stay informed of critical actions
-- Optional notification preferences would create confusion and may cause users to miss important updates
-- Notification inbox at `/profile/notifications` provides full notification management (read/unread, filter, delete)
+**Key Clarifications:**
+- ✅ `/settings` hub is PLANNED for future implementation (account, privacy, preferences)
+- ❌ `/settings/notifications` will NOT be implemented (notifications are mandatory)
+- All notifications are moderation-related and users must receive them
+- Notification inbox at `/profile/notifications` provides full notification management
+
+**Settings Hub Will Include (Future):**
+- `/settings/account` - Password, email, 2FA, sessions, account deletion
+- `/settings/privacy` - Profile visibility, data export, GDPR compliance
+- `/settings/preferences` - Language, theme, accessibility
 
 **Files Updated:**
-- `TASKS.md` - Removed Phase 1 (Settings & Navigation Architecture) entirely
-- `replit.md` - Fixed incorrect claims about settings being implemented
-- `CODEBASE_STRUCTURE.md` - Clarified that `/settings` does NOT exist and is NOT planned
+- `TASKS.md` - Restructured Phase 1 to focus on settings hub (excluding notification preferences)
+- `replit.md` - Clarified that settings hub is deferred, not cancelled
+- `CODEBASE_STRUCTURE.md` - Updated to reflect planned settings architecture
 
 ---
 
@@ -91,13 +96,13 @@ Conducted comprehensive documentation audit comparing actual codebase against al
      - ✅ NotificationBell, NotificationToast, NotificationProvider components
      - ✅ Notification inbox at `/profile/notifications` (read/unread, filter, delete)
      - ✅ Server-side sendInAppNotification utility for sending notifications
-     - ❌ `/settings` and `/settings/notifications` NOT implemented (not needed - all notifications are mandatory moderation updates)
 
-3. **Notification Architecture Clarification:**
-   - Notification inbox at `/profile/notifications` is fully implemented
-   - No settings/preferences page needed - all notifications are moderation-related and must be delivered
-   - Users can view, filter, and delete notifications in the inbox
-   - Notifications are mandatory to ensure users don't miss critical moderation actions
+3. **Settings Architecture Clarification:**
+   - ⏸️ `/settings` hub is planned for future (account, privacy, preferences pages)
+   - ❌ `/settings/notifications` will NOT be implemented (notifications are mandatory moderation updates)
+   - ✅ Notification inbox at `/profile/notifications` is fully functional
+   - Users can view, filter, and delete notifications without needing preferences
+   - All notifications are critical moderation actions that must be delivered
 
 4. **Documentation Updates:**
    - Updated TASKS.md with notification system documentation
@@ -113,7 +118,7 @@ Conducted comprehensive documentation audit comparing actual codebase against al
 - ✅ Complete appeal system (user submission + admin review)
 - ✅ Auto-deletion cron jobs (fully implemented)
 - ✅ Appeal deadline reminder notifications (fully implemented)
-- ❌ Settings hub (/settings) - NOT implemented and NOT needed (notifications are mandatory)
+- ⏸️ Settings hub (`/settings`) - Deferred for future (account, privacy, preferences pages)
 - ⏸️ Admin warning history view (deferred - future enhancement)
 
 ## Recent Updates (October 24, 2025)

@@ -22,17 +22,94 @@ This document tracks **unimplemented features only**. All completed features are
 - ✅ Email notifications for bans/unbans (MailerSend)
 - ✅ Appeal system (user submission + admin review)
 - ✅ Automated cron jobs (appeal cleanup, reminders)
+- ⏸️ Settings architecture (deferred - will be needed for account, privacy, preferences)
 - ⏸️ Advanced analytics (deferred to future)
-
-**Note on Notification Settings:**
-- ❌ `/settings` and `/settings/notifications` are **NOT NEEDED** and will not be implemented
-- **Rationale:** All notifications are moderation-related (warnings, removals, bans, appeals) and users must receive them
-- Users already have full notification management via the inbox at `/profile/notifications`
-- Optional notification preferences would create confusion and may cause users to miss critical moderation actions
 
 ---
 
-## 🚀 Phase 1: Advanced Analytics & Insights (DEFERRED)
+## 🎯 Phase 1: Settings Hub Architecture (DEFERRED)
+
+**Status:** ⏸️ **DEFERRED (Future Enhancement)**  
+**Goal:** Create unified settings hub for account, privacy, and preferences management  
+**Estimated Time:** 1-2 weeks
+
+### Overview
+
+**Why Settings Hub is Needed:**
+- Future account management features (password change, email management, 2FA)
+- Privacy controls (profile visibility, data export, GDPR compliance)
+- User preferences (language, theme, accessibility)
+
+**Why Notification Preferences Are NOT Needed:**
+- ❌ All notifications are moderation-related (warnings, removals, bans, appeals)
+- ❌ Users must receive all notifications to stay informed of critical actions
+- ✅ Notification inbox at `/profile/notifications` already provides full management (read/unread, filter, delete)
+- Optional notification preferences would create confusion and risk users missing important updates
+
+---
+
+### Planned Settings Pages (Future)
+
+#### `/settings` - Main Settings Hub (with Sidebar Layout)
+
+**Purpose:** Central hub for all user settings
+
+**Sidebar Items:**
+1. 🔒 **Account & Security** - Password, email, 2FA, sessions
+2. 🔐 **Privacy & Data** - Profile visibility, data export, privacy preferences
+3. ⚙️ **Preferences** - Language, theme, accessibility
+4. ~~🔔 **Notifications**~~ - **NOT NEEDED** (notifications are mandatory)
+
+**Default Behavior:** Opening `/settings` redirects to `/settings/account`
+
+---
+
+### Future Phase: Account & Security Settings
+
+**Page:** `/settings/account`
+
+**Features:**
+- Password change functionality
+- Email address management
+- Session management (view active sessions, logout all)
+- Two-factor authentication setup
+- Account deletion option
+- Account activity log
+
+---
+
+### Future Phase: Privacy & Data Settings
+
+**Page:** `/settings/privacy`
+
+**Features:**
+- Profile visibility controls (public/private)
+- Data export (GDPR compliance)
+- Download all user data
+- Privacy preferences
+- Block/mute users functionality
+- Search engine indexing preferences
+
+---
+
+### Future Phase: General Preferences
+
+**Page:** `/settings/preferences`
+
+**Features:**
+- Language selection (i18n)
+- Theme selection (light/dark mode)
+- Accessibility settings
+- Dashboard layout preferences
+- Time zone settings
+
+---
+
+**Note:** `/profile/edit` remains separate - it's dedicated to profile information only (avatar, banner, bio, username). Settings hub is for account/privacy/preferences.
+
+---
+
+## 🚀 Phase 2: Advanced Analytics & Insights (DEFERRED)
 
 **Status:** ⏸️ **DEFERRED (Post-Launch)**  
 **Priority:** Low (Nice-to-have features)
