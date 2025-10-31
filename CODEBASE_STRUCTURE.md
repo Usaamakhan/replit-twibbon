@@ -167,7 +167,7 @@ Creator workflow for uploading new campaigns.
 #### 📁 **`/appeals`**
 - **`page.js`** - User appeals submission page for removed campaigns and banned accounts
 
-**Note:** The `/settings` directory is planned but not yet implemented. Currently documented in TASKS.md Section 11 as a future enhancement to create a unified settings hub under `/settings/notifications`, `/settings/account`, etc. Profile editing remains at `/profile/edit`.
+**Note:** The `/settings` directory does NOT exist and is NOT planned for implementation. All notifications are moderation-related and mandatory, so notification preferences are not needed. Users manage notifications via the inbox at `/profile/notifications`. Profile editing remains at `/profile/edit`.
 
 ---
 
